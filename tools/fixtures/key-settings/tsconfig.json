@@ -1,0 +1,77 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "bun"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "typeRoots": [
+      "../../../node_modules/@types"
+    ],
+    "paths": {
+      "wxt/browser": [
+        "../../../node_modules/wxt/dist/browser.d.mts"
+      ],
+      "wxt/testing/fake-browser": [
+        "../../../node_modules/wxt/dist/testing/fake-browser.d.mts"
+      ],
+      "@happy-dom/global-registrator": [
+        "../../../node_modules/@happy-dom/global-registrator/lib/index.d.ts"
+      ]
+    },
+    "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/background/adapters/starting-owner.ts",
+    "../../../src/background/store/local-filter-writer.ts",
+    "../../../src/background/store/settings-edit.bun-test.ts",
+    "../../../src/background/store/settings-edit.ts",
+    "../../../src/background/store/settings-edit.type-test.ts",
+    "../../../src/background/store/shared-setting-execution.bun-test.ts",
+    "../../../src/background/store/shared-setting-execution.ts",
+    "../../../src/background/store/shared-setting-execution.type-test.ts",
+    "../../../tools/fixtures/feature-switches/specimens.ts",
+    "../../../tools/fixtures/feature-switches/consumer.ts",
+    "../../../tools/fixtures/feature-switches/type-proofs.ts",
+    "../../../tools/fixtures/feature-switches/consumer.bun-test.ts",
+    "../../../tools/fixtures/feature-switches/owner.bun-test.ts",
+    "../../../tools/fixtures/feature-switches/harness.ts",
+    "../../../tools/fixtures/feature-switches/run.ts",
+    "../../../tools/fixtures/feature-switches/boundaries.bun-test.ts",
+    "../../../src/shared/contracts/ui.type-test.ts",
+    "../../../src/ui/backend/backend.type-test.ts",
+    "../../../src/background/adapters/starting-owner.type-test.ts",
+    "../../../src/background/store/consent-recovery.type-test.ts",
+    "../../../src/background/router/ui-playlists/router.type-test.ts",
+    "../../../src/ui/backend/scripted.ts",
+    "harness.ts",
+    "owner.bun-test.ts",
+    "wire.bun-test.ts",
+    "recorder.bun-test.ts",
+    "consumer.ts",
+    "consumer.bun-test.ts",
+    "run.ts",
+    "type-proofs.ts",
+    "isolated-negative.ts",
+    "../../../src/ui/keys/client.ts",
+    "../../../src/ui/keys/dom.ts",
+    "../../../src/ui/keys/controller.ts",
+    "../../../src/ui/backend/key-settings.ts",
+    "recovery.bun-test.ts",
+    "sync.bun-test.ts",
+    "account-lifetime.bun-test.ts"
+  ]
+}

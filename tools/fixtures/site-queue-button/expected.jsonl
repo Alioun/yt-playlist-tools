@@ -1,0 +1,37 @@
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "construction is inert and only an enabled feature owns one overlay host", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "placement sits 4 px into the thumbnail and stacks in a row under 100 px", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "signed out with absent account keys still adds with no account field and ignores filters and skips", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a signed-in view's channel filters and session skips do not gate the queue", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "busy ignores repeated clicks and key repeat, and Added ignores another click", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "only a confirmed answer renders Added; a page answer without confirmation is sent-unconfirmed and resends only on click", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a PageLink deadline is unconfirmed, not failure or success", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "failure shows with feedback off for 1.5 s, then idle, and never resends", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a noisy confirmed add stands without our toast and is not resent", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "confirmed quiet success offers Undo for exactly the captured entry; success closes and returns the item to idle", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "Undo failure reads Couldn't undo and the item stays Added", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "the undo key reaches the same exact-entry Undo", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "confirmation without an entry identity offers no Undo", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a card without a readable title gets the untitled added toast", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a card without a readable title gets the untitled unconfirmed toast", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a card without a readable title gets the untitled failed toast", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "every card for the same video shows Added once one of them is added", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "state belongs to the video: duplicates share Added and a recycled renderer shows its new item", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "navigation during the awaited add resets the page view without reviving the old state", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "turning the feature off during an awaited add leaves no host, toast or revived state", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "fullscreen conceals the overlay and a hidden tab defers the failure toast", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "keyboard-visible thumbnail focus shows the overlay without moving focus", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "moving to another card cancels the obsolete rechecks", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "search's inline preview takes the host while it covers the card", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "not working draws nothing and asks for the notice once at the first card hover", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "the tooltip appears after 0.5 s to the right and the host stops page clicks only on itself", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "host disposal releases every listener, deadline and host", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "YouTube's own hover Add to queue suppresses our slot at the 150 ms recheck", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "YouTube's own hover Add to queue suppresses our slot at the 900 ms recheck", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "ytm-shorts-lockup-view-model gets no queue button", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "ytd-ad-slot-renderer gets no queue button", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "ytd-playlist-renderer gets no queue button", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "ytd-channel-renderer gets no queue button", "expected": "pass"}
+{"kind": "test", "file": "src/site/kit/overlay/overlay.bun-test.ts", "name": "construction is inert and two slots share one movable host", "expected": "pass"}
+{"kind": "test", "file": "src/site/kit/overlay/overlay.bun-test.ts", "name": "releasing every lease leaves zero hosts and a later lease starts fresh", "expected": "pass"}
+{"kind": "test", "file": "src/site/kit/overlay/overlay.bun-test.ts", "name": "the host mirrors YouTube's dark attribute and isolates its own clicks", "expected": "pass"}
+{"kind": "eof", "tests": 36, "files": ["src/site/features/queue-button/queue-button.bun-test.ts", "src/site/kit/overlay/overlay.bun-test.ts"]}

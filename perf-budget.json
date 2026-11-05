@@ -1,0 +1,54 @@
+{
+  "sites": {
+    "www": {
+      "page": 13.8,
+      "core": 28.3,
+      "kit": 28,
+      "auto-add": 5.5,
+      "shortcuts": 2.0,
+      "quick-save": 3.6,
+      "queue-button": 3.6,
+      "watch-button": 4.5,
+      "card-menu": 1.6
+    },
+    "music": {
+      "page": 14.0,
+      "core": 28.8,
+      "kit": 31.7,
+      "shortcuts": 1,
+      "music-actions": 7.7,
+      "music-keys": 1
+    }
+  },
+  "totals": {
+    "www": 90.9,
+    "music": 84.2
+  },
+  "lazy": {
+    "popovers": 50,
+    "page-jobs-www": 20,
+    "page-jobs-music": 18
+  },
+  "popup": {
+    "www": {
+      "js": 57.6,
+      "css": 8
+    },
+    "music": {
+      "js": 67.6,
+      "css": 8
+    },
+    "lazy": 45
+  },
+  "settings": {
+    "js": 60,
+    "css": 10,
+    "lazy": 45
+  },
+  "firstRun": {
+    "js": 62.7,
+    "upgrade": 66.5
+  },
+  "background": 230,
+  "exceptions": []
+}

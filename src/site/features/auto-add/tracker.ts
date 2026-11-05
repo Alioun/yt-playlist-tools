@@ -82,6 +82,11 @@ export function updateTracker(tracker: Tracker, update: {
   return interrupted && next.last?.kind === "playing" ? { ...next, last: null } : next
 }
 
+/** Progress from an earlier visit that arrived after the playback started. A length that no longer matches drops it. */
+export function rememberEarlier(tracker: Tracker, remembered: RememberedProgress): Tracker {
+  return updateTracker({ ...tracker, remembered: { length: remembered.length, parts: merge(remembered.parts) } }, {})
+}
+
 export function recordReading(tracker: Tracker, reading: Reading): Tracker {
   if (reading.kind !== "playing") return { ...tracker, last: { ...reading } }
   if (reading.video !== tracker.video || !canCount(tracker)) return { ...tracker, last: null }

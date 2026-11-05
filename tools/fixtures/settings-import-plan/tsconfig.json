@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true, "noImplicitOverride": true,
+    "typeRoots": ["../../../node_modules/@types"],
+    "paths": {
+      "wxt/browser": ["../../../node_modules/wxt/dist/browser.d.mts"]
+    }
+  },
+  "files": [
+    "../../../src/background/store/settings-import-plan.ts",
+    "../../../src/background/store/settings-import-plan.bun-test.ts",
+    "../../../src/background/store/settings-import-plan.type-test.ts",
+    "specimens.ts", "consumer.ts", "run.ts", "guard.bun-test.ts"
+  ]
+}

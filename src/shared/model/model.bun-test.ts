@@ -1,10 +1,56 @@
 import { describe, expect, test } from "bun:test"
 import {
-  DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup,
-  defaultDevice, defaultFilter, defaultSettings, defaultSetup, documentKey, isAccountKey, isChannelId,
-  isKey, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, isVideoId,
-  normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite, parseDocumentKey
+  DecodeError,
+  readStoredUnclaimed,
+  decodeUnclaimed,
+  decodeSyncMeta,
+  decodeDevice,
+  decodeDocument,
+  decodeLastAccount,
+  decodeFilter,
+  decodeKey,
+  decodeSettings,
+  decodeSetup,
+  decodeSyncState,
+  defaultDevice,
+  defaultFilter,
+  defaultSettings,
+  defaultSetup,
+  documentKey,
+  isAccountKey,
+  isChannelId,
+  isKey,
+  isPercent,
+  isPlaylistId,
+  isSetupEmpty,
+  isShortcutId,
+  isVideoId,
+  normalizeFilterForWrite,
+  normalizeSettingsForWrite,
+  normalizeSetupForWrite,
+  parseDocumentKey
 } from "./index"
+import type { SyncMeta, SyncOpaqueWrite, SyncState } from "./index"
+
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
+type Check<T extends true> = T
+export type SyncStateProofs = [
+  Check<
+    Equal<
+      SyncState,
+      {
+        joined: string | null
+        pushed: Record<string, string>
+        deferred?: Record<string, string>
+        status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"
+        editedSinceOff: boolean
+        opaqueWrite?: SyncOpaqueWrite
+        everEdited?: boolean
+      }
+    >
+  >,
+  Check<Equal<typeof decodeSyncState, (raw: unknown) => SyncState>>
+]
 
 const account = "synthetic_acct01"
 const channel = `UC${"a".repeat(22)}`
@@ -13,22 +59,106 @@ const stamp = { v: 1, gen: "synthetic-write", at: 100, by: "synthetic-device" }
 const shortcut = { id: "save01", key: null, label: "Save", watchLaterOnEveryAccount: false }
 const context = { shortcutIds: new Set(["save01"]) }
 const upgradeDetails = {
-  from: "1.4.5", autoAdd: { kept: 1, dropped: 2 },
-  pct: { value: 50, wasUnset: true, authorised: false }, feedback: false,
-  shortcut: { raw: "Control+K", key: null, playlist: true, note: "ctrl-never-fired" }, credentialsDeleted: true
+  from: "1.4.5",
+  autoAdd: { kept: 1, dropped: 2 },
+  pct: { value: 50, wasUnset: true, authorised: false },
+  feedback: false,
+  shortcut: { raw: "Control+K", key: null, playlist: true, note: "ctrl-never-fired" },
+  credentialsDeleted: true
 }
 function roundtrip(value: unknown): unknown {
   return JSON.parse(JSON.stringify(value))
 }
 
+describe("canonical sync history", () => {
+  test("first-edit provenance is optional and validates both boolean values without backfill", () => {
+    const old = { joined: null, pushed: {}, status: "off", editedSinceOff: false } satisfies SyncState
+    const before = structuredClone(old)
+    expect(decodeSyncState(old)).toEqual(old)
+    expect(Object.hasOwn(decodeSyncState(old), "everEdited")).toBe(false)
+    expect(Object.hasOwn(decodeSyncState({ ...old, everEdited: undefined }), "everEdited")).toBe(false)
+    for (const everEdited of [false, true]) {
+      const raw = {
+        ...old,
+        everEdited,
+        future: { items: [null, 1] },
+        opaqueWrite: { gate: { kind: "held" as const, notBefore: 60_000, future: [false] }, diagnostic: { name: null, message: "synthetic opaque failure", future: { keep: true } } }
+      }
+      const saved = structuredClone(raw)
+      expect(decodeSyncState(raw)).toEqual(saved)
+      expect(raw).toEqual(saved)
+    }
+    expect(old).toEqual(before)
+  })
+
+  test.each([null, 0, 1, "false", "true", [], {}].map(everEdited => ({ everEdited })))("rejects malformed owned first-edit provenance %p", ({ everEdited }) => {
+    const raw = { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited }
+    const before = structuredClone(raw)
+    try {
+      decodeSyncState(raw)
+      throw new Error("Expected invalid first-edit provenance")
+    } catch (error) {
+      expect(error).toBeInstanceOf(DecodeError)
+      if (!(error instanceof DecodeError)) throw error
+      expect(error.path).toBe("value.everEdited")
+    }
+    expect(raw).toEqual(before)
+  })
+
+  test("requires the exact owned shape and retains opaque pushed keys and every extension", () => {
+    const raw = JSON.parse(
+      '{"joined":"history-id","pushed":{"doc:settings":"g1","unrecognized:key":"g2","":"g3","__proto__":"g4"},"status":"off","editedSinceOff":false,"future":{"nested":[1,null]},"__proto__":{"keep":true},"toJSON":"inert","v":99}'
+    )
+    expect(decodeSyncState(raw)).toEqual(raw)
+    expect(Object.hasOwn(decodeSyncState(raw), "__proto__")).toBe(true)
+    expect(Object.hasOwn(decodeSyncState(raw).pushed, "__proto__")).toBe(true)
+    for (const status of ["off", "joining", "ok", "full", "update-needed", "waiting"]) {
+      expect(decodeSyncState({ ...raw, joined: null, status })).toEqual({ ...raw, joined: null, status })
+    }
+    expect(raw.editedSinceOff).toBe(false)
+  })
+
+  test("never defaults missing or malformed bookkeeping", () => {
+    const valid = { joined: null, pushed: {}, status: "off", editedSinceOff: false }
+    for (const raw of [
+      undefined,
+      null,
+      false,
+      0,
+      "off",
+      [],
+      {},
+      ...Object.keys(valid).map(key => Object.fromEntries(Object.entries(valid).filter(([field]) => field !== key))),
+      { ...valid, joined: "" },
+      { ...valid, joined: 1 },
+      { ...valid, pushed: null },
+      { ...valid, pushed: [] },
+      { ...valid, pushed: { opaque: "" } },
+      { ...valid, pushed: { opaque: 1 } },
+      { ...valid, pushed: { opaque: undefined } },
+      { ...valid, status: "future" },
+      { ...valid, editedSinceOff: 0 },
+      { ...valid, editedSinceOff: undefined }
+    ])
+      expect(() => decodeSyncState(raw)).toThrow(DecodeError)
+  })
+})
 
 describe("fresh documents", () => {
   test("nothing starts on; music is available, Undo is Alt+U and the required percentage is 50", () => {
     const settings = decodeSettings()
     expect([
-      settings.autoAdd.on, settings.shortcuts.on, settings.quickSave.on, settings.queueButton.on,
-      settings.watchButton.on, settings.cardMenu.on, settings.browserMenu.on,
-      settings.musicActions.on, settings.musicKeys.on, settings.anyTabKeys.on, settings.gather.on
+      settings.autoAdd.on,
+      settings.shortcuts.on,
+      settings.quickSave.on,
+      settings.queueButton.on,
+      settings.watchButton.on,
+      settings.cardMenu.on,
+      settings.browserMenu.on,
+      settings.musicActions.on,
+      settings.musicKeys.on,
+      settings.anyTabKeys.on,
+      settings.gather.on
     ]).toEqual(Array(11).fill(false))
     expect(settings.theme).toBe("system")
     expect(settings.musicSection).toBe(true)
@@ -38,19 +168,25 @@ describe("fresh documents", () => {
     expect(settings.quickSave.shortsShelves).toBe(false)
     expect(settings.watchButton).toEqual({ on: false, feedback: true, shorts: false })
     expect(settings.cardMenu.keepLinkMenu).toBe(false)
-    expect(settings.musicActions.buttons).toEqual({ next: true, queue: true, save: false, like: false, remove: false,
-      bar: false, library: false, mix: false, album: false, artist: false })
+    expect(settings.musicActions.buttons).toEqual({ next: true, queue: true, save: false, like: false, remove: false, bar: false, library: false, mix: false, album: false, artist: false })
     expect(Object.values(settings.musicKeys.keys)).toEqual(Array(10).fill(null))
-    expect(settings.gather).toEqual({ on: false, feedback: true, to: "player", order: "newest", close: false,
-      auto: { unvisited: false, after: "1d", background: false, count: false, n: 10 } })
+    expect(settings.gather).toEqual({ on: false, feedback: true, to: "player", order: "newest", close: false, auto: { unvisited: false, after: "1d", background: false, count: false, n: 10 } })
   })
 
   test("missing choices do not create account data, consent, a sync subscription or a filter that blocks", () => {
     expect(decodeSetup()).toEqual({ label: null, autoAdd: [], targets: {}, quickSave: null, musicSave: null, gather: null, marks: {} })
     expect(decodeFilter()).toEqual({ on: false, mode: "deny", channels: [] })
     expect(decodeDevice(undefined, "synthetic-device")).toEqual({
-      id: "synthetic-device", consent: null, syncOn: false, upgradeNote: null, claimNotice: null,
-      lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: false
+      id: "synthetic-device",
+      consent: null,
+      syncOn: false,
+      upgradeNote: null,
+      claimNotice: null,
+      newPlaylistVisibility: null,
+      pickerSortAZ: false,
+      detailedLog: false,
+      recentAdds: true,
+      legacyCleared: false
     })
     expect(() => decodeDevice()).toThrow(DecodeError)
     expect(() => defaultDevice("")).toThrow(TypeError)
@@ -73,8 +209,7 @@ describe("fresh documents", () => {
   })
 
   test("additive omitted fields get defaults without re-enabling explicitly cleared choices", () => {
-    const settings = decodeSettings({ undoKey: null, autoAdd: { on: true, pct: 0, feedback: false },
-      musicSection: false, shortcuts: { preset: true, list: [] }, gather: { auto: { n: 5 } } })
+    const settings = decodeSettings({ undoKey: null, autoAdd: { on: true, pct: 0, feedback: false }, musicSection: false, shortcuts: { preset: true, list: [] }, gather: { auto: { n: 5 } } })
     expect(settings.undoKey).toBeNull()
     expect(settings.autoAdd).toEqual({ on: true, pct: 0, feedback: false, toolbarTick: true, toolbarPaused: true })
     expect(settings.musicSection).toBe(false)
@@ -99,10 +234,15 @@ describe("known data validation", () => {
   })
   test("rejects malformed nested switches and choices", () => {
     for (const raw of [
-      { autoAdd: { on: "false" } }, { musicActions: { buttons: { next: 1 } } },
-      { shortcuts: { preset: null } }, { gather: { order: "random" } },
-      { gather: { auto: { after: "2d" } } }, { gather: { auto: { n: 11 } } }, { theme: "blue" }
-    ]) expect(() => decodeSettings(raw)).toThrow(DecodeError)
+      { autoAdd: { on: "false" } },
+      { musicActions: { buttons: { next: 1 } } },
+      { shortcuts: { preset: null } },
+      { gather: { order: "random" } },
+      { gather: { auto: { after: "2d" } } },
+      { gather: { auto: { n: 11 } } },
+      { theme: "blue" }
+    ])
+      expect(() => decodeSettings(raw)).toThrow(DecodeError)
     expect(() => decodeSetup({ autoAdd: [{ pl: playlist, takes: "all" }] })).toThrow(DecodeError)
     expect(() => decodeSetup({ targets: { short: playlist } })).toThrow(DecodeError)
     expect(() => decodeFilter({ mode: "off" })).toThrow(DecodeError)
@@ -110,7 +250,9 @@ describe("known data validation", () => {
     expect(() => decodeFilter({ channels: [["not-a-channel", "Name"]] })).toThrow(DecodeError)
     expect(() => decodeFilter({ channels: [[channel, "Name", 5]] })).toThrow(DecodeError)
     expect(() => decodeDevice({ id: "synthetic-device", consent: { v: 1, at: -1 } })).toThrow(DecodeError)
-    expect(() => decodeDevice({ id: "synthetic-device", lastAccount: "raw||identity" })).toThrow(DecodeError)
+    expect(() => decodeLastAccount({ lastAccount: "raw||identity" })).toThrow(DecodeError)
+    expect(decodeLastAccount({})).toBeNull()
+    expect(decodeLastAccount({ lastAccount: null })).toBeNull()
   })
   test("all document bodies reject malformed root and nested required values", () => {
     for (const raw of [null, false, 1, "document", []]) {
@@ -119,11 +261,13 @@ describe("known data validation", () => {
       expect(() => decodeDevice(raw, "synthetic-device")).toThrow(DecodeError)
     }
     for (const raw of [
-      { id: "" }, { id: "synthetic-device", recentAdds: "true" },
+      { id: "" },
+      { id: "synthetic-device", recentAdds: "true" },
       { id: "synthetic-device", newPlaylistVisibility: "private" },
       { id: "synthetic-device", upgradeNote: { state: "pending", details: {} } },
       { id: "synthetic-device", claimNotice: { acct: account, dropped: -1 } }
-    ]) expect(() => decodeDevice(raw)).toThrow(DecodeError)
+    ])
+      expect(() => decodeDevice(raw)).toThrow(DecodeError)
   })
   test("shortcuts stop at twenty distinct six-character IDs", () => {
     const list = Array.from({ length: 20 }, (_, index) => ({ ...shortcut, id: `save${String(index).padStart(2, "0")}` }))
@@ -134,7 +278,10 @@ describe("known data validation", () => {
   })
   test("playlist order, Takes and absent overrides survive", () => {
     const setup = decodeSetup({ autoAdd: [{ pl: "WL", takes: "shorts", pct: 0 }, { pl: playlist }] })
-    expect(roundtrip(setup.autoAdd)).toEqual([{ pl: "WL", takes: "shorts", pct: 0 }, { pl: playlist, takes: "videos" }])
+    expect(roundtrip(setup.autoAdd)).toEqual([
+      { pl: "WL", takes: "shorts", pct: 0 },
+      { pl: playlist, takes: "videos" }
+    ])
   })
   test("checks every gather choice", () => {
     for (const order of ["newest", "oldest", "english", "non-english", "left-to-right", "right-to-left", "shuffled"] as const) {
@@ -148,17 +295,26 @@ describe("known data validation", () => {
 
 describe("read, edit, serialize and read again", () => {
   test("settings retain unknown fields at every edited object depth", () => {
-    const raw = { future: { flag: true }, undoKey: { ...defaultSettings().undoKey, futureKey: "x" },
+    const raw = {
+      future: { flag: true },
+      undoKey: { ...defaultSettings().undoKey, futureKey: "x" },
       shortcuts: { futureSection: [1, 2], list: [{ ...shortcut, futureShortcut: { x: 1 } }] },
-      gather: { futureGather: "value", auto: { futureAuto: 2 } }, musicKeys: { keys: { futureAction: { x: 1 } } } }
+      gather: { futureGather: "value", auto: { futureAuto: 2 } },
+      musicKeys: { keys: { futureAction: { x: 1 } } }
+    }
     const decoded = decodeSettings(roundtrip(raw))
     const edited = normalizeSettingsForWrite({ ...decoded, theme: "dark" })
     expect(roundtrip(decodeSettings(roundtrip(edited)))).toMatchObject({ ...raw, theme: "dark" })
     expect(raw.gather.auto).toEqual({ futureAuto: 2 })
   })
   test("setup edits keep the label, entry and document extensions", () => {
-    const raw = { future: "setup", label: { name: "Synthetic account", handle: "@synthetic", futureLabel: "x" },
-      autoAdd: [{ pl: playlist, takes: "both", futurePlaylist: [1, 2] }], gather: playlist, targets: { save01: playlist } }
+    const raw = {
+      future: "setup",
+      label: { name: "Synthetic account", handle: "@synthetic", futureLabel: "x" },
+      autoAdd: [{ pl: playlist, takes: "both", futurePlaylist: [1, 2] }],
+      gather: playlist,
+      targets: { save01: playlist }
+    }
     const decoded = decodeSetup(roundtrip(raw))
     expect(roundtrip(normalizeSetupForWrite({ ...decoded, quickSave: "WL" }, context))).toMatchObject({ ...raw, quickSave: "WL" })
   })
@@ -172,10 +328,12 @@ describe("read, edit, serialize and read again", () => {
     { name: "explicit undefined", tuple: [channel, "Synthetic channel", undefined], saved: [channel, "Synthetic channel"] },
     { name: "JSON placeholder", tuple: [channel, "Synthetic channel", null], saved: [channel, "Synthetic channel"] },
     { name: "real handle", tuple: [channel, "Synthetic channel", "@synthetic"], saved: [channel, "Synthetic channel", "@synthetic"] },
-    { name: "undefined before future columns", tuple: [channel, "Synthetic channel", undefined, { future: [1, null] }, false],
-      saved: [channel, "Synthetic channel", null, { future: [1, null] }, false] },
-    { name: "placeholder before future columns", tuple: [channel, "Synthetic channel", null, { future: [1, null] }, false],
-      saved: [channel, "Synthetic channel", null, { future: [1, null] }, false] }
+    {
+      name: "undefined before future columns",
+      tuple: [channel, "Synthetic channel", undefined, { future: [1, null] }, false],
+      saved: [channel, "Synthetic channel", null, { future: [1, null] }, false]
+    },
+    { name: "placeholder before future columns", tuple: [channel, "Synthetic channel", null, { future: [1, null] }, false], saved: [channel, "Synthetic channel", null, { future: [1, null] }, false] }
   ])("filter $name survives a normalized JSON write and redecode", ({ tuple, saved }) => {
     const raw = { channels: [tuple], futureFilter: { keep: true } }
     const original = structuredClone(raw)
@@ -184,8 +342,7 @@ describe("read, edit, serialize and read again", () => {
     expect(decoded.channels[0]?.[2]).toBe(typeof tuple[2] === "string" ? tuple[2] : undefined)
     const written = normalizeFilterForWrite({ ...decoded, on: true })
     const persisted = roundtrip({ ...stamp, futureEnvelope: true, data: written })
-    expect(persisted).toEqual({ ...stamp, futureEnvelope: true,
-      data: { mode: "deny", on: true, channels: [saved], futureFilter: { keep: true } } })
+    expect(persisted).toEqual({ ...stamp, futureEnvelope: true, data: { mode: "deny", on: true, channels: [saved], futureFilter: { keep: true } } })
     const document = { ...stamp, futureEnvelope: true, data: written }
     expect(decodeDocument(persisted, decodeFilter)).toEqual({ kind: "value", document })
     expect(normalizeFilterForWrite(written)).toEqual(written)
@@ -197,17 +354,37 @@ describe("read, edit, serialize and read again", () => {
     expect(() => decodeFilter({ channels: [[channel, "Synthetic channel", handle, "future"]] })).toThrow(DecodeError)
   })
   test("device and upgrade details retain R96 and R97 plus future fields", () => {
-    const raw = { id: "synthetic-device", futureDevice: "x", upgradeNote: { state: "pending", details: {
-      ...upgradeDetails, futureDetails: [1], pct: { ...upgradeDetails.pct, futurePct: 2 },
-      shortcut: { ...upgradeDetails.shortcut, futureShortcut: true }
-    }, opened: true, seen: false, reopened: false, futureNote: 3 } }
+    const raw = {
+      id: "synthetic-device",
+      futureDevice: "x",
+      upgradeNote: {
+        state: "pending",
+        details: {
+          ...upgradeDetails,
+          futureDetails: [1],
+          pct: { ...upgradeDetails.pct, futurePct: 2 },
+          shortcut: { ...upgradeDetails.shortcut, futureShortcut: true }
+        },
+        opened: true,
+        seen: false,
+        reopened: false,
+        futureNote: 3
+      }
+    }
     const decoded = decodeDevice(roundtrip(raw))
     expect(roundtrip(decodeDevice(roundtrip({ ...decoded, pickerSortAZ: true })))).toMatchObject({ ...raw, pickerSortAZ: true })
     expect(decoded.upgradeNote?.details.pct.authorised).toBe(false)
     expect(decoded.upgradeNote?.details.pct.value).toBe(50)
-    const authorised = decodeDevice({ id: "synthetic-device", upgradeNote: { state: "done", details: {
-      ...upgradeDetails, pct: { value: 0, wasUnset: true, authorised: true }
-    } } })
+    const authorised = decodeDevice({
+      id: "synthetic-device",
+      upgradeNote: {
+        state: "done",
+        details: {
+          ...upgradeDetails,
+          pct: { value: 0, wasUnset: true, authorised: true }
+        }
+      }
+    })
     expect(authorised.upgradeNote?.details.pct).toEqual({ value: 0, wasUnset: true, authorised: true })
     expect(authorised.upgradeNote?.seen).toBe(false)
     expect(authorised.upgradeNote?.reopened).toBe(false)
@@ -226,9 +403,15 @@ describe("write normalization", () => {
     expect(filter.channels[0]?.[1]).toHaveLength(101)
   })
   test("keeps dangling references on read, removes only dangling targets and marks on write", () => {
-    const setup = decodeSetup({ label: { name: "Synthetic account" }, autoAdd: [{ pl: playlist, takes: "both" }],
-      targets: { save01: "WL", gone01: "PLgone" }, quickSave: "PLquick", musicSave: "PLmusic", gather: "PLgather",
-      marks: { [playlist]: "full", WL: "missing", PLgone: "missing", PLquick: "full", PLmusic: "missing", PLgather: "full", PLorphan: "missing" } })
+    const setup = decodeSetup({
+      label: { name: "Synthetic account" },
+      autoAdd: [{ pl: playlist, takes: "both" }],
+      targets: { save01: "WL", gone01: "PLgone" },
+      quickSave: "PLquick",
+      musicSave: "PLmusic",
+      gather: "PLgather",
+      marks: { [playlist]: "full", WL: "missing", PLgone: "missing", PLquick: "full", PLmusic: "missing", PLgather: "full", PLorphan: "missing" }
+    })
     expect(setup.targets.gone01).toBe("PLgone")
     expect(setup.marks.PLorphan).toBe("missing")
     const cleaned = normalizeSetupForWrite(setup, context)
@@ -282,9 +465,15 @@ describe("stamps and document versions", () => {
     expect(result.kind).toBe("value")
     if (result.kind !== "value") throw new Error("Expected a readable document")
     const edited = { ...result.document, gen: "next-write", data: { ...result.document.data, theme: "light" } }
-    expect(decodeDocument(roundtrip(edited), decodeSettings)).toMatchObject({ kind: "value", document: {
-      ...stamp, gen: "next-write", futureEnvelope: 1, data: { theme: "light", futureSettings: 2 }
-    } })
+    expect(decodeDocument(roundtrip(edited), decodeSettings)).toMatchObject({
+      kind: "value",
+      document: {
+        ...stamp,
+        gen: "next-write",
+        futureEnvelope: 1,
+        data: { theme: "light", futureSettings: 2 }
+      }
+    })
   })
   test("a newer version is refused before its incompatible data is decoded", () => {
     const raw = { ...stamp, v: 2, data: "future-incompatible-shape", futureEnvelope: true }
@@ -292,9 +481,14 @@ describe("stamps and document versions", () => {
     expect(decodeDocument({ ...stamp, v: 2, deleted: true }, decodeSettings).kind).toBe("newer-version")
   })
   test.each([
-    { ...stamp, at: -1, data: {} }, { ...stamp, v: 0, data: {} }, { ...stamp, v: 1.5, data: {} },
-    { ...stamp, gen: "", data: {} }, { ...stamp, by: "", data: {} }, { ...stamp },
-    { ...stamp, data: undefined }, { ...stamp, deleted: false, data: {} }
+    { ...stamp, at: -1, data: {} },
+    { ...stamp, v: 0, data: {} },
+    { ...stamp, v: 1.5, data: {} },
+    { ...stamp, gen: "", data: {} },
+    { ...stamp, by: "", data: {} },
+    { ...stamp },
+    { ...stamp, data: undefined },
+    { ...stamp, deleted: false, data: {} }
   ])("rejects malformed stamp or body %p", raw => {
     expect(() => decodeDocument(raw, decodeSettings)).toThrow(DecodeError)
   })
@@ -340,14 +534,18 @@ describe("keys and identifiers", () => {
       if (parsed === null) throw new Error("Expected a valid document key")
       expect(documentKey(parsed)).toBe(key)
     }
-    for (const key of ["settings", `doc:settings:${account}`, "doc:setup:raw||identity", `doc:setup:${account}:extra`,
-      `doc:filter:${account}:`, `doc:filter:${account}:${playlist}:extra`]) expect(parseDocumentKey(key)).toBeNull()
+    for (const key of ["settings", `doc:settings:${account}`, "doc:setup:raw||identity", `doc:setup:${account}:extra`, `doc:filter:${account}:`, `doc:filter:${account}:${playlist}:extra`])
+      expect(parseDocumentKey(key)).toBeNull()
   })
 })
 
 test("imports and operates without browser, DOM, clock or randomness access", () => {
   const result = Bun.spawnSync({
-    cmd: [process.execPath, "--eval", `
+    cmd: [
+      process.execPath,
+      "--no-env-file",
+      "--eval",
+      `
       for (const name of ["window", "document", "browser", "chrome", "localStorage", "fetch", "crypto",
         "navigator", "indexedDB", "MutationObserver", "KeyboardEvent"]) {
         Object.defineProperty(globalThis, name, {
@@ -367,7 +565,8 @@ test("imports and operates without browser, DOM, clock or randomness access", ()
       model.isSetupEmpty(setup, false)
       model.decodeDocument({ v: 1, gen: "synthetic-write", at: 0, by: device.id, data: settings }, model.decodeSettings)
       console.log("pure model operations passed")
-    `],
+    `
+    ],
     cwd: import.meta.dir,
     stdout: "pipe",
     stderr: "pipe"
@@ -375,4 +574,150 @@ test("imports and operates without browser, DOM, clock or randomness access", ()
   expect(result.stderr.toString()).toBe("")
   expect(result.exitCode).toBe(0)
   expect(result.stdout.toString()).toBe("pure model operations passed\n")
+})
+
+export type SyncMetaProofs = [Check<Equal<SyncMeta, { v: number; id: string; created: number; reset?: boolean }>>, Check<Equal<typeof decodeSyncMeta, (raw: unknown) => SyncMeta>>]
+
+test("ordinary sync metadata requires owned fields and retains extensions", () => {
+  const own = JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert","future":[null,1]}')
+  for (const reset of [undefined, false, true]) {
+    const raw = { v: 1, id: "history", created: 0, ...own, ...(reset === undefined ? {} : { reset }) }
+    expect(decodeSyncMeta(raw)).toEqual(raw)
+  }
+  for (const raw of [
+    undefined,
+    null,
+    {},
+    { id: "history", created: 0 },
+    { v: 1, created: 0 },
+    { v: 1, id: "history" },
+    { v: 0, id: "history", created: 0 },
+    { v: 1, id: "", created: 0 },
+    { v: 1, id: "history", created: -1 },
+    { v: 1, id: "history", created: 0, reset: 0 }
+  ]) {
+    expect(() => decodeSyncMeta(raw)).toThrow(DecodeError)
+  }
+})
+
+describe("unclaimed migration provenance", () => {
+  const old = { from: "1.4.5" as const, autoAdd: [playlist], shortcutPlaylist: playlist, filters: {}, at: 0 }
+
+  test("old records stay provenance-less and valid original IDs remain exact", () => {
+    expect(decodeUnclaimed(old)).toEqual(old)
+    expect(Object.hasOwn(decodeUnclaimed(old), "originalShortcutId")).toBe(false)
+    for (const originalShortcutId of ["orig01", "_-0123", "ABCdef"]) {
+      expect(decodeUnclaimed({ ...old, originalShortcutId })).toEqual({ ...old, originalShortcutId })
+    }
+  })
+
+  test.each([null, 123456, {}, [], "short", "longer1", "bad!id", "é12345"].map(originalShortcutId => ({ originalShortcutId })))(
+    "rejects malformed provenance %p at the exact path",
+    ({ originalShortcutId }) => {
+      const raw = { ...old, originalShortcutId }
+      const before = structuredClone(raw)
+      try {
+        decodeUnclaimed(raw)
+        throw new Error("Expected invalid provenance")
+      } catch (error) {
+        expect(error).toBeInstanceOf(DecodeError)
+        if (!(error instanceof DecodeError)) throw error
+        expect(error.path).toBe("unclaimed.originalShortcutId")
+        expect(error.message).toBe("unclaimed.originalShortcutId: expected a six-character shortcut ID")
+      }
+      expect(raw).toEqual(before)
+    }
+  )
+
+  test("root own keys and Filter extensions survive without changing the raw tuple", () => {
+    const raw = JSON.parse(
+      `{"from":"1.5.0","autoAdd":["WL"],"shortcutPlaylist":null,"originalShortcutId":"orig01","at":5,"__proto__":{"keep":true},"toJSON":"inert","future":{"items":[1,null]},"filters":{"WL":{"mode":"allow","on":false,"channels":[["${channel}","Title",null,{"futureColumn":true}]],"__proto__":{"filter":true},"toJSON":"filter-data","futureFilter":[2]}}}`
+    )
+    const before = structuredClone(raw)
+    const decoded = decodeUnclaimed(raw)
+    expect(decoded).toEqual({ ...raw, filters: { ...raw.filters, WL: { ...raw.filters.WL, channels: [[channel, "Title", undefined, { futureColumn: true }]] } } })
+    expect(Object.hasOwn(decoded, "__proto__")).toBe(true)
+    const filter = decoded.filters.WL
+    if (!filter) throw new Error("Missing carried Filter")
+    expect(Object.hasOwn(filter, "__proto__")).toBe(true)
+    expect(JSON.parse(JSON.stringify(decoded))).toEqual(raw)
+    expect(raw).toEqual(before)
+  })
+
+  test("moving the decoder preserves all existing required-field validation", () => {
+    for (const raw of [
+      undefined,
+      null,
+      [],
+      1,
+      "unclaimed",
+      {},
+      ...Object.keys(old).map(key => Object.fromEntries(Object.entries(old).filter(([field]) => field !== key))),
+      { ...old, from: "2.0" },
+      { ...old, autoAdd: null },
+      { ...old, autoAdd: ["bad key"] },
+      { ...old, shortcutPlaylist: "bad key" },
+      { ...old, filters: [] },
+      { ...old, filters: { "bad key": {} } },
+      { ...old, filters: { WL: { mode: "bad" } } },
+      { ...old, at: -1 },
+      { ...old, at: 0.5 },
+      { ...old, at: "0" }
+    ])
+      expect(() => decodeUnclaimed(raw)).toThrow(DecodeError)
+  })
+})
+
+describe("stored claim compatibility", () => {
+  test("stored reader separates absence, consumption and pending; strict decoder still refuses null", () => {
+    expect(readStoredUnclaimed(undefined)).toEqual({ kind: "absent" })
+    expect(readStoredUnclaimed(null)).toEqual({ kind: "consumed" })
+    const data = { from: "1.5.0" as const, autoAdd: [], shortcutPlaylist: null, filters: {}, at: 1 }
+    expect(readStoredUnclaimed(data)).toEqual({ kind: "pending", data })
+    expect(() => decodeUnclaimed(null)).toThrow(DecodeError)
+  })
+  test("old notices omit detail, new discriminants validate and nested extensions survive", () => {
+    const old = { acct: "synthetic_acct01", dropped: 0 }
+    expect(decodeDevice({ id: "fixture", claimNotice: old }).claimNotice).toEqual(old)
+    for (const shortcut of [
+      { kind: "not-carried" },
+      { kind: "not-owned" },
+      { kind: "filled", shortcut: "orig01" },
+      { kind: "already-set", shortcut: "orig01" },
+      { kind: "skipped", reason: "deleted-original" }
+    ] as const) {
+      const claimNotice = { ...old, extension: false, claim: { autoAddAdded: 0, filtersAdded: 1, shortcut: { ...shortcut, extension: [false] } } }
+      expect(decodeDevice({ id: "fixture", claimNotice }).claimNotice).toEqual(claimNotice)
+    }
+    for (const shortcut of [{ kind: "filled", shortcut: "bad" }, { kind: "already-set" }, { kind: "skipped", reason: "invented" }, { kind: "unknown" }, null]) {
+      expect(() => decodeDevice({ id: "fixture", claimNotice: { ...old, claim: { autoAddAdded: 0, filtersAdded: 1, shortcut } } })).toThrow(DecodeError)
+    }
+    for (const autoAddAdded of [-1, 1.5, "1", null]) {
+      expect(() => decodeDevice({ id: "fixture", claimNotice: { ...old, claim: { autoAddAdded, filtersAdded: 0, shortcut: { kind: "not-carried" } } } })).toThrow(DecodeError)
+    }
+  })
+})
+
+test("opaque write bookkeeping validates present fields and preserves old raw extensions", () => {
+  const raw: SyncState = { joined: "H", pushed: { other: "g0" }, status: "ok", editedSinceOff: false }
+  expect(decodeSyncState(raw)).toEqual(raw)
+  expect(Object.hasOwn(decodeSyncState(raw), "opaqueWrite")).toBe(false)
+  const own = JSON.parse('{"__proto__":{"inert":true},"toJSON":"inert","future":{"keep":[1,null]}}')
+  for (const gate of [null, { kind: "pending", notBefore: 0, ...own }, { kind: "held", notBefore: Number.MAX_SAFE_INTEGER, ...own }]) {
+    const extended = { ...raw, ...own, opaqueWrite: { gate, diagnostic: { name: null, message: "synthetic", ...own }, ...own } }
+    expect(decodeSyncState(extended)).toEqual(extended)
+    expect(Object.hasOwn(decodeSyncState(extended).opaqueWrite!, "__proto__")).toBe(true)
+  }
+  for (const opaqueWrite of [
+    null,
+    {},
+    { gate: null },
+    { diagnostic: null },
+    { gate: {}, diagnostic: null },
+    { gate: { kind: "held" }, diagnostic: null },
+    { gate: { kind: "other", notBefore: 0 }, diagnostic: null },
+    ...[-1, 0.5, Infinity, NaN, Number.MAX_SAFE_INTEGER + 1, "0", null].map(notBefore => ({ gate: { kind: "held", notBefore }, diagnostic: null })),
+    ...[{}, { name: null }, { message: null }, { name: 1, message: null }, { name: null, message: {} }].map(diagnostic => ({ gate: null, diagnostic }))
+  ])
+    expect(() => decodeSyncState({ ...raw, opaqueWrite })).toThrow(DecodeError)
 })

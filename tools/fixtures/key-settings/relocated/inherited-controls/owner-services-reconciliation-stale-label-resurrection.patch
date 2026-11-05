@@ -1,0 +1,13 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -1947,8 +1947,8 @@
+     const result = await executeSetupEdit({ local: guardedLocal, sync, authority: records => retainedHold(records) ? { kind: "unavailable", reason: "startup" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation, remove: runAccountRemoval }, input.acct,
+       records => {
+         const state = accountLabelState(records, input.acct)
+-        return labelCaptureCurrent(capture, records) && state.kind === "label" && state.checkedAt === lookup.checkedAt
+-          ? planAccountLabel(records, input.acct, lookup.label, label) : { kind: "stale", reason: "setup" }
++        return state.kind === "label"
++          ? planAccountLabel(records, input.acct, state.label, label) : { kind: "stale", reason: "setup" }
+       })
+     if (result.kind === "unconfirmed" || result.kind === "failed" && result.stage === "set") {
+       claimConfirmation = "unconfirmed"

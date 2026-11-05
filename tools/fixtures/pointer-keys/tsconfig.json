@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["bun", "svelte"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "../../../src/site/core/pointer.ts",
+    "../../../src/site/core/pointer.bun-test.ts",
+    "../../../src/site/core/pointer.type-test.ts",
+    "../../../src/site/core/keys.ts",
+    "../../../src/site/core/keys.bun-test.ts",
+    "../../../src/site/core/keys.type-test.ts",
+    "harness.ts",
+    "preload.ts",
+    "run.ts"
+  ]
+}

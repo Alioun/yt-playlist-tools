@@ -9,7 +9,7 @@ bun install
 bun run dev            # Chrome
 bun run dev:firefox    # Firefox
 bun run compile        # typecheck
-bun run test           # unit tests (test:watch, test:coverage)
+bun run test           # Bun tests and fixture gates
 bun run build          # Chrome
 bun run build:firefox  # Firefox
 bun run zip            # Chrome package
@@ -36,4 +36,3 @@ Some things follow the default branch, so they land on `dev` first:
 - [Tests and CI](testing-and-ci.md)
 - [Releasing](releasing.md)
 - [Environment files](environment-files.md)
-- [Google sign-in and the token broker](../legacy/README.md) (legacy, historical setup for released versions)

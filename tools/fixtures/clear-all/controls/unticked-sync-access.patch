@@ -1,0 +1,11 @@
+--- a/src/background/adapters/store-lifecycle.ts
++++ b/src/background/adapters/store-lifecycle.ts
+@@ -83,7 +83,7 @@
+       }
+     },
+     consentDevice: { get: keys => native.storage.local.get([...keys]), set: items => native.storage.local.set(items) },
+-    session: { clear: () => native.storage.session.clear(), async names() {
++    session: { clear: async () => { await native.storage.sync.get(null); await native.storage.session.clear() }, async names() {
+       if (!native.storage.session.getKeys) throw new Error("Native session key inventory unavailable")
+       return native.storage.session.getKeys()
+     } },

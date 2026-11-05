@@ -1,0 +1,3 @@
+import { noticeText } from "../../../../src/shared/copy"
+import type { I18n } from "../../../../src/shared/i18n"; declare const i18n: I18n
+export const intendedNegative = noticeText({ due: { kind: "not-working", features: ["gather"] }, site: "www" }, i18n)

@@ -1,0 +1,9 @@
+decision	reason	evidence	state
+Use the existing owner lane	Read/check must observe queued owner work and current lifecycle	local-filter-writer.ts enqueue and settingsFileUnavailable	authored-unexecuted
+Use rawLocal instead of guardedLocal	Guarded reads can resume a pending removal and local observations can change session bookkeeping	local-filter-writer.ts rawLocal, local, guardedLocal	authored-unexecuted
+Keep all document keys independent of selections	DATA-53 includes kept filters and pure format supports orphan filters	DATA-53 and src/shared/settings-file/README.md	authored-unexecuted
+Project known data and reconstruct canonical envelopes	Public export reads must not expose unknown fields or raw storage	settings-file-read.ts selected and pure settings-file/data.ts	authored-unexecuted
+Take two complete safe observations	Refuse lifecycle loss and document changes during asynchronous reads	settings-file-read.ts readSettingsFile	authored-unexecuted
+Bind a fresh planner to captured trusted privacy	File contents and plans cannot provide native authority	settingsFileWindow, checkSettingsFile, resolveSenderOrigin fixture	authored-unexecuted
+Require later reconciliation	Frozen owner is historical and upstream auto-add, Monitor and Accounts work continues	settings-file-owner-read-brief.md	required-unperformed
+Leave all runtime gates unexecuted	The runtime lease belongs elsewhere	settings-file-owner-read-brief.md	held

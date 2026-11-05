@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["bun"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "../../../src/page/gateway.type-test.ts",
+    "../../../src/page/gateway.bun-test.ts",
+    "../../../src/page/gateway-consumer.bun-test.ts",
+    "../../../src/page/live-reads.bun-test.ts",
+    "run.ts"
+  ]
+}

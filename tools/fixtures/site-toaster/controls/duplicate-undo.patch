@@ -1,0 +1,10 @@
+diff --git a/src/site/kit/feedback/undo.ts b/src/site/kit/feedback/undo.ts
+--- a/src/site/kit/feedback/undo.ts
++++ b/src/site/kit/feedback/undo.ts
+@@ -6,5 +6,5 @@
+   undo(handle: Handle): Promise<Answer>
+   format(answer: Answer): ToastContent | null
+ }): ToastAction {
+-  return { kind: "undo", label: options.label, async run() { return options.format(await options.undo(options.handle)) } }
++  return { kind: "undo", label: options.label, async run() { await options.undo(options.handle); return options.format(await options.undo(options.handle)) } }
+ }

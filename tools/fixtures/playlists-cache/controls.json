@@ -1,0 +1,90 @@
+{
+  "state": "authored-unexecuted",
+  "requires": "A later coordinator-granted exclusive runtime lease and passing baseline type, behavior and consumer gates.",
+  "controls": [
+    {
+      "id": "membership-persistence",
+      "path": "src/background/store/local-filter-writer.ts",
+      "find": "const key = `cache:${saved.acct}`,\n      value = cacheJson(planned)",
+      "replace": "const key = `cache:${saved.acct}`, value = cacheJson(planned)\n    value.membership = { contains: true, videoId: \"aaaaaaaaaaa\", setVideoIds: [\"entry\"] }",
+      "test": "src/background/store/playlist-cache.bun-test.ts",
+      "name": "membership stores only addable playlist facts and preserves complete unrelated storage",
+      "assertion": "The complete local record equals the independent membershipCache, with no added membership property.",
+      "count": 1,
+      "sourceSha256": "bed00902421db50f298d5a0c0f021aa2cbd146e496d866bacbf86f43698a8d72",
+      "mode": "100644"
+    },
+    {
+      "id": "overwritten-metadata",
+      "path": "src/background/store/playlist-cache.ts",
+      "find": "...(saved?.count === undefined ? {} : { count: saved.count })",
+      "replace": "...(row.count === undefined ? {} : { count: row.count })",
+      "test": "src/background/store/playlist-cache.bun-test.ts",
+      "name": "membership stores only addable playlist facts and preserves complete unrelated storage",
+      "assertion": "The surviving Beta row keeps count 8 rather than the membership count 999.",
+      "count": 1,
+      "sourceSha256": "89a8741e36356e9d857c4a3310260524b4a1aa657512309c4d4bdaeaa68b0adc",
+      "mode": "100644"
+    },
+    {
+      "id": "duplicate-refresh",
+      "path": "src/background/playlists/playlists.ts",
+      "find": "    if (pending) {",
+      "replace": "    if (pending && request.originalTab === -999999) {",
+      "test": "src/background/playlists/playlists.bun-test.ts",
+      "name": "cached rows are available before a pending answer and two opens coalesce one normal refresh",
+      "assertion": "The second open sees exactly one playlists request while the answer is pending.",
+      "count": 1,
+      "sourceSha256": "52515fcc030a441a827265f57779293286c69d44ce90c3afbf1aeeab4892d14f",
+      "mode": "100644"
+    },
+    {
+      "id": "private-write",
+      "path": "src/background/store/local-filter-writer.ts",
+      "find": "if (request.private) return { kind: \"cache\", cache, authority: { kind: \"caller-owned\", reason: \"private\" } }",
+      "replace": "if (request.private && request.acct.length === 0) return { kind: \"cache\", cache, authority: { kind: \"caller-owned\", reason: \"private\" } }",
+      "test": "src/background/store/playlist-cache.bun-test.ts",
+      "name": "private, absent and empty Setup reads mint no cache authority or local writes",
+      "assertion": "The complete private read has caller-owned authority, with no persistence capture.",
+      "count": 1,
+      "sourceSha256": "bed00902421db50f298d5a0c0f021aa2cbd146e496d866bacbf86f43698a8d72",
+      "mode": "100644"
+    },
+    {
+      "id": "old-capture-resurrection",
+      "path": "src/background/store/local-filter-writer.ts",
+      "find": "!sessionAccountCurrent(saved.revision, sessionRevisionView(), saved.acct)",
+      "replace": "!true",
+      "count": 3,
+      "test": "src/background/store/playlist-cache.bun-test.ts",
+      "name": "removal revokes a pending capture even when the same account is recreated",
+      "assertion": "The old capture returns refused/revoked and the removed cache key remains absent.",
+      "sourceSha256": "bed00902421db50f298d5a0c0f021aa2cbd146e496d866bacbf86f43698a8d72",
+      "mode": "100644"
+    },
+    {
+      "id": "optimistic-confirmation",
+      "path": "src/background/store/local-filter-writer.ts",
+      "find": "!agreementSame(after.records[key], value)",
+      "replace": "false",
+      "test": "src/background/store/playlist-cache.bun-test.ts",
+      "name": "cache readback is truthful for resolved-unchanged",
+      "assertion": "A resolved write with unchanged readback is unconfirmed, never committed.",
+      "count": 1,
+      "sourceSha256": "bed00902421db50f298d5a0c0f021aa2cbd146e496d866bacbf86f43698a8d72",
+      "mode": "100644"
+    },
+    {
+      "id": "repeated-uncertain-creation",
+      "path": "src/background/playlists/playlists.ts",
+      "find": "        if (submitted) return submitted",
+      "replace": "        if (submitted && request.originalTab === -999999) return submitted",
+      "test": "src/background/playlists/playlists.bun-test.ts",
+      "name": "one uncertain creation preserves delivery uncertainty and repeated submit never retries it",
+      "assertion": "Repeated submit produces exactly one native create invocation.",
+      "count": 1,
+      "sourceSha256": "52515fcc030a441a827265f57779293286c69d44ce90c3afbf1aeeab4892d14f",
+      "mode": "100644"
+    }
+  ]
+}

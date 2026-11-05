@@ -1,0 +1,76 @@
+{
+ "state": "UNEXECUTED",
+ "rule": "each directive must be consumed by an error on exactly its intended line",
+ "negatives": [
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 23,
+   "intendedLine": 24,
+   "reason": "A queue add carries no account pin.",
+   "text": "const pinned: JobInvocation<JobOf<\"queueAdd\">> = { job: { kind: \"queueAdd\" }, acct: services.page }"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 25,
+   "intendedLine": 26,
+   "reason": "Undo requires the branded queue entry, never a video ID.",
+   "text": "const byVideo: JobInvocation<JobOf<\"queueUndo\">> = { job: { kind: \"queueUndo\", listId, videoId: \"AAAAAAAAAAA\" } }"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 27,
+   "intendedLine": 28,
+   "reason": "Undo needs the list and entry identities, not plain strings.",
+   "text": "const unbranded: JobInvocation<JobOf<\"queueUndo\">> = { job: { kind: \"queueUndo\", listId: \"list\", setVideoId: \"entry\" } }"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 29,
+   "intendedLine": 30,
+   "reason": "Only Added carries an entry.",
+   "text": "const idleEntry = (state.kind === \"idle\" ? state : null)?.entry"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 31,
+   "intendedLine": 32,
+   "reason": "The overlay has no per-card or speculative slot.",
+   "text": "kit.use(scope, \"card-menu\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 33,
+   "intendedLine": 34,
+   "reason": "The notice collaborator is required.",
+   "text": "const silent: QueueButtonServices = { ...services, notices: undefined }"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 35,
+   "intendedLine": 36,
+   "reason": "Labels come from the five states.",
+   "text": "text.label(\"queued\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 37,
+   "intendedLine": 38,
+   "reason": "A titled queue message requires its title.",
+   "text": "i18n.message(\"queueButton_toast_added_named\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 39,
+   "intendedLine": 40,
+   "reason": "Simple queue labels take no values.",
+   "text": "i18n.message(\"queueButton_idle\", { title: \"Title\" })"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "directiveLine": 41,
+   "intendedLine": 42,
+   "reason": "A failed outcome cannot claim confirmation.",
+   "text": "const claimed: QueueOutcome = { kind: \"failed\", reason: \"unavailable\", quiet: true, entry: null }"
+  }
+ ]
+}

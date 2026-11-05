@@ -1,0 +1,112 @@
+import type { DestinationAnswer } from "../../shared/contracts/first-run"
+import type { BuildId, Privacy } from "../../shared/contracts/vocabulary"
+import {
+  tabActionContract, tabGatherContract, tabProgressContract, TITLE_LIMIT, type GatherToastLine, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated,
+  type TabDestinationChange, type TabChannelLabel, type TabDeviceAnswer, type TabDeviceChange, type TabGatherMessages, type TabPlaylists, type TabProgress, type TabProgressMessages,
+  type TabRemoveReport, type TabRemoveRequest, type TabSettingsTarget, type TabUndoReport, type UndoHandle, type TabFilterChannel
+} from "../../shared/contracts/tab-actions"
+import type { AccountKey, VideoId } from "../../shared/model"
+import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
+import { tabHealthContract, type TabHealthMessages, type TabHealthReport } from "../../shared/contracts/tab-health"
+import type { Transport } from "../../shared/rpc/transport"
+
+/** No answer came back, so the background may or may not have acted. A write is never retried (ARC-MSG-08). */
+export type Unanswered = { readonly kind: "unanswered" }
+export type TabActions = {
+  add(request: TabAddRequest): Promise<TabAddReport | Unanswered>
+  remove(request: TabRemoveRequest): Promise<TabRemoveReport | Unanswered>
+  undo(handle: UndoHandle): Promise<TabUndoReport | Unanswered>
+  /** A gather toast's Undo: null once it worked, else the line the toast shows instead. */
+  gatherUndo(id: string): Promise<GatherToastLine | null | Unanswered>
+  release(handle: UndoHandle): void
+  /** Asks the background to inject `popovers.js` into this tab (ARC-MAN-16). */
+  need(): Promise<boolean>
+  /** Asks the background to inject this page's jobs file into this tab, for the page half's first job (G42). */
+  loadJobs(): Promise<boolean>
+  playlists(refresh: boolean): Promise<TabPlaylists>
+  create(playlist: { readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }): Promise<TabCreated>
+  destination(change: TabDestinationChange): Promise<DestinationAnswer>
+  /** Breakage evidence for the Monitor, batched by the site's health reporter (HEALTH-28). */
+  health(reports: readonly TabHealthReport[]): void
+  /** Tells the background a listed channel's title or @handle changed (YT-CF-10). */
+  channelLabel(channel: TabChannelLabel): void
+  /** Opens Settings at a feature's playlist, for a failure toast's **Settings** (YT-ADD-29). */
+  settings(target: TabSettingsTarget): void
+  /** The watch-page menu's Don't auto-add this video, Pause and this channel's chips, as this tab's account (UI-YT-22). */
+  skip(video: VideoId, skip: boolean): Promise<boolean>
+  pause(paused: boolean): Promise<boolean>
+  filterChannel(change: TabFilterChannel): Promise<boolean>
+  /** Saves this browser's Sort A–Z or last visibility from the page picker. */
+  device(change: TabDeviceChange): Promise<TabDeviceAnswer>
+  /** Auto-add's watch progress at DATA-27's checkpoints, kept per account by the background. */
+  readonly progress: {
+    load(video: VideoId): Promise<TabProgress | null>
+    save(video: VideoId, progress: TabProgress): Promise<void>
+  }
+  /** Whether this playback that can't be measured is the browser session's first, which alone gets a toast (YT-AA-41). */
+  cantMeasure(): Promise<boolean>
+  /** The video auto-add ticked the toolbar icon for has changed in-app, so the background clears the tick (ARC-MOD-38). */
+  videoChanged(): void
+  dispose(): void
+}
+type Messages = TabActionMessages & TabProgressMessages & TabGatherMessages & TabHealthMessages
+
+/**
+ * The tab's side of a user action (06 §6.8.2). Every request carries the account PageLink trusts, which the
+ * background compares with its tab registry (ARC-ACC-49). Without a trusted account nothing is sent.
+ */
+export function createTabActions(options: {
+  readonly transport: Pick<Transport<never>, "send">
+  readonly build: BuildId
+  readonly deadline: Deadline
+  account(): AccountKey | null | undefined
+}): TabActions {
+  const rpc = createRpcCaller<Messages>(options.transport, { build: options.build, deadline: options.deadline,
+    contract: { ...tabActionContract, ...tabProgressContract, ...tabGatherContract, ...tabHealthContract } })
+  const unanswered: Unanswered = { kind: "unanswered" }
+  async function call<K extends keyof Messages, F>(kind: K, request: Messages[K]["payload"] extends { request: infer R } ? R : never, fallback: F):
+    Promise<Messages[K]["result"] | F> {
+    const acct = options.account()
+    if (acct === undefined) return fallback
+    const payload = { acct, request } as Messages[K]["payload"]
+    const answer = await rpc.call(kind, payload)
+    return answer.kind === "answered" ? answer.result : fallback
+  }
+  async function need(what: Messages["tab.need"]["payload"]): Promise<boolean> {
+    const answer = await rpc.call("tab.need", what)
+    return answer.kind === "answered" && answer.result.kind === "ok"
+  }
+  return {
+    // A title past the contract's limit would refuse the whole add, so it is cut to fit.
+    add: request => call("tab.add", request.title && request.title.length > TITLE_LIMIT ? { ...request, title: request.title.slice(0, TITLE_LIMIT) } : request, unanswered),
+    remove: request => call("tab.remove", request, unanswered),
+    undo: handle => call("tab.undo", handle, unanswered),
+    gatherUndo: id => call("tab.gatherUndo", { id }, unanswered),
+    release(handle) { void rpc.call("tab.release", { handle }) },
+    need: () => need({ popovers: true }),
+    loadJobs: () => need({ jobs: true }),
+    playlists: refresh => call("tab.playlists", { refresh }, { kind: "failed" } as const),
+    create: playlist => call("tab.create", playlist, { kind: "failed", reason: "failed" } as const),
+    destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
+    channelLabel(channel) { void call("tab.channelLabel", { channel }, null) },
+    health(reports) { void call("tab.health", { reports }, null) },
+    settings(target) { void rpc.call("tab.settings", target) },
+    skip: async (video, skip) => (await call("tab.skip", { video, skip }, null))?.kind === "done",
+    pause: async paused => (await call("tab.pause", { paused }, null))?.kind === "done",
+    filterChannel: async change => (await call("tab.filterChannel", change, null))?.kind === "done",
+    async device(change) {
+      const answer = await rpc.call("tab.device", { change })
+      return answer.kind === "answered" ? answer.result : { kind: "refused", reason: "unavailable" }
+    },
+    progress: {
+      load: video => call("tab.progress.load", { video }, null),
+      async save(video, progress) { await call("tab.progress.save", { video, progress }, null) }
+    },
+    async cantMeasure() {
+      const answer = await call("tab.cantMeasure", null, null)
+      return answer?.show === true
+    },
+    videoChanged() { void call("tab.videoChanged", null, null) },
+    dispose: () => rpc.dispose()
+  }
+}

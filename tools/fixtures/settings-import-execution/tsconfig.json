@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "bun"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "typeRoots": [
+      "../../../node_modules/@types"
+    ],
+    "paths": {
+      "wxt/browser": [
+        "../../../node_modules/wxt/dist/browser.d.mts"
+      ]
+    },
+    "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/background/adapters/starting-owner.bun-test.ts",
+    "../../../src/background/adapters/starting-owner.ts",
+    "../../../src/background/adapters/starting-owner.type-test.ts",
+    "../../../src/background/store/consent-recovery.ts",
+    "../../../src/background/store/local-filter-writer.ts",
+    "../../../src/background/store/local-filter-writer.type-test.ts",
+    "../../../src/background/store/settings-import-execution.ts",
+    "../../../src/background/store/settings-import-execution.type-test.ts",
+    "../../../src/background/store/settings-import-persistence.ts",
+    "../../../src/background/store/settings-import-plan.ts",
+    "../../../src/background/store/settings-import-plan.type-test.ts",
+    "../../../src/background/store/settings-import-recovery.ts",
+    "../../../tools/fixtures/settings-import-execution/canonical.bun-test.ts",
+    "../../../tools/fixtures/settings-import-execution/consumer.bun-test.ts",
+    "../../../tools/fixtures/settings-import-execution/consumer.ts",
+    "../../../tools/fixtures/settings-import-execution/harness.ts",
+    "../../../tools/fixtures/settings-import-execution/owner.bun-test.ts",
+    "../../../tools/fixtures/settings-import-execution/publication.bun-test.ts",
+    "../../../tools/fixtures/settings-import-execution/run.ts"
+  ]
+}

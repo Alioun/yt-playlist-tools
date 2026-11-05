@@ -1,0 +1,446 @@
+{
+  "state": "byte-and-mode-identical",
+  "upstreamRuntime": "unexecuted-not-accepted",
+  "files": [
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/PATH-identities.json",
+      "sha256": "819e62ebfb15a145743b8f4820ef6114b1fcbf8c078322bcd782f6c570f791cf",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/README.md",
+      "sha256": "88c6eb7801ae857b03806efe64cd0e93507cbe96dadc4502e41ce9ebce3321e9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/compare-eof.py",
+      "sha256": "350578222d5490838af05a14f9de2cd1ea3d3883a78629d310526b53734ad532",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/compile-svelte.mjs",
+      "sha256": "952e37f5509b0636c0b14d2ba9c412db8fc8eb48c9ed32807221f1d89b57e7db",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts",
+      "sha256": "7e0607b7f75b19179056e98dbde89b56a709ba9619292448e0ef5c353e3b7f0d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/controls/bookkeeping-event-noise.patch",
+      "sha256": "5f9698e7ad99fe653c2929b64a034d263546cb3a38666e5c25b71394eecf67d3",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/controls/checking-writes.patch",
+      "sha256": "9a1979731229a815ebd75767f7ee9712e3635268aec6cc9817303a23c2895a71",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/controls/lost-label-event.patch",
+      "sha256": "dcc347d3397f2ea14ae3733f8dedc68a3badff2a00f280af3580e6c10576251a",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/controls/omitted-read-freshness.patch",
+      "sha256": "0f413be7cc8e419ce2e7ed4575ab6ca32076371fbefce8dec2fbc66c9fd60755",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/controls/stale-label-resurrection.patch",
+      "sha256": "d39f4ea8e92122535c3d262b4342c301b9aa7f9dd78c30244048165d0e564068",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/controls.json",
+      "sha256": "0c4913b4b0bab79f2a65ae5f4e6992429ddf691eaab76ac2fb3c794fe3e229eb",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/execution-contract.json",
+      "sha256": "3ea948f45edad29a4ad979f19b96a1c37027fe2a8c250b6fc556c18ec21914f7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/expected.json",
+      "sha256": "7d602b9892e66c91f7743450ad9d2dbd6b8ef6ccf6fc86cf7be29f4af6d49c78",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/expected.jsonl",
+      "sha256": "d4363f00ff62c1ab9d67f631fccf1580878d90ce3b5078d1e58420d82bd80522",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-bin/bun",
+      "sha256": "a45ef1d305e14022e4ae64cbc9763bf5411e2e2eaa200b532eb95ba278f64d8a",
+      "mode": "0o755"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-bin/node",
+      "sha256": "7491547a9745e66aa7d84df1f010e8473693af6f5d4129962408cd931edb4340",
+      "mode": "0o755"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-bin/python3",
+      "sha256": "c810b1a9498fd4ca7c78a8879fc0480b14d8e5b168fda2880606fb51c5d2b55b",
+      "mode": "0o755"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-bin/sh",
+      "sha256": "4ea5a04b46fd91acb841fe346b72726d2e81a2fd8bf4daeacb1f40c9fb30388e",
+      "mode": "0o755"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-bin/timeout",
+      "sha256": "55749b354d199bf2616e4fac2d35d11e23f5286fbc748f6bac1f1a4b4a0c4ef7",
+      "mode": "0o755"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-bin/tsc",
+      "sha256": "40e0f6481237af4d86ca119121f38783df20d7ee3419f1514c302d148840c3ca",
+      "mode": "0o755"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-bin/tsgo",
+      "sha256": "40e0f6481237af4d86ca119121f38783df20d7ee3419f1514c302d148840c3ca",
+      "mode": "0o755"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-gates.json",
+      "sha256": "5a42adad71d842bae3695e3e6cc1f4e0d94688e01139077c4a8b27c10f04c51b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/gate-census.json",
+      "sha256": "3ee45f439fe12826c056aef2d1473ceebad3f900ba1a277e57fc87cc385f2641",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/harness.ts",
+      "sha256": "0af382498acc09a78b0bbe94d356d9aeceb1cb66a51835b0d1a0a0c13c49575e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/negatives.json",
+      "sha256": "68f3b284babcd60ca5f05979f587f010013105d63e27de30913856f18cea37aa",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "sha256": "b241f841ca925590f75ca5b2d580b5f3703c8b00296e417bacd2309c06c2aa04",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/run.ts",
+      "sha256": "730b95debc1c01ff9fbd2ae9a660b8f00bb250c45e399b7afab2d88f687d6f68",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/svelte-inputs.json",
+      "sha256": "3e65dc73a8f00c50409233c1141d42b4f487e07e89580d0c37adddba25098bc4",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/tsconfig.json",
+      "sha256": "08f7fd7c4afd14a26662bc6e7299b615e9611ceb3bae4766c0a605b4b392b312",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/unapplied-proposals.json",
+      "sha256": "f9db89a9ee1b7a1e827625f539634c2c6a89b6cab9c375434d9bdfc3cd5bc671",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/verify-inclusion.py",
+      "sha256": "34c3f8cd150668cd6a912698c4a8c1c5554e6654a46db9872de2d2446f81c350",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/README.md",
+      "sha256": "db2d1f291a8a5a9f44646b12004f50299380c37a59570a85114825989890909e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/consumer.bun-test.ts",
+      "sha256": "fdd404294f9c131dac743c34042fb4f7b7b5857f714bd4292254be7a7f95a94c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/consumer.py",
+      "sha256": "d877c63d7bad30b06f245f964bfba6c02ec6d1afa4cd9848197e0752cb9d72fe",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/all-monitor-notifications.patch",
+      "sha256": "c2f1ccd407449839705924d7cf90039ee11996e01b2537bd96beec3f7b0ddb8e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/lost-removed-account.patch",
+      "sha256": "4ae73716ea7103a87c256f68fc6e352f590a0fb92461cf2cdf30f0e00541f99d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/missing-sync-filter-event.patch",
+      "sha256": "14f31669b370b5adba2e037e441761edf5b5745931577afadb3d3e45b3ccb024",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/omitted-coalescing.patch",
+      "sha256": "29d8b626583070ffa4220eb1b59afdee3a99c41ccce462f1c6a14ccd3332c326",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/omitted-internal-private-event.patch",
+      "sha256": "d43b18471f1bfa6157009c4cfa4c2d0a5e0db90c0177c255191d22c640861fda",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/optimistic-before-readback.patch",
+      "sha256": "c40bed7a82b4e9fde59eba0e047991bc4be464c54fcd3e9dfa0f59fe2b4c2dbd",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/privacy-broadcast.patch",
+      "sha256": "207af8393d060c9c629480caf9b1122ee50b0c7e66c070835ed076e07c077b3d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/private-deadline-after-disposal.patch",
+      "sha256": "a522c386cee201e75bfe9bb9b2b0fa058cb4b7ef720199760452165b59883435",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/private-normal-tab-broadcast.patch",
+      "sha256": "5e7b6f4d69ec93e0aa6acedb447871f1da2121069da7bd54fbd095daff6fcd2c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/private-notification-before-load.patch",
+      "sha256": "c2226639146b95638566baf1185af07776450fb0743fd7a659aa0d8fdb61c66d",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/stale-projection-reuse.patch",
+      "sha256": "73a4492b29f7f1c9e41337b6ebadff4d6dad7dea8878b7903c1df81727ad0521",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls/timer-after-disposal.patch",
+      "sha256": "a522c386cee201e75bfe9bb9b2b0fa058cb4b7ef720199760452165b59883435",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls.json",
+      "sha256": "4e82141a52c988a562996ef984fe25bb1358cf6495e88a9357636a8869d20ceb",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls.py",
+      "sha256": "97273cd30de68ee488c239b02dee8deb8e3a6a0b08f88383a8bf6be90f7c0247",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/execution-pins.json",
+      "sha256": "7357ab6db96383ebcb3cf1cf21e22bb49f28a179a4385c5b8edb026df248e850",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/expected-bytes.json",
+      "sha256": "e5bb98d4a682eb9fc9837fb7f516bfcb6475cd686d7cd0a81b15cce389f477e7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/expected.jsonl",
+      "sha256": "1dad7b34e309cf03df5b8e0c998e92b29dc18c4acb44b3ed3975835dcf34989f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/future-gates.json",
+      "sha256": "86af233d2dab1efb3b9e66b235094dd48d5784bd8fdb6c2e8860a0ec784cf9e6",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/harness.ts",
+      "sha256": "fba1eb16717d01cc025742f18ef9590f9fa49541f515295131280b2be753abc5",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/qualification.py",
+      "sha256": "f910e9fd043c46b111dcbae8def2c86d926571a6bcc642625d7911ce607a51b2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/run.ts",
+      "sha256": "2ba7dd30ecc774c0310493b7e11bf3b05e062359eb98b5971a2ff927dfdb9540",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/tsconfig.json",
+      "sha256": "0fccf778b6a8888108c8990e9463fa24535b6614f25c1e56e111f874c805d7e2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/type-probes.json",
+      "sha256": "1fc10f33301cb84fb7b4f73cf76214390f1e1e22f353b87e8d1f2cc73337ec95",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/view-publication/type-probes.py",
+      "sha256": "87b8fde4bc025fb87a7b2a9285ed395b089e41ea1348f35aa1fced1f1827d8ee",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/README.md",
+      "sha256": "8a6590dc924f59ee1f9686c7b9e09521e03726d3412ef8ca3c4d3f661adc6749",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/consumer.bun-test.ts",
+      "sha256": "6385a490e290e4184fb80791b6543406f386fdace06815c3478d482d787c70b1",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/consumer.ts",
+      "sha256": "1a2744b98aeb26daa50520d3b1365be88e4377d22be20cefbacbc29686a1fcaa",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/controls.json",
+      "sha256": "eac3594ac33e207c3885db9717532a43bd6bf3f88404fa8386156fef021321df",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/decision-trail.tsv",
+      "sha256": "3ae1cf6c811155d98b197fc989b31ff96ed5669319de6d17b0baafb8ba728562",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/dependency-identities.json",
+      "sha256": "24bd15b7c5302168d63759edf9add61d02c61864c2ce7d74d811f3d26b39569c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/dependency-verification.json",
+      "sha256": "2ef574d8435653f051f0dac3f5bf37b7b4b0d4b41ed33ee3e20626544aa9e2b2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/expected-stdout.jsonl",
+      "sha256": "36f405562c52779926d50d0ea81bc9065b77478bb4ce9d5614251fd64978bd7b",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/frozen866.json",
+      "sha256": "5364a13c0cab407583011119c56c4128bb298279f89548776ea3c78759ea95c7",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/future-commands.json",
+      "sha256": "a2f7bebbcc4ea3d04e9d7b3e8675d7ff98992e372b8be895214fd238cc7b6b64",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/harness.ts",
+      "sha256": "4e7edfbf6502e2236fb65c011727e7fe37896607a024851c8244b5932a653a1f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/independent_rehash.py",
+      "sha256": "4b3e676b8ff10575370933787e89de53f84b135e75a232c9e93efe72ef810941",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/installation.json",
+      "sha256": "8ea27eee0fcf770892a434bd13ae0bdefa4a3db1217c48c88146a30fff0eac02",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/qualify.py",
+      "sha256": "19ec8a79ecdf1fee6116f869dd627d25f291a7366be25a5ae71ca4243f0c4120",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/reconciliation.required.json",
+      "sha256": "c6ae5dd4bf5d3d85767673541971856104a98f6b72ed54529f5b0044cd00b11f",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/run.ts",
+      "sha256": "0f557181d7abf77440ac71ce58d09990885940f71539445c028884a842a76185",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/seal.py",
+      "sha256": "158655e16ea035c79a8c4edcc033aed01b8338830571ec7ff3374f4ac43358e9",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/static_support.py",
+      "sha256": "44ef716733c3b63009b8bfe149014dd938416efbdfa3f95c07525ce6fd04e2e8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/tsconfig.json",
+      "sha256": "e6b07c32a3db1392fe768f79461d7c0cababda855c3347bbb96734f713757c81",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/type-probes.json",
+      "sha256": "809e3ee0db40da1f22ffca83456f0c77bcc645c0a82d0d0cb5e6e47a63384042",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/README.md",
+      "sha256": "783e93ee2cebc3493091bdf64fcc0aec76fde6a93af956ecee40f9b97751d676",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/consumer.ts",
+      "sha256": "00ad0791b6befdbe709e09d9c6b13c0c29bbf9686acb714bbc17517be1bf20e8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/controls.json",
+      "sha256": "a0358c2e5dddd309e1b9912d254aa0754db4aeda49a073ae801628a710f75fac",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/expected-stdout.jsonl",
+      "sha256": "e7f2eca2ec2bf35dd561bc24b5abf86e55c355f4d81d806cdd1bbec075bf47e8",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/future-commands.json",
+      "sha256": "4bd0db359819a66e7dc42b65946e0fe0497a51f24038e3482658d99fbd3ac0fd",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/guard.bun-test.ts",
+      "sha256": "8b4d7a785284d1ce9df6138d096dca35ff0a5d50df644154b9403d903c6bc8b2",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/run.ts",
+      "sha256": "defc5dc1a32b1a5d7756bfe25a564784b9cef5a4d774f32c3047a121fb444262",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/specimens.ts",
+      "sha256": "94a0de02a0fb7e9d5dbda4b912669498ff1476d0390a09edee5ef6f9f79fb63e",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/tsconfig.json",
+      "sha256": "4d36dae89c7f871e6b209acde631f54d30e67be91068f6cd71181a5d355eff9c",
+      "mode": "0o644"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/type-probes.json",
+      "sha256": "1c4c091441a36c798af57e9a79b42776eec427e99c227f0a141dcba46003b82b",
+      "mode": "0o644"
+    }
+  ]
+}

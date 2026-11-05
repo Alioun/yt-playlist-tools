@@ -1,0 +1,459 @@
+{
+  "status": "all six unexecuted; no compiling or behavior credit",
+  "controls": [
+    {
+      "name": "unconditional tracking",
+      "path": "src/site/core/pointer.ts",
+      "edits": [
+        {
+          "before": "constructor(private readonly options: PointerOptions) {}",
+          "after": "constructor(private readonly options: PointerOptions) { this.track(new Scope(options)) }"
+        }
+      ],
+      "test": "Pointer construction is inert and two features share one delegated tracker",
+      "testFile": "./src/site/core/pointer.bun-test.ts",
+      "redAssertion": "expect(native).not.toHaveBeenCalled()",
+      "status": "unexecuted proposal; compiling status unproven",
+      "baselineCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "mutatedCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "behavior": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/pointer-keys/preload.ts",
+        "./src/site/core/pointer.bun-test.ts",
+        "-t",
+        "Pointer construction is inert and two features share one delegated tracker"
+      ],
+      "requiredSequence": [
+        "baseline compiler pass",
+        "baseline named behavior pass",
+        "exact mutation in disposable candidate",
+        "mutated compiler pass",
+        "named observable assertion fails",
+        "exact byte and mode restoration",
+        "restored compiler pass",
+        "restored named behavior pass"
+      ]
+    },
+    {
+      "name": "unconditional key listener",
+      "path": "src/site/core/keys.ts",
+      "edits": [
+        {
+          "before": "constructor(private readonly options: KeysOptions) {}",
+          "after": "constructor(private readonly options: KeysOptions) { const window = options.document.defaultView; if (window) { this.listener = new Scope({ document: options.document, onError() {} }); this.listener.on(window, \"keydown\", event => this.dispatch(event), true) } }"
+        }
+      ],
+      "test": "Keys construction is inert and two features share one capture listener",
+      "testFile": "./src/site/core/keys.bun-test.ts",
+      "redAssertion": "expect(add).not.toHaveBeenCalled()",
+      "status": "unexecuted proposal; compiling status unproven",
+      "baselineCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "mutatedCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "behavior": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/pointer-keys/preload.ts",
+        "./src/site/core/keys.bun-test.ts",
+        "-t",
+        "Keys construction is inert and two features share one capture listener"
+      ],
+      "requiredSequence": [
+        "baseline compiler pass",
+        "baseline named behavior pass",
+        "exact mutation in disposable candidate",
+        "mutated compiler pass",
+        "named observable assertion fails",
+        "exact byte and mode restoration",
+        "restored compiler pass",
+        "restored named behavior pass"
+      ]
+    },
+    {
+      "name": "stale target reuse",
+      "path": "src/site/core/pointer.ts",
+      "edits": [
+        {
+          "before": "  private ended = false",
+          "after": "  private ended = false\n  private cachedStack: readonly Element[] | undefined"
+        },
+        {
+          "before": "        const stack = document.elementsFromPoint(point.x, point.y)\n          .filter(element => element.isConnected && element.ownerDocument === document)",
+          "after": "        const stack = this.cachedStack ?? document.elementsFromPoint(point.x, point.y)\n          .filter(element => element.isConnected && element.ownerDocument === document)\n        this.cachedStack = stack"
+        }
+      ],
+      "test": "stationary pointer resolves a changed stack at invocation and retains preview order",
+      "testFile": "./src/site/core/pointer.bun-test.ts",
+      "redAssertion": "expect(pointer.read()).toEqual({ kind: \"pointer\", point: { x: 12, y: 18 }, stack: [replacement] })",
+      "status": "unexecuted proposal; compiling status unproven",
+      "baselineCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "mutatedCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "behavior": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/pointer-keys/preload.ts",
+        "./src/site/core/pointer.bun-test.ts",
+        "-t",
+        "stationary pointer resolves a changed stack at invocation and retains preview order"
+      ],
+      "requiredSequence": [
+        "baseline compiler pass",
+        "baseline named behavior pass",
+        "exact mutation in disposable candidate",
+        "mutated compiler pass",
+        "named observable assertion fails",
+        "exact byte and mode restoration",
+        "restored compiler pass",
+        "restored named behavior pass"
+      ]
+    },
+    {
+      "name": "duplicate dispatch",
+      "path": "src/site/core/keys.ts",
+      "edits": [
+        {
+          "before": "      const result = selected.registration.invoke()",
+          "after": "      const result = selected.registration.invoke()\n      for (const duplicate of this.registrations) if (duplicate !== selected.registration && duplicate.group === group) void duplicate.invoke()"
+        }
+      ],
+      "test": "duplicate semantic actions dispatch once and share pending ownership after individual release",
+      "testFile": "./src/site/core/keys.bun-test.ts",
+      "redAssertion": "expect(calls).toBe(1)",
+      "status": "unexecuted proposal; compiling status unproven",
+      "baselineCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "mutatedCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "behavior": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/pointer-keys/preload.ts",
+        "./src/site/core/keys.bun-test.ts",
+        "-t",
+        "duplicate semantic actions dispatch once and share pending ownership after individual release"
+      ],
+      "requiredSequence": [
+        "baseline compiler pass",
+        "baseline named behavior pass",
+        "exact mutation in disposable candidate",
+        "mutated compiler pass",
+        "named observable assertion fails",
+        "exact byte and mode restoration",
+        "restored compiler pass",
+        "restored named behavior pass"
+      ]
+    },
+    {
+      "name": "missing propagation suppression",
+      "path": "src/site/core/keys.ts",
+      "edits": [
+        {
+          "before": "    event.stopImmediatePropagation()",
+          "after": "    void event"
+        }
+      ],
+      "test": "matching keys suppress later listeners before invoking the action",
+      "testFile": "./src/site/core/keys.bun-test.ts",
+      "redAssertion": "expect(seen).toEqual([\"action\"])",
+      "status": "unexecuted proposal; compiling status unproven",
+      "baselineCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "mutatedCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "behavior": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/pointer-keys/preload.ts",
+        "./src/site/core/keys.bun-test.ts",
+        "-t",
+        "matching keys suppress later listeners before invoking the action"
+      ],
+      "requiredSequence": [
+        "baseline compiler pass",
+        "baseline named behavior pass",
+        "exact mutation in disposable candidate",
+        "mutated compiler pass",
+        "named observable assertion fails",
+        "exact byte and mode restoration",
+        "restored compiler pass",
+        "restored named behavior pass"
+      ]
+    },
+    {
+      "name": "pending state loss after duplicate release",
+      "path": "src/site/core/keys.ts",
+      "edits": [
+        {
+          "before": "      this.registrations.delete(registration)",
+          "after": "      this.registrations.delete(registration)\n      registration.group.pending = null"
+        }
+      ],
+      "test": "duplicate semantic actions dispatch once and share pending ownership after individual release",
+      "testFile": "./src/site/core/keys.bun-test.ts",
+      "redAssertion": "expect(press().defaultPrevented).toBe(false)",
+      "status": "unexecuted proposal; compiling status unproven",
+      "baselineCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "mutatedCompiler": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/pointer-keys/tsconfig.json"
+      ],
+      "behavior": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        ".audit/pointer-keys-qualification/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/pointer-keys/preload.ts",
+        "./src/site/core/keys.bun-test.ts",
+        "-t",
+        "duplicate semantic actions dispatch once and share pending ownership after individual release"
+      ],
+      "requiredSequence": [
+        "baseline compiler pass",
+        "baseline named behavior pass",
+        "exact mutation in disposable candidate",
+        "mutated compiler pass",
+        "named observable assertion fails",
+        "exact byte and mode restoration",
+        "restored compiler pass",
+        "restored named behavior pass"
+      ]
+    }
+  ]
+}

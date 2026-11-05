@@ -61,10 +61,7 @@ export type RecorderEvent =
   | { readonly kind: "cancel" }
   | { readonly kind: "use-here" }
 
-export type RecorderOutcome =
-  | { readonly kind: "none" }
-  | { readonly kind: "cancelled" }
-  | { readonly kind: "commit"; readonly key: Readonly<Key> | null; readonly clear: readonly ShortcutTarget[] }
+export type RecorderOutcome = { readonly kind: "none" } | { readonly kind: "cancelled" } | { readonly kind: "commit"; readonly key: Readonly<Key> | null; readonly clear: readonly ShortcutTarget[] }
 
 export type RecorderStep = {
   readonly state: RecorderState

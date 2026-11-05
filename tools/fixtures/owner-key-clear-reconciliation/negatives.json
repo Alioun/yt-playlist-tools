@@ -1,0 +1,281 @@
+[
+ {
+  "id": "01-lost-reset-view",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/01-lost-reset-view.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 267,
+   "sha256": "1042fb5792fd40c19ff9f362da8bdfc6d4229943b8eae06871b81ea2cb1845a0",
+   "gitBlob": "bb4244e76c2df256cc80a48a5c0071862c4109c3"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/01-lost-reset-view.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: HeldWorkView = { kind: \"sync-reset\", selection, record: {}, resume: \"renewed-agreement\" }",
+  "expectedDiagnostic": "TS2322",
+  "obligation": "lost operation recognition",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "02-recovered-reset-without-completion",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/02-recovered-reset-without-completion.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 263,
+   "sha256": "41ece3cf253fa4c2642584b3bf528a78967c85be14861972ef764fc1c463cbfa",
+   "gitBlob": "9bb567628247148fd430caad2ff16d6356b89b2a"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/02-recovered-reset-without-completion.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: ExactRecoveryResult = { kind: \"recovered\", job: { kind: \"sync-reset\", id: \"reset\" }, remaining }",
+  "expectedDiagnostic": "TS2322",
+  "obligation": "renewed-agreement replay",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "03-early-reset-success",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/03-early-reset-success.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 185,
+   "sha256": "b09b8f90043fcae4e48ce5baf274c43742ddea06ce25b92afc4de31231ffed89",
+   "gitBlob": "94c07b597fc7c7578e4f7407741c6b7a171e9e97"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/03-early-reset-success.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: ReceivedResetResult = { kind: \"reset-received\" }",
+  "expectedDiagnostic": "TS2322",
+  "obligation": "early reset success",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "04-omitted-reset-accounts",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/04-omitted-reset-accounts.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 217,
+   "sha256": "80aa38f75a4a18c0fe21d1c5b8cb1ed809134a90d322dff3229f8fede4d236da",
+   "gitBlob": "a266a91889dd50144f1bb95d2e4661327479cbf0"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/04-omitted-reset-accounts.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: Extract<ReceivedResetResult, { kind: \"reset-received\" }>[\"accounts\"] = undefined",
+  "expectedDiagnostic": "TS2322",
+  "obligation": "omitted account or shard",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "05-revived-undo-window",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/05-revived-undo-window.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 303,
+   "sha256": "1a2734f16d5cd10493984445cae99c23aea82c00da6fb9979f8028fe8836a510",
+   "gitBlob": "7b3bccb86a744195a40a9d330eaec6849a767d69"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/05-revived-undo-window.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: KeySettingAnswer = { kind: \"removed\", id, receipt: \"undo:00000000-0000-0000-0000-000000000000\", undoForMs: 60000 }",
+  "expectedDiagnostic": "TS2322",
+  "obligation": "revived Undo authority",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "06-duplicate-catalogue",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/06-duplicate-catalogue.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 269,
+   "sha256": "007987b50eb960af0b38c54840f13d733f1c683932fcbca04baea29120ea375f",
+   "gitBlob": "47b7bf6f0a9c1bcf58a9138f5db5c15415d6d96a"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/06-duplicate-catalogue.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: RpcContract<UiMessages> = { ...uiContract, \"ui.featureSetting\": uiContract[\"ui.change\"] }",
+  "expectedDiagnostic": "TS2353",
+  "obligation": "duplicate catalogue",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "07-localization-key-loss",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/07-localization-key-loss.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 143,
+   "sha256": "b029e324d2120b314844b3dd5bf6c9a7433b1c3ff1f665dbce577daa6cc678a1",
+   "gitBlob": "8d3cb1db84972f635666d17e6eff614ce3392350"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/07-localization-key-loss.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: SimpleMessageKey = \"toast_dismis\"",
+  "expectedDiagnostic": "TS2820",
+  "obligation": "localization loss",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "08-notice-without-collaborator",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/08-notice-without-collaborator.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 257,
+   "sha256": "145dabbb5918d6641478acc50ba1c6a20a01e6bbd16eca09dac41053daf7af15",
+   "gitBlob": "5cf59b6a086e70c1d40141870946ab8bae0bf792"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/08-notice-without-collaborator.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative = noticeText({ due: { kind: \"not-working\", features: [\"gather\"] }, site: \"www\" }, i18n)",
+  "expectedDiagnostic": "TS2741",
+  "obligation": "localization loss",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ },
+ {
+  "id": "09-backend-without-clear",
+  "template": "tools/fixtures/owner-key-clear-reconciliation/negatives/09-backend-without-clear.ts.txt",
+  "templateIdentity": {
+   "mode": "100644",
+   "bytes": 139,
+   "sha256": "178d55b0444a43555d97e1fee8e88719d709947ffc54aa79c4e6c4d633e22a38",
+   "gitBlob": "8c486d2621a01c972db58f4035408761eddce337"
+  },
+  "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/09-backend-without-clear.ts",
+  "intendedLine": 3,
+  "intendedText": "export const intendedNegative: Backend[\"clearAll\"] = undefined",
+  "expectedDiagnostic": "TS2322",
+  "obligation": "duplicate catalogue",
+  "credit": "none; unexecuted",
+  "command": [
+   "/usr/bin/env",
+   "-i",
+   "PATH=<pinned-proved-bin>",
+   "HOME=<scratch-home>",
+   "TMPDIR=<scratch-tmp>",
+   "<pinned-bun>",
+   "x",
+   "--no-env-file",
+   "--no-install",
+   "tsc",
+   "--noEmit",
+   "-p",
+   "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+  ]
+ }
+]

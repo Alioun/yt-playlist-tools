@@ -1,0 +1,174 @@
+{
+  "status": "unexecuted",
+  "compiler": [
+    "timeout",
+    "-k",
+    "10",
+    "120",
+    "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+    "-I",
+    "-B",
+    ".audit/pointer-keys-qualification/launch.py",
+    "node",
+    "node_modules/@typescript/native/bin/tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/pointer-keys/tsconfig.json"
+  ],
+  "probes": [
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 7,
+      "errorLine": 8,
+      "expectation": "Pointer requires the actual document collaborator.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 9,
+      "errorLine": 10,
+      "expectation": "Pointer requires its cleanup error collaborator.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 11,
+      "errorLine": 12,
+      "expectation": "A native target cannot replace a feature Scope.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 13,
+      "errorLine": 14,
+      "expectation": "Missing-point facts are not an element.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 16,
+      "errorLine": 17,
+      "expectation": "No point exposes no cached target element.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 18,
+      "errorLine": 19,
+      "expectation": "No point exposes no hit stack.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 24,
+      "errorLine": 25,
+      "expectation": "A pointer stack is not a recognized item or focused element.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/pointer.type-test.ts",
+      "directiveLine": 30,
+      "errorLine": 31,
+      "expectation": "Focus facts have no fabricated pointer coordinate.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 10,
+      "errorLine": 11,
+      "expectation": "Open-blocker collaborators cannot be omitted.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 12,
+      "errorLine": 13,
+      "expectation": "The extension popover state is a required collaborator.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 14,
+      "errorLine": 15,
+      "expectation": "An action error collaborator cannot be omitted.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 18,
+      "errorLine": 19,
+      "expectation": "A picker target cannot implement an Undo semantic action.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 20,
+      "errorLine": 21,
+      "expectation": "Playlist actions require their semantic playlist ID.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 22,
+      "errorLine": 23,
+      "expectation": "Music action names come from the canonical ShortcutTarget.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 24,
+      "errorLine": 25,
+      "expectation": "Enabled registrations require a key.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 26,
+      "errorLine": 27,
+      "expectation": "A null setting must become a disabled binding.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 28,
+      "errorLine": 29,
+      "expectation": "A disabled registration cannot carry an active key.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 30,
+      "errorLine": 31,
+      "expectation": "Registration updates cannot change the semantic target.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 35,
+      "errorLine": 36,
+      "expectation": "The real Undo callback is required.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 37,
+      "errorLine": 38,
+      "expectation": "Undo uses the actual nullable TabView key rather than a string.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/keys.type-test.ts",
+      "directiveLine": 39,
+      "errorLine": 40,
+      "expectation": "Active Undo needs both visibility inputs.",
+      "status": "unexecuted"
+    }
+  ],
+  "requiredSequence": [
+    "baseline pass",
+    "remove one directive",
+    "nonzero compiler with diagnostic at the intended statement",
+    "restore exact bytes and mode",
+    "restored baseline pass"
+  ]
+}

@@ -1,0 +1,4 @@
+import { createBrowserStoreLifecycle } from "../../../src/background/adapters/store-lifecycle"
+
+declare const options: Parameters<typeof createBrowserStoreLifecycle>[1]; const { firstRun, ...missing } = options; declare const native: Parameters<typeof createBrowserStoreLifecycle>[0]; createBrowserStoreLifecycle(native, missing)
+export {}

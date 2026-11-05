@@ -1,0 +1,10 @@
+export const MONITOR_TIMEOUTS = 3
+export const MONITOR_NO_EFFECTS = 2
+export const MONITOR_CANNOT_MEASURE = 3
+export const MONITOR_SETTLE_MS = 3_000
+export const MONITOR_MIN_LINKS = 6
+export const MONITOR_RECOGNISED_RATIO = 0.5
+export const MONITOR_WRITE_MS = 10_000
+export const MONITOR_SIGNALS = 200
+export const MONITOR_BATCH_MS = 60
+export const MONITOR_DELIVERY_LEASE_MS = 60_000

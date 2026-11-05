@@ -1,13 +1,14 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
     "types": ["bun"],
     "paths": {
       "@": ["./src"],
       "@/*": ["./src/*"],
       "~": ["./src"],
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "$kit": ["./src/site/kit/index.ts"]
     }
-  }
+  },
+  "exclude": ["**/node_modules", ".output", "tools/fixtures/site-core-lifecycle/svelte-props.ts"]
 }

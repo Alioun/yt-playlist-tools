@@ -1,0 +1,773 @@
+{
+ "boundary": "Every Bun invocation and descendant: --no-env-file and --no-install, cleared environment, pinned executable and PATH, scratch HOME and TMPDIR, closed stdin, timeout -k 10 bound, and dummy-fixture enforcement proved first under a later sole runtime lease.",
+ "state": "unexecuted; no runtime lease",
+ "newGates": [
+  {
+   "id": "scoped-native-compile",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tsconfig.json"
+   ],
+   "expect": "exit 0, inclusion set lists every changed path"
+  },
+  {
+   "id": "fixture-compile",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/clear-all/tsconfig.json"
+   ],
+   "expect": "exit 0 including owner-key-clear-reconciliation"
+  },
+  {
+   "id": "reconciliation-owner-tests",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts"
+   ],
+   "expect": "8 named tests pass"
+  },
+  {
+   "id": "clear-all-owner",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/clear-all/owner.bun-test.ts"
+   ]
+  },
+  {
+   "id": "clear-all-rpc",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/clear-all/rpc.bun-test.ts"
+   ]
+  },
+  {
+   "id": "clear-all-teardown",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/clear-all/teardown.bun-test.ts"
+   ]
+  },
+  {
+   "id": "key-owner",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/key-settings/owner.bun-test.ts"
+   ]
+  },
+  {
+   "id": "key-recovery",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/key-settings/recovery.bun-test.ts"
+   ]
+  },
+  {
+   "id": "key-wire",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/key-settings/wire.bun-test.ts"
+   ],
+   "precondition": "unapplied-proposals.json key-catalogue patch applied by an authorized writer, else this gate is expected red on the catalogue enumeration"
+  },
+  {
+   "id": "key-account-lifetime",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/key-settings/account-lifetime.bun-test.ts"
+   ]
+  },
+  {
+   "id": "key-sync",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/key-settings/sync.bun-test.ts"
+   ]
+  },
+  {
+   "id": "key-consumer-twice-eof",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/key-settings/consumer.bun-test.ts"
+   ],
+   "expect": "two independent processes, compared through EOF with tools/fixtures/clear-all/compare-eof.py"
+  },
+  {
+   "id": "ui-contract",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "src/shared/contracts/ui.bun-test.ts"
+   ]
+  },
+  {
+   "id": "full-direct-bun",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install"
+   ]
+  },
+  {
+   "id": "negative-01-lost-reset-view",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2322 at tools/fixtures/owner-key-clear-reconciliation/negatives/01-lost-reset-view.ts:3 only"
+  },
+  {
+   "id": "negative-02-recovered-reset-without-completion",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2322 at tools/fixtures/owner-key-clear-reconciliation/negatives/02-recovered-reset-without-completion.ts:3 only"
+  },
+  {
+   "id": "negative-03-early-reset-success",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2322 at tools/fixtures/owner-key-clear-reconciliation/negatives/03-early-reset-success.ts:3 only"
+  },
+  {
+   "id": "negative-04-omitted-reset-accounts",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2322 at tools/fixtures/owner-key-clear-reconciliation/negatives/04-omitted-reset-accounts.ts:3 only"
+  },
+  {
+   "id": "negative-05-revived-undo-window",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2322 at tools/fixtures/owner-key-clear-reconciliation/negatives/05-revived-undo-window.ts:3 only"
+  },
+  {
+   "id": "negative-06-duplicate-catalogue",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2353 at tools/fixtures/owner-key-clear-reconciliation/negatives/06-duplicate-catalogue.ts:3 only"
+  },
+  {
+   "id": "negative-07-localization-key-loss",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2820 at tools/fixtures/owner-key-clear-reconciliation/negatives/07-localization-key-loss.ts:3 only"
+  },
+  {
+   "id": "negative-08-notice-without-collaborator",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2741 at tools/fixtures/owner-key-clear-reconciliation/negatives/08-notice-without-collaborator.ts:3 only"
+  },
+  {
+   "id": "negative-09-backend-without-clear",
+   "command": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
+   ],
+   "expect": "TS2322 at tools/fixtures/owner-key-clear-reconciliation/negatives/09-backend-without-clear.ts:3 only"
+  },
+  {
+   "id": "control-drop-key-progress-reset-hold",
+   "phases": [
+    "baseline named test passes",
+    "patch -p1 -F 0 applies",
+    "mutant compiles",
+    "named test red",
+    "restore exact bytes and mode"
+   ],
+   "commands": {
+    "mutantCompile": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "x",
+     "--no-env-file",
+     "--no-install",
+     "tsc",
+     "--noEmit",
+     "-p",
+     "tsconfig.json"
+    ],
+    "namedRed": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "test",
+     "--no-env-file",
+     "--no-install",
+     "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+     "-t",
+     "pending key progress holds remote reset before any marker or erasure"
+    ]
+   },
+   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/drop-key-progress-reset-hold.patch"
+  },
+  {
+   "id": "control-revived-undo-after-reset",
+   "phases": [
+    "baseline named test passes",
+    "patch -p1 -F 0 applies",
+    "mutant compiles",
+    "named test red",
+    "restore exact bytes and mode"
+   ],
+   "commands": {
+    "mutantCompile": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "x",
+     "--no-env-file",
+     "--no-install",
+     "tsc",
+     "--noEmit",
+     "-p",
+     "tsconfig.json"
+    ],
+    "namedRed": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "test",
+     "--no-env-file",
+     "--no-install",
+     "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+     "-t",
+     "received reset revokes six-second shortcut Undo even without account targets"
+    ]
+   },
+   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/revived-undo-after-reset.patch"
+  },
+  {
+   "id": "control-lost-reset-recognition",
+   "phases": [
+    "baseline named test passes",
+    "patch -p1 -F 0 applies",
+    "mutant compiles",
+    "named test red",
+    "restore exact bytes and mode"
+   ],
+   "commands": {
+    "mutantCompile": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "x",
+     "--no-env-file",
+     "--no-install",
+     "tsc",
+     "--noEmit",
+     "-p",
+     "tsconfig.json"
+    ],
+    "namedRed": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "test",
+     "--no-env-file",
+     "--no-install",
+     "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+     "-t",
+     "an unreadable reset marker remains recognized held work"
+    ]
+   },
+   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/lost-reset-recognition.patch"
+  },
+  {
+   "id": "control-early-reset-success",
+   "phases": [
+    "baseline named test passes",
+    "patch -p1 -F 0 applies",
+    "mutant compiles",
+    "named test red",
+    "restore exact bytes and mode"
+   ],
+   "commands": {
+    "mutantCompile": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "x",
+     "--no-env-file",
+     "--no-install",
+     "tsc",
+     "--noEmit",
+     "-p",
+     "tsconfig.json"
+    ],
+    "namedRed": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "test",
+     "--no-env-file",
+     "--no-install",
+     "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+     "-t",
+     "renewed agreement with later key progress cannot continue the old reset"
+    ]
+   },
+   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/early-reset-success.patch"
+  },
+  {
+   "id": "control-renewed-agreement-replay",
+   "phases": [
+    "baseline named test passes",
+    "patch -p1 -F 0 applies",
+    "mutant compiles",
+    "named test red",
+    "restore exact bytes and mode"
+   ],
+   "commands": {
+    "mutantCompile": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "x",
+     "--no-env-file",
+     "--no-install",
+     "tsc",
+     "--noEmit",
+     "-p",
+     "tsconfig.json"
+    ],
+    "namedRed": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "test",
+     "--no-env-file",
+     "--no-install",
+     "tools/fixtures/clear-all/owner.bun-test.ts",
+     "-t",
+     "fresh agreement cannot silently authorize admitted old reset cleanup"
+    ]
+   },
+   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/renewed-agreement-replay.patch"
+  },
+  {
+   "id": "control-localization-parameter-loss",
+   "phases": [
+    "baseline named test passes",
+    "patch -p1 -F 0 applies",
+    "mutant compiles",
+    "named test red",
+    "restore exact bytes and mode"
+   ],
+   "commands": {
+    "mutantCompile": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "x",
+     "--no-env-file",
+     "--no-install",
+     "tsc",
+     "--noEmit",
+     "-p",
+     "tsconfig.json"
+    ],
+    "namedRed": [
+     "/usr/bin/env",
+     "-i",
+     "PATH=<pinned-proved-bin>",
+     "HOME=<scratch-home>",
+     "TMPDIR=<scratch-tmp>",
+     "<pinned-bun>",
+     "test",
+     "--no-env-file",
+     "--no-install",
+     "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+     "-t",
+     "toaster and notice copy is localized with exact parameters"
+    ]
+   },
+   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/localization-parameter-loss.patch"
+  }
+ ],
+ "newGateCount": 29,
+ "inheritedInventories": {
+  "tools/fixtures/clear-all/future-gates.json": {
+   "identity": {
+    "bytes": 232389,
+    "sha256": "91d7c3c597cb1127dfbd32f9a01a13270fe95d4cfdedbbd539d56e8ccc63b514",
+    "gitBlob": "8e90781384d5090de5272be1ae971cbaf498afe9",
+    "mode": "100644"
+   },
+   "entries": 126
+  },
+  "tools/fixtures/clear-all/preserved-inventories.json": {
+   "identity": {
+    "bytes": 45816,
+    "sha256": "2455628f06da4cb788fb9d27efc1eaa8119b8b349abeef7fc124092fd12f301d",
+    "gitBlob": "f2f57ea6ee454b87ac1c990e4105333c6cd92b99",
+    "mode": "100644"
+   },
+   "entries": null
+  },
+  "tools/fixtures/clear-all/negatives.json": {
+   "identity": {
+    "bytes": 10196,
+    "sha256": "8e89a558d3ca8682b1c72576647f02dd6ec32e5607f353ff9836fc36b254738a",
+    "gitBlob": "43ecb94a4d7abd99fd99fd2a1083d5c25b8247c9",
+    "mode": "100644"
+   },
+   "entries": 20
+  },
+  "tools/fixtures/clear-all/controls.json": {
+   "identity": {
+    "bytes": 13552,
+    "sha256": "6e06e7e9c845bdba100d5f1d87f2dd8a9107c4000808d088317530ad6d12ca30",
+    "gitBlob": "ceafa51647bcf9d3f8791f7d7241527b2bcecdb5",
+    "mode": "100644"
+   },
+   "entries": null
+  },
+  "tools/fixtures/key-settings/future-gates.json": {
+   "identity": {
+    "bytes": 175808,
+    "sha256": "ab9a1030b69df503351e65c0851b5f110d72728a8247c86036808d9f470b1c43",
+    "gitBlob": "ad75d8a61b6ba57744e1a84d4eeea0721d0f2abd",
+    "mode": "100644"
+   },
+   "entries": 64
+  },
+  "tools/fixtures/key-settings/inherited-feature-gates.json": {
+   "identity": {
+    "bytes": 292312,
+    "sha256": "dc3d8e6765743d5d15c71a1f0d9f8e116dce0fc844df6fafae677157bc035c5c",
+    "gitBlob": "92ccf29182ca31fa8046cfab5a611ef876591d43",
+    "mode": "100644"
+   },
+   "entries": 175
+  },
+  "tools/fixtures/key-settings/negatives.json": {
+   "identity": {
+    "bytes": 6540,
+    "sha256": "07bcbfb86320a4324eb60260708c8dee247908f3403f4bae6b36691379aa2a2a",
+    "gitBlob": "eabbfb132dcf0338d72b2d01eb0769f33ea921a3",
+    "mode": "100644"
+   },
+   "entries": 10
+  },
+  "tools/fixtures/key-settings/controls.json": {
+   "identity": {
+    "bytes": 5480,
+    "sha256": "0bdbf031fab61d099d1430910ece4fee91f9e88fdb2765f2556a4d73fdf955ed",
+    "gitBlob": "bc62d9b7b26b7b06055cc62031b89479fd068c83",
+    "mode": "100644"
+   },
+   "entries": null
+  },
+  "tools/fixtures/key-settings/relocated-feature-negatives.json": {
+   "identity": {
+    "bytes": 17280,
+    "sha256": "78c3a420fed22a096b3f310e09abe07bcd9867e1d0dd1cd3741079f7b9d88364",
+    "gitBlob": "3e39242447d7443f873e6d5f2b008c91c9a73934",
+    "mode": "100644"
+   },
+   "entries": 18
+  },
+  "tools/fixtures/key-settings/relocated-feature-controls.json": {
+   "identity": {
+    "bytes": 6681,
+    "sha256": "aefe52c7df6da032e3666242c15d3bcf7ed66580f0a0acf0115d610cdc3eb3ca",
+    "gitBlob": "908d6f0252e905bc0e63c5462f44df89e64414ea",
+    "mode": "100644"
+   },
+   "entries": null
+  },
+  "tools/fixtures/key-settings/relocated-inherited-controls.json": {
+   "identity": {
+    "bytes": 37718,
+    "sha256": "f87b7ba3bcca6cd6d2a861fa81df2cc89a2670630cb5ff92fc85b819f739bddf",
+    "gitBlob": "ba56fa90fe85d800cdd6e90aa8273db2b9ec08dd",
+    "mode": "100644"
+   },
+   "entries": null
+  },
+  "tools/fixtures/key-settings/inherited-conservation.json": {
+   "identity": {
+    "bytes": 157974,
+    "sha256": "f7751de72bf9ebdc730debfb19fa1e45ea622fb0f094acd750842a5cad208663",
+    "gitBlob": "9a591fb22a8975f0f597dda505312f7749dfa75a",
+    "mode": "100644"
+   },
+   "entries": null
+  }
+ },
+ "inheritedObligations": {
+  "clearAllGates": 126,
+  "keyGates": 64,
+  "featureGates": 175,
+  "owner": 170,
+  "import": 114,
+  "options": 85,
+  "note": "Counts restated from the upstream returns; each file above is byte-identical to the frozen input and keeps its own commands."
+ },
+ "relocationSidecars": [
+  "tools/fixtures/owner-key-clear-reconciliation/inherited-control-relocations.json",
+  "tools/fixtures/owner-key-clear-reconciliation/inherited-control-reanchors.json"
+ ]
+}

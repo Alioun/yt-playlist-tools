@@ -1,0 +1,11 @@
+{"step":"read-check","accounts":2,"provenance":"fresh-edit-required","freshReads":2,"writes":0,"events":0}
+{"step":"reservation","stamp":true,"lastAccount":true,"generations":0,"events":0}
+{"step":"unchanged","result":"current","generations":0,"events":0}
+{"step":"changed","result":"committed","label":{"name":"Changed"},"events":[{"kind":"setup-changed","source":"local","acct":"AAAAAAAAAAAAAAAA"}],"generations":1,"jobs":1}
+{"step":"privacy","seen":"private","signedOut":"signed-out","check":"private","reads":0,"writes":0,"jobs":0,"events":1}
+{"step":"late-last-account","results":["committed","committed"],"lastAccountIsSecond":true,"events":2}
+{"step":"independent","result":"committed","destination":true,"filter":true,"cache":true,"otherAccount":true,"events":2}
+{"step":"recreated","result":"stale","label":null,"newEvents":0}
+{"step":"uncertain","result":"unconfirmed","events":0,"revocations":1,"checking":"unavailable"}
+{"step":"disposed","result":"setup","events":0,"export":"unavailable","revocations":1}
+{"step":"eof","complete":true}

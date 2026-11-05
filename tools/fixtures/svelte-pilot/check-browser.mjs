@@ -23,14 +23,14 @@ try {
         response.writeHead(404).end()
       }
     })
-    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve))
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve))
     const address = server.address()
     assert(address && typeof address === "object")
     const context = await browser.newContext()
     try {
       const page = await context.newPage()
       const errors = []
-      page.on("pageerror", (error) => errors.push(error.message))
+      page.on("pageerror", error => errors.push(error.message))
       await page.goto(`http://127.0.0.1:${address.port}/pilot.html`)
       await page.getByRole("button", { name: "Count 0" }).click()
       await page.getByRole("button", { name: "Count 1" }).waitFor()
@@ -71,13 +71,13 @@ try {
       await page.keyboard.press("Escape")
       await content.waitFor({ state: "hidden" })
       assert.equal(await page.getByRole("button", { name: "Open pilot popover" }).getAttribute("aria-expanded"), "false")
-      assert.equal(await page.getByRole("button", { name: "Open pilot popover" }).evaluate((element) => element.getRootNode().activeElement === element), true)
+      assert.equal(await page.getByRole("button", { name: "Open pilot popover" }).evaluate(element => element.getRootNode().activeElement === element), true)
       assert.deepEqual(errors, [])
       console.log(`${target}: Chromium ${browser.version()} passed counter, shadow styles, popover positioning, Escape dismissal, and focus restoration`)
       console.log(JSON.stringify(result))
     } finally {
       await context.close()
-      await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+      await new Promise((resolve, reject) => server.close(error => (error ? reject(error) : resolve())))
     }
   }
 } finally {

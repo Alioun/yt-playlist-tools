@@ -1,0 +1,11 @@
+--- a/scripts/run-bun-tests.ts
++++ b/scripts/run-bun-tests.ts
+@@ -32,7 +32,7 @@
+   const shard = parseShard(args)
+   const entries = selectTestEntries(await discoverTestEntries(cwd), shard)
+   if (entries.length === 0) return 0
+-  return spawn([process.execPath, "test", "--no-env-file", "--isolate", "--conditions=browser", ...entries])
++  return spawn([process.execPath, "test", "--no-env-file", "--no-install", "--isolate", "--conditions=browser", ...entries])
+ }
+ 
+ if (import.meta.main) {

@@ -1,0 +1,397 @@
+{
+  "schema": 1,
+  "device": {
+    "id": "starting-fixture",
+    "consent": {
+      "v": 1,
+      "at": 1
+    },
+    "syncOn": false
+  },
+  "doc:settings": {
+    "v": 1,
+    "gen": "settings-0",
+    "at": 1,
+    "by": "starting-fixture",
+    "extension": {
+      "keep": "envelope"
+    },
+    "data": {
+      "theme": "system",
+      "undoKey": null,
+      "autoAdd": {
+        "on": false,
+        "feedback": true,
+        "pct": 50,
+        "toolbarTick": true,
+        "toolbarPaused": true,
+        "futureAuto": {
+          "keep": true
+        }
+      },
+      "shortcuts": {
+        "on": false,
+        "feedback": true,
+        "music": false,
+        "preset": true,
+        "picker": null,
+        "list": [
+          {
+            "id": "save01",
+            "key": null,
+            "label": "Kept shortcut",
+            "watchLaterOnEveryAccount": false,
+            "futureRow": [
+              "keep"
+            ]
+          }
+        ]
+      },
+      "quickSave": {
+        "on": false,
+        "feedback": true,
+        "shortsShelves": false
+      },
+      "queueButton": {
+        "on": false,
+        "feedback": true
+      },
+      "watchButton": {
+        "on": false,
+        "feedback": true,
+        "shorts": false
+      },
+      "cardMenu": {
+        "on": false,
+        "keepLinkMenu": false
+      },
+      "browserMenu": {
+        "on": false,
+        "feedback": true
+      },
+      "musicSection": false,
+      "musicActions": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "buttons": {
+          "next": true,
+          "queue": true,
+          "save": false,
+          "like": false,
+          "remove": false,
+          "bar": false,
+          "library": false,
+          "mix": false,
+          "album": false,
+          "artist": false,
+          "futureButton": true
+        }
+      },
+      "musicKeys": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "keys": {
+          "next": null,
+          "queue": null,
+          "save": null,
+          "picker": null,
+          "like": null,
+          "remove": null,
+          "library": null,
+          "mix": null,
+          "album": null,
+          "artist": null
+        }
+      },
+      "anyTabKeys": {
+        "on": false,
+        "feedback": true
+      },
+      "gather": {
+        "on": false,
+        "feedback": true,
+        "to": "player",
+        "order": "newest",
+        "close": false,
+        "auto": {
+          "unvisited": true,
+          "after": "1d",
+          "background": true,
+          "count": true,
+          "n": 10,
+          "futureTrigger": [
+            "keep"
+          ]
+        }
+      },
+      "futureRoot": {
+        "keep": [
+          "unknown",
+          0,
+          null
+        ]
+      }
+    }
+  },
+  "sync": {
+    "joined": null,
+    "pushed": {},
+    "status": "off",
+    "editedSinceOff": false,
+    "everEdited": false,
+    "futureHistory": [
+      "keep"
+    ]
+  },
+  "doc:setup:AAAAAAAAAAAAAAAA": {
+    "v": 1,
+    "gen": "setup-0",
+    "at": 1,
+    "by": "starting-fixture",
+    "data": {
+      "quickSave": "PL_saved",
+      "gather": "PL_gather",
+      "targets": {
+        "save01": "PL_shortcut"
+      }
+    }
+  },
+  "doc:filter:AAAAAAAAAAAAAAAA:PL_saved": {
+    "v": 1,
+    "gen": "filter-0",
+    "at": 1,
+    "by": "starting-fixture",
+    "data": {
+      "on": true,
+      "mode": "deny",
+      "channels": [
+        [
+          "UCaaaaaaaaaaaaaaaaaaaaaa",
+          "Kept"
+        ]
+      ]
+    }
+  },
+  "progress:AAAAAAAAAAAAAAAA:0": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      0
+    ]
+  },
+  "skips": {
+    "kept": true
+  },
+  "undo": {
+    "kept": true
+  },
+  "gatherHistory": {
+    "kept": [
+      3
+    ]
+  },
+  "unclaimed": null,
+  "unrelated": {
+    "kept": [
+      false,
+      null,
+      "🙂"
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:1": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      1
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:2": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      2
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:3": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      3
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:4": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      4
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:5": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      5
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:6": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      6
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:7": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      7
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:8": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      8
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:9": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      9
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:10": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      10
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:11": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      11
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:12": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      12
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:13": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      13
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:14": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      14
+    ]
+  },
+  "progress:AAAAAAAAAAAAAAAA:15": {
+    "remembered": [
+      "AAAAAAAAAAAAAAAA",
+      15
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:0": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      0
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:1": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      1
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:2": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      2
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:3": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      3
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:4": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      4
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:5": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      5
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:6": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      6
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:7": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      7
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:8": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      8
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:9": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      9
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:10": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      10
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:11": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      11
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:12": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      12
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:13": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      13
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:14": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      14
+    ]
+  },
+  "progress:BBBBBBBBBBBBBBBB:15": {
+    "remembered": [
+      "BBBBBBBBBBBBBBBB",
+      15
+    ]
+  },
+  "progress:unrecognized:99": {
+    "keep": true
+  },
+  "futureInventory": {
+    "keep": [
+      "all",
+      null
+    ]
+  }
+}

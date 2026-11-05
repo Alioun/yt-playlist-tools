@@ -1,0 +1,20 @@
+--- a/src/background/store/sync-reset-receive.ts
++++ b/src/background/store/sync-reset-receive.ts
+@@ -53,7 +53,7 @@
+     raw.phase !== "session" && raw.phase !== "local" && raw.phase !== "commit" && raw.phase !== "notice") return
+   const accounts = [...new Set(raw.accounts)]
+   if (accounts.length !== raw.accounts.length || new Set(raw.targets).size !== raw.targets.length) return
+-  const expected = new Set(["doc:settings", ...accounts.flatMap(acct => [`cache:${acct}`, ...removalProgressShards.map(shard => `progress:${acct}:${shard}`)])])
++  const expected = new Set(["doc:settings", ...accounts.flatMap(acct => [`cache:${acct}`, ...removalProgressShards.filter(shard => shard !== 15).map(shard => `progress:${acct}:${shard}`)])])
+   for (const name of raw.targets) {
+     const key = parseDocumentKey(name)
+     if (!expected.has(name) && !(key && (key.kind === "setup" || key.kind === "filter") && accounts.includes(key.acct) && documentKey(key) === name)) return
+@@ -134,7 +134,7 @@
+       }
+       if (accounts.size > 128 || documents.length > 1792) return held("inventory")
+       const targets = [...new Set([...documents, "doc:settings", ...[...accounts].flatMap(acct =>
+-        [`cache:${acct}`, ...removalProgressShards.map(shard => `progress:${acct}:${shard}`)])])].sort()
++        [`cache:${acct}`, ...removalProgressShards.filter(shard => shard !== 15).map(shard => `progress:${acct}:${shard}`)])])].sort()
+       marker = { v: 1, kind: "received-reset", metadata, authority: snapshot(current), originalAuthority: snapshot(current),
+         recovery: { kind: "none" }, accounts: [...accounts].sort(), targets, phase: "session" }
+     }

@@ -15,6 +15,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # G28's secret-flow tests, in a job of their own whose name no other
+  # workflow's job uses, so the main ruleset can require this check by name.
+  # A test compares the job and ci.yml's top-level keys whole, so no env
+  # reaches the proof from the workflow, and only checkout and setup-bun run
+  # before it, so no step of ours can set its environment through $GITHUB_ENV.
+  g28-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit upstream's v7 tag peels to (design, "Turning it on")
+
+      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
+        with:
+          bun-version-file: package.json
+          # No cache entry another job saved may replace the Bun that runs the proof.
+          no-cache: true
+
+      # Without the install and without the repo's bunfig.toml or
+      # tsconfig.json, so only code-owned files decide whether they pass. A
+      # tsconfig paths entry can make bun test register no test and still exit
+      # 0, and bunfig.toml preloads tests/setup. Bun starts from an empty
+      # environment, because BUN_OPTIONS and BUN_INSPECT_PRELOAD preload even
+      # with --config. Bun's report must also count every test passed, so a
+      # file that exits early fails.
+      - name: Test the reviewer-login secret flow (G28)
+        run: |
+          : > "$RUNNER_TEMP/empty.toml"
+          echo '{}' > "$RUNNER_TEMP/empty.json"
+          report=$RUNNER_TEMP/reviewer-login-proof.xml
+          rm -f "$report"
+          env -i PATH="$PATH" HOME="$HOME" RUNNER_TEMP="$RUNNER_TEMP" bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file \
+            --tsconfig-override="$RUNNER_TEMP/empty.json" --reporter=junit --reporter-outfile="$report" \
+            ./tests/integration/amo-reviewer-notes.test.ts
+          grep -Eq '^<testsuites name="bun test" tests="108" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
+            || { echo "::error::the G28 proof did not pass all 108 of its tests"; exit 1; }
+
   build:
     runs-on: ubuntu-latest
     outputs:
@@ -31,11 +66,18 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Lint
+        run: bun run lint
+
+      - name: Format
+        run: bun run format:check
+
       - name: Typecheck
         run: bun run compile
 
-      - name: Test
-        run: bun run test
+      # test:bun runs as the test-bun matrix below.
+      - name: Fixture gates
+        run: bun run test:fixtures
 
       - name: Release decision cases
         run: scripts/release-meta.test.sh
@@ -54,7 +96,15 @@ jobs:
         run: node tools/fixtures/svelte-pilot/check-archives.mjs
 
       - name: Assert manifests are correct
-        run: scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3
+        run: bun run check:manifest
+
+      # Writes the size table to the job summary (Q-PERF-39).
+      - name: Assert bundle sizes are within budget
+        run: bun run check:budget
+
+      # Chrome won't load a content script that isn't valid UTF-8.
+      - name: Assert built text files are valid UTF-8
+        run: bun run check:utf8
 
       - name: Short SHA
         id: sha
@@ -103,12 +153,35 @@ jobs:
           - **Firefox** (\`firefox-mv3-${SHORT_SHA}\`): open \`about:debugging#/runtime/this-firefox\`, **Load Temporary Add-on…**, and pick the downloaded zip as it is. It's gone when Firefox restarts.
           EOF
 
+  # One Bun process runs on one core, and the suite takes about 20 minutes
+  # that way, so its files are split across parallel jobs. The name stays
+  # literal, because G28's proof fails any computed job name. GitHub adds the
+  # shard number to each check's name.
+  test-bun:
+    name: bun test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bun run test:bun --shard ${{ matrix.shard }}/${{ strategy.job-total }}
+
   svelte-pilot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -156,10 +229,8 @@ jobs:
     environment: amo-dev
     env:
       SHORT_SHA: ${{ needs.build.outputs.short-sha }}
-      # Public, and asserted in check-manifests.sh. AMO finds it only with braces.
+      # Public, and asserted in check-manifest.ts. AMO finds it only with braces.
       FIREFOX_EXTENSION_ID: "{cc70cd21-2cc6-444b-bd89-496909346091}"
-      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
     steps:
       - uses: actions/checkout@v7
 
@@ -198,6 +269,8 @@ jobs:
         id: amo
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           status=$(bun scripts/amo-version.ts status "$VERSION")
@@ -210,11 +283,14 @@ jobs:
 
       - name: Sign on AMO (unlisted)
         if: steps.amo.outputs.status == 'missing'
+        # web-ext reads WEB_EXT_* options from the environment, which keeps the key off the command line.
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           bunx web-ext sign --source-dir unpacked --artifacts-dir signed \
             --channel unlisted \
-            --api-key "$FIREFOX_JWT_ISSUER" --api-secret "$FIREFOX_JWT_SECRET" \
             --upload-source-code "$(ls sources/*-sources.zip)" \
             --approval-timeout 1800000
 
@@ -222,12 +298,16 @@ jobs:
         if: steps.amo.outputs.status == 'no-source'
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun scripts/amo-version.ts attach-source "$VERSION" "$(ls sources/*-sources.zip)"
 
       # Whichever way the version got there, it must now have its sources.
       - name: Check AMO has the version with its sources
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           status=$(bun scripts/amo-version.ts status "$VERSION")
           [ "$status" = present ] || { echo "::error::AMO's version $VERSION is '$status', not present with sources"; exit 1; }
@@ -236,6 +316,8 @@ jobs:
         if: steps.amo.outputs.status != 'missing'
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun scripts/amo-version.ts download "$VERSION" signed 30
 
       # web-ext repackages the directory; the signed files must be the built ones.

@@ -1,0 +1,103 @@
+{
+  "state": "authored-unexecuted",
+  "probes": [
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 23,
+      "directive": "// @ts-expect-error Private Monitor state has no canonical persistence edit.",
+      "diagnosticLine": 24,
+      "diagnostic": "export const privateEdit: SessionEdit = { kind: \"monitor\", scope: \"private\", acct, vocabulary, operations: [operation] }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 25,
+      "directive": "// @ts-expect-error An account envelope requires a validated account identity.",
+      "diagnosticLine": 26,
+      "diagnostic": "export const rawAccount: SessionEdit = { kind: \"monitor\", scope: \"normal\", acct: \"unvalidated\", vocabulary, operations: [operation] }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 27,
+      "directive": "// @ts-expect-error Diagnostic vocabulary is a required boundary collaborator.",
+      "diagnosticLine": 28,
+      "diagnostic": "export const unvalidated: SessionEdit = { kind: \"monitor\", scope: \"normal\", acct, operations: [operation] }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 29,
+      "directive": "// @ts-expect-error A route without any shipped route fact cannot assert job health.",
+      "diagnosticLine": 30,
+      "diagnostic": "export const emptyRoutes: JobRoutes = { routes: [] }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 31,
+      "directive": "// @ts-expect-error Route identities must pass the identifier boundary.",
+      "diagnosticLine": 32,
+      "diagnostic": "export const rawRoute: JobRoutes = { routes: [{ route: \"arbitrary-url\", state: \"usable\" }] }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 33,
+      "directive": "// @ts-expect-error Registry dependencies cannot substitute for current core, account, anchor and destination facts.",
+      "diagnosticLine": 34,
+      "diagnostic": "export const missingFacts: HealthFacts = { site: \"www\", jobs: new Map() }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 35,
+      "directive": "// @ts-expect-error A page status cannot carry a background-only feature identifier.",
+      "diagnosticLine": 36,
+      "diagnostic": "export const backgroundAsPage: FeatureStatus = { feature: \"browser-menu\", state: \"working\", jobs: [], anchors: [], actions: [], kinds: [] }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 37,
+      "directive": "// @ts-expect-error A due read does not provide a display acknowledgement method.",
+      "diagnosticLine": 38,
+      "diagnostic": "monitor.noticeProducer.acknowledge(context)"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 39,
+      "directive": "// @ts-expect-error A delivery acknowledgement requires the exact token.",
+      "diagnosticLine": 40,
+      "diagnostic": "monitor.acknowledgeNotice(context)"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 41,
+      "directive": "// @ts-expect-error A signal never serializes authenticated account scope.",
+      "diagnosticLine": 42,
+      "diagnostic": "export const accountInSignal: BreakageSignal = { ...signal, acct }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 43,
+      "directive": "// @ts-expect-error The injected instance identity cannot be an arbitrary string.",
+      "diagnosticLine": 44,
+      "diagnostic": "export const inventedInstance: NoticeToken = { instance: \"tab-1\", sequence: 1 }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 45,
+      "directive": "// @ts-expect-error Current route authority is required even when a registry exists.",
+      "diagnosticLine": 46,
+      "diagnostic": "export const noAuthority: MonitorPorts = { owner: ports.owner, vocabulary, instance, clock: ports.clock }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 47,
+      "directive": "// @ts-expect-error An injected one-shot scheduler is required.",
+      "diagnosticLine": 48,
+      "diagnostic": "export const pollingClock: MonitorPorts = { ...ports, clock: { now: () => 0 } }"
+    },
+    {
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 49,
+      "directive": "// @ts-expect-error Status detail is immutable to consumers.",
+      "diagnosticLine": 50,
+      "diagnostic": "status.actions.push(\"save\")"
+    }
+  ]
+}

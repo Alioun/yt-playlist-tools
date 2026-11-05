@@ -2,17 +2,33 @@ import { describe, expect, test } from "bun:test"
 import { readFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { runInNewContext } from "node:vm"
-import ts from "typescript"
+// TypeScript 7's package has no compiler API, so this parser uses the TypeScript 6 alias.
+import ts from "typescript6"
 import {
-  decodeDocument, decodeFilter, decodeSettings, decodeSetup,
-  isAccountKey, isPlaylistId, normalizeFilterForWrite, normalizeSettingsForWrite,
-  normalizeSetupForWrite, type DocumentKey, type Tombstone
+  decodeDocument,
+  decodeFilter,
+  decodeSettings,
+  decodeSetup,
+  isAccountKey,
+  isPlaylistId,
+  normalizeFilterForWrite,
+  normalizeSettingsForWrite,
+  normalizeSetupForWrite,
+  type DocumentKey,
+  type Tombstone
 } from "../../shared/model"
 import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
 import {
-  encodeSyncDocument, readSyncDocument, projectSyncWrite,
-  SINGLE_DOCUMENT_BYTES, SYNC_ITEM_BYTES, SYNC_BUDGET_BYTES, SYNC_BUDGET_ITEMS,
-  type EncodedSyncDocument, type RawSyncItem, type SyncItem
+  encodeSyncDocument,
+  readSyncDocument,
+  projectSyncWrite,
+  SINGLE_DOCUMENT_BYTES,
+  SYNC_ITEM_BYTES,
+  SYNC_BUDGET_BYTES,
+  SYNC_BUDGET_ITEMS,
+  type EncodedSyncDocument,
+  type RawSyncItem,
+  type SyncItem
 } from "./sync-codec"
 
 const settingsKey = { kind: "settings" } satisfies DocumentKey
@@ -24,7 +40,10 @@ const setupKey = { kind: "setup", acct } satisfies DocumentKey
 const filterKey = { kind: "filter", acct, playlist: watchLater } satisfies DocumentKey
 const stamp = { v: 1, gen: "g", at: 1, by: "b" }
 const small = { ...stamp, data: {} }
-const oracle = runInNewContext(`(key, value) => new TextEncoder().encode(key).length + new TextEncoder().encode(JSON.stringify(value)).length + 4`, { TextEncoder }) as (key: string, value: unknown) => number
+const oracle = runInNewContext(`(key, value) => new TextEncoder().encode(key).length + new TextEncoder().encode(JSON.stringify(value)).length + 4`, { TextEncoder }) as (
+  key: string,
+  value: unknown
+) => number
 const jsonBytes = (value: unknown): number => oracle("", value) - 4
 const charge = (item: RawSyncItem): number => oracle(item.key, item.value)
 const total = (items: readonly RawSyncItem[]): number => items.reduce((sum, item) => sum + charge(item), 0)
@@ -119,7 +138,7 @@ describe("1. literal documents and canonical names", () => {
 describe("2. inclusive document byte threshold", () => {
   test("7600 is inclusive and 7001 stays a single object", () => {
     expect([SINGLE_DOCUMENT_BYTES, SYNC_ITEM_BYTES, SYNC_BUDGET_BYTES, SYNC_BUDGET_ITEMS]).toEqual([7600, 8192, 98304, 480])
-    for (const seed of [small, { ...small, 'é🙂': '"\\\né🙂\ud800' }]) {
+    for (const seed of [small, { ...small, "é🙂": '"\\\né🙂\ud800' }]) {
       for (const size of [7001, 7599, 7600, 7601]) {
         const document = padded(size, seed)
         const wire = encoded(document)
@@ -168,7 +187,10 @@ describe("3. greedy escaped-byte packing", () => {
       expect(typeof item.value).toBe("string")
       if (typeof item.value === "string") expect(/[\uD800-\uDBFF]$|^[\uDC00-\uDFFF]/.test(item.value)).toBe(false)
     }
-    for (const document of [{ ...small, gen: "界".repeat(4000) }, { ...small, by: "b".repeat(9000) }]) {
+    for (const document of [
+      { ...small, gen: "界".repeat(4000) },
+      { ...small, by: "b".repeat(9000) }
+    ]) {
       const result = encodeSyncDocument({ key: settingsKey, document })
       expect(result.kind).toBe("item-too-large")
       if (result.kind === "item-too-large") expect(result.bytes).toBeGreaterThan(8192)
@@ -185,7 +207,11 @@ describe("4. complete snapshot assembly", () => {
     noCandidate(items.slice(1), "absent")
     expect(read([...items].reverse())).toEqual(read(items))
     expect(read(items).kind).toBe("value")
-    for (const index of [1, 2, 3]) noCandidate(items.filter((_, at) => at !== index), "incomplete")
+    for (const index of [1, 2, 3])
+      noCandidate(
+        items.filter((_, at) => at !== index),
+        "incomplete"
+      )
     noCandidate([...items, items[1]!], "invalid")
     noCandidate([...items, items[0]!], "invalid")
     const nativeSnapshot = new Map(items.map(item => [item.key, item.value]))
@@ -282,7 +308,11 @@ describe("7. last-good caller and explicit tombstone", () => {
 
 describe("8. real model forward compatibility and caller materialization", () => {
   test("unknown fields survive known edits, normalization and transport", () => {
-    const settings = { ...stamp, envelope: { future: true }, data: { quickSave: { on: true, future: [1, 2] }, shortcuts: { list: [{ id: "abc123", key: null, label: "🙂".repeat(42), watchLaterOnEveryAccount: true, future: "kept" }] } } }
+    const settings = {
+      ...stamp,
+      envelope: { future: true },
+      data: { quickSave: { on: true, future: [1, 2] }, shortcuts: { list: [{ id: "abc123", key: null, label: "🙂".repeat(42), watchLaterOnEveryAccount: true, future: "kept" }] } }
+    }
     const decoded = decodeDocument(settings, decodeSettings)
     if (decoded.kind !== "value") throw new Error("Missing decoded settings")
     const final = { ...decoded.document, data: normalizeSettingsForWrite({ ...decoded.document.data, theme: "dark" }) }
@@ -293,7 +323,11 @@ describe("8. real model forward compatibility and caller materialization", () =>
     expect(roundTrip.json.envelope).toEqual({ future: true })
     expect(roundTrip.json.data).toMatchObject({ quickSave: { future: [1, 2] }, shortcuts: { list: [{ future: "kept" }] } })
 
-    const setup = { ...stamp, envelope: "setup future", data: { autoAdd: [{ pl: "PLtest", future: 9 }], label: { name: "界".repeat(103), future: true }, targets: { abc123: "PLtest" }, marks: { WL: "full", PLtest: "missing", PLgone: "full" } } }
+    const setup = {
+      ...stamp,
+      envelope: "setup future",
+      data: { autoAdd: [{ pl: "PLtest", future: 9 }], label: { name: "界".repeat(103), future: true }, targets: { abc123: "PLtest" }, marks: { WL: "full", PLtest: "missing", PLgone: "full" } }
+    }
     const setupDecoded = decodeDocument(setup, decodeSetup)
     if (setupDecoded.kind !== "value") throw new Error("Missing decoded setup")
     const normalized = normalizeSetupForWrite({ ...setupDecoded.document.data, autoAdd: [] }, { shortcutIds: new Set(["abc123"]), additionalChosenPlaylists: new Set(["WL"]) })
@@ -315,7 +349,7 @@ describe("8. real model forward compatibility and caller materialization", () =>
     expect(normalized.channels[0]![2]).toBeUndefined()
     expect(isJsonValue({ ...decoded.document, data: normalized })).toBe(false)
     expect(encodeSyncDocument({ key: filterKey, document: { ...decoded.document, data: normalized } }).kind).toBe("invalid")
-    const channels: unknown = normalized.channels.map(row => row.length > 3 && row[2] === undefined ? [...row.slice(0, 2), null, ...row.slice(3)] : row)
+    const channels: unknown = normalized.channels.map(row => (row.length > 3 && row[2] === undefined ? [...row.slice(0, 2), null, ...row.slice(3)] : row))
     const materialized = { ...decoded.document, data: { ...normalized, channels } }
     if (!isJsonValue(materialized) || materialized === null || typeof materialized !== "object" || Array.isArray(materialized)) throw new Error("Expected JSON-form filter")
     expect([...normalized.channels[0]![1]]).toHaveLength(100)
@@ -349,7 +383,7 @@ describe("9. inclusive quota bounds and independent byte oracle", () => {
 
   test("each key, pointer, escaped fragment, metadata and tombstone contributes", () => {
     const current = [
-      { key: "é🙂", value: "\"\\\n🙂" },
+      { key: "é🙂", value: '"\\\n🙂' },
       { key: "s:settings", value: { ...stamp, n: 1 } },
       { key: "s:settings@g.0", value: JSON.stringify(small) },
       { key: "s:settings@old.0", value: "retained old chunk" },
@@ -375,7 +409,10 @@ describe("9. inclusive quota bounds and independent byte oracle", () => {
 
 describe("10. exact-key overlay and retained occupancy", () => {
   test("overwrite counts once, malformed values can be repaired and duplicates refuse", () => {
-    const current = [{ key: "a", value: "long old value" }, { key: "b", value: true }]
+    const current = [
+      { key: "a", value: "long old value" },
+      { key: "b", value: true }
+    ]
     const set = [{ key: "a", value: 1 }]
     const result = projectSyncWrite({ current, set })
     expect(result.kind).toBe("fits")
@@ -393,7 +430,10 @@ describe("10. exact-key overlay and retained occupancy", () => {
     const set = [{ key: "s:settings", value: small }]
     expect(projectSyncWrite({ current: [], set }).kind).toBe("fits")
     expect(projectSyncWrite({ current: snapshotBytes(98304), set }).kind).toBe("full")
-    const retained = [{ key: "s:settings@old.0", value: "previous chunk" }, { key: "s:meta", value: { id: "history" } }]
+    const retained = [
+      { key: "s:settings@old.0", value: "previous chunk" },
+      { key: "s:meta", value: { id: "history" } }
+    ]
     for (const item of retained) {
       const current = [...snapshotBytes(98304 - charge(set[0]!)), item]
       expect(projectSyncWrite({ current, set }).kind).toBe("full")
@@ -447,10 +487,29 @@ describe("12. strict JSON and immutable inputs", () => {
 
   test("unsupported data refuses without executing own accessors or hooks", () => {
     let reads = 0
-    const getter = Object.defineProperty({}, "x", { enumerable: true, get() { reads++; return 1 } })
+    const getter = Object.defineProperty({}, "x", {
+      enumerable: true,
+      get() {
+        reads++
+        return 1
+      }
+    })
     const cycle: { self?: unknown } = {}
     cycle.self = cycle
-    const bad = [getter, { x() {} }, { toJSON() { reads++; return "tiny" } }, { x: Infinity }, cycle, { x: undefined }, new Array(1)]
+    const bad = [
+      getter,
+      { x() {} },
+      {
+        toJSON() {
+          reads++
+          return "tiny"
+        }
+      },
+      { x: Infinity },
+      cycle,
+      { x: undefined },
+      new Array(1)
+    ]
     for (const extension of bad) {
       const document = { ...small, extension }
       expect(encodeSyncDocument({ key: settingsKey, document })).toEqual({ kind: "invalid", field: "document", reason: "json" })
@@ -489,24 +548,50 @@ describe("13. actual browser artifact, graph and prototype hooks", () => {
       for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(source)) {
         expect(imported.path.startsWith(".")).toBe(true)
         const base = resolve(dirname(file), imported.path)
-        await inspect(await Bun.file(`${base}.ts`).exists() ? `${base}.ts` : resolve(base, "index.ts"))
+        await inspect((await Bun.file(`${base}.ts`).exists()) ? `${base}.ts` : resolve(base, "index.ts"))
       }
     }
     await inspect(entrypoint)
     expect(visited.has(resolve(import.meta.dir, "../../shared/contracts/json.ts"))).toBe(true)
     const program = ts.createProgram([...visited], { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler, types: [] })
     const checker = program.getTypeChecker()
-    const forbidden = new Set(["Date", "performance", "crypto", "process", "Bun", "Deno", "browser", "chrome", "window", "document", "navigator", "indexedDB", "localStorage", "sessionStorage", "fetch", "XMLHttpRequest", "setTimeout", "setInterval"])
+    const forbidden = new Set([
+      "Date",
+      "performance",
+      "crypto",
+      "process",
+      "Bun",
+      "Deno",
+      "browser",
+      "chrome",
+      "window",
+      "document",
+      "navigator",
+      "indexedDB",
+      "localStorage",
+      "sessionStorage",
+      "fetch",
+      "XMLHttpRequest",
+      "setTimeout",
+      "setInterval"
+    ])
     for (const file of visited) {
       const source = program.getSourceFile(file)
       if (!source) throw new Error("Missing graph source")
       function check(node: ts.Node): void {
         if (ts.isTypeNode(node) || ts.isImportDeclaration(node)) return
         if (ts.isIdentifier(node) && forbidden.has(node.text)) {
-          const property = ts.isPropertyAccessExpression(node.parent) && node.parent.name === node || ts.isPropertyAssignment(node.parent) && node.parent.name === node
-          if (!property) expect(checker.getSymbolAtLocation(node)?.declarations?.some(declaration => visited.has(declaration.getSourceFile().fileName)), `${file} reads ambient ${node.text}`).toBe(true)
+          const property = (ts.isPropertyAccessExpression(node.parent) && node.parent.name === node) || (ts.isPropertyAssignment(node.parent) && node.parent.name === node)
+          if (!property)
+            expect(
+              checker.getSymbolAtLocation(node)?.declarations?.some(declaration => visited.has(declaration.getSourceFile().fileName)),
+              `${file} reads ambient ${node.text}`
+            ).toBe(true)
         }
-        if (ts.isPropertyAccessExpression(node)) expect(node.getText(source)).not.toMatch(/^(?:Math\.random|import\.meta\.env|globalThis\.(?:Date|performance|crypto|process|Bun|Deno|browser|chrome|window|document|navigator|indexedDB|localStorage|sessionStorage|fetch|XMLHttpRequest))(?:\.|$)/)
+        if (ts.isPropertyAccessExpression(node))
+          expect(node.getText(source)).not.toMatch(
+            /^(?:Math\.random|import\.meta\.env|globalThis\.(?:Date|performance|crypto|process|Bun|Deno|browser|chrome|window|document|navigator|indexedDB|localStorage|sessionStorage|fetch|XMLHttpRequest))(?:\.|$)/
+          )
         ts.forEachChild(node, check)
       }
       check(source)
@@ -516,7 +601,11 @@ describe("13. actual browser artifact, graph and prototype hooks", () => {
     expect(build.outputs).toHaveLength(1)
     const artifact = await build.outputs[0]!.text()
     expect(artifact.length).toBeGreaterThan(0)
-    const evidence = JSON.parse(runInNewContext(ambientGuards + artifact + `
+    const evidence = JSON.parse(
+      runInNewContext(
+        ambientGuards +
+          artifact +
+          `
       ;(() => {
         const api = module.exports;
         const key = {kind:"settings"};
@@ -576,7 +665,11 @@ describe("13. actual browser artifact, graph and prototype hooks", () => {
         const actual = JSON.parse(baseline);
         return JSON.stringify({exports:Object.keys(api).sort(),single:actual.single.encoded.mode,roundTrip:actual.roundTrip.kind,equal:JSON.stringify(actual.roundTrip.json)===JSON.stringify(large),incomplete:actual.incomplete.kind,projection:actual.projection,usage:actual.usage,deleted:actual.deleted.kind,probes,enumerable,reads,calls});
       })()
-    `, { module: { exports: {} }, TextEncoder }, { timeout: 15000 }))
+    `,
+        { module: { exports: {} }, TextEncoder },
+        { timeout: 15000 }
+      )
+    )
     expect(evidence.exports).toEqual(["SINGLE_DOCUMENT_BYTES", "SYNC_BUDGET_BYTES", "SYNC_BUDGET_ITEMS", "SYNC_ITEM_BYTES", "encodeSyncDocument", "projectSyncWrite", "readSyncDocument"])
     expect(evidence).toMatchObject({ single: "single", roundTrip: "value", equal: true, incomplete: "incomplete", deleted: "deleted", reads: 0, calls: 0 })
     expect(evidence.projection.kind).toBe("fits")

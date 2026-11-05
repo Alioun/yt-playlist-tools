@@ -43,17 +43,22 @@ export function normalizeSetupForWrite(setup: Setup, context: SetupContext): Set
   for (const playlist of [value.quickSave, value.musicSave, value.gather]) {
     if (playlist !== null) playlists.add(playlist)
   }
-  const label = value.label === null ? null : {
-    ...value.label, name: cut(value.label.name, 100),
-    ...(value.label.handle === undefined ? {} : { handle: cut(value.label.handle, 30) })
-  }
+  const label =
+    value.label === null
+      ? null
+      : {
+          ...value.label,
+          name: cut(value.label.name, 100),
+          ...(value.label.handle === undefined ? {} : { handle: cut(value.label.handle, 30) })
+        }
   return {
-    ...value, label, targets,
+    ...value,
+    label,
+    targets,
     marks: Object.fromEntries(Object.entries(value.marks).filter(([playlist]) => playlists.has(playlist)))
   }
 }
 
 export function isSetupEmpty(setup: Setup, hasKeptFilters: boolean): boolean {
-  return !hasKeptFilters && setup.autoAdd.length === 0 && Object.keys(setup.targets).length === 0 &&
-    setup.quickSave === null && setup.musicSave === null && setup.gather === null
+  return !hasKeptFilters && setup.autoAdd.length === 0 && Object.keys(setup.targets).length === 0 && setup.quickSave === null && setup.musicSave === null && setup.gather === null
 }

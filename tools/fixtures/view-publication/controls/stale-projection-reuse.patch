@@ -1,0 +1,28 @@
+--- a/src/background/tab-view/publication.ts
++++ b/src/background/tab-view/publication.ts
+@@ -30,6 +30,7 @@
+     running: boolean; cancel: (() => void) | undefined
+   }
+   const pending = new Map<number, Pending>(), subscriptions: (() => void)[] = []
++  const stale = new Map<number, Awaited<ReturnType<PublicationPorts["producer"]["produce"]>>>()
+   const lifetime = new AbortController()
+   let disposed = false
+   function dispose() {
+@@ -63,7 +64,16 @@
+     row.dirtyAt = undefined
+     const version = row.version, tab = row.tab
+     try {
+-      await ports.tabs.publish(tab, ports.producer, lifetime.signal, () => {
++      await ports.tabs.publish(tab, {
++        isView: ports.producer.isView,
++        async produce(context) {
++          const old = stale.get(tab.tabId)
++          if (old) return old
++          const current = await ports.producer.produce(context)
++          stale.set(tab.tabId, current)
++          return current
++        }
++      }, lifetime.signal, () => {
+         if (disposed || row.version !== version || row.tab !== tab) return false
+         row.lastSend = ports.clock.now()
+         return true

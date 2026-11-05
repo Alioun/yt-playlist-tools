@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["bun"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "../../../src/shared/contracts/tabs.ts",
+    "../../../src/shared/contracts/tabs.bun-test.ts",
+    "../../../src/background/tabs/tabs.type-test.ts",
+    "../../../src/background/tabs/tabs.bun-test.ts",
+    "../../../src/background/tabs/owner.bun-test.ts",
+    "../../../src/background/adapters/tabs.bun-test.ts",
+    "../../../src/background/store/session-memory.type-test.ts",
+    "../../../src/background/store/session-memory.bun-test.ts",
+    "../../../src/background/store/account-removal-session.bun-test.ts",
+    "run.ts"
+  ]
+}

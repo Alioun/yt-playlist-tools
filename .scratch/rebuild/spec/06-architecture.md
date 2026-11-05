@@ -40,9 +40,10 @@ This chapter says how 2.0 reaches YouTube and YouTube Music, what ships in each 
  │   popovers.js      lazy, by scripting.executeScript: playlist picker + watch-page menu (own Svelte + Bits UI)             │
  │        ▲▼ PageChannel: CustomEvents with JSON-string detail; item jobs are dispatched on the item's element               │
  │ MAIN world, registration pp-www-page:                                                                                     │
- │   page-www.js      Gateway: route table · lanes · account guard · parsers · effect checks ── PagePort (live) ── YouTube    │
+ │   page-www.js      Gateway's page half: page channel · hello · account · streams ── PagePort (live) ── YouTube            │
+ │   page-jobs-www.js lazy, on the page's first job: route table · lanes · account guard · parsers · effect checks (R200)    │
  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
- A YouTube Music tab has the same shape: page-music.js, core-music.js, kit-music.js and its features.
+ A YouTube Music tab has the same shape: page-music.js, page-jobs-music.js, core-music.js, kit-music.js and its features.
 ```
 
 **Runtime contexts:**
@@ -415,7 +416,7 @@ flowchart TD
 - **ARC-ACC-52. Account in view,** in [ACC-13](04-features-accounts-data.md#23-which-account-is-shown)'s order:
   1. the active tab's account, or its signed-out state, when the popup sits over a YouTube or YouTube Music tab;
   2. else the account of the most recently active YouTube or YouTube Music tab, in a window of the same kind;
-  3. else, in a normal window, the last account **with a setup** that was current in a normal window (`Device.lastAccount`), from cache. A private window has no such fallback.
+  3. else, in a normal window, the last account **with a setup** that was current in a normal window (`storage.local`'s `lastAccount`, [DATA-07](04-features-accounts-data.md#43-storage-layout)), from cache. A private window has no such fallback.
 
   Settings uses the account picked in it ([ACC-14](04-features-accounts-data.md#23-which-account-is-shown)). (R54)
 - **ARC-ACC-53. Candidates** come from `tabs.query({ url: [...the job's site pattern], discarded: false })`. Host access is enough for the `url` filter and for the `url`, `incognito` and `lastAccessed` fields, so no `tabs` permission is needed.
@@ -470,7 +471,7 @@ flowchart TD
   - jobs that need an account aren't sent; the gateway answers `signedOut`;
   - Add to queue, the card menu and YouTube Music's queue actions keep working;
   - what users see: auto-add stays silent, with no toast, and every explicit action that needs a signed-in account shows a failure toast with a **Sign in** action ([YT-GEN-08](02-youtube.md#21-rules-shared-by-every-youtube-feature), [YM-ACC-5](03-youtube-music.md#2-accounts-and-private-windows)). (R3, R41)
-- **ARC-ACC-61. No site access** (revoked on Firefox, Firefox 125–126 installs, Chrome's "on click" or a withheld site):
+- **ARC-ACC-61. No site access** (revoked on Firefox, Firefox 125–126 installs, a Firefox upgrader whose music.youtube.com grant didn't carry over (R179), Chrome's "on click" or a withheld site):
   - **Check:** the background calls `permissions.contains` per site on every start, and on `permissions.onAdded` and `onRemoved`.
   - **Missing:** a toolbar "!" on every tab, plus a button in the popup and settings that asks for access ([FT-13](04-features-accounts-data.md#12-switching-features), [§1.7](04-features-accounts-data.md#17-site-access-and-youtube-tabs) for the copy). The click handler calls `permissions.request` first and synchronously, before anything else. (R53)
     - **Every tab,** because without host access the extension can't tell which tabs are that site's.
@@ -478,6 +479,7 @@ flowchart TD
   - **Features:** a feature that's on for a site without access shows as on but held with "Needs site access", and nothing is registered or injected for it until access is granted.
   - **Refused at first run's Agree (Chrome):** consent and the other ticks still apply. The ticked YouTube Music features are saved on but held in the same way, and so is Playlist shortcuts' "Also on YouTube Music", while Playlist shortcuts runs on YouTube. **Give access** shows in the popup and settings ([FT-40](04-features-accounts-data.md#16-first-run) step 2). (R14, R53)
   - **Refused from a switch** in the popup or settings: the YouTube Music feature's switch, or "Also on YouTube Music", stays off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The exception is the click that first switches Playlist shortcuts on: Playlist shortcuts goes on, "Also on YouTube Music" is written off in the same change, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row. (R71)
+  - **Refused after feature-on consent:** "Before this feature can run" keeps explicitly given consent but leaves the affected feature off with an accurate missing-access explanation. First-run and Playlist shortcuts' exceptions above still apply (FT-32, FT-52; R154).
   - **Chrome 133+, PROVISIONAL** ([ticket 09](../issues/09-where-things-live.md), at build; [FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs)): while a feature for that site is on and access is missing, the registrar also calls `permissions.addHostAccessRequest` on open tabs of that site.
 
 ### 6.2.13 Private windows
@@ -573,9 +575,10 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
   - The new tab is ours, not a gathered tab, so injecting into it keeps ARC-ACC-72's rule; it's the one core this job injects (ARC-ACC-70). (R123)
 - **ARC-ACC-76. Closing and reopening tabs.**
   - A gather closes its tabs in one `tabs.remove([...ids])` call, once its destination has confirmed their videos (ARC-ACC-74, ARC-ACC-75, the batch's report).
-  - For a gather into the gather playlist, each closed tab's `url`, `title`, `index` and `windowId` go into the gather's Undo record first ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)).
+  - For a gather into the gather playlist, the gather's Undo record first saves the close plan: each tab's ID, `url`, `title`, `index` and `windowId` ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)). After the `tabs.remove` call, `tabs.get` reads each planned tab back, and the record's second write keeps only the tabs read back as gone. Only the browser's own "no tab with that ID" error means gone. Any other failure leaves the tab unconfirmed, and no removal is retried.
   - **Undo:** one `membership` read for the account guard, then `removeBatch` with the entries the gather added, from a serving tab of that account (ARC-ACC-73's order for automatic gathers, `Tabs.serve` from the popup). Then one `tabs.create({ windowId, index, url, active: false })` per closed tab, in their old order; Firefox adds `discarded: true` and `title`, so they open unloaded. If the window has closed, one `windows.create({ url: [...], focused: false })` holds them. PROVISIONAL (G7).
-  - The reopened tabs' IDs go to the session's `kept` list (DATA-58), which automatic gathering skips until a tab's `lastAccessed` moves.
+  - If the record still holds its plan, because the background stopped before the second write, Undo reads each planned tab ID before reopening. A tab whose ID no longer exists counts as closed and reopens from the plan. A tab still open is left alone, so nothing opens twice.
+  - The reopened tabs' IDs go to the session's `kept` list (DATA-58) in Undo's second write. Automatic gathering skips them until a tab's `lastAccessed` moves.
   - If `removeBatch` fails, no tab reopens, and Undo reports "Couldn't undo.". (R124, R127)
 
 ## 6.3 Manifest, permissions and registration
@@ -598,8 +601,8 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
 | `browser_specific_settings.gecko.data_collection_permissions` | — | `{ "required": ["none"] }`. Settings sync declares no data type (R83). [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps a fallback ready if an AMO reviewer objects. |
 | `browser_specific_settings.gecko.update_url` | — | Only in `--mode beta` builds: `https://alioun.github.io/yt-playlist-tools/beta/updates.json` (ADR-0011) |
 | `permissions` | `["storage", "scripting"]` | `["storage", "scripting"]` |
-| `host_permissions` | `["https://www.youtube.com/*"]` | `["*://*.youtube.com/*"]` |
-| `optional_host_permissions` | `["https://music.youtube.com/*"]` | — (covered by the host permission) |
+| `host_permissions` | `["https://www.youtube.com/*"]` | same (R179) |
+| `optional_host_permissions` | `["https://music.youtube.com/*"]` | same (R179) |
 | `optional_permissions` | `["contextMenus"]`, for Save from the browser's menu only (ARC-MAN-20; R91) | `["contextMenus"]` |
 | `background` | `service_worker` | `scripts` (event page) |
 | `action` | `default_popup`: the popup; `default_title`: `__MSG_actionTitle__`; `default_icon`: `brand/icon-16.png`, `brand/icon-24.png`, `brand/icon-32.png` (R140) | same; no `theme_icons` (R140) |
@@ -611,7 +614,7 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
 
 - **ARC-MAN-01.** The built manifests match this table exactly. `check:manifest` asserts it on both builds ([Q-CI-3](07-quality.md#771-ciyml), [REL-CI-20](08-release.md#141-ciyml)).
 - **ARC-MAN-02.** These are never requested: `tabs`, `activeTab`, `cookies`, `identity`, `offscreen`, `declarativeNetRequest*`, `webRequest*`, `unlimitedStorage`, `menus`, `notifications`, `downloads`, and any Google host other than YouTube's. `contextMenus` is requested only as an optional permission, when Save from the browser's menu is switched on (ARC-MAN-20; R91).
-- **ARC-MAN-03.** On Chrome, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of Give access, or of the control that switches on the first thing that needs it: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on. The shortcuts preset turns that option on, so the click that first switches on playlist shortcuts asks too ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The YouTube Music section switch itself never asks. A refused prompt is handled as [ARC-ACC-61](#6212-no-tab-not-signed-in-no-site-access) says: from a switch, that switch stays off, except that Playlist shortcuts' own first switch-on goes on with "Also on YouTube Music" written off (R71); at first run's Agree, what needs the access is saved on but held (R14). Keys from any tab asks too when it's switched on; refused, it still goes on, and its YouTube Music keys answer "No access to YouTube Music." (R88). (R53, R71)
+- **ARC-MAN-03.** On both browsers, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of Give access, or of the control that switches on the first thing that needs it: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on. The shortcuts preset turns that option on, so the click that first switches on playlist shortcuts asks too ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The YouTube Music section switch itself never asks. A refused prompt is handled as [ARC-ACC-61](#6212-no-tab-not-signed-in-no-site-access) says: from a switch, that switch stays off, except that Playlist shortcuts' own first switch-on goes on with "Also on YouTube Music" written off (R71); at first run's Agree, what needs the access is saved on but held (R14). Keys from any tab asks too when it's switched on; refused, it still goes on, and its YouTube Music keys answer "No access to YouTube Music." (R88). (R53, R71, R179)
 - **ARC-MAN-04.** Dynamic script matches stay narrow on both browsers: `https://www.youtube.com/*` and `https://music.youtube.com/*`, top frame only. A page entry may narrow its paths within those hosts: Gather tabs' covers only watch and live pages (ARC-MAN-24). (R133)
 - **ARC-MAN-05.** The keyboard commands are the unbound `_execute_action` and keys from any tab's three unbound commands (ARC-MAN-19). Every shortcut the user records is caught in the page (ADR-0004, amended 2026-10-20; R88).
 - **ARC-MAN-19. Keys from any tab's commands** (R88):
@@ -626,22 +629,21 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
   - Switching the feature off calls `permissions.remove({ permissions: ["contextMenus"] })`. `permissions.onRemoved` holds the feature with "Needs your OK" ([FT-60](04-features-accounts-data.md#13-off-costs-nothing)).
 - **ARC-MAN-21. Strings come from `_locales`** (R93). The manifest sets `default_locale: "en"`, and its name, short name, description, action title and command descriptions are `__MSG_…__` entries of `_locales/en/messages.json`, the same catalogue the UI reads ([ARC-MOD-35](#644-popup-settings-and-the-first-run-page-srcui)). Only `en` ships.
 
-**Why the hosts differ per browser:**
-- **Firefox keeps `*://*.youtube.com/*`,** the exact pattern 1.4.5's content script was granted.
-  - Firefox MV3 never grants new origins on update.
-  - Firefox's code marks "revoke origins no longer declared" as planned for every extension (Bug 2022704). Narrowing could then strip every upgrader's access.
-- **Chrome is narrow,** because it's a fresh listing and Chrome Web Store policy asks for the narrowest set.
+**Why both browsers ask for the same hosts** (R179, which replaces the per-browser split):
+- **Both are narrow.** Chrome Web Store policy asks for the narrowest set, and the owner chose the same set for Firefox (G21).
   - Making YouTube Music optional keeps the install prompt to www.youtube.com alone.
   - Optional permissions never disable the extension on update.
+- **Firefox narrows from 1.4.5's `*://*.youtube.com/*`.** Narrowing asks nothing on update, so the 1.4.5 → 2.0 update still shows no prompt.
+  - Firefox's code marks "revoke origins no longer declared" as planned for every extension (Bug 2022704). Once that ships, an upgrader who used YouTube Music under 1.4.5 may have to give access to music.youtube.com again. The owner accepted that cost.
 
 **What users see** (settled from Firefox's and Chromium's sources, [R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83); P1 only glances at the real dialogs. The exact strings and the full list by audience are [08 §5](08-release.md#5-permission-prompts-by-audience)):
 
 | Situation | Prompt |
 |---|---|
 | Chrome install | "Read and change your data on www.youtube.com" only |
-| Chrome, the first thing that needs YouTube Music (ARC-MAN-03) | A site-access prompt for music.youtube.com |
-| Firefox install | "Add Perchling for YouTube™", with no question mark; one required line, "Access your data for sites in youtube.com domains" (no line for `storage` or `scripting`); and "Data collection: The developer says this extension doesn't require data collection." ([08 §5](08-release.md#5-permission-prompts-by-audience); R83) |
-| Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and neither has a message, dropping `identity` and `activeTab` is silent, the origin is unchanged, and on update Firefox shows only added required data types, never `none` (R83). The new `commands` and the optional `contextMenus` add nothing (R88, R91). |
+| Either browser, the first thing that needs YouTube Music (ARC-MAN-03) | A site-access prompt for music.youtube.com |
+| Firefox install | "Add Perchling for YouTube™", with no question mark; one required line, "Access your data for www.youtube.com" (R179; no line for `storage` or `scripting`); and "Data collection: The developer says this extension doesn't require data collection." ([08 §5](08-release.md#5-permission-prompts-by-audience); R83) |
+| Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and neither has a message, dropping `identity` and `activeTab` is silent, narrowing the origin asks nothing (R179), and on update Firefox shows only added required data types, never `none` (R83). The new `commands` and the optional `contextMenus` add nothing (R88, R91). |
 | Either browser, Save from the browser's menu switched on | None: `contextMenus` has no warning on Chrome and no message on Firefox (ARC-MAN-20; R91) |
 
 **Chrome Web Store justification for `scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
@@ -691,6 +693,12 @@ Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by th
   - It's the only code that reaches a YouTube page while every feature is off, and only after the user opens the popup or settings.
   - **Injection on use** (R88, R91): keys from any tab and the browser menu, which register nothing, call `Registrar.ensure(tabId, { core: true, kit: true })` before their job, so the tab can show the answer's toast ([FT-59](04-features-accounts-data.md#13-off-costs-nothing), ARC-ACC-69). It's allowed only after consent, and the injected code stays inert until reload.
 - **ARC-MAN-16. Popovers:** `ctx.popovers()` → `tab.need { popovers: true }` → `Registrar.ensure(tabId, { popovers: true })` → `executeScript` of `popovers.js`.
+- **ARC-MAN-26. The jobs file** (G42, R200): the page half asks for `page-jobs-<site>.js` on its page's first job, and only then.
+  - The page half sends `need` to the core, the core sends `tab.need { jobs: true }`, and the background runs `Registrar.ensure(tabId, { jobs: true })`. It injects the file into the page's world (`world: "MAIN"`) of that one tab, once, and only behind the page half and core of the current build. It's never registered, so a tab that loads afterwards gets it only on its own first job.
+  - The file offers itself to the page half of its own build with a `ppt:jobs-offer` event on `document`, whose detail is the offer. The page half takes it only while it is asking, and then answers the Registrar's `ppt:jobs` presence check for that build. The core answers `need` with `loaded { ok }` once `ensure` returns.
+  - Jobs that arrive meanwhile wait, and none runs before both the file and that confirmation arrive. Each keeps what is left of its 10 s, so expired work never starts. A refusal, or no answer within 10 s, fails the waiting jobs as never sent (`unavailable`), and the next job asks again.
+  - The jobs half uses the account the page half pinned at load. A jobs file that arrives after an account switch answers `accountChanged` and sends nothing.
+  - Nothing is written into the page: the offer and the presence check are events on `document`, like the page channel. A retire disposes the jobs with the page half. After Clear all disposes the Registrar, `ensure` refuses, so the file can't load again until the page reloads under a new consent.
 - **ARC-MAN-17. After an extension update** (PROVISIONAL until the real-browser layer runs an update in both browsers):
   - the start-up reconcile registers everything again and injects the current files into open tabs;
   - the new core announces itself with a `ppt:retire { build }` event on `document`, and every older core and gateway in the tab disposes itself;
@@ -889,7 +897,7 @@ type TrackerUpdate = { state: TrackerState; counted: number; due: PlaylistId[]; 
 ```ts
 interface Registrar {
   reconcile(): Promise<void>   // idempotent, serialised; on start (which covers install and update), on store changes, on access changes
-  ensure(tabId: number, what: { core?: boolean; kit?: boolean; popovers?: boolean }): Promise<void>  // on-demand probe; injection on use (R88, R91); lazy popovers
+  ensure(tabId: number, what: { core?: boolean; kit?: boolean; popovers?: boolean; jobs?: boolean }): Promise<void>  // on-demand probe; injection on use (R88, R91); lazy popovers; the jobs file (R200)
 }
 ```
 
@@ -963,7 +971,7 @@ interface Gather {
   - the destinations: YouTube's player (ARC-ACC-74), YouTube's queue (ARC-ACC-75) and the gather playlist (`AddFlow.batch`);
   - closing in one call, the Undo records and reopening (ARC-ACC-76);
   - where a result goes: the popup row through `ui.gathers` and `ui.gatherProgress`, the add flow's toast in the serving tab, the Badge's 3 s ✓ or ✕ when the gathering window is focused, and one Recent entry per gather into a playlist ([YT-GT-31](02-youtube.md#2166-feedback-keys-and-copy)).
-- **Its state** is the store's `gather` session record ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)), written once per gather or Undo and never on a check that gathers nothing. A private window's gathers stay in its memory only.
+- **Its state** is the store's `gather` session record ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)). A gather or an Undo makes at most two writes to it, and a check that gathers nothing makes none. A gather saves its close plan before closing, then what closed once it has read the tabs back, because only that read shows which tabs closed. An Undo ends the record, then saves the tab IDs it reopened. A private window's gathers stay in its memory only.
 - **Dependencies:** `TabsPort`, `AddFlow.batch`, `Registrar.ensure`, the Store, the Badge, Recent and the Monitor. Off, or on with no automatic option, its wake handlers return after the settings read the wake already made.
 - **Tests:** layer 1 for its rules (ARC-MOD-41), and layer 3 over the fake `TabsPort` with a fake clock ([Q-TEST-49](07-quality.md#724-layer-3-fake-browser-and-dom)).
 
@@ -991,7 +999,7 @@ interface Monitor {
 
 **Smaller background modules:**
 - **Playlists:** `list(acct, { refresh, req })`, `create(...)`, `resolveChannel(input, req)` and `absorb(answer)`. It hides cache freshness (a list opened with a cache older than 5 minutes refreshes; `refresh` is ↻, R39) and the merge rules.
-- **Accounts:** `onSeen(acct, tab)`. It hides the 24 h label check, and claiming the unclaimed setup after consent with the pure `claim(unclaimed, owned, existing) → { setup, dropped }`, written through the store's `claim` change ([§6.9](#69-the-store-module-interface); [ACC-30](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [REL-MIG-35](08-release.md#210-claiming-the-unclaimed-setup)).
+- **Accounts:** `onSeen(acct, tab)`. It hides the 24 h label check, and claiming the unclaimed setup after consent with the pure claim calculation over the unclaimed record, owned playlist IDs, current shared shortcuts, and the existing account setup. Its result distinguishes merged choices, ownership drops, and a skipped shortcut (R150, R152). The store's `claim` change applies the result ([§6.9](#69-the-store-module-interface); [ACC-30](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [REL-MIG-35](08-release.md#210-claiming-the-unclaimed-setup)).
 - **Diagnostics:** `report() → string` and `checkNow() → CheckResult | NoTab`. It hides the list of what a report never contains ([HEALTH-25](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report)). With no YouTube tab, Check now is disabled with "Open YouTube to check" and a button (R15). It also builds Report a problem's address, `reportUrl(kind, feature) → { url, shown }`, from the version, the browser, the feature and its status only; `shown` is the line the chooser displays ([HEALTH-27](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report); R89).
 - **Commands and Menus** (R88, R91): `onCommand(name)` and `onMenuClick(info, tab)`, which hand off to ARC-ACC-69. Menus also creates and removes the browser menu's entries as the feature and its permission change (ARC-MAN-20).
 - **Recent:** `record(report, origin)` after each add with an *added* outcome, `forget(undo)` after its Undo, and `list(acct)`. It keeps `storage.session`'s `recentAdds` through the store, at most 50 entries, and nothing from a private tab ([DATA-52](04-features-accounts-data.md#411-recent-adds); R86). A gather into the gather playlist records one entry for all the videos it added (R134).
@@ -1014,7 +1022,7 @@ interface Monitor {
   - **ARC-MOD-39. The background's listeners and timers** (R103, R110, R133):
     - its only listeners are `runtime.onMessage`, `runtime.onInstalled` (ARC-MOD-34, and the browser menu after an update, ARC-MAN-23), `permissions.onAdded` and `onRemoved`, `storage.sync.onChanged` ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)), `commands.onCommand` (R88), `contextMenus.onClicked` (R91, present only while its optional permission is held) and `runtime.onStartup`, for the upgrade note's one reopening ([REL-CON-25](08-release.md#31-opening-the-note); R97), automatic gathering's trigger-1 check (R129) and, if live check P2 calls for it, P2's fallback (§6.2.15). That one wakes the background once per browser start, and returns after one storage read when none of them needs it (R133);
     - it never listens to an event that every tab or window fires: no `tabs.on*`, `windows.on*` or `webNavigation` listener, and no `menus.onShown`. Chrome can't filter these, so each would wake the background for every tab in the browser, including tabs it has no access to;
-    - it sets no interval and no alarm (FT-22, [FT-61](04-features-accounts-data.md#13-off-costs-nothing)). A timer is a one-shot follow-up of the event being handled (sync's 2 s and 5 s, a command's or a gather's 3 s answer, a gather's quiet second and its 10 s cap, the 2 s and 10 s checks of YouTube's player tab, and the 1, 3 and 10 s checks of YouTube's queue tab; R133), at most 25 s long, and never set again by its own callback. Longer waits, such as the 60 s pause after a 429 and a new playlist's 30 s, are timestamps checked at the next event, because a stopped worker loses its timers.
+    - it sets no interval and no alarm (FT-22, [FT-61](04-features-accounts-data.md#13-off-costs-nothing)). A timer is a one-shot follow-up of the event being handled (sync's 2 s and 5 s, a command's or a gather's 3 s answer, a gather's quiet second and its 10 s cap, the 2 s and 10 s checks of YouTube's player tab, and the 1, 3 and 10 s checks of YouTube's queue tab; R133), at most 25 s long, and never set again by its own callback. Longer waits, such as the 60 s pause after a 429 and a new playlist's 30 s, are timestamps checked at the next event, because a stopped worker loses its timers. Opaque sync failures use R155's persisted minimum-60-second hold, checked only on a later external event. Cleanup and opaque recovery add no timers or polling (R151, R155).
 
 ### 6.4.4 Popup, settings and the first-run page (`src/ui/`)
 
@@ -1066,7 +1074,7 @@ interface Backend {
 
 ### 6.5.1 The gateway
 
-There's one gateway per tab, created by `page-www.js` or `page-music.js`. It's the only code in YouTube's own JavaScript world: it logs nothing, imports no Svelte and holds no settings.
+There's one gateway per tab, created by `page-www.js` or `page-music.js`. Its jobs half loads from `page-jobs-www.js` or `page-jobs-music.js` on the page's first job (ARC-MAN-26; R200). It's the only code in YouTube's own JavaScript world: it logs nothing, imports no Svelte and holds no settings.
 
 ```ts
 interface Gateway {
@@ -1208,7 +1216,8 @@ type FeatureDef = {
 
 | File | World | Contents | Loads while |
 |---|---|---|---|
-| `page-www.js` | MAIN | Gateway, www route table, parsers, live www adapter, page channel | any www feature is on, or the popup's on-demand probe |
+| `page-www.js` | MAIN | Gateway's page half: page channel, hello, account, streams, their parsers and the live read port | any www feature is on, or the popup's on-demand probe |
+| `page-jobs-www.js` | MAIN, lazy | Gateway's jobs: www route table, lanes, account guard, playlist and queue parsers, live www request and queue adapters (R200) | a page's first job, injected into that tab once (ARC-MAN-26) |
 | `core-www.js` | isolated | SiteCore with www items, and the card menu's kit-free notice (ARC-MOD-32) | same |
 | `kit-www.js` | isolated | Svelte runtime (linked exports), hosts, toaster, overlay, components, YouTube skin, icons | any www feature that needs the kit is on: every www feature except the card menu |
 | `feature-auto-add.js` | isolated | tracker, player feed, status | on |
@@ -1217,7 +1226,8 @@ type FeatureDef = {
 | `feature-queue-button.js` | isolated | queue button | on |
 | `feature-watch-button.js` | isolated | the pill | on |
 | `feature-card-menu.js` | isolated | `contextmenu` handler | on |
-| `page-music.js` | MAIN | Gateway, music route table, queue-state code, parsers, live music adapter | any music page entry is on and the section switch is on |
+| `page-music.js` | MAIN | Gateway's page half, as `page-www.js`, with YouTube Music's read bindings | any music page entry is on and the section switch is on |
+| `page-jobs-music.js` | MAIN, lazy | Gateway's jobs: music route table, handlers, queue-state code, item reads, live music adapter (R200) | a page's first job, injected into that tab once (ARC-MAN-26) |
 | `core-music.js` | isolated | SiteCore with music items | same |
 | `kit-music.js` | isolated | as `kit-www`, with the YouTube Music skin | same |
 | `feature-music-actions.js` | isolated | overlay, availability, actions | on |
@@ -1226,7 +1236,7 @@ type FeatureDef = {
 | `popovers.js` | isolated, lazy | picker and watch-page menu, with their own Svelte and Bits UI | first open, or hover intent |
 
 - **ARC-MOD-09.** With every feature off, no file in this table reaches any page, except the on-demand probe's page half and core in one tab, once the user opens the popup or settings (ARC-MAN-15, [FT-16](04-features-accounts-data.md#13-off-costs-nothing)). With the section switch off, no `*-music.js` file reaches music.youtube.com (R1).
-- **ARC-MOD-10.** The gateway carries every job of its site and stays inert until asked, so a little unused job code loads with the site core (ADR-0007).
+- **ARC-MOD-10.** The gateway carries every job of its site and stays inert until asked (ADR-0007). Its jobs half loads on a page's first job, so a page that runs no job loads no job code (ARC-MAN-26; R200).
 - **Size budgets** per file, per site and for the lazy picker, with the CI size gate, are in [07 §7.6](07-quality.md#76-performance-budgets): [Q-PERF-12](07-quality.md#763-in-page-weight) to Q-PERF-14 and [Q-PERF-37](07-quality.md#767-enforcement).
 
 ### 6.7.2 Linking Svelte
@@ -1305,7 +1315,8 @@ sequenceDiagram
 | `hello { build }` | `{ site, build, snapshot: { signedIn, datasyncId \| null, pageType, video?, startedHidden, navType } }`; the last two are read by the page half at `document_start` (ARC-MSG-15; R133) |
 | `run { id, job }` | `{ id, result: JobResult }` |
 | `watch { id, stream }` / `unwatch { id }` | `stream { id, data }` events until unwatched |
-| `probe { id }` | `{ id, report: ProbeReport }` |
+| `probe { id }` | `{ id, report: ProbeReport }`; it loads the jobs file first, which answers it (R200) |
+| `loaded { ok }`, the core's answer to the page half's `need` | whether the background loaded and confirmed the jobs file (ARC-MAN-26; R200) |
 | — | unsolicited `signal { BreakageSignal }` |
 | `retire { build }` (on `document`) | older cores and gateways stop and dispose themselves |
 
@@ -1324,7 +1335,7 @@ sequenceDiagram
 | `tab.change { Change }` | `ChangeResult` | Pause, "Don't auto-add this video", channel filter edits from the watch-page menu |
 | `tab.progress.load { video }` / `tab.progress.save { video, len, parts }` | `Parts \| null` / — | Refused for private tabs, which keep progress in memory |
 | `tab.signals { signals[], successes[] }` | — | Batched |
-| `tab.need { popovers: true }` | `ok` | |
+| `tab.need { popovers: true }` or `tab.need { jobs: true }` | `ok` | The picker, or the page's jobs file on its first job (ARC-MAN-16, ARC-MAN-26) |
 | `tab.noticeShown { features }` | — | |
 
 | Message (background → tab, frame 0) | Answer | Notes |
@@ -1403,16 +1414,30 @@ sequenceDiagram
 
 The store is one deep module in the background, and the only writer of every storage area (ADR-0006). The layout, shapes, sync, budget, migrations and private-write table are in [04-features-accounts-data.md](04-features-accounts-data.md): [§4.3](04-features-accounts-data.md#43-storage-layout), [§4.7](04-features-accounts-data.md#47-the-private-window-write-guard), [§4.10](04-features-accounts-data.md#410-schema-versions-and-migrations) and [§3](04-features-accounts-data.md#3-settings-sync).
 
+The store is not one `change(origin, Change)` call over a single `Change` union. Each write is its own owner operation, as built (R180). The background composes them in `background/store/` behind one object, and the router is their only caller:
+
 ```ts
-interface Store {
-  ready(): Promise<"ok" | "newer-layout">       // migrations run once per start, first
-  read<V extends View>(view: V, args?: ViewArgs<V>): Promise<ViewData<V>>
-  change(origin: Origin, change: Change): Promise<ChangeResult>
-  subscribe(fn: (e: StoreEvent) => void): () => void   // which documents changed, edited here or synced in
-  clearAll(origin: Origin, opts: { alsoSynced: boolean }): Promise<void>
+interface StoreOwners {
+  ready(): Promise<"ok" | "newer-layout">                        // migrations run once per start, first
+  // reads: settings, setups, session memory, the tab projection, the playlist cache, sync status
+  read(view: "settings"): Promise<SettingsRead>
+  readSetup(acct: AccountKey): Promise<SetupRead>
+  readTabProjection(request: TabProjectionRequest): Promise<TabProjectionRead>
+  subscribeView(fn: (e: ConfirmedViewChange) => void): () => void   // which documents changed, edited here or synced in
+  // one operation per write
+  change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>       // channel filters
+  changeSharedSetting(origin, change): Promise<LocalSettingsWriteResult>                    // also feature, key and setup-destination edits
+  claim(): Promise<ClaimTransactionResult>                       // ACC-30 to ACC-33
+  discard(origin, expected): Promise<DiscardResult>              // DATA-42; not built yet
+  agree(origin, input): Promise<AgreementResult>
+  withdrawConsent(origin, expected): Promise<WithdrawalResult>   // R167
+  importSettings(origin, input): Promise<SettingsImportResult>   // R90
+  applySyncJoin(origin, input): Promise<SyncJoinResult>
+  removeAccountSetup(origin, confirmation): Promise<RemovalResult>
+  clearAll(origin, opts: { alsoSynced: boolean }): Promise<ClearAllResult>
+  changeSession(change: SessionChange): Promise<SessionWrite>   // background only
 }
 
-type View = "settings" | "device" | "setup" | "unclaimed" | "filters" | "cache" | "progress" | "session" | "syncStatus" | "tabView"   // "unclaimed": the 1.x setup waiting for its account (ACC-28)
 type ChangeResult = { ok: true } | { refused: "private" | "sync-full" | "update-needed" | "invalid" }
 type Origin =
   | { kind: "tab"; tabId: number; incognito: boolean }
@@ -1421,29 +1446,41 @@ type Origin =
   | { kind: "sync" }
 ```
 
-- **ARC-MOD-19.** `Change` is one discriminated union for every write: settings edits, setup edits (removing a setup included), the unclaimed setup (`claim`, which merges it into an account's setup and deletes it, and `discard`, which deletes it; [ACC-30 to ACC-33](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [DATA-42](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals)), filters, cache absorbs, marks, progress, session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry, Gather tabs' record; R135), device fields (the sync switch, `Device.syncOn`, included; R54), the sync join choice, and `import`, which replaces the shared settings and the setups and filters of the accounts in a settings file in one write (R90). A `claim` from a private window is refused, as every account-setup write there is ([DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)).
+- **ARC-MOD-19. Per-operation owners** (R180). Every write has its own operation, named for what it does: settings edits (shared, feature and key settings, and setup destinations), channel filters, the unclaimed setup (`claim`, which merges it into an account's setup and deletes it, and `discard`, which deletes it; [ACC-30 to ACC-33](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [DATA-42](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals)), Agree and withdrawal, `importSettings`, which replaces the shared settings and the setups and filters of the accounts in a settings file in one write (R90), the sync join choice, account removal, Clear all, and session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry, Gather tabs' record; R135). Cache absorbs, marks, progress and device fields (the sync switch, `Device.syncOn`, included; R54) are writes inside these owners. A `claim` from a private window is refused, as every account-setup write there is ([DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)).
+  - **Two result shapes.** A small edit (filters, shared settings) answers `{ kind: "result", result: ChangeResult }` for an applied or refused change. A transaction (claim, Agree, withdrawal, import, sync join, account removal, Clear all) answers a `kind`-tagged union: `committed` (or its named success, such as `withdrawn` or `cleared`), `unchanged`, `refused`, `unavailable` with a reason, `failed` with the stage, or `unconfirmed` when the write's read-back didn't match. Small edits can also answer `unavailable`, `failed` or `unconfirmed`, as transactions do.
+  - **The router normalizes them.** Each route maps its owner's answer to the one reply shape its caller reads, so a page never branches on which owner answered. The owners keep their own shapes, because each carries evidence (stages, receipts, notices) the next step of its own flow needs.
+  - In the claim operation, recheck the current shared row by exact original shortcut ID and the empty account target. Never recreate a deleted row or guess missing provenance (R150, R152).
+  - Consent withdrawal sets `device.consent` to `null` and stops features even when unfinished migration, account-removal or sync records bind the old agreement. Keep those records intact and inactive, with their original evidence, accepted effects and tombstones. A new Agree never resumes them by itself. Only explicit recovery does. Never report immediate shutdown that rests on an unconfirmed write. The recovery representation and its operations remain engineering work, and no schema is selected (R167; [FT-35](04-features-accounts-data.md#15-the-consent-gate)).
 - **ARC-MOD-20.** `Origin` is computed by the router from `sender`. The popup's window ID is the one value a message supplies, and it's checked against the sender first (ARC-ACC-65).
 - **ARC-MOD-33. `update-needed`** refuses only an edit to a synced document that a newer version wrote and this browser can't read. Every other edit goes through ([SYNC-23](04-features-accounts-data.md#37-different-2x-versions-update-needed)). The sync status reads `waiting` while the join question hasn't been answered. (R13)
-- **ARC-MOD-21. What the store hides:**
+- **ARC-MOD-21. What the store's owners hide** (R180)**:**
   - the storage layout and its prefixes, codecs and stamps;
-  - migrations from 1.4.5 and 1.5.0;
+  - migrations from 1.4.5 and 1.5.0, and the separately recognized interim conversion obligations in [08 §2.12](08-release.md#212-interim-session-access-storage) (R156–R160);
   - the private-write table;
   - the budget counter, the chunker and tombstones;
-  - the replicator: join, conflicts, push scheduling, rate-limit retry;
+  - the replicator: join, conflicts, push scheduling, shared mutation admission, safe cleanup, and write-failure recovery (R151, R155);
   - progress pruning and caps;
   - cache freshness.
-- **ARC-MOD-22. Seam: `StorageAreas` `{ local, session, sync }`,** each with `{ get, set, remove, clear, onChanged }`.
+  - All sync mutators, including reset/clear, share opportunities at least 5 s apart. A push is one combined `set`; a cleanup `remove` uses a separate opportunity and yields to pushes. Rejected or uncertain calls consume an opportunity. Reset ordering must preserve its marker and crash-safety contract under this pacing (SYNC-27; R151).
+  - Cleanup is restricted to this browser's own superseded generations, apart from the expired-tombstone exception below. It needs minimum evidence establishing the original history, complete generation and author, plus deletion safety under reordered delivery and restart. A key, orphanhood, current device ID, or `pushed` entry alone proves no ownership. A fresh snapshot alone cannot prove that a delayed older pointer will not reference the chunks after removal. Any protocol must preserve complete-generation adoption, last-good local data, explicit join winners, imports, reset, and version guards across devices and interruptions. Without proof, retain and count the chunks. No eventual reclamation guarantee follows. Exact protocol, bounded evidence, compatibility, and invalidation within existing local data lifetimes remain engineering obligations (R151).
+  - Opaque native write failures preserve the original error without assigning an unsupported category. Before further admission, retain a local deadline enforcing at least 60 s across worker and browser restarts. One later external event after that deadline may admit one attempt using current documents and all current guards. Failure renews the hold. No edit replay, polling, or retry timer is allowed. This extends older kind-only retry text only for opaque failures; known-kind handling, quotas, full, sync-off, reset, version, consent, and diagnostics-privacy guards, and existing local data lifetimes remain in force. No new journal or wire fields are specified (R155).
+  - A setup's tombstone that arrives by sync passes the ordinary receive checks first. The receiver then removes the account's cache, its recognized progress shards and its session memory, and reads them back. One local write then stores the tombstone and its acknowledgement and, when `lastAccount` names the account, sets it to `null`. No removal journal is kept. A restart before that write finds the setup still live and repeats only what's left. A filter's tombstone applies only under a setup tombstone already in `storage.local` (R177; [DATA-44](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals), [SYNC-12](04-features-accounts-data.md#34-conflicts)).
+  - The one exception to the ownership rule is an expired tombstone ([SYNC-12](04-features-accounts-data.md#34-conflicts); R178). Any browser removes a setup's synced tombstone once 30 days have passed since its `at`, whoever wrote it. The same `remove` takes the account's filter tombstones and the chunks of each tombstone's own `gen`. It runs only when this browser holds no local copy and no `pushed` entry for any of them, every synced document of the account is a tombstone, and fresh reads of both areas still match what it planned from. It is one paced opportunity of its own that waits behind any push. Chunks of older generations stay under the rule above. The local turn comes first. During an automatic receive pass, after the received documents, the browser removes its acknowledged expired tombstones and then writes the history without their `pushed` entries. A restart between those two writes leaves `pushed` entries with no documents, and the next pass drops them. A synced tombstone that this browser doesn't hold doesn't block its pushes or edits.
+- **ARC-MOD-22. Seam: one port per area** (R180). `local` has `{ get, set }`, `sync` has `{ get, set, remove, subscribe }`, and `session` has the session-memory port. Clear all takes its own `{ get, set, remove, clear }` per area. The owners share these ports, so every owner writes through the same three areas.
   - Adapters: browser (`browser.storage.*`); fake (WXT's fake browser for `local` and `session`, plus a sync area with the real quotas, Chrome's write rates, and delayed, reordered or dropped delivery); and a fake server that joins two or more fake sync areas to stand in for browsers.
 - **ARC-MOD-23. One write path:** a guard test fails if any code outside `background/store/` and its adapter calls `storage.*.set`, `remove` or `clear`.
 - **ARC-MOD-24. Who reads:**
-  - content scripts never read storage; they get the `TabView` from the background;
-  - the popup, settings and the first-run page read `storage.local` directly, read-only, for a fast first paint, and follow `storage.onChanged`.
+  - content scripts never read storage; they get the `TabView` from the background's `readTabProjection` (R180);
+  - the popup, settings and the first-run page read `storage.local` directly, read-only, for a fast first paint, and follow `storage.onChanged`. Anything they can't read there, such as a setup's resolved view or the sync join status, comes from the owners' read operations through the router (R180).
 - **ARC-MOD-25. Start-up order** ([DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)):
   1. the migration runs at the top of every background start, before the reconciler, the replicator or any message handler. On a fresh install it writes `schema: 1` at the first start, before consent: a schema marker isn't user data. While settings sync is off it never touches `storage.sync`, so 1.5.0's stray `theme` key there stays (only developer profiles wrote it);
   2. every other module awaits `ready()`;
   3. on `"newer-layout"`, nothing registers and nothing is written. (R20, R21)
+     The one exception is confirmed local Clear all: `clearAll` with `alsoSynced: false` stays available after this browser's writers stop, and leaves `storage.sync` untouched. It erases rather than converts. It enables no other `change`, migration, downgrade or normalization. `clearAll` with `alsoSynced: true` erases the same local data there, runs no synced reset, leaves `storage.sync` untouched and returns `cleared` with `synced: "kept-newer-layout"` (R174). Native clear durability stays unproven (R168; [DATA-36 to DATA-41](04-features-accounts-data.md#48-clear-all-data)).
 
-  **Upgrade or fresh install** is decided in the same start-up step, on every background start ([REL-MIG-02](08-release.md#21-when-it-runs), [DATA-49](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
+  The interim path in [08 §2.12](08-release.md#212-interim-session-access-storage) precedes the original legacy classification below, even with `schema:1`. Inventory account bodies and index entries completely. Preserve canonical documents and tombstones, including Settings, and retain conflicting source inactive. Keep the deliberately shared account-target row separate from original legacy shortcut provenance. Require fresh canonical agreement and retire old in-flight work before activation. Unknown erased authorization must remain distinct from both known branches. Retained globals despite `legacyClaimed:true` require explicit recovery after review, restore and ownership proof. The marker proves no ownership or provenance. Compatible local representations, refusal/readiness outcomes, ordered execution and recovery interactions remain engineering work. No wire shape or reset rules are selected. Do not remove the current runtime refusal or treat these docs as verified production conversion. Existing session and privacy guards remain until equivalent target contracts are verified (R156–R160).
+
+  **Upgrade or fresh install** on the original legacy path is decided in the same start-up step, on every background start ([REL-MIG-02](08-release.md#21-when-it-runs), [DATA-49](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
   - If there's no consent record and no upgrade-note record (`device.consent` and `device.upgradeNote` are null or absent), and any 1.x key is in `storage.local`, it's an upgrade from 1.x: the upgrade-note path. With neither record and no 1.x key, it's a fresh install: the first-run path. That includes a 1.4.5 user with no 1.x key left, for whom no tab opens on the update (ARC-MOD-34; R76).
   - The 1.x keys are `playlists`, `addToPlaylistID`, `watchLaterShortcut`, `requiredWatchPercentage`, `toastEnabled`, `clientID`, `clientSecret`, `accessToken` and `refreshToken`.
   - It never relies on `runtime.onInstalled`, which Firefox can skip (ticket 06), or on the `schema` marker, which the first start may already have written. The event's one listener only opens first run on "install" (ARC-MOD-34).

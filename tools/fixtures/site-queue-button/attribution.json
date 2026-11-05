@@ -1,0 +1,376 @@
+{
+ "sourceTree": "a0ea51385722ec7c0d35fa8512d83b1fe02c3983",
+ "rows": [
+  {
+   "id": "YT-Q-01",
+   "textSha256": "e735aef735031a76d0a7d118582686a3a2c754ae8d137f620dcdc9ce08f79b7a",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts",
+    "src/shared/contracts/tab-view.ts (existing queue-button options: on, feedback)"
+   ],
+   "tests": [
+    "failure shows with feedback off for 1.5 s, then idle, and never resends",
+    "confirmed quiet success offers Undo for exactly the captured entry; success closes and returns the item to idle"
+   ],
+   "remaining": "Show feedback read from the live view at answer time; settings UI is outside this unit.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-02",
+   "textSha256": "5c830da4b63ae84158739599d002ba02f35289d651cd2bd5e64bb992a1847c87",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts",
+    "src/site/kit/overlay/index.ts"
+   ],
+   "tests": [
+    "construction is inert and only an enabled feature owns one overlay host",
+    "keyboard-visible thumbnail focus shows the overlay without moving focus"
+   ],
+   "remaining": "Queue command and miniplayer start are gateway behavior; gateway is unqualified.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-03",
+   "textSha256": "3ce90a40bc501568c15fa711ab1f08b95ab0bcb55c0d7adfe31e859cdf221dd8",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "signed out with absent account keys still adds with no account field and ignores filters and skips",
+    "a signed-in view's channel filters and session skips do not gate the queue"
+   ],
+   "remaining": "Live signed-out behavior unproven.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-04",
+   "textSha256": "a84aee47ed1505ca9cfa7b3655ec5c2d5ee5930b19b12fd06f50c0b99eddd2b6",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "YouTube's own hover Add to queue suppresses our slot at the 150 ms recheck",
+    "YouTube's own hover Add to queue suppresses our slot at the 900 ms recheck",
+    "moving to another card cancels the obsolete rechecks"
+   ],
+   "remaining": "Native label selector is English-only per spec; other locales unproven.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-05",
+   "textSha256": "100f6721340a85c7a266562a1cc8e79be2560d3b5cfe9630b739f31330333151",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/model.ts",
+    "src/page/gateway/www-queue.ts (existing quiet-route-noisy notice)"
+   ],
+   "tests": [
+    "a noisy confirmed add stands without our toast and is not resent"
+   ],
+   "remaining": "PROVISIONAL in spec; noisy detection is gateway-side and unqualified.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-06",
+   "textSha256": "33d61d4cc7534f3c97e4069030c80239b586fd03ea83bc908dc17ddaabf4ea08",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/model.ts"
+   ],
+   "tests": [
+    "only a confirmed answer renders Added; a page answer without confirmation is sent-unconfirmed and resends only on click",
+    "a PageLink deadline is unconfirmed, not failure or success"
+   ],
+   "remaining": "Confirmation signal itself is gateway-side and unqualified.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-07",
+   "textSha256": "dfc7930123efbed1c60654fddf7fd88809c8e3522b95275dab588575307562ce",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/model.ts",
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "busy ignores repeated clicks and key repeat, and Added ignores another click",
+    "failure shows with feedback off for 1.5 s, then idle, and never resends",
+    "every card for the same video shows Added once one of them is added",
+    "state belongs to the video: duplicates share Added and a recycled renderer shows its new item",
+    "navigation during the awaited add resets the page view without reviving the old state"
+   ],
+   "remaining": "Native key-repeat click delivery unproven in happy-dom.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-08",
+   "textSha256": "ff154348aaa632dd012c2b6745ca9934677f7e88fe5eb1d516edcf4a7809a8d6",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/model.ts",
+    "src/site/features/queue-button/feature.ts",
+    "src/shared/copy/index.ts",
+    "src/public/_locales/en/messages.json",
+    "src/shared/i18n/parameters.ts"
+   ],
+   "tests": [
+    "confirmed quiet success offers Undo for exactly the captured entry; success closes and returns the item to idle",
+    "only a confirmed answer renders Added; a page answer without confirmation is sent-unconfirmed and resends only on click",
+    "failure shows with feedback off for 1.5 s, then idle, and never resends",
+    "a card without a readable title gets the untitled added toast",
+    "a card without a readable title gets the untitled unconfirmed toast",
+    "a card without a readable title gets the untitled failed toast"
+   ],
+   "remaining": "Toast copy settled by the owner (G6).",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-09",
+   "textSha256": "403796ed249040b9bdc9b54b2cd10a3ed794a217334b0f32703cd4fe7c0d1beb",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "confirmed quiet success offers Undo for exactly the captured entry; success closes and returns the item to idle",
+    "Undo failure reads Couldn't undo and the item stays Added",
+    "the undo key reaches the same exact-entry Undo",
+    "confirmation without an entry identity offers no Undo"
+   ],
+   "remaining": "PROVISIONAL in spec; quiet removal is gateway-side.",
+   "credit": "none"
+  },
+  {
+   "id": "YT-Q-10",
+   "textSha256": "f12554a1091ba7582387d1b741774af2cc5688e76af59257f31f96abc1b36388",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "not working draws nothing and asks for the notice once at the first card hover"
+   ],
+   "remaining": "Once-per-session, batching and first-visible-tab policy belong to the future core binding of notices.wouldAct.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-01",
+   "textSha256": "c907a46534109732845985932b51cc17399e8d581b89069c9ae7d65523a8bfc9",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/skin.ts"
+   ],
+   "tests": [],
+   "remaining": "Live measurement not executed.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-02",
+   "textSha256": "04a1cb2c7b3de6cabe9ea1b566b32c13e7a1350c00d0abb54972b37abbd37081",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/index.ts"
+   ],
+   "tests": [
+    "the host mirrors YouTube's dark attribute and isolates its own clicks"
+   ],
+   "remaining": "Fallback palette values and cosmetic signal for missing variables not implemented in the overlay; skin uses fixed rgba per UI-YT-08.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-03",
+   "textSha256": "5725b6bf49fcaee8cae6203c3f5b2f089152100112b2ccdf5a7ff67c00b47508",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/skin.ts"
+   ],
+   "tests": [],
+   "remaining": "Rendered type unmeasured.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-04",
+   "textSha256": "64c7f31fe0ee5d43817ef25ae0a3672ffa0a08d305ba74a35650b7d38ac17d0e",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/glyphs.ts"
+   ],
+   "tests": [],
+   "remaining": "Queue glyph path unverified against YouTube's live glyph.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-05",
+   "textSha256": "1ca6d95f6085b0e67f450a099a779acfe367207e7321fdd22105a9bac7550a6e",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/index.ts"
+   ],
+   "tests": [
+    "construction is inert and two slots share one movable host",
+    "construction is inert and only an enabled feature owns one overlay host"
+   ],
+   "remaining": "Layer and inline hosts are other units.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-06",
+   "textSha256": "a0a987db35ba11e785b9ba1b5a71c2962787ee74cd23989747cd7c73d7f03637",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/index.ts"
+   ],
+   "tests": [
+    "releasing every lease leaves zero hosts and a later lease starts fresh",
+    "host disposal releases every listener, deadline and host"
+   ],
+   "remaining": "kit.setNeeded wiring is SiteCore assembly.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-07",
+   "textSha256": "862494a80381c5801c56ae448b47c4a87c991039997ab92b9a9d7912802bf6bd",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/index.ts"
+   ],
+   "tests": [
+    "placement sits 4 px into the thumbnail and stacks in a row under 100 px"
+   ],
+   "remaining": "Quick-save slot reserved only.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-08",
+   "textSha256": "1b6d72d54ee4e1c60eeba8973fe6f1c2c33d6682bcd6adfbd71dffa1f7f912e6",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/skin.ts"
+   ],
+   "tests": [],
+   "remaining": "Rendered size and colour unmeasured; quick-save split not in scope.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-09",
+   "textSha256": "9c1f64baff1ebe59473c69b0c82566b727339c0ad4a493827d2b26ec90a78127",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/index.ts",
+    "src/site/kit/overlay/skin.ts"
+   ],
+   "tests": [
+    "the tooltip appears after 0.5 s to the right and the host stops page clicks only on itself"
+   ],
+   "remaining": "Quick-save tooltip text not in scope.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-10",
+   "textSha256": "7b76f9070448755e307db47072caf66817b976450e8e83582f9ba6f1e83090a1",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/kit/overlay/index.ts",
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "construction is inert and only an enabled feature owns one overlay host",
+    "keyboard-visible thumbnail focus shows the overlay without moving focus"
+   ],
+   "remaining": "Native tab order and focus-visible unproven.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-11",
+   "textSha256": "b54c51deee5b22bbbf385c5ef134a2adf3bdd60af176ce45f2d59fc2ff092160",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "search's inline preview takes the host while it covers the card"
+   ],
+   "remaining": "Live preview geometry unproven.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-12",
+   "textSha256": "26b2e142d0d1823f136fb0146173b1df3f2ef3fcc831da71575295761e9aba11",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "YouTube's own hover Add to queue suppresses our slot at the 150 ms recheck",
+    "YouTube's own hover Add to queue suppresses our slot at the 900 ms recheck"
+   ],
+   "remaining": "English-only label.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-13",
+   "textSha256": "4dc4457a3ab9f4fa904b473a752f427dfa66386f3a8ef1c8e24b7acb953cffa8",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/model.ts",
+    "src/site/features/queue-button/glyphs.ts",
+    "src/shared/copy/index.ts"
+   ],
+   "tests": [
+    "busy ignores repeated clicks and key repeat, and Added ignores another click",
+    "confirmed quiet success offers Undo for exactly the captured entry; success closes and returns the item to idle"
+   ],
+   "remaining": "Screens ip-10, ip-11 not compared.",
+   "credit": "none"
+  },
+  {
+   "id": "UI-YT-15",
+   "textSha256": "917f827e7ef59f920fc938b2f69d5f47ab5ebeb92e4c86334fadf0a391101cea",
+   "state": "authored-unexecuted",
+   "implementation": [
+    "src/site/features/queue-button/feature.ts"
+   ],
+   "tests": [
+    "signed out with absent account keys still adds with no account field and ignores filters and skips"
+   ],
+   "remaining": "Quick-save signed-out answer is another unit.",
+   "credit": "none"
+  }
+ ],
+ "crossReferences": [
+  {
+   "ref": "YT-GEN-01 to YT-GEN-10",
+   "handling": "Feature runs only while the qualified view enables it (GEN-02/03/04); signed out works (GEN-08); account change revokes through FeatureHost (GEN-09); private-window admission is ExtLink/background-owned (GEN-10). No new account field.",
+   "state": "authored-unexecuted"
+  },
+  {
+   "ref": "YT-ITEM-01 onward",
+   "handling": "Recognition, previews, players, Shorts, ads, playlists and channels come from WwwItems.recogniseWwwItem and readPointed; no renderer-property or page-global reads.",
+   "state": "authored-unexecuted"
+  },
+  {
+   "ref": "YT-BRK",
+   "handling": "Not working draws nothing and calls notices.wouldAct at the first hover; partly working still draws; quiet-route-noisy stays gateway-side; account keys missing (BRK-05) does not stop the queue button.",
+   "state": "authored-unexecuted"
+  },
+  {
+   "ref": "ARC-ACC-queue routes",
+   "handling": "queueAdd and queueUndo are non-account jobs in jobs.ts; the feature passes no acct, verified by type negative and behavior test.",
+   "state": "authored-unexecuted"
+  },
+  {
+   "ref": "UI-RULE accessibility and scoped lifecycle",
+   "handling": "Accessible name per state, aria-disabled keeps tab order, no focus stealing, all resources Scope-owned; axe unexecuted.",
+   "state": "authored-unexecuted"
+  },
+  {
+   "ref": "Q-TEST and resource budgets",
+   "handling": "One host per page, four delegated document listeners, one attribute observer while the host exists, one preview observer while relocated, two recheck deadlines per hover; counts asserted in tests, unexecuted.",
+   "state": "authored-unexecuted"
+  }
+ ]
+}

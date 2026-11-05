@@ -1,0 +1,597 @@
+{
+ "note": "Original patches and inventories are unchanged. This sidecar records a static dry-run of each inherited patch that names a path this reconciliation changed. held-reanchor-required holds that gate until the mutation is reanchored without changing its intent. Offsets are recorded, not credited.",
+ "changedPaths": [
+  ".git",
+  "src/background/adapters/starting-owner.ts",
+  "src/background/router/ui-playlists/index.ts",
+  "src/background/store/consent-recovery.ts",
+  "src/background/store/local-filter-writer.ts",
+  "src/background/store/local-filter-writer.type-test.ts",
+  "src/background/store/sync-reset-receive.ts",
+  "src/public/_locales/en/messages.json",
+  "src/shared/contracts/ui.ts",
+  "src/shared/copy/index.ts",
+  "src/shared/i18n/parameters.ts",
+  "src/ui/backend/backend.ts",
+  "src/ui/backend/core.ts",
+  "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts"
+ ],
+ "entries": [
+  {
+   "patch": "tools/fixtures/clear-all/controls/erased-receiver-consent.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 623,
+    "sha256": "e838c493834ea6383dc2145e2ead2d37bb299aede52a822e7f88bfae6e2b7c72",
+    "gitBlob": "5c2834cc540b7129c494d3908e814f978bf9c156"
+   },
+   "targets": [
+    "src/background/store/sync-reset-receive.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/sync-reset-receive.ts": {
+     "mode": "100644",
+     "bytes": 14553,
+     "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+     "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/sync-reset-receive.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/clear-all/controls/erased-unclaimed.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 581,
+    "sha256": "f61e03cb383321fa35ad1c0ebd17d39a39e93d51129a85516b726b1b11c2f181",
+    "gitBlob": "c7055085a894038223bfd83b828eddc46d5ac9d1"
+   },
+   "targets": [
+    "src/background/store/sync-reset-receive.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/sync-reset-receive.ts": {
+     "mode": "100644",
+     "bytes": 14553,
+     "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+     "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/sync-reset-receive.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/clear-all/controls/missing-account.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 751,
+    "sha256": "b97ffe7f0fd0484175be9614514084f7336f6adfc9969888f6f8c830689abbff",
+    "gitBlob": "e03f93a719dda31fe899916d54c61307cef3af1f"
+   },
+   "targets": [
+    "src/background/store/sync-reset-receive.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/sync-reset-receive.ts": {
+     "mode": "100644",
+     "bytes": 14553,
+     "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+     "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/sync-reset-receive.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/clear-all/controls/missing-shard.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 1657,
+    "sha256": "d0d328987a38cc6f7558a805ff097269b3baa59cdae55fdc4842f792d908eaa8",
+    "gitBlob": "f31978cb60fc376b576bc84b03c21b2335b0a682"
+   },
+   "targets": [
+    "src/background/store/sync-reset-receive.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/sync-reset-receive.ts": {
+     "mode": "100644",
+     "bytes": 14553,
+     "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+     "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/sync-reset-receive.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/feature-switches/controls/private-blanket-rejection.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 1112,
+    "sha256": "ecfb206a6e49042aa11927ac6ff4e6c36d9d25d82b012a77060712835973de0a",
+    "gitBlob": "3e57850b010d168a65ba3a612f43c1579f5fcc2e"
+   },
+   "targets": [
+    "src/background/router/ui-playlists/index.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/router/ui-playlists/index.ts": {
+     "mode": "100644",
+     "bytes": 24310,
+     "sha256": "ed488fb73afa370511fb477f2e7170a678e9c3739e9d6d8b1c0c94e1a50994f9",
+     "gitBlob": "d100c08068a6a80f76497f6f25dd824607851325"
+    }
+   },
+   "dryRunReturncode": 1,
+   "dryRunStdout": "patching file 'src/background/router/ui-playlists/index.ts'\n1 out of 1 hunks failed while patching 'src/background/router/ui-playlists/index.ts'",
+   "dryRunStderr": "",
+   "state": "held-reanchor-required"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/feature-controls/private-blanket-rejection.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 1189,
+    "sha256": "1587d2e42116ae2a9c2a856b1b16b09479f8919e02e135a3ea825e500653d571",
+    "gitBlob": "5b864a3fad995fac6c6c6b04988e13c43d82a437"
+   },
+   "targets": [
+    "src/background/router/ui-playlists/index.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/router/ui-playlists/index.ts": {
+     "mode": "100644",
+     "bytes": 24310,
+     "sha256": "ed488fb73afa370511fb477f2e7170a678e9c3739e9d6d8b1c0c94e1a50994f9",
+     "gitBlob": "d100c08068a6a80f76497f6f25dd824607851325"
+    }
+   },
+   "dryRunReturncode": 1,
+   "dryRunStdout": "patching file 'src/background/router/ui-playlists/index.ts'\n1 out of 1 hunks failed while patching 'src/background/router/ui-playlists/index.ts'",
+   "dryRunStderr": "",
+   "state": "held-reanchor-required"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/owner-services-reconciliation-bookkeeping-event-noise.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 433,
+    "sha256": "c98fcc90a755c01d64870061da70242930da538381c4b44b8ae9a3f542653607",
+    "gitBlob": "ee16a9b87ac45d2300cdee346da68a6cdaaa7942"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/owner-services-reconciliation-checking-writes.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 484,
+    "sha256": "b33ffa9bf1bdb0f0645e868061e95c37be830bcdef17b477237a36ca012af06a",
+    "gitBlob": "bdc1f38cd911a5f5f787afdf8cc5cafa27fb8558"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/owner-services-reconciliation-lost-label-event.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 417,
+    "sha256": "570f9cfb583a47f2a2d56aa02c57ac0d40f7a81ff37d412edf638f0f02b0baa9",
+    "gitBlob": "b07be7f2b84438d3958d108a4e26ce785cd589de"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/owner-services-reconciliation-omitted-read-freshness.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 637,
+    "sha256": "f6e44d96fef46f10a3e06c9c72493f5ed21932e42bf0f6b3e3bbfd21c8d44c40",
+    "gitBlob": "68ee31812b2408653b346095d0acf974993263d2"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/owner-services-reconciliation-stale-label-resurrection.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 1037,
+    "sha256": "d5cab0d3eae8245da8084b44b3e61cc4a771789d9b4a45bc3ca75bf9b5459242",
+    "gitBlob": "3cc5f5f2904edf9c4a4085e89ed7b841e9a2ac18"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/settings-import-execution-ignored-startup-marker.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 499,
+    "sha256": "817d8e5e4b9999aa7767cc6f84237cba645633d9da205031b9b7ae4b103017b3",
+    "gitBlob": "0c4926f02e1fecf717dc161f022e48599365b4da"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/view-publication-missing-sync-filter-event.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 625,
+    "sha256": "14f31669b370b5adba2e037e441761edf5b5745931577afadb3d3e45b3ccb024",
+    "gitBlob": "795627b5d4b9168539f94691c836737cfca08199"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 272995,
+     "sha256": "f269818d0bdabbbd1020b751ed3c01cd9b76e5a1f02cc5779739de90a2dfce31",
+     "gitBlob": "2735f804e941dc02e8066ae5d02d03711af1d2f7"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/inherited-controls/view-publication-optimistic-before-readback.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 983,
+    "sha256": "771c7c977a49f213a4faf5ccce8f09fbd728c631d18dcbc395a12f925e01c202",
+    "gitBlob": "570907b27a5d222c2afd0c766ad5f2875af9e957"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/owner-services-reconciliation/controls/bookkeeping-event-noise.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 433,
+    "sha256": "5f9698e7ad99fe653c2929b64a034d263546cb3a38666e5c25b71394eecf67d3",
+    "gitBlob": "2e6dab71f67aa533e171c4e0aa4e70bac9c6dc68"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/owner-services-reconciliation/controls/checking-writes.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 484,
+    "sha256": "9a1979731229a815ebd75767f7ee9712e3635268aec6cc9817303a23c2895a71",
+    "gitBlob": "80bc0e06fd99bddd8944b01ea046bb6ced076020"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/owner-services-reconciliation/controls/lost-label-event.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 417,
+    "sha256": "dcc347d3397f2ea14ae3733f8dedc68a3badff2a00f280af3580e6c10576251a",
+    "gitBlob": "2ecb59c557d3bcbdccfd6de62ce176fbe78bb033"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/owner-services-reconciliation/controls/omitted-read-freshness.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 637,
+    "sha256": "0f413be7cc8e419ce2e7ed4575ab6ca32076371fbefce8dec2fbc66c9fd60755",
+    "gitBlob": "f6a4ca6907b44be84d211a2c4f0d1c46868e808c"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/owner-services-reconciliation/controls/stale-label-resurrection.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 1037,
+    "sha256": "d39f4ea8e92122535c3d262b4342c301b9aa7f9dd78c30244048165d0e564068",
+    "gitBlob": "65c66d73749545a4c69bde007c4bb45fcb38a6b4"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/settings-import-execution/controls/ignored-startup-marker.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 499,
+    "sha256": "af6ab5044f12f4aea5db656c31a1d98b44e286f322edfcb46e0944789fde8306",
+    "gitBlob": "4d6645ba3b811786843c12f5fed356ad039eddd7"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 560,
+    "sha256": "6bfc7eef1d717fe4db76d13299c1f673e2713d66929c55021e8424841b312314",
+    "gitBlob": "9cb65c840963493f8f768e1f68760fbbcae08a16"
+   },
+   "targets": [
+    "src/background/adapters/starting-owner.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/adapters/starting-owner.ts": {
+     "mode": "100644",
+     "bytes": 6423,
+     "sha256": "e28f3c3736d7be17fcf1b5b03824f2dd8aef38d2050f94c5ae17d5acb30eebe4",
+     "gitBlob": "59fd49ebe50b73d87e1151d39ed6a7774b05e8cb"
+    }
+   },
+   "dryRunReturncode": 1,
+   "dryRunStdout": "patching file 'src/background/adapters/starting-owner.ts'\n1 out of 1 hunks failed while patching 'src/background/adapters/starting-owner.ts'",
+   "dryRunStderr": "",
+   "state": "held-reanchor-required"
+  },
+  {
+   "patch": "tools/fixtures/ui-owner-reconciliation/protected-repairs.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 4309,
+    "sha256": "790e08c3a3b246b886dc320c4fff910cc10d146c0ad767de05b9c34dc6c96766",
+    "gitBlob": "bc647b0611fa26903148509fd0651ba6f0db39cc"
+   },
+   "targets": [
+    "src/background/router/ui-playlists/index.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/router/ui-playlists/index.ts": {
+     "mode": "100644",
+     "bytes": 24310,
+     "sha256": "ed488fb73afa370511fb477f2e7170a678e9c3739e9d6d8b1c0c94e1a50994f9",
+     "gitBlob": "d100c08068a6a80f76497f6f25dd824607851325"
+    }
+   },
+   "dryRunReturncode": 1,
+   "dryRunStdout": "patching file 'src/background/router/ui-playlists/index.ts'\n1 out of 1 hunks failed while patching 'src/background/router/ui-playlists/index.ts'\npatching file 'tools/fixtures/starting-owner/run.ts'\npatching file 'src/background/router/first-run.bun-test.ts'\n1 out of 2 hunks failed while patching 'src/background/router/first-run.bun-test.ts'",
+   "dryRunStderr": "",
+   "state": "held-reanchor-required"
+  },
+  {
+   "patch": "tools/fixtures/view-publication/controls/missing-sync-filter-event.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 625,
+    "sha256": "14f31669b370b5adba2e037e441761edf5b5745931577afadb3d3e45b3ccb024",
+    "gitBlob": "795627b5d4b9168539f94691c836737cfca08199"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 272995,
+     "sha256": "f269818d0bdabbbd1020b751ed3c01cd9b76e5a1f02cc5779739de90a2dfce31",
+     "gitBlob": "2735f804e941dc02e8066ae5d02d03711af1d2f7"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  },
+  {
+   "patch": "tools/fixtures/view-publication/controls/optimistic-before-readback.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 983,
+    "sha256": "c40bed7a82b4e9fde59eba0e047991bc4be464c54fcd3e9dfa0f59fe2b4c2dbd",
+    "gitBlob": "0c3f94fba6c8439a9102055c5b4b0bf3c85a624e"
+   },
+   "targets": [
+    "src/background/store/local-filter-writer.ts"
+   ],
+   "finalTargetIdentities": {
+    "src/background/store/local-filter-writer.ts": {
+     "mode": "100644",
+     "bytes": 269817,
+     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+    }
+   },
+   "dryRunReturncode": 0,
+   "dryRunStdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "dryRunStderr": "",
+   "state": "applies-zero-fuzz"
+  }
+ ]
+}

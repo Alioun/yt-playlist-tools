@@ -4,21 +4,18 @@
 
 ## Using it
 
-- [Features](features.md): what 1.5.0 does
+- [Features](features.md): what Perchling 2.0 does
 - [Screenshots](screenshots/): the 1.5.0 popup and settings
 - [Setting up 1.4.5](legacy/1.4.5-setup.md): the Google credentials the Firefox Add-ons version needs
 
-## Working on 1.5.0
+## Working on Perchling
 
 - [Development](development/README.md): stack, setup and commands
   - [Gotchas](development/gotchas.md)
   - [How Add to queue works](development/add-to-queue.md)
   - [Tests and CI](development/testing-and-ci.md)
-  - [Releasing](development/releasing.md)
+  - [Releasing](development/releasing.md), and the [release checklist](../RELEASING.md)
   - [Environment files](development/environment-files.md)
-- [Legacy: Google sign-in and the token broker](legacy/README.md), historical setup for released versions
-  - [Authentication](legacy/authentication.md)
-  - [Token broker](legacy/token-broker.md)
 
 ## Planning 2.0
 
@@ -32,4 +29,5 @@
 
 - [Further reading](further-reading.md): external docs, grouped by topic
 - [Agent docs](agents/): how coding agents use the issue tracker, triage labels and domain docs
+- [Store listings](../store/listing/README.md), the [reviewer notes](../store/notes/) and the [website](../site/), with the privacy policy
 - [GLOSSARY.md](../GLOSSARY.md) and [docs/adr/](adr/) at their canonical paths

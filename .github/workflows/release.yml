@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Public, and asserted in check-manifests.sh. AMO finds it only with braces.
+  # Public, and asserted in check-manifest.ts. AMO finds it only with braces.
   AMO_GUID: "{cc70cd21-2cc6-444b-bd89-496909346091}"
   # publish-browser-extension strips the GUID's braces, which AMO then can't
   # find, so `wxt submit` gets the slug. It doesn't change (ADR-0013).
@@ -35,12 +35,17 @@ jobs:
       channel: ${{ steps.meta.outputs.channel }}
       kind: ${{ steps.meta.outputs.kind }}
       cws: ${{ steps.meta.outputs.cws }}
+      previous: ${{ steps.meta.outputs.previous }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Decide
         id: meta
         run: scripts/release-meta.sh
+
+      - name: Link the release checklist
+        run: |
+          echo "Checklist: [RELEASING.md]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/RELEASING.md)" >> "$GITHUB_STEP_SUMMARY"
 
   build:
     needs: meta
@@ -82,7 +87,13 @@ jobs:
         run: |
           firefox=.output/firefox-mv3
           [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
-          scripts/check-manifests.sh .output/chrome-mv3 "$firefox"
+          bun scripts/check-manifest.ts .output/chrome-mv3 "$firefox"
+
+      - name: Assert bundle sizes are within budget
+        run: |
+          firefox=.output/firefox-mv3
+          [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
+          bun scripts/check-budget.ts .output/chrome-mv3 "$firefox"
 
       - name: Verify the AMO sources zip actually rebuilds
         run: |
@@ -100,10 +111,12 @@ jobs:
       - name: AMO metadata
         env:
           KIND: ${{ needs.meta.outputs.kind }}
+          PREVIOUS: ${{ needs.meta.outputs.previous }}
           STRICT: ${{ needs.meta.outputs.release == 'true' && '--strict' || '' }}
         run: |
           bun scripts/amo-metadata.ts --version "$VERSION" --kind "$KIND" \
-            --channel "$CHANNEL" --out .output/amo-metadata.json $STRICT
+            --channel "$CHANNEL" --previous "$PREVIOUS" \
+            --out .output/amo-metadata.json $STRICT
 
       # The manifests too: later patch releases compare against them (REL-CI-36).
       # Collected outside .output/, which upload-artifact skips as hidden.
@@ -116,6 +129,9 @@ jobs:
           cp .output/*.zip .output/amo-metadata.json dist/
           cp .output/chrome-mv3/manifest.json dist/manifest.chrome.json
           cp "$firefox/manifest.json" dist/manifest.firefox.json
+          # The GitHub release's text. A release build has checked it exists.
+          notes="store/release-notes/$VERSION.md"
+          if [ -f "$notes" ]; then cp "$notes" dist/release-notes.md; fi
           ls -l dist
 
       # What's gated is what ships: every later job uses these exact files.
@@ -134,7 +150,6 @@ jobs:
     env:
       VERSION: ${{ needs.meta.outputs.version }}
       PRERELEASE: ${{ needs.meta.outputs.channel == 'beta' && '--prerelease' || '' }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -146,6 +161,8 @@ jobs:
       # this commit and finishes the job. A GITHUB_TOKEN tag starts no other
       # workflow, which is why releasing happens here rather than on a tag push.
       - name: Tag and create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           tag="v$VERSION"
@@ -154,17 +171,90 @@ jobs:
             [ "$sha" = "$GITHUB_SHA" ] \
               || { echo "::error::$tag already exists at $sha, not $GITHUB_SHA"; exit 1; }
             echo "$tag already exists at this commit; finishing it."
-            gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber dist/*.zip dist/manifest.*.json
-            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false
+            gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber dist/*.zip dist/manifest.*.json dist/release-notes.md
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file dist/release-notes.md --draft=false
           else
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" --title "$tag" --generate-notes $PRERELEASE \
-              dist/*.zip dist/manifest.*.json
+              --target "$GITHUB_SHA" --title "$tag" --notes-file dist/release-notes.md $PRERELEASE \
+              dist/*.zip dist/manifest.*.json dist/release-notes.md
           fi
 
+  # G28 (.audit/2.0-build/ci-reviewer-credentials-design.md): before anything
+  # goes to AMO, checks AMO_REVIEWER_LOGIN if the notes ask for the test account.
+  # The login lives only in the amo-reviewer environment, which this job and
+  # fill-reviewer-notes alone use, so no job that installs or runs other code
+  # holds it. Betas' notes ask for no account.
+  check-reviewer-login:
+    needs: [meta, build]
+    # Off until the owner approves G28. Turning it on deletes `false && ` here
+    # and in fill-reviewer-notes, once every action below is pinned to a commit.
+    if: false && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true' && needs.meta.outputs.channel == 'stable' && vars.PUBLISH_AMO == 'true'
+    # A named image, so a move of ubuntu-latest needs the owner's approval.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: amo-reviewer
+    steps:
+      # Only the script: no package.json, lockfile, bunfig or install.
+      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit upstream's v7 tag peels to (design, "Turning it on")
+        with:
+          sparse-checkout: /scripts/amo-reviewer-notes.ts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # package.json isn't checked out; a test holds this to its packageManager.
+      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
+        with:
+          bun-version: 1.4.3
+          no-cache: true
+
+      - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit upstream's v8 tag peels to (design, "Turning it on")
+        with:
+          name: release-${{ needs.meta.outputs.version }}
+          path: dist
+
+      # Bun alone gets the login, with no other name, from an empty directory
+      # with an empty config and tsconfig; the tools before it get none of it.
+      # Without the override, Bun reads the nearest tsconfig.json or
+      # jsconfig.json above the directory, whose paths can redirect node:fs.
+      # The script runs only at the owner-set digest, and Bun too once the
+      # owner sets vars.BUN_SHA256.
+      - name: Check the reviewer test account
+        env:
+          AMO_REVIEWER_LOGIN: ${{ secrets.AMO_REVIEWER_LOGIN }}
+          REVIEWER_NOTES_SHA256: ${{ vars.REVIEWER_NOTES_SHA256 }}
+          BUN_SHA256: ${{ vars.BUN_SHA256 }}
+        run: |
+          digest=$REVIEWER_NOTES_SHA256
+          script=$GITHUB_WORKSPACE/scripts/amo-reviewer-notes.ts
+          metadata=$GITHUB_WORKSPACE/dist/amo-metadata.json
+          temp=$RUNNER_TEMP
+          bun_digest=$BUN_SHA256
+          for name in $(compgen -e); do
+            case $name in PATH) ;; AMO_REVIEWER_LOGIN) export -n "$name" ;; *) unset "$name" ;; esac
+          done
+          [[ $digest =~ ^[0-9a-f]{64}$ ]] \
+            || { echo "::error::vars.REVIEWER_NOTES_SHA256 is not a SHA-256 digest (G28)"; exit 1; }
+          [[ -z $bun_digest || $bun_digest =~ ^[0-9a-f]{64}$ ]] \
+            || { echo "::error::vars.BUN_SHA256 is not a SHA-256 digest (G28)"; exit 1; }
+          bun=$(command -v bun)
+          work=$(mktemp -d "$temp/reviewer-notes.XXXXXX")
+          cd "$work"
+          cp "$script" amo-reviewer-notes.ts
+          : > empty.toml
+          echo '{}' > empty.json
+          echo "$digest  amo-reviewer-notes.ts" | shasum -a 256 --check --status \
+            || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }
+          if [[ -n $bun_digest ]]; then
+            echo "$bun_digest  $bun" | shasum -a 256 --check --status \
+              || { echo "::error::bun is not the approved build (G28)"; exit 1; }
+          fi
+          export AMO_REVIEWER_LOGIN HOME=$work
+          exec "$bun" --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts check "$metadata"
+
+  # Runs while check-reviewer-login is skipped (G28 off, or a beta), never after it failed.
   submit-amo:
-    needs: [meta, build, github-release]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true' && vars.PUBLISH_AMO == 'true'
+    needs: [meta, build, github-release, check-reviewer-login]
+    if: ${{ !cancelled() && needs.github-release.result == 'success' && (needs.check-reviewer-login.result == 'success' || needs.check-reviewer-login.result == 'skipped') && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true' && vars.PUBLISH_AMO == 'true' }}
     runs-on: ubuntu-latest
     environment: amo
     permissions:
@@ -173,11 +263,12 @@ jobs:
     env:
       VERSION: ${{ needs.meta.outputs.version }}
       CHANNEL: ${{ needs.meta.outputs.channel }}
-      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
-      GH_TOKEN: ${{ github.token }}
     steps:
+      # The job's token can write releases, and checkout would otherwise leave
+      # it in .git/config for bun install, wxt and web-ext to read.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -197,6 +288,8 @@ jobs:
         id: amo
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           status=$(bun scripts/amo-version.ts status "$VERSION")
@@ -213,6 +306,8 @@ jobs:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_SLUG }}
           FIREFOX_CHANNEL: listed
           FIREFOX_AMO_METADATA_FILE: dist/amo-metadata.json
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           bunx wxt submit \
@@ -222,13 +317,16 @@ jobs:
       # web-ext signs a directory, so the checked zip is unpacked as it is.
       - name: Sign the beta on AMO (unlisted)
         if: env.CHANNEL == 'beta' && steps.amo.outputs.status == 'missing'
+        # web-ext reads WEB_EXT_* options from the environment, which keeps the key off the command line.
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           mkdir -p unpacked signed
           unzip -q "$(ls dist/*-firefox-beta.zip)" -d unpacked
           bunx web-ext sign --source-dir unpacked --artifacts-dir signed \
             --channel unlisted \
-            --api-key "$FIREFOX_JWT_ISSUER" --api-secret "$FIREFOX_JWT_SECRET" \
             --upload-source-code "$(ls dist/*-sources-beta.zip)" \
             --amo-metadata dist/amo-metadata.json \
             --approval-timeout 1800000
@@ -237,6 +335,8 @@ jobs:
         if: steps.amo.outputs.status == 'no-source'
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           suffix=""
           [ "$CHANNEL" = beta ] && suffix=-beta
@@ -246,6 +346,8 @@ jobs:
       - name: Check AMO has the version with its sources
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           status=$(bun scripts/amo-version.ts status "$VERSION")
           [ "$status" = present ] || { echo "::error::AMO's version $VERSION is '$status', not present with sources"; exit 1; }
@@ -254,6 +356,8 @@ jobs:
         if: env.CHANNEL == 'beta' && steps.amo.outputs.status != 'missing'
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun scripts/amo-version.ts download "$VERSION" signed 30
 
       # web-ext repackages the directory; the signed files must be the checked ones.
@@ -268,9 +372,79 @@ jobs:
           scripts/check-signed-build.sh checked from-amo
           echo "The signed beta holds exactly the checked files."
 
+      # The only run step with the token, which can write releases. bun
+      # install, wxt and web-ext run earlier in this job, and the checkout
+      # kept no copy of it for them.
       - name: Attach the signed beta to the pre-release
         if: env.CHANNEL == 'beta'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: gh release upload "v$VERSION" signed/*.xpi --clobber --repo "$GITHUB_REPOSITORY"
+
+  # G28: once AMO has the version and its sources, sets its reviewer notes to the
+  # filled notes, which exist only in the script's memory. A re-run sets them again.
+  fill-reviewer-notes:
+    needs: [meta, check-reviewer-login, submit-amo]
+    # Off until the owner approves G28, like check-reviewer-login.
+    if: false && needs.check-reviewer-login.result == 'success' && needs.submit-amo.result == 'success'
+    # A named image, so a move of ubuntu-latest needs the owner's approval.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: amo-reviewer
+    steps:
+      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit upstream's v7 tag peels to (design, "Turning it on")
+        with:
+          sparse-checkout: /scripts/amo-reviewer-notes.ts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
+        with:
+          bun-version: 1.4.3
+          no-cache: true
+
+      - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit upstream's v8 tag peels to (design, "Turning it on")
+        with:
+          name: release-${{ needs.meta.outputs.version }}
+          path: dist
+
+      - name: Put the reviewer test account into the reviewer notes
+        env:
+          AMO_REVIEWER_LOGIN: ${{ secrets.AMO_REVIEWER_LOGIN }}
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+          VERSION: ${{ needs.meta.outputs.version }}
+          REVIEWER_NOTES_SHA256: ${{ vars.REVIEWER_NOTES_SHA256 }}
+          BUN_SHA256: ${{ vars.BUN_SHA256 }}
+        run: |
+          digest=$REVIEWER_NOTES_SHA256
+          script=$GITHUB_WORKSPACE/scripts/amo-reviewer-notes.ts
+          metadata=$GITHUB_WORKSPACE/dist/amo-metadata.json
+          version=$VERSION
+          temp=$RUNNER_TEMP
+          bun_digest=$BUN_SHA256
+          for name in $(compgen -e); do
+            case $name in PATH) ;; AMO_REVIEWER_LOGIN|FIREFOX_EXTENSION_ID|FIREFOX_JWT_ISSUER|FIREFOX_JWT_SECRET) export -n "$name" ;; *) unset "$name" ;; esac
+          done
+          [[ $digest =~ ^[0-9a-f]{64}$ ]] \
+            || { echo "::error::vars.REVIEWER_NOTES_SHA256 is not a SHA-256 digest (G28)"; exit 1; }
+          [[ -z $bun_digest || $bun_digest =~ ^[0-9a-f]{64}$ ]] \
+            || { echo "::error::vars.BUN_SHA256 is not a SHA-256 digest (G28)"; exit 1; }
+          bun=$(command -v bun)
+          work=$(mktemp -d "$temp/reviewer-notes.XXXXXX")
+          cd "$work"
+          cp "$script" amo-reviewer-notes.ts
+          : > empty.toml
+          echo '{}' > empty.json
+          echo "$digest  amo-reviewer-notes.ts" | shasum -a 256 --check --status \
+            || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }
+          if [[ -n $bun_digest ]]; then
+            echo "$bun_digest  $bun" | shasum -a 256 --check --status \
+              || { echo "::error::bun is not the approved build (G28)"; exit 1; }
+          fi
+          export AMO_REVIEWER_LOGIN FIREFOX_EXTENSION_ID FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET HOME=$work
+          exec "$bun" --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts fill "$version" "$metadata"
 
   submit-cws:
     needs: [meta, build, github-release]
@@ -305,3 +479,18 @@ jobs:
           # Patches always publish on approval; others follow CWS_PUBLISH_TYPE.
           CHROME_PUBLISH_TYPE: ${{ needs.meta.outputs.kind == 'patch' && 'DEFAULT_PUBLISH' || vars.CWS_PUBLISH_TYPE || 'DEFAULT_PUBLISH' }}
         run: bun scripts/cws-submit.ts "$(ls dist/*-chrome.zip)" "$VERSION"
+
+  # A release made with GITHUB_TOKEN starts no workflow by itself, so this asks
+  # pages.yml to rebuild the site: beta/updates.json and the /beta/ page list
+  # the new pre-release's signed .xpi once submit-amo has attached it.
+  pages:
+    needs: [github-release, submit-amo]
+    if: always() && needs.github-release.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Rebuild the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main

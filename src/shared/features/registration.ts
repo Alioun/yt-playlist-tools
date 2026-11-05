@@ -20,10 +20,14 @@ export type RegistrationFeature = {
 export type PageBundle = { kind: "feature" | "kit"; site: Site } | { kind: "page" | "unrelated" }
 export type EntryOwnership = Readonly<Record<string, PageBundle>>
 
+/**
+ * Files named `page-…` run in the page's own world (MAIN): the page half and its jobs file. `jobs` is never registered;
+ * the Registrar injects it on a page's first job (G42). Every other file runs in the isolated world.
+ */
 export const siteBundles = {
-  www: { match: "https://www.youtube.com/*", page: "page-www", core: "core-www", kit: "kit-www" },
-  music: { match: "https://music.youtube.com/*", page: "page-music", core: "core-music", kit: "kit-music" }
-} as const satisfies Record<Site, { match: string; page: string; core: string; kit: string }>
+  www: { match: "https://www.youtube.com/*", page: "page-www", jobs: "page-jobs-www", core: "core-www", kit: "kit-www" },
+  music: { match: "https://music.youtube.com/*", page: "page-music", jobs: "page-jobs-music", core: "core-music", kit: "kit-music" }
+} as const satisfies Record<Site, { match: string; page: string; jobs: string; core: string; kit: string }>
 export const popoversBundle = "popovers"
 const sites: readonly Site[] = ["www", "music"]
 
@@ -42,6 +46,7 @@ export function pageLinkEntries(registry: readonly RegistrationFeature[]): Entry
   for (const site of sites) {
     const names = siteBundles[site]
     entries[names.page] = { kind: "page" }
+    entries[names.jobs] = { kind: "page" }
     entries[names.core] = { kind: "page" }
     entries[names.kit] = { kind: "kit", site }
   }
@@ -53,7 +58,7 @@ export function pageLinkEntries(registry: readonly RegistrationFeature[]): Entry
       const page = feature.pages[site]
       if (!page) continue
       const prefix = siteBundles[site].match.slice(0, -1)
-      if (page.matches && (!page.matches.length || page.matches.some((match) => !match.startsWith(prefix) || /[\s#]/.test(match)))) {
+      if (page.matches && (!page.matches.length || page.matches.some(match => !match.startsWith(prefix) || /[\s#]/.test(match)))) {
         throw Error(`Off-site or invalid registration matches for ${feature.id} on ${site}`)
       }
       if (!page.file) {
@@ -69,13 +74,7 @@ export function pageLinkEntries(registry: readonly RegistrationFeature[]): Entry
   return entries
 }
 
-export function desired(
-  registry: readonly RegistrationFeature[],
-  settings: Settings,
-  consent: boolean,
-  access: Readonly<Record<Site, boolean>>,
-  schemaOk: boolean,
-): RegisteredScript[] {
+export function desired(registry: readonly RegistrationFeature[], settings: Settings, consent: boolean, access: Readonly<Record<Site, boolean>>, schemaOk: boolean): RegisteredScript[] {
   if (!consent || !schemaOk) return []
   pageLinkEntries(registry)
   const result: RegisteredScript[] = []
@@ -89,10 +88,10 @@ export function desired(
     }
     if (!selected.length) continue
     const names = siteBundles[site]
-    const matches = [...new Set(selected.flatMap((page) => page.matches ?? [names.match]))]
+    const matches = [...new Set(selected.flatMap(page => page.matches ?? [names.match]))]
     const effectiveMatches = matches.includes(names.match) ? [names.match] : matches
-    const files = [...new Set(selected.flatMap((page) => page.file ? [`${page.file}.js`] : []))]
-    const js = [`${names.core}.js`, ...(selected.some((page) => page.needs.includes("kit")) ? [`${names.kit}.js`] : []), ...files]
+    const files = [...new Set(selected.flatMap(page => (page.file ? [`${page.file}.js`] : [])))]
+    const js = [`${names.core}.js`, ...(selected.some(page => page.needs.includes("kit")) ? [`${names.kit}.js`] : []), ...files]
     result.push(
       { id: `pp-${site}-page`, matches: [...effectiveMatches], js: [`${names.page}.js`], world: "MAIN", runAt: "document_start", allFrames: false, persistAcrossSessions: true },
       { id: `pp-${site}`, matches: [...effectiveMatches], js, world: "ISOLATED", runAt: "document_idle", allFrames: false, persistAcrossSessions: true }

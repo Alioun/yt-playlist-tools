@@ -1,10 +1,33 @@
 import type {
-  BuildId, RouteId, PageRequestId, PageWatchId, WatchId, Job, JobOf, JobId, JobInputById, JobDataById,
-  JobData, JobResult, MembershipRow, Stream, StreamDataById, StreamData, JobInvocation
+  BuildId,
+  RouteId,
+  PageRequestId,
+  PageWatchId,
+  WatchId,
+  Job,
+  JobOf,
+  JobId,
+  JobInputById,
+  JobDataById,
+  JobData,
+  JobResult,
+  MembershipRow,
+  Stream,
+  StreamDataById,
+  StreamData,
+  JobInvocation
 } from "./index"
 import type {
-  PageHelloSnapshot, PageHelloAnswer, PageRequestPayloadByKind, PageCoreMessage,
-  PageAnswerByKind, PageGatewayMessage, PageRunAnswer, PageStreamEvent, PageJobData, PageAccountData
+  PageHelloSnapshot,
+  PageHelloAnswer,
+  PageRequestPayloadByKind,
+  PageCoreMessage,
+  PageAnswerByKind,
+  PageGatewayMessage,
+  PageRunAnswer,
+  PageStreamEvent,
+  PageJobData,
+  PageAccountData
 } from "./page"
 import { isPageHelloAnswer, isPageRunAnswerFor, isPageStreamEventFor } from "./page"
 import type { AccountKey, VideoId, PlaylistId } from "../model"
@@ -19,16 +42,15 @@ import { isPageRunAnswerFor as rootRunGuard } from "./index"
 // @ts-expect-error Hello guards belong to the page entrypoint.
 import { isPageHelloAnswer as rootHelloGuard } from "./index"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Assert<T extends true> = T
 type Distinct<A, B> = A extends B ? false : B extends A ? false : true
-type Pairwise<Values extends unknown[]> = Values extends [infer Head, ...infer Tail]
-  ? Distinct<Head, Tail[number]> extends true ? Pairwise<Tail> : false : true
+type Pairwise<Values extends unknown[]> = Values extends [infer Head, ...infer Tail] ? (Distinct<Head, Tail[number]> extends true ? Pairwise<Tail> : false) : true
 type PageReads = { kind: "account" | "accountLabel" }
 export type PageRelationships = [
-  Assert<Equal<keyof PageRequestPayloadByKind, "hello" | "run" | "watch" | "unwatch" | "probe">>,
-  Assert<Equal<PageCoreMessage["kind"], "hello" | "run" | "watch" | "unwatch" | "probe" | "retire">>,
-  Assert<Equal<keyof PageAnswerByKind, "hello" | "run" | "stream" | "probe" | "signal">>,
+  Assert<Equal<keyof PageRequestPayloadByKind, "hello" | "run" | "watch" | "unwatch" | "probe" | "loaded">>,
+  Assert<Equal<PageCoreMessage["kind"], "hello" | "run" | "watch" | "unwatch" | "probe" | "loaded" | "retire">>,
+  Assert<Equal<keyof PageAnswerByKind, "hello" | "run" | "stream" | "probe" | "signal" | "need">>,
   Assert<Equal<PageGatewayMessage["kind"], keyof PageAnswerByKind>>,
   Assert<Equal<keyof JobInputById, JobId>>,
   Assert<Equal<keyof JobDataById, JobId>>,
@@ -48,6 +70,21 @@ declare const dependency: WatchId
 declare const route: RouteId
 declare const acct: AccountKey
 declare const video: VideoId
+declare const playlist: PlaylistId
+
+export function removalPageRelationships() {
+  const request: PageCoreMessage = { v: 1, build, kind: "run", id, job: { kind: "remove", playlistId: playlist, videoId: video } }
+  const music: PageCoreMessage = { v: 1, build, kind: "run", id, job: { kind: "unsave", playlistId: playlist, videoId: video } }
+  const missing: PageRunAnswer<JobOf<"add">> = { v: 1, build, kind: "run", id, result: { ok: true, route, data: { setVideoId: null } } }
+  const removed: PageRunAnswer<JobOf<"remove">> = { v: 1, build, kind: "run", id, result: { ok: true, route, data: null } }
+  // @ts-expect-error Removal data is not a confirmed add identity.
+  const wrong: PageRunAnswer<JobOf<"remove">> = missing
+  // @ts-expect-error An unknown success cannot omit the normalized identity.
+  const unknown: PageRunAnswer<JobOf<"add">> = { v: 1, build, kind: "run", id, result: { ok: true, route, data: {} } }
+  // @ts-expect-error A page removal still requires one removal identity.
+  const neither: PageCoreMessage = { v: 1, build, kind: "run", id, job: { kind: "remove", playlistId: playlist } }
+  void [request, music, missing, removed, wrong, unknown, neither]
+}
 
 export function pageIdentifierRelationships() {
   // @ts-expect-error A subscription cannot correlate a request.
@@ -106,7 +143,9 @@ export function membershipCorrelation(raw: unknown) {
 }
 
 export function genericPending<J extends Job>(pending: { id: PageRequestId; job: J }, accept: (answer: PageRunAnswer<J>) => void) {
-  return (raw: unknown) => { if (isPageRunAnswerFor(pending, raw, build)) accept(raw) }
+  return (raw: unknown) => {
+    if (isPageRunAnswerFor(pending, raw, build)) accept(raw)
+  }
 }
 export function unionPending(job: PageReads, raw: unknown) {
   if (isPageRunAnswerFor({ id, job }, raw, build) && raw.result.ok && "signedIn" in raw.result.data && raw.result.data.signedIn) {
@@ -118,7 +157,10 @@ export function unionPending(job: PageReads, raw: unknown) {
 }
 export function specialisedPending<J extends Job & { trace: "synthetic" }>(pending: { id: PageRequestId; job: J }) {
   const trace: "synthetic" = pending.job.trace
-  genericPending(pending, answer => { const result: PageRunAnswer<J> = answer; void result })
+  genericPending(pending, answer => {
+    const result: PageRunAnswer<J> = answer
+    void result
+  })
   return trace
 }
 export function pinsRemainRequired() {

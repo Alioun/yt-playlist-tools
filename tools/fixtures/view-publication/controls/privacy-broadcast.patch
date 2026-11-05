@@ -1,0 +1,11 @@
+--- a/src/background/tabs/tabs.ts
++++ b/src/background/tabs/tabs.ts
+@@ -25,7 +25,7 @@
+   switch (target.kind) {
+     case "all": return true
+     case "tab": return tab.tabId === target.tabId
+-    case "account": return tab.acct === target.acct && (target.scope === "all" || tab.privateTab === (target.scope === "private"))
++    case "account": return target.scope === "all" || tab.privateTab === (target.scope === "private")
+   }
+ }
+ 

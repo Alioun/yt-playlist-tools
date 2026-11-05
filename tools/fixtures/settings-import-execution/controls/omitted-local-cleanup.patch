@@ -1,0 +1,11 @@
+--- a/src/background/store/settings-import-execution.ts
++++ b/src/background/store/settings-import-execution.ts
+@@ -178,7 +178,7 @@
+         let apply: () => Promise<void>
+         switch (effect.kind) {
+           case "local-set": local = { ...local, ...effect.items }; apply = () => deps.local.set(effect.items); break
+-          case "local-remove": for (const name of effect.names) delete local[name]; apply = () => deps.cleanup.removeLocal(effect.keys); break
++          case "local-remove": for (const name of effect.names) delete local[name]; apply = () => Promise.resolve(); break
+           case "session": {
+             const operation = effect.effect
+             if (operation.kind === "set") { session[operation.key] = operation.value; apply = () => deps.cleanup.session.set({ [operation.key]: operation.value }) }

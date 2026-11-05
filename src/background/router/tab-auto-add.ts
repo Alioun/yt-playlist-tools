@@ -1,0 +1,69 @@
+import { authenticateTab, type TabContext } from "../adapters/runtime"
+import type { SenderOriginPorts, NativeSender } from "../adapters/sender-origin"
+import type { ProgressOwner } from "../store/progress"
+import type { SessionChange, SessionRead, SessionWrite } from "../store/session-memory"
+import type { ViewTarget } from "../tabs/ports"
+import type { KnownTab } from "../tabs/tabs"
+import type { BuildId } from "../../shared/contracts"
+import { tabProgressContract, type TabProgressMessages } from "../../shared/contracts/tab-actions"
+import type { AccountKey } from "../../shared/model"
+import { createRpc, type Deadline } from "../../shared/rpc/rpc"
+import type { Transport } from "../../shared/rpc/transport"
+
+export const CANT_MEASURE_SHOWN = "auto-add:cant-measure"
+
+/**
+ * Auto-add's tab routes besides `tab.add`: progress at DATA-27's checkpoints and the once-per-session can't-measure
+ * toast. Each answers only for the account the tab registry holds for the sending tab (ARC-ACC-49).
+ */
+export function createAutoAddTabRouter(deps: {
+  readonly transport: Transport<NativeSender>
+  readonly senders: SenderOriginPorts
+  readonly build: BuildId
+  readonly deadline: Deadline
+  readonly tabs: { known(target: ViewTarget): Promise<readonly Pick<KnownTab, "acct" | "privateTab">[]> }
+  readonly owner: ProgressOwner & { readSession(): Promise<SessionRead>; changeSession(change: SessionChange): Promise<SessionWrite> }
+  /** Clears the tab's toolbar tick (ARC-MOD-38). */
+  readonly untick?: (tabId: number) => void
+  now(): number
+}): { dispose(): void } {
+  const rpc = createRpc<TabProgressMessages, NativeSender>(deps.transport, { build: deps.build, deadline: deps.deadline, contract: tabProgressContract })
+  async function registered(context: TabContext, acct: AccountKey): Promise<boolean> {
+    const [known] = await deps.tabs.known({ kind: "tab", tabId: context.origin.tabId })
+    return known !== undefined && known.acct === acct && known.privateTab === context.origin.incognito
+  }
+  const unbind = rpc.handle({
+    authenticate: authenticateTab(deps.senders),
+    handlers: {
+      async "tab.progress.load"({ acct, request }, context) {
+        if (acct === null || context.origin.incognito || !(await registered(context, acct))) return null
+        const read = await deps.owner.loadProgress({ acct, video: request.video, private: false })
+        return read.kind === "progress" && read.progress ? { len: read.progress.len, parts: read.progress.parts } : null
+      },
+      async "tab.progress.save"({ acct, request }, context) {
+        if (acct === null || context.origin.incognito || !(await registered(context, acct))) return null
+        await deps.owner.saveProgress({ acct, video: request.video, private: false, len: request.progress.len, parts: request.progress.parts })
+        return null
+      },
+      async "tab.cantMeasure"({ acct }, context) {
+        if (acct === null || !(await registered(context, acct))) return { show: false }
+        if (context.origin.incognito) return { show: true }
+        const read = await deps.owner.readSession()
+        if (read.kind !== "memory") return { show: true }
+        if (read.memory.shown.global.has(CANT_MEASURE_SHOWN)) return { show: false }
+        await deps.owner.changeSession({ revision: read.revision, now: deps.now(), edits: [{ kind: "shown-global", acct, scope: "normal", keys: [CANT_MEASURE_SHOWN] }] })
+        return { show: true }
+      },
+      async "tab.videoChanged"({ acct }, context) {
+        if (acct !== null && (await registered(context, acct))) deps.untick?.(context.origin.tabId)
+        return null
+      }
+    }
+  })
+  return {
+    dispose() {
+      unbind()
+      rpc.dispose()
+    }
+  }
+}

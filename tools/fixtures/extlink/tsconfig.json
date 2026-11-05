@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["bun"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/shared/rpc/callback.ts",
+    "../../../src/shared/rpc/callback.bun-test.ts",
+    "../../../src/background/adapters/runtime.bun-test.ts",
+    "../../../src/background/adapters/runtime.type-test.ts",
+    "../../../src/site/core/extlink.ts",
+    "../../../src/site/core/extlink.bun-test.ts",
+    "../../../src/site/core/extlink-consumer.bun-test.ts",
+    "../../../src/site/core/extlink.type-test.ts",
+    "../../../src/site/core/adapters/extlink-runtime.bun-test.ts",
+    "../../../src/site/core/adapters/extlink-runtime.type-test.ts",
+    "run.ts"
+  ]
+}

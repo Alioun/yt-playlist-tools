@@ -1,0 +1,3 @@
+# Paths resolve from the repository root, where scripts/run-fixture-gates.ts runs this folder with --config.
+[test]
+preload = []

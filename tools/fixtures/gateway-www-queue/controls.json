@@ -1,0 +1,349 @@
+{
+ "source": "see seal.json sourceTree",
+ "protocol": [
+  "baseline: named test passes on sealed source",
+  "apply exactly one mutant line by byte replacement",
+  "mutant compiles: scoped tsc -p tools/fixtures/gateway-www-queue/tsconfig.json and whole tsc -p tsconfig.json",
+  "named test is red",
+  "restore exact bytes and verify file SHA-256 equals seal",
+  "named test passes again"
+ ],
+ "status": "authored-unexecuted",
+ "negatives": [
+  {
+   "id": "N01",
+   "category": "identity-list-mismatch",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 193,
+   "original": "        if (before && after.listId !== before.listId) return false",
+   "mutant": "        if (false) return false",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "an entry in a replaced queue list never confirms the add"
+   }
+  },
+  {
+   "id": "N02",
+   "category": "duplicate-collapse",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 194,
+   "original": "        const fresh = after.entries.filter(entry => entry.videoId === card.videoId && !known.has(entry.setVideoId))",
+   "mutant": "        const fresh = after.entries.filter(entry => entry.videoId === card.videoId)",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "duplicate video IDs confirm only the distinct new entry"
+   }
+  },
+  {
+   "id": "N03",
+   "category": "callback-only-success",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 197,
+   "original": "        if (fresh.length === 0 || returned !== undefined && !entry) return false",
+   "mutant": "        if (returned !== undefined && !entry) return false",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "callback success without a panel effect is confirmed false with no Undo"
+   }
+  },
+  {
+   "id": "N04",
+   "category": "miniplayer-fallback-scope",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 190,
+   "original": "          confirmed = !before && miniplayerBefore === false && miniplayer() === true",
+   "mutant": "          confirmed = miniplayer() === true",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "the miniplayer fallback confirms only a first add whose miniplayer turns active"
+   }
+  },
+  {
+   "id": "N05",
+   "category": "noisy-signal",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 210,
+   "original": "      if (noisy && before) notice(\"quiet-route-noisy\", route)",
+   "mutant": "      if (false) notice(\"quiet-route-noisy\", route)",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "a noisy quiet route counts its real edit, records quiet-route-noisy once and never resends"
+   }
+  },
+  {
+   "id": "N06",
+   "category": "undo-retry-missing",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 230,
+   "original": "      for (let round = 0; round < 2; round++) {",
+   "mutant": "      for (let round = 0; round < 1; round++) {",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "Undo retries the exact entry once after it stays present, then succeeds"
+   }
+  },
+  {
+   "id": "N07",
+   "category": "excessive-undo",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 230,
+   "original": "      for (let round = 0; round < 2; round++) {",
+   "mutant": "      for (let round = 0; round < 3; round++) {",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "Undo that never takes effect fails after exactly one retry"
+   }
+  },
+  {
+   "id": "N08",
+   "category": "wrong-undo-removal",
+   "file": "src/page/gateway/requests.ts",
+   "line": 40,
+   "original": "  return { endpoint: edit(listId, [{ action: \"ACTION_REMOVE_VIDEO\", setVideoId }]).endpoint }",
+   "mutant": "  return { endpoint: edit(listId, [{ action: \"ACTION_REMOVE_VIDEO\", removedVideoId: setVideoId }]).endpoint }",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "Undo removes exactly its entry quietly, refreshes that list and confirms absence"
+   }
+  },
+  {
+   "id": "N09",
+   "category": "account-exemption",
+   "file": "src/page/gateway/requests.ts",
+   "line": 69,
+   "original": "  return ![\"channelOf\", \"resolveChannel\", \"queueAdd\", \"queueUndo\", \"queueAddList\", \"openCardMenu\"].includes(job.kind)",
+   "mutant": "  return ![\"channelOf\", \"resolveChannel\", \"queueUndo\", \"queueAddList\", \"openCardMenu\"].includes(job.kind)",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "signed-out first add resolves the card's own queue command and confirms a new panel entry"
+   }
+  },
+  {
+   "id": "N10",
+   "category": "occurrence-count",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 286,
+   "original": "        for (const [id, times] of wanted) matched += Math.min(times, found.get(id) ?? 0)",
+   "mutant": "        for (const [id, times] of wanted) matched += Math.min(1, found.get(id) ?? 0)",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "queueAddList sends every ID in order and confirms every occurrence"
+   }
+  },
+  {
+   "id": "N11",
+   "category": "set-membership-count",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 286,
+   "original": "        for (const [id, times] of wanted) matched += Math.min(times, found.get(id) ?? 0)",
+   "mutant": "        for (const [id, times] of wanted) matched += found.has(id) ? times : 0",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "queueAddList reports a truthful partial count and never counts pre-existing duplicates"
+   }
+  },
+  {
+   "id": "N12",
+   "category": "pre-existing-entries",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 269,
+   "original": "    const known = new Set(before?.entries.map(entry => entry.setVideoId))",
+   "mutant": "    const known = new Set<string>()",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "queueAddList reports a truthful partial count and never counts pre-existing duplicates"
+   }
+  },
+  {
+   "id": "N13",
+   "category": "late-callback-leak",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 213,
+   "original": "      if (sent.kind === \"sent\") sent.stop()",
+   "mutant": "<delete line>",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "a late callback after confirmation is cancelled and changes nothing"
+   }
+  },
+  {
+   "id": "N14",
+   "category": "listener-leak",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 214,
+   "original": "      stopActions()",
+   "mutant": "<delete line>",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "signed-out first add resolves the card's own queue command and confirms a new panel entry"
+   }
+  },
+  {
+   "id": "N15",
+   "category": "stale-target",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 166,
+   "original": "    if (!target || !connected(target)) return unavailable",
+   "mutant": "    if (!target) return unavailable",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "stale targets and unrecognised cards send nothing"
+   }
+  },
+  {
+   "id": "N16",
+   "category": "panel-entry-identity",
+   "file": "src/page/parsers/www-queue.ts",
+   "line": 36,
+   "original": "      if (!entry || seen.has(entry.setVideoId)) return undefined",
+   "mutant": "      if (!entry) return undefined",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "panel and card parsers keep list identity, distinct entries and the card's own command"
+   }
+  },
+  {
+   "id": "N17",
+   "category": "overlapping-edits",
+   "file": "src/page/gateway/lanes.ts",
+   "line": 26,
+   "original": "    if (disposed || running[lane]) return",
+   "mutant": "    if (disposed) return",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "two adds run one at a time in the app-state lane"
+   }
+  },
+  {
+   "id": "N18",
+   "category": "noisy-success-retry",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 210,
+   "original": "      if (noisy && before) notice(\"quiet-route-noisy\", route)",
+   "mutant": "      if (noisy && before) { notice(\"quiet-route-noisy\", route); void send(queueAddEdit(before.listId, card.videoId), scope, route) }",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "a noisy quiet route counts its real edit, records quiet-route-noisy once and never resends"
+   }
+  }
+ ],
+ "controls": [
+  {
+   "id": "C01",
+   "of": "N01",
+   "category": "identity-list-mismatch",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 193,
+   "original": "        if (before && after.listId !== before.listId) return false",
+   "mutant": "        if (false) return false",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "an entry in a replaced queue list never confirms the add"
+   }
+  },
+  {
+   "id": "C02",
+   "of": "N03",
+   "category": "callback-only-success",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 197,
+   "original": "        if (fresh.length === 0 || returned !== undefined && !entry) return false",
+   "mutant": "        if (returned !== undefined && !entry) return false",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "callback success without a panel effect is confirmed false with no Undo"
+   }
+  },
+  {
+   "id": "C03",
+   "of": "N07",
+   "category": "excessive-undo",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 230,
+   "original": "      for (let round = 0; round < 2; round++) {",
+   "mutant": "      for (let round = 0; round < 3; round++) {",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "Undo that never takes effect fails after exactly one retry"
+   }
+  },
+  {
+   "id": "C04",
+   "of": "N08",
+   "category": "wrong-undo-removal",
+   "file": "src/page/gateway/requests.ts",
+   "line": 40,
+   "original": "  return { endpoint: edit(listId, [{ action: \"ACTION_REMOVE_VIDEO\", setVideoId }]).endpoint }",
+   "mutant": "  return { endpoint: edit(listId, [{ action: \"ACTION_REMOVE_VIDEO\", removedVideoId: setVideoId }]).endpoint }",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "Undo removes exactly its entry quietly, refreshes that list and confirms absence"
+   }
+  },
+  {
+   "id": "C05",
+   "of": "N09",
+   "category": "account-exemption",
+   "file": "src/page/gateway/requests.ts",
+   "line": 69,
+   "original": "  return ![\"channelOf\", \"resolveChannel\", \"queueAdd\", \"queueUndo\", \"queueAddList\", \"openCardMenu\"].includes(job.kind)",
+   "mutant": "  return ![\"channelOf\", \"resolveChannel\", \"queueUndo\", \"queueAddList\", \"openCardMenu\"].includes(job.kind)",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "signed-out first add resolves the card's own queue command and confirms a new panel entry"
+   }
+  },
+  {
+   "id": "C06",
+   "of": "N11",
+   "category": "set-membership-count",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 286,
+   "original": "        for (const [id, times] of wanted) matched += Math.min(times, found.get(id) ?? 0)",
+   "mutant": "        for (const [id, times] of wanted) matched += found.has(id) ? times : 0",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "queueAddList reports a truthful partial count and never counts pre-existing duplicates"
+   }
+  },
+  {
+   "id": "C07",
+   "of": "N14",
+   "category": "listener-leak",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 214,
+   "original": "      stopActions()",
+   "mutant": "<delete line>",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "signed-out first add resolves the card's own queue command and confirms a new panel entry"
+   }
+  },
+  {
+   "id": "C08",
+   "of": "N17",
+   "category": "overlapping-edits",
+   "file": "src/page/gateway/lanes.ts",
+   "line": 26,
+   "original": "    if (disposed || running[lane]) return",
+   "mutant": "    if (disposed) return",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "two adds run one at a time in the app-state lane"
+   }
+  },
+  {
+   "id": "C09",
+   "of": "N18",
+   "category": "noisy-success-retry",
+   "file": "src/page/gateway/www-queue.ts",
+   "line": 210,
+   "original": "      if (noisy && before) notice(\"quiet-route-noisy\", route)",
+   "mutant": "      if (noisy && before) { notice(\"quiet-route-noisy\", route); void send(queueAddEdit(before.listId, card.videoId), scope, route) }",
+   "expectedRed": {
+    "file": "tools/fixtures/gateway-www-queue/gateway.bun-test.ts",
+    "test": "a noisy quiet route counts its real edit, records quiet-route-noisy once and never resends"
+   }
+  }
+ ]
+}

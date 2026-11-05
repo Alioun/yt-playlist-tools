@@ -1,0 +1,122 @@
+{
+  "state": "authored-unexecuted",
+  "controls": [
+    {
+      "id": "private-persistence-leak",
+      "testFile": "src/background/monitor/monitor.bun-test.ts",
+      "test": "private signal, counters and notice acknowledgements never persist",
+      "assertion": "No private signal, counter, or acknowledgement produces a canonical write.",
+      "edits": [
+        {
+          "path": "src/background/monitor/monitor.ts",
+          "before": "if (facts.private) privateJournals.set(facts.acct, applyMonitorOperation(state, operation))",
+          "after": "if (false) privateJournals.set(facts.acct, applyMonitorOperation(state, operation))"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    },
+    {
+      "id": "stale-snapshot-overwrite",
+      "testFile": "src/background/store/monitor-session.bun-test.ts",
+      "test": "Monitor edits merge a fresh session and preserve unknown keys and other owners",
+      "assertion": "The fresh paused flag and concurrent future key survive a Monitor edit.",
+      "edits": [
+        {
+          "path": "src/background/store/session-memory.ts",
+          "before": "const next = copy(raw),\n    touched = new Set<RemovalSessionCollection>()",
+          "after": "const next = copy({ breakage: raw.breakage ?? { v: 1, global: {}, accounts: {} } }), touched = new Set<RemovalSessionCollection>()"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    },
+    {
+      "id": "removal-resurrection",
+      "testFile": "src/background/monitor/monitor.bun-test.ts",
+      "test": "real account removal revokes a pending flush and never resurrects the account",
+      "assertion": "The removed account remains absent after the stale flush deadline.",
+      "edits": [
+        {
+          "path": "src/background/monitor/monitor.ts",
+          "before": "pending = pending.filter(row => sessionAccountCurrent(row.revision, read.revision, row.acct))",
+          "after": "pending = [...pending]"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    },
+    {
+      "id": "bypassed-threshold",
+      "testFile": "src/background/monitor/monitor.bun-test.ts",
+      "test": "two no-effects are required and an intervening success resets the run",
+      "assertion": "The first no-effect remains working.",
+      "edits": [
+        {
+          "path": "src/background/store/monitor-session.ts",
+          "before": "(signal.kind !== \"no-effect\" || next.noEffects >= MONITOR_NO_EFFECTS)",
+          "after": "(signal.kind !== \"no-effect\" || next.noEffects >= 1)"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    },
+    {
+      "id": "missing-music-action-detail",
+      "testFile": "src/background/monitor/monitor.bun-test.ts",
+      "test": "Music action detail names unavailable enabled actions and preserves queue actions",
+      "assertion": "The unavailable Save and Like actions appear by exact action identifiers.",
+      "edits": [
+        {
+          "path": "src/background/monitor/derive.ts",
+          "before": "const actions = actionEntries.filter(([, jobs]) => jobs.some(failed)).map(([action]) => action)",
+          "after": "const actions: MusicAction[] = []"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    },
+    {
+      "id": "premature-notice-acknowledgement",
+      "testFile": "src/background/monitor/monitor.bun-test.ts",
+      "test": "notices batch at sixty milliseconds, defer visibility and require actual acknowledgement",
+      "assertion": "Repeated view reads preserve the same pending notice until explicit display acknowledgement.",
+      "edits": [
+        {
+          "path": "src/background/monitor/monitor.ts",
+          "before": "const rows = due(captured, statuses)\n    const allowed",
+          "after": "const rows = due(captured, statuses)\n    for (const row of rows) shownNormal.add(row.key)\n    const allowed"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    },
+    {
+      "id": "unavailable-reported-working",
+      "testFile": "src/background/monitor/monitor.bun-test.ts",
+      "test": "applied rejected and unconfirmed writes remain unavailable rather than reporting confirmed success",
+      "assertion": "An unavailable canonical owner produces unavailable status authority.",
+      "edits": [
+        {
+          "path": "src/background/monitor/monitor.ts",
+          "before": "if (result.kind !== \"statuses\") return unavailable\n    return { ...result, statuses: pageStatuses(result.statuses, enabled) }",
+          "after": "if (result.kind !== \"statuses\") return { kind: \"statuses\" as const, facts: tabViewFacts(context), statuses: enabled.map(feature => ({ feature: feature.id, state: \"working\" as const, jobs: [], anchors: [], actions: [], kinds: [] })), current: () => true }\n    return { ...result, statuses: pageStatuses(result.statuses, enabled) }"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    },
+    {
+      "id": "diagnostic-fallback-failure",
+      "testFile": "src/background/monitor/monitor.bun-test.ts",
+      "test": "diagnostic-only fallback and cosmetic records never cause failure or notices",
+      "assertion": "A successful fallback remains working and schedules no breakage notice.",
+      "edits": [
+        {
+          "path": "src/background/monitor/derive.ts",
+          "before": "const records = input.journal.signals.filter(row => row.tabId === tabId && row.signal.site === facts.site && row.active)",
+          "after": "const records = input.journal.signals.filter(row => row.tabId === tabId && row.signal.site === facts.site && (row.active || row.signal.kind === \"fell-back\"))"
+        },
+        {
+          "path": "src/background/monitor/derive.ts",
+          "before": "if (kind === \"quiet-route-noisy\" && row.signal.feature === feature.id)",
+          "after": "if ((kind === \"quiet-route-noisy\" || kind === \"fell-back\") && row.signal.feature === feature.id)"
+        }
+      ],
+      "compiling": "intended, unexecuted"
+    }
+  ]
+}

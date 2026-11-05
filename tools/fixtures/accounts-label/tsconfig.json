@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true, "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/background/accounts/accounts.ts",
+    "../../../src/background/accounts/accounts.bun-test.ts",
+    "../../../src/background/accounts/account-label-owner.bun-test.ts",
+    "../../../src/background/accounts/accounts.type-test.ts",
+    "../../../src/background/store/account-label.ts",
+    "../../../src/background/store/local-filter-writer.type-test.ts",
+    "harness.ts", "run.ts", "consumer.bun-test.ts"
+  ]
+}

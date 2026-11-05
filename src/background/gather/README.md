@@ -1,0 +1,22 @@
+# Gather
+
+`gather.ts` is the background Gather module's manual half (02 §2.16, ARC-MOD-40): one window, three destinations, closing and playlist Undo.
+
+- It reads a window through `GatherNativePort` (`tabs/ports.ts`): address, title, place and access time. It never messages, injects into, activates, reloads or wakes a gathered tab.
+- Selection is `shared/rules/gather.ts`: `videoOf`, `languageTitle` and `order`. Language groups come from the `language` port, which the composition binds to `i18n.detectLanguage`.
+- YouTube's player and queue are confirmed by the destination itself: the new tab's address naming a list, and `queueAddList` answering `confirmed` with every submitted ID. A create callback, a load or a delivered call is not confirmation.
+- A gather into the gather playlist is one `AddFlow.batch`. Its Undo record, with the close plan and the Recent entry, is one `gather` session edit, saved inside the batch before any tab closes. The after-close readback is the record's second and last save. Private gathers stay in AddFlow's memory.
+- Undo is `AddFlow.undo`. Only a complete removal returns `reopen`, and only then do tabs reopen in the background.
+
+- DATA-58's record is the store's `gather` session record, through the canonical owner: `last` (at most five, of three kinds: a playlist Undo record, a reopen-only record when every video was already in, and a player or queue record), `paced`, `kept` and `refused`. A private window's gathers stay in AddFlow's and this module's memory.
+- Closing is a plan until the browser shows each tab gone. The record names the planned tabs (`closing`, with their tab IDs); each is read again right before the one `tabs.remove` call and after it, and `AddFlow.settle` replaces the plan with the tabs read back as gone (`closed`). A tab still open, navigated or unreadable is never counted, and no removal is retried. Undo reopens `closed`. A record that still holds its plan, because the worker stopped or the readback save failed, is reconciled at Undo: each planned tab whose ID no longer exists was closed and reopens from its saved address, title, place and window. A planned tab still open stays as it is, so nothing opens twice. An unreadable one is not reopened and counts as unopened.
+- Reopened tab IDs go to the session's `kept`. `activated(tabId, scope)` takes a tab out of it once the user switches to it; the triggers call it for a kept tab they find active.
+- `execution.ts` is AddFlow's execution port over the Tabs engine: a popup origin goes through `Tabs.serve` with the account in view, a tab origin through `Tabs.runIn`. `adapters/gather-browser.ts` adapts the browser's tabs and windows, with Firefox's unloaded reopen and its loaded fallback.
+
+- `triggers.ts` is automatic gathering (YT-GT-22 to YT-GT-29). No timer looks for tabs: the unvisited check runs on a wake (any `tab.hello`, UI message or browser start), at most once a minute across every normal window, and a video tab's load starts its window's burst, gathered a quiet second after its last tab and at most 10 s after its first. Each window gathers at most once a minute; a window the pace held back gathers at the next wake after it. `pick` in `shared/rules/gather.ts` decides which tabs each trigger takes. The serving tab comes from the composition, and `automatic` saves into its account's gather playlist, always closing what it saved.
+- `copy.ts` words every result, Undo and progress in YT-GT-32 and YT-GT-33's copy, with the line's one action. The popup row, the Settings card, a page's toast and the badge's tooltip all read it.
+- `compose/gather.ts` wires it all in the background: the browser adapter, the `ui.gather`, `ui.gatherUndo` and `ui.gathers` routes, `ui.gatherProgress` pushes, the toast in the tab a gather saved from with its `tab.gatherUndo`, the badge's 3 s mark, and ARC-ACC-73's serving tab for automatic gathering.
+
+- A player tab that shows no list in 10 s is a `no-effect` signal (HEALTH-29). `compose/gather.ts` records it in the Monitor on the first youtube.com tab the registry knows in the gather's scope. After 2 in a row the Monitor's authority reads YouTube's player as `no-effect`, so Gather is not working and the next player gather answers that the player isn't working. A gather the player confirms, or a reload of that tab, clears it. Gather reads its own destinations' health from the Monitor on the same tab.
+
+Not here yet: a Missing or Full gather playlist's toast has no Settings action, and the popup's health list shows no background feature, Gather included.

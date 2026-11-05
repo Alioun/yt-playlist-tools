@@ -1,0 +1,11 @@
+diff --git a/src/site/kit/toaster/Toast.svelte b/src/site/kit/toaster/Toast.svelte
+--- a/src/site/kit/toaster/Toast.svelte
++++ b/src/site/kit/toaster/Toast.svelte
+@@ -7,6 +7,7 @@
+ 
+   let { source, site, document }: { source: Toaster; site: Site; document: Document } = $props()
+   let view = $state.raw<ToastView | null>(untrack(() => source.read()))
++  const inclusionProbe: never = site
+   let container = $state<HTMLDivElement | undefined>()
+   $effect(() => source.subscribe(next => { if (!document.hidden) view = next }))
+   $effect(() => { if (view) source.presented(view) })

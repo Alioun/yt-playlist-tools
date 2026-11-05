@@ -1,0 +1,7 @@
+--- a/tools/fixtures/feature-switches/isolated-negative.ts
++++ b/tools/fixtures/feature-switches/isolated-negative.ts
+@@ -1 +1,3 @@
+-export {}
++import type { FeatureSettingChange, FeatureSettingAnswer } from "../../../src/shared/contracts/shared-settings"; import type { FeatureAccess } from "../../../src/background/store/feature-settings"; import type { UiMessages } from "../../../src/shared/contracts/ui"
++
++export const intendedNegative: Extract<FeatureSettingChange, {kind: "feature"}>["feature"] = "autoAdd"

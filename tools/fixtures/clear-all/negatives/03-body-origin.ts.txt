@@ -1,0 +1,4 @@
+import type { ClearAllPayload } from "../../../src/shared/contracts/clear-all"
+
+const negative: ClearAllPayload = { action: "review", alsoSynced: false, origin: { page: "settings" } }
+export {}

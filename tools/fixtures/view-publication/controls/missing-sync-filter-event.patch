@@ -1,0 +1,11 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -1599,7 +1599,7 @@
+       if (changed) {
+         if (key.kind === "settings") emitView({ kind: "settings-changed", source: "sync" })
+         else if (key.kind === "setup") emitView(tombstone ? { kind: "account-removed", source: "sync", acct: key.acct } : { kind: "setup-changed", source: "sync", acct: key.acct })
+-        else emitView({ kind: "filter-changed", source: "sync", acct: key.acct, playlist: key.playlist })
++        else void key
+       }
+       return { kind: "adopted", received }
+     } catch (error) {

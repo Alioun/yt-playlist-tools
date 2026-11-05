@@ -1,0 +1,4 @@
+import type { SettingsPageOrigin } from "../../../src/background/store/store-lifecycle"
+
+const negative: SettingsPageOrigin = { kind: "tab", tabId: 1, incognito: false }
+export {}

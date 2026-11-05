@@ -1,0 +1,641 @@
+{
+  "protectedInventoriesChanged": false,
+  "relocations": [
+    {
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "originalDirectiveLine": 241,
+      "directive": "  // @ts-expect-error negative: reconciliation-private-sighting",
+      "currentDirectiveLines": [
+        376
+      ],
+      "intendedDiagnosticLines": [
+        377
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "originalDirectiveLine": 243,
+      "directive": "  // @ts-expect-error negative: reconciliation-forged-capture",
+      "currentDirectiveLines": [
+        378
+      ],
+      "intendedDiagnosticLines": [
+        379
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "originalDirectiveLine": 245,
+      "directive": "  // @ts-expect-error negative: reconciliation-label-shape",
+      "currentDirectiveLines": [
+        380
+      ],
+      "intendedDiagnosticLines": [
+        381
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "originalDirectiveLine": 247,
+      "directive": "  // @ts-expect-error negative: reconciliation-native-origin",
+      "currentDirectiveLines": [
+        382
+      ],
+      "intendedDiagnosticLines": [
+        383
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "originalDirectiveLine": 249,
+      "directive": "  // @ts-expect-error negative: reconciliation-plan-no-write",
+      "currentDirectiveLines": [
+        384
+      ],
+      "intendedDiagnosticLines": [
+        385
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 16,
+      "directive": "// @ts-expect-error negative: publication-missing-producer. Every publication requires the complete producer.",
+      "currentDirectiveLines": [
+        16
+      ],
+      "intendedDiagnosticLines": [
+        17
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 18,
+      "directive": "// @ts-expect-error negative: publication-partial-producer. A scope does not supply a complete TabView.",
+      "currentDirectiveLines": [
+        18
+      ],
+      "intendedDiagnosticLines": [
+        19
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 20,
+      "directive": "// @ts-expect-error negative: publication-missing-validator. Delivery requires the concrete validator.",
+      "currentDirectiveLines": [
+        20
+      ],
+      "intendedDiagnosticLines": [
+        21
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 22,
+      "directive": "// @ts-expect-error negative: publication-invented-target. Window broadcasts are outside the target vocabulary.",
+      "currentDirectiveLines": [
+        22
+      ],
+      "intendedDiagnosticLines": [
+        23
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 24,
+      "directive": "// @ts-expect-error negative: publication-fake-account. Raw identities require account validation.",
+      "currentDirectiveLines": [
+        24
+      ],
+      "intendedDiagnosticLines": [
+        25
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 26,
+      "directive": "// @ts-expect-error negative: publication-privacy-mixing. A scope is one explicit target variant.",
+      "currentDirectiveLines": [
+        26
+      ],
+      "intendedDiagnosticLines": [
+        27
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 28,
+      "directive": "// @ts-expect-error negative: publication-fabricated-handle. Tabs alone creates the nominal live-core identity.",
+      "currentDirectiveLines": [
+        28
+      ],
+      "intendedDiagnosticLines": [
+        29
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 30,
+      "directive": "// @ts-expect-error negative: publication-disposed-handle. Disposal returns no live target handle.",
+      "currentDirectiveLines": [
+        30
+      ],
+      "intendedDiagnosticLines": [
+        31
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 32,
+      "directive": "// @ts-expect-error negative: publication-monitor-required. No healthy or empty-notice fallback exists.",
+      "currentDirectiveLines": [
+        32
+      ],
+      "intendedDiagnosticLines": [
+        33
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 34,
+      "directive": "// @ts-expect-error negative: publication-private-storage-event. The canonical session owner cannot confirm private memory.",
+      "currentDirectiveLines": [
+        34
+      ],
+      "intendedDiagnosticLines": [
+        35
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tabs/tabs.type-test.ts",
+      "originalDirectiveLine": 42,
+      "directive": "// @ts-expect-error negative: tabs-target-account-required. Account targets carry a validated account.",
+      "currentDirectiveLines": [
+        42
+      ],
+      "intendedDiagnosticLines": [
+        43
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tabs/tabs.type-test.ts",
+      "originalDirectiveLine": 44,
+      "directive": "// @ts-expect-error negative: tabs-target-not-requester. A UI requester cannot select publication targets.",
+      "currentDirectiveLines": [
+        44
+      ],
+      "intendedDiagnosticLines": [
+        45
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tabs/tabs.type-test.ts",
+      "originalDirectiveLine": 46,
+      "directive": "// @ts-expect-error negative: tabs-target-opaque. A numeric tab ID cannot replace a live handle.",
+      "currentDirectiveLines": [
+        46
+      ],
+      "intendedDiagnosticLines": [
+        47
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tabs/tabs.type-test.ts",
+      "originalDirectiveLine": 48,
+      "directive": "// @ts-expect-error negative: tabs-publish-cancellation. A target delivery needs its lifetime signal.",
+      "currentDirectiveLines": [
+        48
+      ],
+      "intendedDiagnosticLines": [
+        49
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/monitor/monitor.type-test.ts",
+      "originalDirectiveLine": 53,
+      "directive": "// @ts-expect-error negative: monitor-view-not-generic. Projected changes identify the affected tab.",
+      "currentDirectiveLines": [
+        56
+      ],
+      "intendedDiagnosticLines": [
+        57
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "originalDirectiveLine": 220,
+      "directive": "  // @ts-expect-error negative: owner-view-no-fake-account. Confirmed view events retain branded account identities.",
+      "currentDirectiveLines": [
+        355
+      ],
+      "intendedDiagnosticLines": [
+        356
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "originalDirectiveLine": 222,
+      "directive": "  // @ts-expect-error negative: owner-view-no-cache-event. Cache bookkeeping cannot become a confirmed view change.",
+      "currentDirectiveLines": [
+        357
+      ],
+      "intendedDiagnosticLines": [
+        358
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/tab-view/publication.type-test.ts",
+      "originalDirectiveLine": 37,
+      "directive": "// @ts-expect-error negative: publication-private-source-required. Private changes require the actual AddFlow subscription.",
+      "currentDirectiveLines": [
+        37
+      ],
+      "intendedDiagnosticLines": [
+        38
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/add-flow/add-flow.type-test.ts",
+      "originalDirectiveLine": 103,
+      "directive": "// @ts-expect-error negative: add-flow-private-scope. Private memory never emits normal session events.",
+      "currentDirectiveLines": [
+        109
+      ],
+      "intendedDiagnosticLines": [
+        110
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 7,
+      "directive": "  // @ts-expect-error negative: raw-snapshot-is-not-a-public-source",
+      "currentDirectiveLines": [
+        6
+      ],
+      "intendedDiagnosticLines": [
+        7
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 9,
+      "directive": "  // @ts-expect-error negative: device-is-not-export-data",
+      "currentDirectiveLines": [
+        8
+      ],
+      "intendedDiagnosticLines": [
+        9
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 11,
+      "directive": "  // @ts-expect-error negative: channel-is-not-an-account",
+      "currentDirectiveLines": [
+        10
+      ],
+      "intendedDiagnosticLines": [
+        11
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 13,
+      "directive": "  // @ts-expect-error negative: unchecked-read-is-not-a-source",
+      "currentDirectiveLines": [
+        12
+      ],
+      "intendedDiagnosticLines": [
+        13
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 15,
+      "directive": "  // @ts-expect-error negative: unchecked-check-is-not-a-plan",
+      "currentDirectiveLines": [
+        14
+      ],
+      "intendedDiagnosticLines": [
+        15
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 17,
+      "directive": "  // @ts-expect-error negative: public-source-has-no-device",
+      "currentDirectiveLines": [
+        16
+      ],
+      "intendedDiagnosticLines": [
+        17
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 25,
+      "directive": "  // @ts-expect-error negative: omitted-filter-inventory",
+      "currentDirectiveLines": [
+        24
+      ],
+      "intendedDiagnosticLines": [
+        25
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-read.type-test.ts",
+      "originalDirectiveLine": 27,
+      "directive": "  // @ts-expect-error negative: stale-result-cannot-expose-source",
+      "currentDirectiveLines": [
+        26
+      ],
+      "intendedDiagnosticLines": [
+        27
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "originalDirectiveLine": 11,
+      "directive": "  // @ts-expect-error negative: tab-cannot-call-owner-export",
+      "currentDirectiveLines": [
+        12
+      ],
+      "intendedDiagnosticLines": [
+        13
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "originalDirectiveLine": 13,
+      "directive": "  // @ts-expect-error negative: file-plan-is-not-native-origin",
+      "currentDirectiveLines": [
+        14
+      ],
+      "intendedDiagnosticLines": [
+        15
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "originalDirectiveLine": 15,
+      "directive": "  // @ts-expect-error negative: payload-privacy-is-not-native-origin",
+      "currentDirectiveLines": [
+        16
+      ],
+      "intendedDiagnosticLines": [
+        17
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "originalDirectiveLine": 17,
+      "directive": "  // @ts-expect-error negative: import-application-is-not-authorized",
+      "currentDirectiveLines": [
+        18
+      ],
+      "intendedDiagnosticLines": [
+        19
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "originalDirectiveLine": 24,
+      "directive": "  // @ts-expect-error negative: export-has-no-consent-parameter",
+      "currentDirectiveLines": [
+        25
+      ],
+      "intendedDiagnosticLines": [
+        26
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "originalDirectiveLine": 26,
+      "directive": "  // @ts-expect-error negative: imported-plan-cannot-select-check-privacy",
+      "currentDirectiveLines": [
+        27
+      ],
+      "intendedDiagnosticLines": [
+        28
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 7,
+      "directive": "  // @ts-expect-error negative: raw-storage-export",
+      "currentDirectiveLines": [
+        6
+      ],
+      "intendedDiagnosticLines": [
+        7
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 9,
+      "directive": "  // @ts-expect-error negative: invented-plan-variant",
+      "currentDirectiveLines": [
+        8
+      ],
+      "intendedDiagnosticLines": [
+        9
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 11,
+      "directive": "  // @ts-expect-error negative: channel-as-account",
+      "currentDirectiveLines": [
+        10
+      ],
+      "intendedDiagnosticLines": [
+        11
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 13,
+      "directive": "  // @ts-expect-error negative: account-as-playlist",
+      "currentDirectiveLines": [
+        12
+      ],
+      "intendedDiagnosticLines": [
+        13
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 15,
+      "directive": "  // @ts-expect-error negative: playlist-as-channel",
+      "currentDirectiveLines": [
+        14
+      ],
+      "intendedDiagnosticLines": [
+        15
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 17,
+      "directive": "  // @ts-expect-error negative: newer-format-type",
+      "currentDirectiveLines": [
+        16
+      ],
+      "intendedDiagnosticLines": [
+        17
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 19,
+      "directive": "  // @ts-expect-error negative: plan-is-not-owner-confirmation",
+      "currentDirectiveLines": [
+        18
+      ],
+      "intendedDiagnosticLines": [
+        19
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 21,
+      "directive": "  // @ts-expect-error negative: payload-is-not-bound-parser",
+      "currentDirectiveLines": [
+        20
+      ],
+      "intendedDiagnosticLines": [
+        21
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "tools/fixtures/settings-file/native.type-test.ts",
+      "originalDirectiveLine": 23,
+      "directive": "  // @ts-expect-error negative: payload-cannot-select-native-privacy",
+      "currentDirectiveLines": [
+        22
+      ],
+      "intendedDiagnosticLines": [
+        23
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-import-plan.type-test.ts",
+      "originalDirectiveLine": 18,
+      "directive": "  // @ts-expect-error account identity cannot be a document address.",
+      "currentDirectiveLines": [
+        17
+      ],
+      "intendedDiagnosticLines": [
+        18
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-import-plan.type-test.ts",
+      "originalDirectiveLine": 20,
+      "directive": "  // @ts-expect-error a playlist identity cannot be an account identity.",
+      "currentDirectiveLines": [
+        19
+      ],
+      "intendedDiagnosticLines": [
+        20
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-import-plan.type-test.ts",
+      "originalDirectiveLine": 22,
+      "directive": "  // @ts-expect-error parsed imports require fresh provenance.",
+      "currentDirectiveLines": [
+        21
+      ],
+      "intendedDiagnosticLines": [
+        22
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-import-plan.type-test.ts",
+      "originalDirectiveLine": 24,
+      "directive": "  // @ts-expect-error the executable document batch has a Settings member.",
+      "currentDirectiveLines": [
+        23
+      ],
+      "intendedDiagnosticLines": [
+        24
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-import-plan.type-test.ts",
+      "originalDirectiveLine": 26,
+      "directive": "  // @ts-expect-error refusal contains no executable document replacement.",
+      "currentDirectiveLines": [
+        25
+      ],
+      "intendedDiagnosticLines": [
+        26
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "file": "src/background/store/settings-import-plan.type-test.ts",
+      "originalDirectiveLine": 28,
+      "directive": "  // @ts-expect-error sync-off inputs carry no already-read remote inventory.",
+      "currentDirectiveLines": [
+        27
+      ],
+      "intendedDiagnosticLines": [
+        28
+      ],
+      "state": "unexecuted"
+    }
+  ]
+}

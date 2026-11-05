@@ -1,54 +1,57 @@
-import { defineConfig } from "wxt"
+import type {} from "@wxt-dev/module-svelte"
 import tailwindcss from "@tailwindcss/vite"
+import { fileURLToPath } from "node:url"
+import { defineConfig } from "wxt"
+import { keepActionTitle, perchlingManifest } from "./build/manifest"
+import { buildPagesApart, firstViewChunk } from "./build/extension-pages"
+import { createPageLink } from "./build/page-link"
+import packageJson from "./package.json"
+import { pageLinkEntries } from "./src/shared/features/registration"
+import { features } from "./src/shared/features/registry"
 
-// See https://wxt.dev/api/config.html
+const path = (relative: string) => fileURLToPath(new URL(relative, import.meta.url))
+const kitIndex = path("./src/site/kit/index.ts")
+// Page scripts share one Svelte copy: the kit carries it, features link to it (06 §6.7.2).
+const link = createPageLink({ siteRoot: path("./src/site"), kitIndex, evidenceDir: path("./.output/page-link"), entries: pageLinkEntries(features) })
+
 export default defineConfig({
   srcDir: "src",
+  publicDir: "src/public",
   imports: false,
   zip: {
-    excludeSources: ["tools/fixtures/svelte-pilot/**"]
+    excludeSources: ["store/**", "site/**", "tools/**"]
   },
   // REQUIRED: WXT defaults Firefox to MV2. We ship MV3 on both browsers.
   manifestVersion: 3,
-  modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
-  vite: () => ({
-    // NOTE: swapping React for preact/compat was tried and does not work here.
-    // Base UI's useRender passes element types as React element descriptors,
-    // which Preact renders literally as <[object Object]>, so every primitive
-    // (Button, Checkbox, Switch, Slider) fails to render. See the README.
-    plugins: [tailwindcss()],
-    css: {
-      // Tailwind v4 runs as a Vite plugin, not through PostCSS. Pin an inline
-      // (empty) PostCSS config so Vite does NOT walk up the directory tree
-      // looking for one -- the parent git worktree still has a Tailwind v3
-      // postcss.config.js that would otherwise be picked up and break the build.
-      postcss: {}
-    }
-  }),
-  manifest: ({ browser, mode }) => ({
-    name: "YouTube Playlist Tools",
-    description: "Add current YouTube video to specified playlists.",
-    permissions: ["storage", "scripting"],
-    ...(browser === "chrome" && { minimum_chrome_version: "121" }),
-    host_permissions: [
-      "https://www.youtube.com/*"
-    ],
-    ...(browser === "firefox" && {
-      browser_specific_settings: {
-        gecko: {
-          // Must be preserved so AMO updates keep working.
-          id: "{cc70cd21-2cc6-444b-bd89-496909346091}",
-          strict_min_version: "140.0",
-          // Required by AMO for new extensions since 2025-11-03.
-          data_collection_permissions: { required: ["none"] },
-          // Betas (`--mode beta`) are signed unlisted and update from this
-          // repo's Pages. AMO rejects update_url in listed versions, so the
-          // store build never has it (REL-CI-10, ADR-0011).
-          ...(mode === "beta" && {
-            update_url: "https://alioun.github.io/yt-playlist-tools/beta/updates.json"
-          })
-        }
+  modules: ["@wxt-dev/module-svelte"],
+  svelte: {
+    vite: {
+      // Our components use runes; node_modules keep their own setting, since forcing runes breaks Bits UI.
+      dynamicCompileOptions(options) {
+        const page = link.pageCompileOptions(options)
+        return options.filename.includes("/node_modules/") ? page : { ...page, runes: true }
       }
-    })
-  })
+    }
+  },
+  hooks: {
+    ...link.hooks,
+    "entrypoints:grouped": (wxt, groups) => {
+      buildPagesApart(wxt, groups)
+      link.hooks["entrypoints:grouped"](wxt, groups)
+    },
+    "vite:build:extendConfig": (entries, config) => {
+      link.hooks["vite:build:extendConfig"](entries, config)
+      firstViewChunk(entries, config)
+    },
+    "build:manifestGenerated": keepActionTitle
+  },
+  vite: ({ mode }) => ({
+    plugins: [tailwindcss()],
+    define: { "import.meta.env.PP_BUILD": JSON.stringify(`${packageJson.version}-${mode}`) },
+    // An inline PostCSS config stops Vite from walking up into a parent checkout's config.
+    css: { postcss: {} },
+    build: { sourcemap: process.env.PP_SOURCEMAP === "1" },
+    resolve: { alias: { $kit: kitIndex } }
+  }),
+  manifest: ({ browser, mode }) => perchlingManifest({ browser, mode })
 })

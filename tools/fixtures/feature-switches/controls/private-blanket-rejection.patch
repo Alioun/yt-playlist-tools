@@ -1,0 +1,11 @@
+--- a/src/background/router/ui-playlists/index.ts
++++ b/src/background/router/ui-playlists/index.ts
+@@ -241,7 +241,7 @@
+       if (!active) return { kind: "rejected" }
+       if (request.kind === "ui.featureSetting") {
+         const resolved = await resolveSenderOrigin(ports.native, { sender, popupWindowId: request.payload.windowId })
+-        if (!active || resolved.kind !== "ui" || resolved.page === "onboarding" || resolved.page !== "popup" && request.payload.windowId !== undefined) return { kind: "rejected" }
++        if (!active || resolved.kind !== "ui" || resolved.origin.incognito || resolved.page === "onboarding" || resolved.page !== "popup" && request.payload.windowId !== undefined) return { kind: "rejected" }
+         return { kind: "accepted", context: { kind: "shared-settings", ui: resolved, current: async () => {
+           const current = await resolveSenderOrigin(ports.native, { sender, popupWindowId: request.payload.windowId })
+           return active && current.kind === "ui" && current.page === resolved.page && JSON.stringify(current.origin) === JSON.stringify(resolved.origin)

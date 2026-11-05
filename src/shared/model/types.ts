@@ -2,6 +2,29 @@ export type Stamp = { v: number; gen: string; at: number; by: string }
 export type Stamped<T> = Stamp & { data: T }
 export type Tombstone = Stamp & { deleted: true }
 
+export type SyncMeta = {
+  v: number
+  id: string
+  created: number
+  reset?: boolean
+}
+
+export type SyncOpaqueWrite = {
+  gate: null | { kind: "pending" | "held"; notBefore: number }
+  diagnostic: null | { name: string | null; message: string | null }
+}
+
+export type SyncState = {
+  opaqueWrite?: SyncOpaqueWrite
+  everEdited?: boolean
+  joined: string | null
+  pushed: Record<string, string>
+  /** Marks and label refreshes saved past the browsers' own sync limit, by document and gen, until room frees up (SYNC-16). */
+  deferred?: Record<string, string>
+  status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"
+  editedSinceOff: boolean
+}
+
 export type Key = {
   char?: string
   code: string
@@ -24,7 +47,10 @@ export type Settings = {
   undoKey: Key | null
   autoAdd: { on: boolean; feedback: boolean; pct: number; toolbarTick: boolean; toolbarPaused: boolean }
   shortcuts: {
-    on: boolean; feedback: boolean; music: boolean; preset: boolean
+    on: boolean
+    feedback: boolean
+    music: boolean
+    preset: boolean
     picker: Key | null
     list: Shortcut[]
   }
@@ -35,23 +61,30 @@ export type Settings = {
   browserMenu: { on: boolean; feedback: boolean }
   musicSection: boolean
   musicActions: {
-    on: boolean; feedback: boolean; preset: boolean
+    on: boolean
+    feedback: boolean
+    preset: boolean
     buttons: Record<MusicAction | "bar", boolean>
   }
   musicKeys: {
-    on: boolean; feedback: boolean; preset: boolean
+    on: boolean
+    feedback: boolean
+    preset: boolean
     keys: Record<MusicAction | "picker", Key | null>
   }
   anyTabKeys: { on: boolean; feedback: boolean }
   gather: {
-    on: boolean; feedback: boolean
+    on: boolean
+    feedback: boolean
     to: "player" | "queue" | "playlist"
     order: GatherOrder
     close: boolean
     auto: {
-      unvisited: boolean; after: "1h" | "1d" | "1w"
+      unvisited: boolean
+      after: "1h" | "1d" | "1w"
       background: boolean
-      count: boolean; n: 5 | 10 | 15 | 20 | 30 | 50
+      count: boolean
+      n: 5 | 10 | 15 | 20 | 30 | 50
     }
   }
 }
@@ -87,6 +120,17 @@ export type UpgradeDetails = {
   }
   credentialsDeleted: boolean
 }
+export type ClaimShortcutOutcome =
+  | { kind: "not-carried" | "not-owned" }
+  | { kind: "filled" | "already-set"; shortcut: string }
+  | { kind: "skipped"; reason: "missing-provenance" | "deleted-original" | "target-filled" }
+export type ClaimNoticeDetails = {
+  autoAddAdded: number
+  filtersAdded: number
+  shortcut: ClaimShortcutOutcome
+}
+export type ClaimNotice = { acct: string; dropped: number; claim?: ClaimNoticeDetails }
+
 export type Device = {
   id: string
   consent: { v: number; at: number } | null
@@ -98,8 +142,7 @@ export type Device = {
     seen: boolean
     reopened: boolean
   } | null
-  claimNotice: { acct: string; dropped: number } | null
-  lastAccount: string | null
+  claimNotice: ClaimNotice | null
   newPlaylistVisibility: "PRIVATE" | "UNLISTED" | "PUBLIC" | null
   pickerSortAZ: boolean
   detailedLog: boolean
@@ -110,6 +153,7 @@ export type Unclaimed = {
   from: "1.4.5" | "1.5.0"
   autoAdd: string[]
   shortcutPlaylist: string | null
+  originalShortcutId?: string
   filters: Record<string, Filter>
   at: number
 }

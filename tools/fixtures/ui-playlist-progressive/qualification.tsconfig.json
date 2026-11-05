@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "bun",
+      "svelte"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true
+  },
+  "files": [
+    "../../../src/shared/contracts/ui.ts",
+    "../../../src/shared/contracts/ui.bun-test.ts",
+    "../../../src/shared/contracts/ui.type-test.ts",
+    "../../../src/shared/contracts/ui-playlists.ts",
+    "../../../src/shared/contracts/ui-playlists.bun-test.ts",
+    "../../../src/shared/contracts/ui-playlists.type-test.ts",
+    "../../../src/background/adapters/ui-requester.ts",
+    "../../../src/background/adapters/ui-requester.bun-test.ts",
+    "../../../src/background/adapters/ui-requester.type-test.ts",
+    "../../../src/background/router/ui-playlists/index.ts",
+    "../../../src/background/router/ui-playlists/wire.ts",
+    "../../../src/background/router/ui-playlists/router.bun-test.ts",
+    "../../../src/background/router/ui-playlists/router.type-test.ts",
+    "../../../src/background/router/first-run.ts",
+    "../../../src/background/router/first-run.bun-test.ts",
+    "../../../src/ui/backend/backend.ts",
+    "../../../src/ui/backend/core.ts",
+    "../../../src/ui/backend/browser.ts",
+    "../../../src/ui/backend/scripted.ts",
+    "../../../src/ui/backend/index.ts",
+    "../../../src/ui/backend/backend.type-test.ts",
+    "../../../src/ui/backend/core.bun-test.ts",
+    "../../../src/ui/backend/browser.bun-test.ts",
+    "../first-run-backend/native.type-test.ts",
+    "../ui-read-playlist-bridge/harness.ts",
+    "../ui-read-playlist-bridge/run.ts",
+    "../ui-read-playlist-bridge/consumer.bun-test.ts",
+    "consumer.bun-test.ts",
+    "harness.ts",
+    "progressive.bun-test.ts",
+    "run.ts",
+    "wire.bun-test.ts",
+    "../../../src/ui/backend/playlist-list/operation.ts",
+    "../../../src/ui/backend/playlist-list/protocol.type-test.ts",
+    "../ui-playlist-progressive/owner-capture.type-test.ts",
+    "../../../.wxt/types/paths.d.ts",
+    "../../../.wxt/types/i18n.d.ts",
+    "../ui-read-playlist-bridge/wxt-i18n-native.d.ts"
+  ]
+}

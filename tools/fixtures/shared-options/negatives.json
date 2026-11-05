@@ -1,0 +1,215 @@
+{
+  "state": "all-unexecuted",
+  "negativeCount": 19,
+  "gates": [
+    {
+      "id": "music-gather-order",
+      "template": "negatives/01-music-gather-order.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "order-music-boolean",
+      "template": "negatives/02-order-music-boolean.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "destination-order",
+      "template": "negatives/03-destination-order.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "time-count",
+      "template": "negatives/04-time-count.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "count-time",
+      "template": "negatives/05-count-time.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "count-outside-choices",
+      "template": "negatives/06-count-outside-choices.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "feedback-number",
+      "template": "negatives/07-feedback-number.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "feature-switch",
+      "template": "negatives/08-feature-switch.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "section-switch",
+      "template": "negatives/09-section-switch.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "preset",
+      "template": "negatives/10-preset.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "trigger-unvisited",
+      "template": "negatives/11-trigger-unvisited.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "trigger-background",
+      "template": "negatives/12-trigger-background.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "trigger-count",
+      "template": "negatives/13-trigger-count.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "raw-path",
+      "template": "negatives/14-raw-path.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "raw-settings",
+      "template": "negatives/15-raw-settings.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "key-lifecycle",
+      "template": "negatives/16-key-lifecycle.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "shortcut-lifecycle",
+      "template": "negatives/17-shortcut-lifecycle.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "destination-account",
+      "template": "negatives/18-destination-account.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "state": "unexecuted",
+      "require": "Baseline compile, one template in a disposable full candidate, diagnostic on the intended line, exact restored compile."
+    },
+    {
+      "id": "missing-forwarding",
+      "template": "negatives/19-missing-forwarding.ts.txt",
+      "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
+      "line": 4,
+      "expectedCodes": [
+        2551
+      ],
+      "state": "unexecuted",
+      "require": "The positive native forwarding proof must first compile, then this deliberate omitted method must fail at line 4."
+    }
+  ]
+}

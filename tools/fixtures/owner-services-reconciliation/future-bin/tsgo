@@ -1,0 +1,2 @@
+#!/bin/sh
+exec "$(dirname "$0")/../../../../node_modules/@typescript/typescript-darwin-arm64/lib/tsc" "$@"

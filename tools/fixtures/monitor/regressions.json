@@ -1,0 +1,19 @@
+{
+  "state": "unexecuted",
+  "files": [
+    "src/background/add-flow/add-flow.bun-test.ts",
+    "src/background/add-flow/add-flow-session.bun-test.ts",
+    "src/background/store/session-memory.bun-test.ts",
+    "src/background/store/account-removal-execution.bun-test.ts",
+    "src/background/store/setup-edit.bun-test.ts",
+    "src/background/store/tab-projection.bun-test.ts",
+    "src/background/tab-view/producer.bun-test.ts",
+    "src/background/tab-view/consumer.bun-test.ts",
+    "src/background/tabs/tabs.bun-test.ts",
+    "src/background/tabs/owner.bun-test.ts",
+    "src/site/core/extlink.bun-test.ts",
+    "src/site/core/page-link.bun-test.ts",
+    "src/shared/features/registry.bun-test.ts",
+    "src/shared/contracts/diagnostics.bun-test.ts"
+  ]
+}

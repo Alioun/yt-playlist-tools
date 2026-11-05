@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true, "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/shared/contracts/tab-view.ts", "../../../src/shared/contracts/tab-view.bun-test.ts",
+    "../../../src/shared/contracts/tab-view.type-test.ts", "../../../src/background/tab-view/producer.ts",
+    "../../../src/background/tab-view/producer.bun-test.ts", "../../../src/background/tab-view/producer.type-test.ts",
+    "../../../src/background/tab-view/consumer.bun-test.ts",
+    "../../../src/background/add-flow/add-flow.bun-test.ts", "../../../src/background/add-flow/add-flow.type-test.ts",
+    "cases.ts", "harness.ts", "run.ts", "consumer.bun-test.ts", "native.type-test.ts"
+  ]
+}

@@ -1,0 +1,11 @@
+--- a/src/background/store/settings-import-execution.ts
++++ b/src/background/store/settings-import-execution.ts
+@@ -73,7 +73,7 @@
+   }
+   const result: Effect[] = [{ kind: "local-set", stage: "documents", items }]
+   if (keys.length) result.push({ kind: "local-remove", stage: "local-cleanup", keys, names })
+-  for (const effect of plan.cleanup.sessionEffects) result.push({ kind: "session", stage: "session-cleanup", effect })
++  for (const effect of plan.cleanup.sessionEffects.slice(0, 0)) result.push({ kind: "session", stage: "session-cleanup", effect })
+   return result
+ }
+ function afterEffect(before: Inventory, effect: Effect): Inventory {

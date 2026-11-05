@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "bun"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "typeRoots": [
+      "../../../node_modules/@types"
+    ],
+    "paths": {
+      "wxt/browser": [
+        "../../../node_modules/wxt/dist/browser.d.mts"
+      ],
+      "wxt/testing/fake-browser": [
+        "../../../node_modules/wxt/dist/testing/fake-browser.d.mts"
+      ]
+    },
+    "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/background/adapters/starting-owner.ts",
+    "../../../src/background/store/local-filter-writer.ts",
+    "../../../src/background/store/settings-edit.bun-test.ts",
+    "../../../src/background/store/settings-edit.ts",
+    "../../../src/background/store/settings-edit.type-test.ts",
+    "../../../src/background/store/shared-setting-execution.bun-test.ts",
+    "../../../src/background/store/shared-setting-execution.ts",
+    "../../../src/background/store/shared-setting-execution.type-test.ts",
+    "../../../tools/fixtures/shared-options/consumer.bun-test.ts",
+    "../../../tools/fixtures/shared-options/consumer.ts",
+    "../../../tools/fixtures/shared-options/harness.ts",
+    "../../../tools/fixtures/shared-options/owner.bun-test.ts",
+    "../../../tools/fixtures/shared-options/run.ts",
+    "../../../tools/fixtures/shared-options/specimens.ts",
+    "../../../tools/fixtures/shared-options/type-proofs.ts"
+  ]
+}

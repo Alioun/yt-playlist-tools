@@ -1,0 +1,3 @@
+import type { ReceivedResetResult } from "../../../../src/background/store/sync-reset-receive"
+export {}
+export const intendedNegative: Extract<ReceivedResetResult, { kind: "reset-received" }>["accounts"] = undefined

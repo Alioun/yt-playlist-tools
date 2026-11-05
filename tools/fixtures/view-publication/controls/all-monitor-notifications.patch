@@ -1,0 +1,11 @@
+--- a/src/background/monitor/monitor.ts
++++ b/src/background/monitor/monitor.ts
+@@ -75,7 +75,7 @@
+   const changed = () => {
+     generation++
+     for (const listener of [...listeners]) { try { listener() } catch { /* One subscriber cannot revoke another subscriber's update. */ } }
+-    for (const row of observedViews.values()) { row.dirty = true; void refreshView(row) }
++    for (const row of observedViews.values()) { for (const listener of viewListeners) listener({ kind: "tab", tabId: row.context.tab.tabId }); row.dirty = true; void refreshView(row) }
+   }
+   const unsubscribe = ports.authority.subscribe(event => {
+     if (disposed) return

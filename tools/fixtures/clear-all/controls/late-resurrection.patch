@@ -1,0 +1,10 @@
+--- a/src/background/adapters/store-lifecycle.ts
++++ b/src/background/adapters/store-lifecycle.ts
+@@ -96,6 +96,6 @@
+     async deleteDatabase(name) {
+       if (await options.database.delete(name) !== "deleted") throw new Error("Retired database deletion unconfirmed")
+     },
+-    openFirstRun: () => options.firstRun.open()
++    openFirstRun: async () => { await native.storage.session.set({ paused: true }); return options.firstRun.open() }
+   })
+ }

@@ -1,8 +1,27 @@
 import type {
-  JobId, JobInputById, JobById, Job, JobOf, JobDataById, JobData, JobResult,
-  MembershipRow, BatchAddResult, JobFailureReason, Stream, StreamDataById, StreamData,
-  QueueItemId, QueueListId, SetVideoId, RouteId, LikeEndpoint, QueueInsertEndpoint,
-  JobInvocation, AccountJobId, PlayerData
+  JobId,
+  JobInputById,
+  JobById,
+  Job,
+  JobOf,
+  JobDataById,
+  JobData,
+  JobResult,
+  MembershipRow,
+  BatchAddResult,
+  JobFailureReason,
+  Stream,
+  StreamDataById,
+  StreamData,
+  QueueItemId,
+  QueueListId,
+  SetVideoId,
+  RouteId,
+  LikeEndpoint,
+  QueueInsertEndpoint,
+  JobInvocation,
+  AccountJobId,
+  PlayerData
 } from "./index"
 import { isJobResultFor, isJobDataFor, isStreamData } from "./index"
 import type { PageAccountData, PageJobData, PageJobResult } from "./page"
@@ -17,7 +36,7 @@ import type { PageJobData as RootPageJobData } from "./index"
 // @ts-expect-error The safe root has no page-result guard.
 import { isPageJobResultFor as rootPageGuard } from "./index"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Assert<T extends true> = T
 type Distinct<A, B> = A extends B ? false : B extends A ? false : true
 export type CatalogueRelationships = [
@@ -58,6 +77,61 @@ declare const acct: AccountKey
 declare const like: LikeEndpoint
 declare const insert: QueueInsertEndpoint
 
+export function removalAndConfirmationRelationships() {
+  const exact = { kind: "remove", playlistId: playlist, setVideoId: occurrence } satisfies JobOf<"remove">
+  const fallback = { kind: "remove", playlistId: playlist, videoId: video } satisfies JobOf<"remove">
+  const musicExact = { kind: "unsave", playlistId: playlist, setVideoId: occurrence } satisfies JobOf<"unsave">
+  const musicFallback = { kind: "unsave", playlistId: playlist, videoId: video } satisfies JobOf<"unsave">
+  const pin = { job: fallback, acct } satisfies JobInvocation<JobOf<"remove">>
+  const musicPin = { job: musicFallback, acct } satisfies JobInvocation<JobOf<"unsave">>
+  const added = { ok: true, route, data: { setVideoId: occurrence } } satisfies JobResult<JobOf<"add">>
+  const missingId = { ok: true, route, data: { setVideoId: null } } satisfies JobResult<JobOf<"add">>
+  const musicMissingId = { ok: true, route, data: { setVideoId: null } } satisfies JobResult<JobOf<"save">>
+  const batchMissingId = { videoId: video, setVideoId: null } satisfies BatchAddResult
+  // @ts-expect-error Exact-entry removal and video removal are mutually exclusive.
+  const both: JobOf<"remove"> = { kind: "remove", playlistId: playlist, setVideoId: occurrence, videoId: video }
+  // @ts-expect-error Removal must carry one identity.
+  const neither: JobOf<"remove"> = { kind: "remove", playlistId: playlist }
+  // @ts-expect-error Music uses the same exclusive identities.
+  const musicBoth: JobOf<"unsave"> = { kind: "unsave", playlistId: playlist, videoId: video, setVideoId: occurrence }
+  // @ts-expect-error Music also requires an identity.
+  const musicNeither: JobOf<"unsave"> = { kind: "unsave", playlistId: playlist }
+  // @ts-expect-error A fallback video is not an occurrence.
+  const wrongIdentity: JobOf<"remove"> = { kind: "remove", playlistId: playlist, videoId: occurrence }
+  // @ts-expect-error A missing entry ID is normalized null, not an omitted result.
+  const unknown: JobResult<JobOf<"add">> = { ok: true, route, data: {} }
+  // @ts-expect-error Unconfirmed writes cannot expose a successful missing identity.
+  const uncertain: JobResult<JobOf<"add">> = { ok: false, reason: "unconfirmed", data: { setVideoId: null } }
+  // @ts-expect-error A failed batch item cannot also be a confirmed addition.
+  const failedSuccess: BatchAddResult = { videoId: video, setVideoId: null, failure: { ok: false, reason: "failed" } }
+  // @ts-expect-error Video-based removal retains the account pin.
+  const noPin: JobInvocation<JobOf<"remove">> = { job: fallback }
+  // @ts-expect-error Video-based unsave retains the account pin.
+  const noMusicPin: JobInvocation<JobOf<"unsave">> = { job: musicFallback }
+  void [
+    exact,
+    fallback,
+    musicExact,
+    musicFallback,
+    pin,
+    musicPin,
+    added,
+    missingId,
+    musicMissingId,
+    batchMissingId,
+    both,
+    neither,
+    musicBoth,
+    musicNeither,
+    wrongIdentity,
+    unknown,
+    uncertain,
+    failedSuccess,
+    noPin,
+    noMusicPin
+  ]
+}
+
 export function identifierRelationships() {
   const validItem: QueueItemId = item
   if (typeof item === "number") {
@@ -86,8 +160,7 @@ export function identifierRelationships() {
   const videoAsPlaylist: PlaylistId = video
   // @ts-expect-error Song Like cannot be replayed as a queue insert.
   const likeAsInsert: QueueInsertEndpoint = like
-  void [validItem, unbranded, videoAsOccurrence, occurrenceAsVideo, playlistAsList, listAsPlaylist,
-    listAsOccurrence, itemAsOccurrence, occurrenceAsItem, videoAsItem, videoAsPlaylist, likeAsInsert]
+  void [validItem, unbranded, videoAsOccurrence, occurrenceAsVideo, playlistAsList, listAsPlaylist, listAsOccurrence, itemAsOccurrence, occurrenceAsItem, videoAsItem, videoAsPlaylist, likeAsInsert]
 }
 
 export function invocationRelationships() {
@@ -175,25 +248,40 @@ export function accountRelationships(raw: unknown, pageResult: PageJobResult<Job
 }
 
 export function pending<J extends Job>(job: J, resolve: (result: JobResult<J>) => void) {
-  return { accept(raw: unknown) { if (isJobResultFor(job, raw)) resolve(raw) } }
+  return {
+    accept(raw: unknown) {
+      if (isJobResultFor(job, raw)) resolve(raw)
+    }
+  }
 }
 export function pagePending<J extends Job>(job: J, resolve: (result: PageJobResult<J>) => void) {
-  return { accept(raw: unknown) { if (isPageJobResultFor(job, raw)) resolve(raw) } }
+  return {
+    accept(raw: unknown) {
+      if (isPageJobResultFor(job, raw)) resolve(raw)
+    }
+  }
 }
 
 export function trackerProjection(player: Extract<PlayerData, { ad: false }>) {
   const facts: {
     content: "video" | "clip" | "made-for-kids"
-    duration: number | null; listedDuration: number | null
-    isPostLiveDvr: boolean; isLive: boolean; isUpcoming: boolean; isLiveContent: boolean
+    duration: number | null
+    listedDuration: number | null
+    isPostLiveDvr: boolean
+    isLive: boolean
+    isUpcoming: boolean
+    isLiveContent: boolean
   } = {
-    content: player.content, duration: player.len, listedDuration: player.listedLength,
-    isPostLiveDvr: player.isPostLiveDvr, isLive: player.isLive,
-    isUpcoming: player.isUpcoming, isLiveContent: player.isLiveContent
+    content: player.content,
+    duration: player.len,
+    listedDuration: player.listedLength,
+    isPostLiveDvr: player.isPostLiveDvr,
+    isLive: player.isLive,
+    isUpcoming: player.isUpcoming,
+    isLiveContent: player.isLiveContent
   }
   return facts
 }
-
 
 type PageReads = { kind: "account" | "accountLabel" }
 type VideoReads = { kind: "membership" | "channelOf"; videoId: VideoId }
@@ -241,8 +329,7 @@ export function unionInvocationRelationships() {
   const accountPin: JobInvocation<PageReads> = { job: { kind: "account" }, acct }
   // @ts-expect-error An object-union membership branch still requires a pin.
   const objectUnpinned: JobInvocation<JobOf<"membership" | "channelOf">> = { job: { kind: "membership", videoId: video } }
-  void [pinned, publicJob, label, account, defaultPinned, defaultPublic, objectUnion,
-    unpinned, publicPin, unpinnedLabel, accountPin, objectUnpinned]
+  void [pinned, publicJob, label, account, defaultPinned, defaultPublic, objectUnion, unpinned, publicPin, unpinnedLabel, accountPin, objectUnpinned]
 }
 
 export function forwardInvocation<J extends Job>(invocation: JobInvocation<J>, send: (value: JobInvocation) => void) {

@@ -53,7 +53,7 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
 - **FT-04** Presets apply once, the first time a feature is switched on. The "preset applied" flag is a shared setting, so it syncs.
   - Switching a feature off and on again keeps what the user had.
   - Removing every playlist shortcut never brings the preset back.
-  - A preset never takes a key already used on the same site. It's left without a key, and its row says "No key: {Key} is used by {Other}".
+  - A preset never takes a key already used on the same site. It's left without a key, and its row says "No key, because {Other} uses {Key}".
   - Upgraders get no Watch later preset. The migration sets the flag, and presets the picker key unless the carried 1.x key uses it. The undo key is Alt+U for them as for everyone, unless the carried key uses it (FT-05; R44).
 - **FT-05** Two shared settings belong to no feature:
   - the **theme** (System, Light or Dark; **System** by default), which covers only the popup, settings and the first-run page; in-page UI follows YouTube. It's set in Settings › Appearance ([UI-SET-15](05-ui.md#sections));
@@ -93,7 +93,7 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
   - It never runs on music.youtube.com while the YouTube Music section switch is off (FT-06). (R1, R8)
 - **FT-17** **Some features on:** only those features' files load, plus what they share: the site core, and the UI kit if one of them draws. The card menu draws nothing of its own and needs no kit; its not-working notice is the site core's tiny kit-free notice (HEALTH-13). A switched-off feature's own files never load. (R28)
 - **FT-18** **The shared site core** ([ticket 17](../issues/17-modules.md) D1, D6) isn't split per feature.
-  - Its page half, the gateway, carries every job of its site, including jobs that only switched-off features use.
+  - Its page half, the gateway, carries every job of its site, including jobs that only switched-off features use. The jobs load from their own file on a page's first job, so a page that runs no job loads none of them ([ARC-MAN-26](06-architecture.md#633-runtime-script-registration); R200).
   - Its isolated half carries the machinery several features share: item recognition, pointer and focus tracking, and the one key listener.
   - So while any feature on a site is on, a switched-off feature's share of that code is present but inert. "Off costs nothing" holds by effect: the core adds no listener, observer or element until a feature that's on asks for one. A switched-off feature leaves no element, style, listener, observer, timer or request.
   - The core's code loads only while some feature on that site is on, or through the probe (FT-16).
@@ -159,13 +159,14 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **FT-32** Consent is given only by an explicit **Agree**, in one of three places:
   - first run's "Before you start" ([FT-40](#16-first-run));
   - the upgrade note's "Before you continue" (FT-43);
-  - "Before this feature can run", raised when the user switches on a feature without consent (a dialog in Settings, a sheet in the popup; [UI-ONB-09](05-ui.md#the-disclosure)). Its Agree sets consent and switches that feature on in one change. Cancel leaves the feature off.
+  - "Before this feature can run", raised when the user switches on a feature without consent (a dialog in Settings, a sheet in the popup; [UI-ONB-09](05-ui.md#the-disclosure)). Its Agree sets consent and switches that feature on in one change when the required site access is given. If the subsequent access request is denied, explicitly given consent stays saved, but the affected feature stays off with an explanation of the missing access (FT-52; R154). Cancel leaves the feature off.
 - **FT-33** It's one consent of our own, the same on Chrome and Firefox. Firefox's built-in data-collection prompt never stands in for it.
 - **FT-34** Each browser gives its own consent. Switches that arrive by sync run only once that browser has consented.
 - **FT-35** **Withdrawing**, in Settings › Privacy & data:
   - The section shows "You agreed on {date}." with **Read it again** and **Withdraw and pause everything**.
-  - The confirmation reads: "**Withdraw your consent?** Every feature stops in this browser and nothing is read from YouTube until you agree again. Your settings are kept." with **Withdraw** and **Cancel**.
+  - The confirmation reads: "**Withdraw your consent?** Every feature stops in this browser, and Perchling reads nothing from YouTube until you agree again. It keeps your settings." with **Withdraw** and **Cancel**.
   - Withdrawing sets consent to `null`, unregisters every page script and tears down every open tab. All settings stay.
+  - Withdrawal stops every feature at once, even when unfinished migration, account-removal or sync work is tied to the old agreement. That work is retained inactive and is never silently resumed or discarded. Its original evidence, accepted effects and tombstones stay. After a new Agree, the work stays inactive until the user explicitly recovers it. The new agreement alone never resumes it. Withdrawal never reports immediate shutdown that rests on an unconfirmed write. Its recovery controls are in Settings › Privacy & data, under "Waiting for your review" ([UI-SET-16](05-ui.md#sections); R167, R181). Their storage remains engineering work.
 - **FT-36** **A new consent version.**
   - The version goes up only when the disclosure text changes, and a release must change the disclosure, and so the version, whenever data handling changes.
   - After such an update, features pause. The popup and the note page show "{Product} {version} handles your data in a new way. Review and agree to keep it running."
@@ -184,13 +185,13 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   1. **"What should {Product} do?"**
      - Settings sync comes first, as a card: "Use {Product} in another browser already? Turn on Settings sync to bring your settings here." Turning it on looks for synced settings for up to 10 s, then pre-ticks the features they have switched on, marked "From sync", for review (SYNC-08). It only reads: nothing is pushed, and the sync switch isn't stored, until Agree (FT-31; R9).
      - Then every other feature, grouped YouTube and YouTube Music, then Keys from any tab under Everywhere, all unticked, each with its footprint tag. A hint says that picking only "Doesn't change the page" features keeps YouTube as it is.
-     - On Chrome, ticking a YouTube Music feature, Playlist shortcuts (whose preset turns "Also on YouTube Music" on, FT-01) or Keys from any tab shows "Chrome will ask for access to music.youtube.com when you agree." ([REL-CON-14](08-release.md#41-the-disclosure); R53, R88).
+     - On both browsers, ticking a YouTube Music feature, Playlist shortcuts (whose preset turns "Also on YouTube Music" on, FT-01) or Keys from any tab shows "Chrome will ask for access to music.youtube.com when you agree.", with "Firefox" in place of "Chrome" on Firefox ([REL-CON-14](08-release.md#41-the-disclosure); R53, R88, R179).
      - The step ends with **Continue with {N} features** or **Continue without features**.
   2. **"Before you start":**
      - the disclosure, with **Agree and turn on {N} features** (**Agree** when N is 0) and **Not now**;
      - **Agree** sets consent and applies the ticks in one change, the sync switch included. Presets apply for each feature switched on (FT-04), and page scripts register;
      - **with Save from the browser's menu ticked,** the same click first requests its optional permission, which shows no prompt (FT-60; R91);
-     - **on Chrome, with a YouTube Music feature, Playlist shortcuts or Keys from any tab ticked,** the same click first calls the site-access request for music.youtube.com, before anything is awaited (FT-44). If the user denies it, consent and the other ticks still apply. The ticked YouTube Music features are saved on but held with "Needs site access" (FT-13), and so is Playlist shortcuts' "Also on YouTube Music", while Playlist shortcuts runs on YouTube. **Give access** shows in the popup and Settings, and nothing is registered or injected on music.youtube.com until access is granted (R14, R53).
+     - **on either browser, with a YouTube Music feature, Playlist shortcuts or Keys from any tab ticked,** the same click first calls the site-access request for music.youtube.com, before anything is awaited (FT-44). If the user denies it, consent and the other ticks still apply. The ticked YouTube Music features are saved on but held with "Needs site access" (FT-13), and so is Playlist shortcuts' "Also on YouTube Music", while Playlist shortcuts runs on YouTube. **Give access** shows in the popup and Settings, and nothing is registered or injected on music.youtube.com until access is granted (R14, R53).
   3. **"Finish setting up":**
      - first, the YouTube state: **Give access**, **Open YouTube**, **Sign in**, or the signed-in account; and, when something ticked lacks YouTube Music access, **Give access to YouTube Music** (R14, R53);
      - then a row per chosen feature: auto-add's playlists, Alt+W's playlist (Watch later on every account), both quick-save playlists, or "Ready";
@@ -209,13 +210,13 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 ### 1.7 Site access and YouTube tabs
 
 - **FT-44** **Site access** is per site:
-  - **Chrome:** www.youtube.com is asked for at install. music.youtube.com is optional. It's asked for from the click that switches on the first thing that needs it, first run's Agree included (R53):
+  - **Both browsers** (R179): www.youtube.com is asked for at install. music.youtube.com is optional. It's asked for from the click that switches on the first thing that needs it, first run's Agree included (R53):
     - a YouTube Music feature;
     - or "Also on YouTube Music" while Playlist shortcuts is on. Since the shortcuts preset turns that option on, the click that first switches on Playlist shortcuts asks too. If that prompt is denied, Playlist shortcuts still goes on, on YouTube only (FT-52; R71);
     - or Keys from any tab, whose YouTube Music keys need it. If that prompt is denied, the feature still goes on, and its YouTube Music keys answer "No access to YouTube Music." until access is given (R88).
 
     The YouTube Music section switch itself never asks. (R53, R71, R88)
-  - **Firefox:** one grant for `*://*.youtube.com/*` covers both sites.
+  - **Firefox upgraders** from 1.4.5 held `*://*.youtube.com/*`. 2.0 narrows it, so once Firefox revokes origins no longer declared, an upgrader may have to give YouTube Music access again (R179).
 - **FT-45** Site access is checked per site at every background start, and whenever the browser reports a permission added or removed.
 - **FT-46** **A site without access:**
   - its switched-on features stay on but are held with "Needs site access", and nothing is registered there;
@@ -226,7 +227,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **FT-49** A feature that's on in a browser without that site's access, for example one switched on by sync, shows "Needs site access" until access is granted there. Site access never syncs.
 - **FT-50** **Give access** calls the browser's permission request first, synchronously in the click handler.
 - **FT-51** When access is granted, the switched-on features for that site register and are injected into its open tabs without a reload. When it's revoked, they unregister and tear down.
-- **FT-52** If the user denies the access prompt raised by switching a YouTube Music feature, or "Also on YouTube Music", on in the popup or Settings, that switch stays off. Two cases differ:
+- **FT-52** If the user denies the access prompt raised by switching a YouTube Music feature, or "Also on YouTube Music", on in the popup or Settings, that switch stays off. If this followed **Agree and turn on {Feature}** in "Before this feature can run", consent stays saved. The popup or Settings explains that missing site access kept the feature off (R154). Two cases differ:
   - **Playlist shortcuts' own switch** (its preset turns "Also on YouTube Music" on, FT-44): Playlist shortcuts goes on, "Also on YouTube Music" turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row where the switch was clicked (R71).
   - **First run's Agree:** consent and the other ticks still apply, and whatever ticked needs the access is saved on but held with "Needs site access" until access is granted (FT-40 step 2). (R14, R53, R71)
 - **FT-53** **PROVISIONAL** ([ticket 09](../issues/09-where-things-live.md), Chrome 133+): while a feature for a site is on and that site's access is missing, the extension also calls `permissions.addHostAccessRequest` on that site's open tabs, so Chrome's extensions menu offers the grant.
@@ -292,6 +293,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **ACC-08** **A new account has no setup.** Nothing about it is stored (no setup, cache or label, and it never becomes the last account) until the user makes a choice for it, such as ticking a playlist or choosing a shortcut's playlist. That choice creates the setup.
   - A setup is deleted, with its label, cache and synced copy, once it holds nothing: no auto-add playlists, targets, quick-save playlists, gather playlist or kept filters. A setup holding only a gather playlist isn't empty (R125).
   - Kept filters count as choices, so re-ticking a playlist brings its filter back unchanged.
+  - Recognized interim saved choices may become a setup under the same account key through [08 §2.12](08-release.md#212-interim-session-access-storage). Their conversion establishes no ownership of separately unclaimed globals. Canonical collisions preserve inactive source, and converted choices await fresh canonical agreement (R156–R158).
 - **ACC-09** **An account with no choices is idle:**
   - auto-add tracks nothing there;
   - nothing beyond what its switched-on features normally draw appears on the page;
@@ -313,7 +315,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **ACC-13** **The account in view** in the popup is the first of these that applies:
   1. the active tab's account, or its signed-out state, when that tab is YouTube or YouTube Music;
   2. else the account of the most recently active YouTube or YouTube Music tab, among windows of the same kind (normal or private);
-  3. else, in a normal window with no YouTube tab open, the last account with a setup that was current in a normal window (`Device.lastAccount`), shown from cache (FT-54). An account without a setup has no cache (DATA-19), so it's never this fallback. A private window has none.
+  3. else, in a normal window with no YouTube tab open, the last account with a setup that was current in a normal window (`storage.local`'s `lastAccount`, DATA-07), shown from cache (FT-54). An account without a setup has no cache (DATA-19), so it's never this fallback. A private window has none.
 
   This order is the one every chapter follows (R54).
 - **ACC-14** Settings shows the account the user picks in it, from its "Showing setup for {Account}" menu.
@@ -374,13 +376,16 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   - **Never** from a private window (DATA-33).
 - **ACC-31** **What claiming does:**
   - playlist IDs that account doesn't own are dropped; they never worked, since 1.4.5 only ever added to one account;
-  - the rest become that account's choices: auto-add playlists taking Videos and using the default percentage, the first playlist shortcut's playlist, and their channel filters;
-  - if the account already has a setup, the claimed choices are merged in without replacing anything the user chose. Missing auto-add playlists are added, the shortcut's playlist is used only if that shortcut has none on this account, and an existing filter is kept;
+  - the rest become that account's choices: auto-add playlists taking Videos and using the default percentage, the original migration-created shortcut's playlist, subject to its identity and empty-target checks below, and their channel filters;
+  - if the account already has a setup, the claimed choices are merged in without replacing anything the user chose. Missing auto-add playlists are added, the shortcut's playlist fills only the empty target of the original shortcut on this account, and an existing filter is kept;
+  - the original shortcut ID survives name and key edits. Claiming checks the current shared row and this account's target by that exact ID. Deleting the row is final for claiming: it never recreates the row or rebinds the playlist to a replacement, even one with the same name or key. Other eligible choices are still claimed (R150, R152);
+  - the local unclaimed record retains a validated association to that original ID from migration. Missing or invalid provenance in an older record is never guessed from row order, name, key, or similarity. The shortcut is skipped while other eligible choices proceed (R152);
   - the result then syncs like any setup.
-- **ACC-32** **The claim result** shows once: in the upgrade note if it's still open, else in the popup ([UI-POP-10](05-ui.md#banners) row 12). "Your auto-add playlists and shortcut from 1.x are now set up for {Account}." In the note, the playlists' titles follow: "…set up for {Account}: {titles}." ([REL-CON-10](08-release.md#34-agree-and-not-now)). If any were dropped, it adds "{N} of them weren't on this account and were left out."
+- **ACC-32** **The claim result** shows once: in the upgrade note if it's still open, else in the popup ([UI-POP-10](05-ui.md#banners) row 12). The popup says "Perchling set up your 1.x auto-add playlists and shortcut for {Account}." with **OK**. The note says "Your auto-add playlists and shortcut from 1.x are now set up for {Account}: {titles}." (R197) ([REL-CON-10](08-release.md#34-agree-and-not-now)). If any were dropped for lack of ownership, it adds "Perchling left out {N} of them, because they weren't on this account." If the shortcut is skipped, the notice names that outcome separately and does not claim it was set up. A deleted row or missing provenance is not counted as an unowned playlist. Notice wording follows [REL-MIG-37](08-release.md#210-claiming-the-unclaimed-setup) (R150, R152).
 - **ACC-33** **Unmatched:** on an account that doesn't own its playlists, the popup says "Your playlists from 1.x belong to another YouTube account. Switch to it on YouTube to use them, or set up {Account} below." with **Switch account** and **Discard**. Discard deletes the unclaimed setup.
 - **ACC-34** **At Agree with nothing to claim from yet:** the upgrade note says "Sign in to YouTube and your 1.x playlists will be picked up." when not signed in, and "Open YouTube and your 1.x playlists will be picked up." when no tab is open.
-- **ACC-35** Ticket 25 checks whether YouTube's playlist list includes collaborative playlists, which decides whether those count as owned for claiming.
+- **ACC-35** Ticket 25 checks whether YouTube's playlist list includes collaborative playlists, which decides whether those count as owned for claiming. Until that check passes, a collaborative playlist the user doesn't own counts as not owned (R192).
+- **ACC-48** **Interim retained globals require explicit recovery.** Globals left behind despite `legacyClaimed:true` remain inactive in an explicit recovery section until review and explicit restore. Offer item-by-item review and selection of playlists, filters and shortcut targets for explicit restore or discard, with nothing preselected. Show each item's destination and any conflict. Retain unselected items inactive (R162). Explicit discard records "do not restore" for only the selected source occurrence and retains its original data until safe cleanup. Equal sibling occurrences and unselected source remain independently unresolved and inactive. Retained discarded data is recovery evidence pending safe cleanup, not authorization to re-offer or restore it automatically. Discard authorizes no immediate source erasure, bulk discard, hidden source consumption or new cleanup authority. No cleanup deadline or eventual reclamation is promised (R165). For an old global playlist choice with no saved account and multiple verified owners, let the user explicitly choose the destination account among those verified owners. Revalidate the chosen account's ownership before restoring only to that account. Labels and cached data never establish ownership. Destination choice grants no account revival, original shortcut association, shortcut rebinding, cross-account copying, automatic restore, consent or site-access bypass, or generic conflict override (R166). Restore an old global playlist choice only to an account that already has a live 2.0 account setup. Show a verified owner without one as unavailable until the user creates a setup the normal way (ACC-20). Recovery never creates an account setup and never revives a removed one as a side effect (R169). When two separate retained entries contain the same playlist, the user may restore each one explicitly to a different freshly verified owner. Each restore consumes only its own source occurrence and restores only to its chosen account. Nothing is copied automatically, and one occurrence cannot be restored twice. Never deduplicate occurrences by playlist value or refuse a restore because a separate equal occurrence went to another account. The bar on cross-account copying still forbids copying one occurrence, or an existing canonical account's choices, to another account (R170). Consent or seeing an account alone never starts recovery. Existing canonical choices and deletions are protected except for R163's separately confirmed filter replacement. Ownership must still be established under ACC-30 and ACC-35. For a retained filter conflicting with the canonical filter for the same playlist and account, offer **Replace this filter** after showing both versions and require separate confirmation. Replace the whole filter without merging channel lists. Keep the canonical filter until replacement succeeds, and retain unselected source inactive. This permits neither revival of a deleted account nor shortcut rebinding and grants no generic conflict override (R163). Ownership, readiness, quota, newer-version, reset, consent, R155, R161 and actual write-confirmation safeguards still apply. The marker proves neither ownership nor original shortcut provenance, and recovery never automatically recreates or rebinds a deleted migrated shortcut. The recovery section is in Settings › Privacy & data, under "Waiting for your review", with the copy in [UI-SET-16](05-ui.md#sections) (R181). Destinations outside R166, other conflict override or replacement semantics, compatible storage representation, ownership mechanisms, shortcut rebinding and the safe cleanup protocol remain unspecified by these decisions ([REL-MIG-47](08-release.md#212-interim-session-access-storage); R160, R162, R163, R165, R166, R169, R170). These policies choose no wire or storage schema.
 - **ACC-46** **Claiming looks once per account.** The playlist-list read that claiming needs (ACC-30) happens at most once per account per browser session. "Checked, no match" is kept in session memory, so an account that doesn't own the playlists isn't fetched again on every page load. (R116)
 
 ### 2.7 Private windows and containers
@@ -449,38 +454,44 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **SYNC-05** Each browser's `storage.local` is always its truth. The **synced copy** in `storage.sync` is a copy, kept as whole documents: the shared settings, one document per account setup, and one per channel filter.
 - **SYNC-06** **Changes travel within seconds** on Chrome, and within Firefox's sync interval there. This browser pushes a changed document 2 s after the last change, and at most once every 5 s. Documents arriving from other browsers apply as ordinary local changes: open pages and tabs pick them up without a reload.
 - **SYNC-07** **A synced copy that vanishes isn't a deletion.** If the synced copy loses documents without a tombstone (an uninstall in another browser, a reset of the browser's own sync, or Chrome's first sync after sign-in), this browser pushes its own documents back. Nothing local is lost.
-- **SYNC-27** **One write per push.** A push writes every changed document, with its chunks, in one `storage.sync.set()` call. So SYNC-06's pace keeps sync at no more than 12 writes a minute, a tenth of Chrome's 120 (Firefox doesn't limit the rate). A document whose synced copy is already the same is never pushed, so two browsers can't keep pushing the same documents back and forth (SYNC-07). The background listens only to the sync area's own change event, and ignores it while sync is off in this browser ([Q-PERF-54](07-quality.md#768-running-cost)). (R108)
+- **SYNC-27** **At least 5 s between mutation opportunities.** All sync mutations share admission with at least 5 s between attempted calls, including rejected or uncertain calls and reset/clear mutations. A push writes every changed document, with its chunks, in one `storage.sync.set()` call. Pushes take priority over cleanup. Safe cleanup may use a separate opportunity for `remove`, never a `set` plus `remove` in the same opportunity. This keeps the shared pace at no more than 12 mutations a minute, a tenth of Chrome's 120 (Firefox doesn't limit the rate). The 2 s user-edit debounce still applies to pushes (R151). A document whose synced copy is already the same is never pushed, so two browsers can't keep pushing the same documents back and forth (SYNC-07). The background listens only to the sync area's own change event, and ignores it while sync is off in this browser ([Q-PERF-54](07-quality.md#768-running-cost)). (R108, R151)
+  - Cleanup is allowed only with evidence of ownership and deletion safety under delayed, reordered, or dropped delivery and restart. If that evidence is unproven, chunks stay and count toward actual occupancy. A planned removal earns no quota credit. Safe retention promises no eventual reclamation. Cleanup adds no polling, new timer, or alarm. The protocol and its minimum evidence remain engineering obligations ([ARC-MOD-21](06-architecture.md#69-the-store-module-interface); R151).
+  - An opaque native write failure keeps its original error in local diagnostics without inventing a rate or quota category. It starts a restart-safe hold of at least 60 s. After the hold, only a later external event permits one fresh-admission attempt against current state. Another failure renews the hold. No polling, retry timer, or replay of a user edit is allowed (R155).
+  - R155 extends older kind-only retry text only for unclassifiable native failures. Reliably known kinds keep their existing handling. Recovery still obeys consent, sync-off, full, reset, version, private-window, diagnostics-privacy, and data-lifetime guards. This changes no quota, budget, or admission rule.
 
 ### 3.3 Switching on: the join
 
 - **SYNC-08** When a browser switches sync on, its documents and the synced copy are joined:
   1. **No synced copy yet:** wait up to 10 s, because a new browser may still be downloading one. If none arrives, start one from this browser's documents.
-  2. **A synced copy exists, and this browser has nothing of its own:** adopt the synced copy silently. "Nothing of its own" means no document was ever edited here, or nothing was edited here since this browser last synced with the same synced copy.
-  3. **Both sides have settings:** ask once, in one dialog wherever the switch was flipped ([UI-SET-13](05-ui.md#sections)):
+  2. **A synced copy exists, and this browser has nothing of its own:** adopt the synced copy silently. "Nothing of its own" means no document was ever edited here, or nothing was edited here since this browser last synced with the same synced copy. Silent adoption requires proof of one of these facts. For an older local profile whose edit provenance is unknowable, use step 3's existing choice dialog. Never silently replace its settings or invent a known edited or unedited fact. The proven same-history no-edit branch remains unchanged. This selects no marker schema or initialization that labels an unproven profile unedited (R164).
+  3. **Both sides have settings, or an older local profile has unknowable edit provenance:** ask once, in one dialog wherever the switch was flipped ([UI-SET-13](05-ui.md#sections)):
      - **Use synced settings** (the default): the synced shared settings replace this browser's; for an account both sides have, the synced setup and its filters win; setups only this browser has are added to the synced copy;
      - **Use this browser's settings:** the reverse; setups only the synced copy has are added here;
      - **Cancel** leaves sync off.
 
-     Either way, nothing is lost for an account only one side has. Until the question is answered, the sync status is `waiting` (SYNC-24; R13).
+     Either way, nothing is lost for an account only one side has. The switch stays off until a choice applies. Until the question is answered, the sync status is `waiting` (SYNC-24; R13, R164). The unknown-provenance choice leaves quota, newer-version, reset, consent, R155, R161 and actual write-confirmation safeguards unchanged.
   4. **At first run:** if a synced copy arrives within the 10 s, first run shows its features ticked and marked "From sync" instead of the defaults, for the user to review before Agree. This lookup may run before consent, because it reads only the user's own settings in the browser, not YouTube. Nothing is pushed, and the sync switch isn't stored, until Agree; without Agree, nothing is written (FT-31, FT-41). Consent is still this browser's own. (R9)
-  5. **Two histories meet later:** if the synced copy is replaced by a different history under a browser that's already syncing (Chrome's sign-in merge, or two browsers that each started one), the browser that last joined the replaced history asks step 3's question. The other carries on. Until it's answered, the asking browser pushes nothing, and its status is `waiting`. (R9, R13)
-- **SYNC-09** Turning sync on with more than fits the budget is refused, with SYNC-14's message naming what to remove.
+  5. **Two histories meet later:** if the synced copy is replaced by a different history under a browser that's already syncing (Chrome's sign-in merge, or two browsers that each started one), the browser that last joined the replaced history asks step 3's question. The other carries on. Until it's answered, the asking browser pushes nothing, and its status is `waiting`. A persistent pending indication in the popup and Settings links to step 3's existing join dialog. Receiving the history opens no tab, chooses no side, and pushes nothing while waiting, even when no Settings page is open (R153). (R9, R13)
+- **SYNC-09** Turning sync on with more than fits the budget is refused, and the message names what takes the most room. It reads "Couldn't turn on Settings sync, because your settings don't fit in the synced copy. Nothing changed." followed by "The largest channel filter takes {n} KB.", "The largest account setup takes {n} KB." or "Shared settings take {n} KB." (R197)
 
 ### 3.4 Conflicts
 
 - **SYNC-10** The unit of conflict is the document. Two browsers editing different documents never conflict.
 - **SYNC-11** For the same document, **the newest edit wins**, by the time of the user's edit, with the device ID breaking ties. The losing edit shows as reverted. It takes edits to one document in two browsers within one sync interval.
-- **SYNC-12** **Deletions are tombstones,** kept for 30 days, so an older edit can't bring back a removed setup or filter.
+- **SYNC-12** **Deletions are tombstones,** kept for 30 days after their edit time (`at`), so an older edit can't bring back a removed setup or filter.
+  - A filter's tombstone that arrives while its setup is still live here isn't applied, so auto-add never runs a playlist without its filter. It applies once the setup's tombstone is here, whichever arrives first. A setup's tombstone that arrives also removes this browser's data for the account (DATA-44; R177).
+  - Any browser with sync on expires a setup's tombstone once 30 days have passed since its `at`. It does so during an automatic receive pass, with no timer of its own. It drops its local copy and its `pushed` entry, then removes the synced copy in a separate cleanup opportunity. The account's filter tombstones expire with their setup's, whatever their own `at`. A filter tombstone under a live setup doesn't expire. After expiry, a browser that was offline for over 30 days can push its live copy back (SYNC-07; R178).
 - **SYNC-13** A document too large for one sync item is applied only once every part of the same write has arrived. Until then, the last good local copy stays.
 
 ### 3.5 Budget and "full"
 
 - **SYNC-14** **The synced copy stays under 96 KiB and 480 items,** counted the way the browsers count (the UTF-8 key plus the JSON value, plus 4 bytes per item). That's the browsers' 100 KiB and 512 items, less headroom: about 1,060 listed channels beside 20 shortcuts and 5 account setups.
+  - Actual occupancy includes unknown keys and retained unproven chunks. Planned cleanup gives no credit. Any chunks that reappear count again (R151).
   - **While sync is on, a user change that would go over is refused, and nothing is saved.**
   - The message: "Synced settings are full. {Largest}: remove some, or turn off sync in this browser to keep more here." {Largest} names what takes the most room, for example "Music's channel filter uses 39 KB".
   - If kept filters take room, it offers **Remove kept filters**, described as "Filters of playlists you no longer auto-add to".
 - **SYNC-15** A refused change is never kept locally and left unsynced. Browsers never differ silently.
-- **SYNC-16** Label refreshes and Missing/Full marks may use the headroom. If even that's gone, they stay local until room frees up.
+- **SYNC-16** Label refreshes and Missing/Full marks may use the headroom. If even that's gone, they stay local until room frees up. The local `SyncState.deferred` names each such document and its gen. Admission leaves them out, so they never refuse another change, and each push adds those that fit again (R198).
 - **SYNC-17** If the synced copy goes over anyway (a browser-side merge ignores quotas), this browser stops pushing, and the status says "Synced settings are full". It recovers as soon as the user removes something.
 - **SYNC-18** The per-item limit (8,192 bytes) never reaches the user: larger documents are split.
 
@@ -507,6 +518,8 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   - synced (`ok`);
   - "Synced settings are full. {Largest}: …" with **Remove kept filters** (`full`, SYNC-14);
   - "Update {Product} in this browser to keep syncing." (`update-needed`, SYNC-23).
+
+  Later-history `waiting` persists in the popup and Settings with a link to the existing join choices (R153).
 
   "Full" and "update needed" also show as the popup's sync banner ([UI-POP-10](05-ui.md#banners) row 9). The status is never synced. (R13)
 - **SYNC-25** Settings sync switches, the join choice and Clear all data are allowed from a private window. Documents arriving from the synced copy come from the user's other browsers, never from a private session, so they're accepted.
@@ -552,7 +565,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | **Session memory** | Pause, session skips, recent adds, the last gathers, 429 pauses, shown-once memory, breakage signals and notices, the tab registry | `storage.session` | Never |
 | **Memory only** | Undo entries, locks, the picker's membership, anything from a private tab, a private window's gathers | The tab, or the background's own variables | Never |
 | **Not stored** | Script registrations (derived from the switches, consent and site access), membership, a video's channel | — | — |
-| **The browser's own** | Site access (YouTube Music is optional on Chrome), the browser menu's optional permission, the keys for Keys from any tab, Firefox data-collection grants | Browser permissions and settings | Never |
+| **The browser's own** | Site access (YouTube Music is optional on both browsers, R179), the browser menu's optional permission, the keys for Keys from any tab, Firefox data-collection grants | Browser permissions and settings | Never |
 
   (R1, R39, R86, R88, R91, R125, R135)
 
@@ -611,6 +624,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 |---|---|---|---|
 | `schema` | This browser's storage layout version | number (2.0 writes `1`) | Always. A fresh install writes it at the first background start, before consent; each migration writes it last (DATA-46; R21) |
 | `device` | This browser's own state | `Device` | Until Clear all data |
+| `lastAccount` | The last account with a setup that was current, normal windows only (ACC-13) | account key or `null`; absent reads as `null` | Until that account's setup is removed (DATA-44), or Clear all data |
 | `doc:settings` | The shared settings | `Stamped<Settings>` | Until Clear all data |
 | `doc:setup:<acct>` | One account setup | `Stamped<Setup>` | Until the setup is empty or removed |
 | `doc:filter:<acct>:<playlistId>` | One channel filter of that account, kept filters included | `Stamped<Filter>` | Until removed with its setup, or by Clear all data |
@@ -620,6 +634,8 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | `sync` | The replicator's bookkeeping | `SyncState` | Once sync has been on |
 
   (R21, R23, R43)
+
+  `lastAccount` is its own key, not a `Device` field, so the writers that clear it (a settings import, removing a setup, a sync join that receives a setup's tombstone, and a setup's tombstone that arrives by sync) never write `device` and can't put back a consent that was withdrawn while they ran (R176, R177).
 
 - **DATA-08** `<acct>` is the account key (ACC-03). An absent `doc:settings` reads as the defaults: every feature off, the YouTube Music section switch on (R1), and the undo key Alt+U (R44). An absent setup reads as "no choices". Every key has a prefix, so none reuses a 1.x name for a new shape.
 
@@ -635,7 +651,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | `s:filter:<acct>:<playlistId>` | One channel filter document |
 | `s:<document>@<gen>.<i>` | Chunk `i` of a document too large for one item |
 
-- **DATA-10** A document of up to 7,600 bytes is one item, `{v, gen, at, by, data}`. A larger one is a pointer `{v, gen, at, by, n}` plus `n` chunks named after its `gen`. A removed document is a tombstone, `{v, gen, at, by, deleted: true}`, for 30 days; while sync is on, the local copy keeps the tombstone too, and readers treat it as absent.
+- **DATA-10** A document of up to 7,600 bytes is one item, `{v, gen, at, by, data}`. A larger one is a pointer `{v, gen, at, by, n}` plus `n` chunks named after its `gen`. A removed document is a tombstone, `{v, gen, at, by, deleted: true}`, for 30 days after its `at`; while sync is on, the local copy keeps the tombstone too, and readers treat it as absent. SYNC-12 says which browser expires it and when (R178).
 
 #### `storage.session`
 
@@ -724,8 +740,7 @@ type Device = {
   syncOn: boolean // Settings sync's switch: per browser, never in Settings (SYNC-01; R54)
   upgradeNote: { state: "pending" | "done"; details: UpgradeDetails; opened: boolean
                  seen: boolean; reopened: boolean } | null // UpgradeDetails: 08-release; seen and reopened: REL-CON-25 (R97)
-  claimNotice: { acct: string; dropped: number } | null // shown once
-  lastAccount: string | null // the last account with a setup that was current, normal windows only
+  claimNotice: { acct: string; dropped: number } | null // minimum fields; distinguish skipped shortcut too (ACC-32; R150, R152)
   newPlaylistVisibility: "PRIVATE" | "UNLISTED" | "PUBLIC" | null // the last pick here
   pickerSortAZ: boolean // the picker's Sort A–Z, default false; this browser only (R39)
   detailedLog: boolean
@@ -749,13 +764,24 @@ type AccountCache = {
 // len and parts in seconds at 0.1 s precision; parts merged; at: when it last played
 type Progress = Record<string /* video ID */, { len: number; parts: [number, number][]; at: number }>
 
+type SyncOpaqueWrite = {
+  gate: null | { kind: "pending" | "held"; notBefore: number } // nonnegative safe-integer Unix milliseconds
+  diagnostic: null | { name: string | null; message: string | null } // local-only original own data strings
+}
+
 type SyncState = {
   joined: string | null // the s:meta id this browser last synced with
   pushed: Record<string /* document */, string /* gen */>
+  deferred?: Record<string /* document */, string /* gen */> // SYNC-16: marks and label refreshes past the quota, until room frees up (R198)
   status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting" // SYNC-24 (R13)
   editedSinceOff: boolean
+  opaqueWrite?: SyncOpaqueWrite // absent in older records; no migration or schema-version change
 }
 ```
+
+**Local bookkeeping amendments to DATA-12.** The declarations above include R155's optional sync bookkeeping. Other local bookkeeping requirements follow R150, R151 and R152. The unclaimed record must retain the minimum validated original-shortcut-ID association, local only, until claim, discard, or Clear all data. Older records without it remain readable and take ACC-31's no-guess path. Claim results distinguish a skipped shortcut from the ownership-drop count. The optional local `SyncState.opaqueWrite` implements R155's recovery deadline. `pending` is confirmed locally before a native write; `held` records an observed opaque rejection. A fresh owner waits a new minimum 60 seconds and normalizes pending to held. Both the wall deadline and the new monotonic minimum apply. Successful confirmation clears the gate and keeps only the latest diagnostic; a record with no diagnostic removes the owned field. Old records remain unchanged until actual work, malformed present fields refuse, and compatible unrelated extensions survive. This field shares the local `sync` lifetime and Clear all data behavior. Switching sync off clears nothing. Diagnostic strings enter neither synced documents, Settings files nor the shareable Diagnostics report. Any cleanup evidence representation must be bounded, local only, and respect existing removal and clearing lifetimes. These requirements add no synced wire fields, raw account identities, retained deleted content, or recovery journal schema. Exact representations and compatibility are engineering obligations.
+
+The recognized interim path additionally requires lossless inactive retention of conflicting source, unknown historical authorization distinct from either known branch, and retained globals for explicit recovery. The shapes above do not specify those additions. Compatible local representations and their lifecycle remain engineering work under [08 §2.12](08-release.md#212-interim-session-access-storage), with no new wire schema or reset rules selected here (R156–R160).
 
 - **DATA-13** **Limits stored with the data:** at most 20 playlist shortcuts; a shortcut label up to 40 characters; a channel title up to 100 and a handle up to 30; an account name up to 100. Longer values are cut when saved. Shortcut IDs are random, 6 characters long.
 - **DATA-14** **Unknown fields are kept.** A browser that reads a document with fields it doesn't know writes them back unchanged.
@@ -856,6 +882,7 @@ type SyncState = {
 ### 4.8 Clear all data
 
 - **DATA-36** Clear all data is in Settings › Privacy & data, always reachable, signed in or not, and always confirmed.
+  - It stays available under a layout newer than this build knows (DATA-48), as an explicit erase action after this browser's writers stop. Nothing else becomes editable under that layout (R168).
 - **DATA-37** The confirmation: "Clear all data? {Product} forgets everything it keeps in this browser: features, shortcuts, account setups, channel filters, cached playlists and watch progress. It starts again as if just installed. Your playlists on YouTube aren't touched." with **Clear** and **Cancel**.
 - **DATA-38** It has a checkbox, "Also delete synced settings from all your browsers", off by default.
   - It shows when sync is on, or when this browser has synced before. That's decided from local state, so the synced copy isn't read while sync is off.
@@ -870,6 +897,8 @@ type SyncState = {
 | Other syncing browsers | Unaffected | Reset (DATA-40) |
 | Registered page scripts | Unregistered; open tabs tear down | Same |
 | Untouched | YouTube's playlists, site access, Firefox data-collection grants | Same |
+
+Under a layout newer than this build knows (DATA-48), DATA-39's unticked column still applies, after this browser's writers stop. `storage.sync` stays untouched. The clear erases the newer-layout data and never downgrades or normalizes it first. Ticked, it still runs only the unticked column. It clears this browser, leaves `storage.sync` to the newer version that wrote it and confirms "Cleared on this browser. Your synced settings stay as the newer version of Perchling saved them. Update Perchling here to clear them too." (R168, R174, R175).
 
 - **DATA-40** **After a ticked clear,** every other syncing browser:
   - drops its shared settings, account setups and filters, and those setups' caches and progress;
@@ -893,6 +922,8 @@ type SyncState = {
 | The last account, if it was this account | Here |
 
   Shared settings stay: the shortcuts keep their keys and labels, and only this account's targets go. Other setups and YouTube are untouched.
+
+  When the setup's tombstone arrives by sync, every receiving browser also removes the rows marked "Here" for that account: its playlist cache, its watch progress, its session memory, and the last account if it was this account. It removes the cache, the progress and the session memory first and writes the tombstone last, with no removal journal (SYNC-12; R177).
 - **DATA-45** **Smaller removals:**
   - switching auto-add off deletes all watch progress and keeps its playlists, filters and percentages;
   - removing a playlist shortcut deletes its entry in the shared settings and its target in every setup; its 6 s Undo is held in memory;
@@ -911,7 +942,8 @@ type SyncState = {
   - 2.x steps each take `schema` from N to N+1, as pure functions of the stored data, in order.
   - `onInstalled` is used only to open first run on "install". An update opens no tab, and recognising a 1.x upgrader never uses it (DATA-49). (R21, R64, R76)
 - **DATA-48** **A layout newer than this build knows** (a manual downgrade, or a rollback past a `schema` bump) leaves the build inert: it changes nothing and registers nothing, and the popup's banner says "This version of {Product} is older than your settings. Update it to continue." ([UI-POP-10](05-ui.md#banners); R65)
-- **DATA-49** **Recognising a 1.x upgrader.** At every background start, if there's no consent and no upgrade-note record (`device.consent` and `device.upgradeNote` absent or `null`), and any 1.x key is present in `storage.local`, it's an upgrade: the migration below runs and sets the note pending, and the user gets the note path (FT-43). With neither record and no 1.x key, it's a fresh install: the first-run path (FT-40). This is [ARC-MOD-25](06-architecture.md#69-the-store-module-interface)'s check. (R64)
+  - The one exception is confirmed local Clear all data (DATA-36, DATA-39). It authorizes no ordinary edit and no automatic downgrade or normalization (R168).
+- **DATA-49** **Recognising a 1.x upgrader.** First distinguish recognized interim session-access storage under [08 §2.12](08-release.md#212-interim-session-access-storage). Its account mapping, effective percentage/feedback, canonical precedence, fresh consent, unknown historical authorization and explicit recovery follow R156–R160. The original legacy check below must not classify an interim profile as fresh or remove its source. At every background start on the original legacy path, if there's no consent and no upgrade-note record (`device.consent` and `device.upgradeNote` absent or `null`), and any 1.x key is present in `storage.local`, it's an upgrade: the migration below runs and sets the note pending, and the user gets the note path (FT-43). With neither record and no 1.x key, it's a fresh install: the first-run path (FT-40). This is [ARC-MOD-25](06-architecture.md#69-the-store-module-interface)'s check. (R64)
   - The 1.x keys are 1.4.5's nine: `playlists`, `addToPlaylistID`, `watchLaterShortcut`, `requiredWatchPercentage`, `toastEnabled`, `clientID`, `clientSecret`, `accessToken` and `refreshToken`.
   - The check never relies on `onInstalled`, which Firefox can skip (ticket 06), or on the `schema` marker (DATA-46).
   - So a 1.4.5 user with no 1.x key left counts as a fresh install. Their update opens no tab; the toolbar "!" and the popup's "Waiting for your OK" lead them to first run (FT-40; R76).
@@ -940,7 +972,7 @@ type SyncState = {
   - the undo key is Alt+U, as at any install, unless the carried key uses it (R44);
   - everything else is off, and sync is off;
   - consent stays `null` and the upgrade note is set to pending, so nothing runs until Agree (FT-43).
-- **DATA-51** The upgrade note's `details` shape ([REL-MIG-33](08-release.md#29-what-the-note-is-built-from)), the note's copy ([§3.2](08-release.md#32-copy)) and the upgrade test matrix ([§17](08-release.md#17-upgrade-test-matrix)) are in 08 Upgrade and release. What 1.4.5 users had is [09's §1.12](09-parity.md#112-what-145-users-had) (PAR-CAP-71 to PAR-CAP-79).
+- **DATA-51** The original legacy upgrade note's `details` shape ([REL-MIG-33](08-release.md#29-what-the-note-is-built-from)), the note's copy ([§3.2](08-release.md#32-copy)) and the upgrade test matrix ([§17](08-release.md#17-upgrade-test-matrix)) are in 08 Upgrade and release. What 1.4.5 users had is [09's §1.12](09-parity.md#112-what-145-users-had) (PAR-CAP-71 to PAR-CAP-79).
 
 ### 4.11 Recent adds
 
@@ -990,11 +1022,14 @@ type GatherRecord = {
   to: "player" | "queue" | "playlist"; count: number
   acct?: string; playlist?: string                       // into a playlist only
   added?: { video: string; setVideoId: string }[]        // what Undo removes
-  closed?: { url: string; index: number; title: string }[] // what Undo reopens
+  closing?: { tabId: number; video: string; tab: { url: string; index: number; title: string } }[] // the close plan, until the second write
+  closed?: { url: string; index: number; title: string }[] // what Undo reopens: the planned tabs read back as gone
 }
 ```
 
-  - It's written once per gather or Undo, in the same `set()` as its Recent adds entry, and never on a check that gathers nothing.
+  - A gather makes at most two writes to it, and a check that gathers nothing makes none. The first write saves the record with its close plan (`closing`) before any tab closes, in the same `set()` as the gather's Recent adds entry. The second write saves what closed (`closed`) once the gather has read each planned tab back after the one `tabs.remove` call. It takes two because Undo needs a saved record before any tab closes, and only the read after closing shows which tabs closed.
+  - An Undo also makes at most two writes: it ends the record, then saves the tab IDs it reopened to `kept`.
+  - If the background stops between a gather's two writes, the record keeps its plan. Undo then reads each planned tab ID. A tab whose ID no longer exists counts as closed and reopens from its saved URL, title, index and window. A tab still open is left alone, so nothing opens twice. A tab Undo can't read isn't reopened, and Undo counts it as not reopened.
   - Nothing from a private window is kept: a private window's gathers stay in the background's memory (ACC-47, DATA-33).
   - It never syncs and is never sent anywhere. Clear all data removes it (DATA-39), and removing a setup removes that account's records (DATA-44).
   - Nothing about gathers is kept in `storage.local`: no video IDs and no tab addresses. (R127, R132, R135)
@@ -1074,7 +1109,7 @@ type GatherRecord = {
 
 | Situation | Notice or status |
 |---|---|
-| Auto-add | Auto-add isn't working right now because YouTube changed something. Videos you watch aren't being added for now. |
+| Auto-add | Auto-add isn't working right now because YouTube changed something. It won't add the videos you watch until it works again. |
 | Playlist shortcuts, quick-save | {Feature} isn't working right now because YouTube changed something. Use YouTube's own Save for now. |
 | Queue button | The Add to queue button isn't working right now because YouTube changed something. Use YouTube's ⋮ menu for now. |
 | Watch-page button | The watch-page button isn't working right now because YouTube changed something. This video's status is still in the toolbar popup. |
@@ -1084,7 +1119,7 @@ type GatherRecord = {
 | A key while its feature isn't working | Play next (Alt+N) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now. |
 | A key for a YouTube Music action unavailable in this tab (its feature partly working, R68) | {Action} isn't working right now. The popup shows why. |
 | A key pointing at an unrecognised item | Couldn't tell which item you meant. Point at it again, or use the player. The same action-neutral wording on both sites (R4). |
-| Account keys missing | Saving isn't working right now because YouTube changed how it shows which account you're using. Nothing is saved, so nothing lands in the wrong account. |
+| Account keys missing | Saving isn't working right now because YouTube changed how it shows which account you're using. {Product} saves nothing, so nothing lands in the wrong account. |
 | The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 | Popup strip | {Feature} isn't working in this tab because YouTube changed something. / {N} features aren't working in this tab. / {Feature} is partly working in this tab. |
 | Settings, not working | Not working right now: YouTube changed something it relies on. |
@@ -1102,7 +1137,7 @@ type GatherRecord = {
   - **Known problems**, a plain link to the public issues labelled `youtube-change`, and **Report a problem**, which opens HEALTH-27's chooser. There's no support e-mail (R89);
   - **Detailed console log**, off by default, this browser only;
   - the version, with "(beta)" on beta builds ([REL-CI-15](08-release.md#71-firefox)), and a note that updates install by themselves. There's no update button. (R65)
-- **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report.
+- **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report. The line beside it reads "Check now reads from an open YouTube tab. It changes nothing." A result reads "{done} of {total} reads answered on {site}.", and a check that can't run reads "Couldn't run the check. Try again." (R197)
   - **With no YouTube tab open,** it's disabled, with "Open YouTube to check" and **Open YouTube** ([UI-SET-17](05-ui.md#sections)).
   - **Before consent** it can't run, because nothing is read from YouTube (FT-30). (R15)
 - **HEALTH-24** **The diagnostics report** is plain text. It contains:
@@ -1163,9 +1198,7 @@ Later decisions overrode earlier text in these places; nothing here is open.
 
 These couldn't be pinned down from the tickets or the resolutions, and stay open:
 - **Re-attaching setups** if `DATASYNC_ID` differs between browsers (ACC-03) is an open question for after ticket 25.
-- **Copy for the sync statuses.** SYNC-24 names `joining`, `waiting` and `ok`, but no ticket or chapter writes their status lines, the join dialog's title and text, the first-run sync card's "nothing found" state, or where SYNC-08 step 5's question appears when no settings page is open. [05](05-ui.md#sections) (UI-SET-12, UI-SET-13) has the same gap.
 - **Check now before consent.** It can't run (FT-30, HEALTH-23), but what Diagnostics shows instead isn't written.
-- **"Before this feature can run" on Chrome with a YouTube Music feature,** when the access prompt is denied: R14 covers only first run's Agree, and FT-52 keeps the switch off, but whether that Agree still sets consent isn't decided. For Playlist shortcuts the outcome follows R71 (FT-52): it goes on, on YouTube only, so its Agree does set consent.
 
 ## Resolved during assembly
 
@@ -1177,7 +1210,7 @@ Settled by the main session in [resolutions.md](resolutions.md):
 - **Badge precedence** (was a gap): consent or upgrade > site access > not working > Missing or Full, with per-tab and every-tab scopes and two colours (FT-57, FT-58, HEALTH-15). R12.
 - **The `waiting` sync status** (was a gap): the join question is unanswered (SYNC-08, SYNC-24). R13.
 - **The `update-needed` refusal** (was a gap): only edits to synced documents a newer version wrote are refused (SYNC-23, FT-12). R13.
-- **First-run Agree on Chrome with YouTube Music access denied** (was a gap): consent and the other ticks apply, and the YouTube Music features are saved on but held with "Needs site access" (FT-40, FT-52). R14.
+- **First-run Agree with YouTube Music access denied** (was a gap): consent and the other ticks apply, and the YouTube Music features are saved on but held with "Needs site access" (FT-40, FT-52). R14.
 - **Check now with no serving tab** (was a gap): disabled, with "Open YouTube to check" and **Open YouTube** (HEALTH-23, FT-54). R15.
 
 Settled in the second round:

@@ -1,0 +1,75 @@
+{
+  "status": "all inherited gates and cases preserved by original identity; unexecuted",
+  "units": [
+    {
+      "unit": "pointer-keys",
+      "counts": {
+        "gates": 13,
+        "negatives": 21,
+        "controls": 6
+      },
+      "manifests": {
+        "unexecuted-gates.json": {
+          "mode": "100644",
+          "bytes": 14145,
+          "sha256": "bf0904f445c8f907959858243908a5181a082c6713654120541879a908ec902b",
+          "gitBlob": "6bba4140bc16d64078ab9740c799d5a2b6af51ab"
+        },
+        "type-probes.json": {
+          "mode": "100644",
+          "bytes": 5155,
+          "sha256": "07752b8c040cb62cfe2b0adc3ed113d452f5188a740f128dd445e2323945f7ca",
+          "gitBlob": "f429033a912475c48680ebf554f1f92caef510c6"
+        },
+        "controls.json": {
+          "mode": "100644",
+          "bytes": 15817,
+          "sha256": "b9a904bcc83949a7c27df599f64cbaacaaba28f62987e42558efdc71b5537ca5",
+          "gitBlob": "cbbe6bbc1468b9b4fa5ddf09e0ad5e4c7da7be3c"
+        }
+      },
+      "originalPaths": [
+        "tools/fixtures/pointer-keys/unexecuted-gates.json",
+        "tools/fixtures/pointer-keys/type-probes.json",
+        "tools/fixtures/pointer-keys/controls.json"
+      ],
+      "runtimeQualification": "unexecuted",
+      "attribution": "inherited, excluded from new Music census"
+    },
+    {
+      "unit": "items-www",
+      "counts": {
+        "gates": 14,
+        "negatives": 21,
+        "controls": 8
+      },
+      "manifests": {
+        "unexecuted-gates.json": {
+          "mode": "100644",
+          "bytes": 15665,
+          "sha256": "3facf361f3f0466b334b8cc01679da972ef903a2e102a2c7b3c30de4230b1f22",
+          "gitBlob": "96fbe933450b3ac745b1ec7c4bac548a53af0c56"
+        },
+        "type-probes.json": {
+          "mode": "100644",
+          "bytes": 43485,
+          "sha256": "d46b8711ee6f854519114918cb88a38151bf2d2ba1ff5e208e4858356fb0d71c",
+          "gitBlob": "8943fbd09bf930a84176a7bc9d6c1bcfabbe5b11"
+        },
+        "controls.json": {
+          "mode": "100644",
+          "bytes": 40859,
+          "sha256": "e4ac94f7fe78e5daadc484a6303324c680934d0026f84853f7ade3570361f7a6",
+          "gitBlob": "230b567c61d2cc07b70e678394d72a4cec5c3a47"
+        }
+      },
+      "originalPaths": [
+        "tools/fixtures/items-www/unexecuted-gates.json",
+        "tools/fixtures/items-www/type-probes.json",
+        "tools/fixtures/items-www/controls.json"
+      ],
+      "runtimeQualification": "unexecuted",
+      "attribution": "inherited, excluded from new Music census"
+    }
+  ]
+}

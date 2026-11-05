@@ -1,0 +1,125 @@
+{
+  "state": "all-unexecuted",
+  "controls": [
+    {
+      "id": "stale-conflict-clears-new-key",
+      "target": "src/background/store/key-settings.ts",
+      "anchors": [
+        {
+          "before": "if (change.confirmation.kind === \"use-here\" && !sameConflicts(conflicts, change.confirmation.conflicts)) return refused(\"stale\")",
+          "after": "if (false) return refused(\"stale\")",
+          "occurrence": 1,
+          "line": 49
+        }
+      ],
+      "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
+      "namedAssertion": "owner stale conflict confirmation cannot clear a target changed since the dialog",
+      "patch": "controls/stale-conflict-clears-new-key.patch",
+      "baseSha256": "f56a50194e594942219b1d5a5a8569ff01516b0a779d9758700b0af8e89f109d",
+      "mutatedSha256": "97201ce7b1aff7897b92765615534c026c286f127c30d19fc9ed8fd9afeb2b9b",
+      "mode": "100644",
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false
+    },
+    {
+      "id": "twenty-first-row",
+      "target": "src/background/store/key-settings.ts",
+      "anchors": [
+        {
+          "before": "if (settings.shortcuts.list.length >= 20) return refused(\"limit\")",
+          "after": "if (settings.shortcuts.list.length >= 21) return refused(\"limit\")",
+          "occurrence": 1,
+          "line": 56
+        }
+      ],
+      "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
+      "namedAssertion": "owner fresh IDs append, the twentieth row succeeds and the twenty-first is refused",
+      "patch": "controls/twenty-first-row.patch",
+      "baseSha256": "f56a50194e594942219b1d5a5a8569ff01516b0a779d9758700b0af8e89f109d",
+      "mutatedSha256": "8dd3221bc125f49cb84ed7acd12a76a3e46dcdd724d0274ab189e1b6594106e0",
+      "mode": "100644",
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false
+    },
+    {
+      "id": "missed-second-account",
+      "target": "src/background/store/key-settings-execution.ts",
+      "anchors": [
+        {
+          "before": "        seen.add(key.acct)",
+          "after": "        if (key.acct === \"BBBBBBBBBBBBBBBB\") continue\n        seen.add(key.acct)",
+          "occurrence": 1,
+          "line": 160
+        }
+      ],
+      "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
+      "namedAssertion": "owner private=true removal and real Undo preserve all unrelated records",
+      "patch": "controls/missed-second-account.patch",
+      "baseSha256": "811d0d20cfee68a8082e236281287332278ce1209b7475d2d3a418ead09147f5",
+      "mutatedSha256": "a9aa81439b739b087a4641f50ec88a18742eab3868a1a1319d6133945621eaff",
+      "mode": "100644",
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false
+    },
+    {
+      "id": "extended-undo-window",
+      "target": "src/background/store/key-settings-execution.ts",
+      "anchors": [
+        {
+          "before": "expires: issued + 6000",
+          "after": "expires: issued + 60000",
+          "occurrence": 1,
+          "line": 231
+        }
+      ],
+      "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
+      "namedAssertion": "owner expiry revokes ephemeral Undo",
+      "patch": "controls/extended-undo-window.patch",
+      "baseSha256": "811d0d20cfee68a8082e236281287332278ce1209b7475d2d3a418ead09147f5",
+      "mutatedSha256": "0df571caf14a5d6dd876c7e2f000e1d86598d22a66f2e21d9261c5e45c10a340",
+      "mode": "100644",
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false
+    },
+    {
+      "id": "unrelated-row-normalized",
+      "target": "src/background/store/key-settings-mutation.ts",
+      "anchors": [
+        {
+          "before": "    if (!jsonObject(edit.settings)) return invalid",
+          "after": "    edit.settings.shortcuts.list.forEach(row => { row.label = row.label.trim() })\n    if (!jsonObject(edit.settings)) return invalid",
+          "occurrence": 1,
+          "line": 44
+        }
+      ],
+      "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
+      "namedAssertion": "owner unrelated untrimmed row and key extensions survive a field edit",
+      "patch": "controls/unrelated-row-normalized.patch",
+      "baseSha256": "cb7a07a022071ef109e295671a1fa08bcefb64d13dff9ffe7298d9facb5d45ce",
+      "mutatedSha256": "ace4aa567166205e81129e6cf22ed1f53d9e8577bb19c4369d655503feae95ec",
+      "mode": "100644",
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false
+    },
+    {
+      "id": "premature-key-success",
+      "target": "src/background/store/key-settings-progress.ts",
+      "anchors": [
+        {
+          "before": "return consentObject(observed) && sameSyncJson(observed, { ...before, ...items }) ? { kind: \"committed\" } : { kind: \"unconfirmed\", cause: { kind: \"readback\" } }",
+          "after": "return { kind: \"committed\" }",
+          "occurrence": 1,
+          "line": 177
+        }
+      ],
+      "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
+      "namedAssertion": "owner removal phase 3 ignore never issues a successful receipt or event",
+      "patch": "controls/premature-key-success.patch",
+      "baseSha256": "a78d71504916423e2d13ec81e40a3e68ad368b294a8918ea4fe61e1f34795de0",
+      "mutatedSha256": "8f1f2639e30c0511ab3f8c212d2086a2a05a9727ca7f8f55a59076685475a3fc",
+      "mode": "100644",
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false
+    }
+  ]
+}

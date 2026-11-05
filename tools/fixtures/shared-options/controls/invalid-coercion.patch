@@ -1,0 +1,14 @@
+--- a/src/background/store/settings-edit.ts
++++ b/src/background/store/settings-edit.ts
+@@ -90,10 +90,9 @@
+   let settings: Settings
+   switch (change.field) {
+     case "autoAdd.feedback":
+-      if (typeof change.value !== "boolean") return { kind: "invalid", reason: "invalid-option" }
+       if (current.autoAdd.feedback === change.value) return { kind: "unchanged" }
+       settings = decodeSettings(current)
+-      settings.autoAdd.feedback = change.value
++      settings.autoAdd.feedback = Boolean(change.value)
+       break
+     case "shortcuts.feedback":
+       if (typeof change.value !== "boolean") return { kind: "invalid", reason: "invalid-option" }

@@ -1,0 +1,10 @@
+--- a/src/background/store/sync-reset-receive.ts
++++ b/src/background/store/sync-reset-receive.ts
+@@ -203,6 +203,7 @@
+     if (notice === "unconfirmed") return held("notice")
+     if (!await observe(marker)) return held("authority")
+     stage = "marker"
++    await host.removeLocal(["unclaimed"])
+     try { await host.removeLocal([receivedResetKey]) } catch {}
+     const final = await deps.local.get(null), finalSession = await host.session.get()
+     if (!object(final) || !object(finalSession) || deps.stopped() || !sameSyncJson(authority(final) ?? null, marker.authority) ||

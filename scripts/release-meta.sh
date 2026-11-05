@@ -5,7 +5,8 @@
 #   Defaults: package.json's version, the remote's v* tags, and
 #   GITHUB_EVENT_NAME / GITHUB_REF.
 #
-# Writes release, version, channel, kind and cws to $GITHUB_OUTPUT (or
+# Writes release, version, channel, kind, cws and previous (the highest
+# release, or 1.4.5 before the first) to $GITHUB_OUTPUT (or
 # stdout), and the reason to $GITHUB_STEP_SUMMARY when set.
 #
 # Eligibility depends only on tags, never on the push's `before`, so force
@@ -134,4 +135,5 @@ out="${GITHUB_OUTPUT:-/dev/stdout}"
   echo "channel=$channel"
   echo "kind=$kind"
   echo "cws=$cws"
+  echo "previous=$previous"
 } >> "$out"

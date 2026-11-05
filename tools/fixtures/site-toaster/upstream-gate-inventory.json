@@ -1,0 +1,836 @@
+{
+  "inventories": [
+    {
+      "path": "tools/fixtures/extlink/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "23fb7f05a19b9391ef321535225faf0853a13db3",
+        "sha256": "f8aa904bff4091126cb001fe5f383e393ac79ce28e507e26abc6791304019526",
+        "bytes": 6745
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/feature-registry/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "d0dfd28eb3f6b382bb822e54233419fd8c03c8a8",
+        "sha256": "3ba16ce55e57282c76ec0b0cc4b0cbc87cddb7fef23c30b960a329d5b7fe60b4",
+        "bytes": 2281
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/first-run-backend/qualification-controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "1205ee321e3ae2e0c2b05c94bba15d1f013e5ab1",
+        "sha256": "3718e9a23f00dd9fcf12258d59cefd048547aa0b21b0adc79351f50ba106059f",
+        "bytes": 3328
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/gateway-playlists/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "17d8d6a8852e4f768b2d8a511db6f39b4b645d75",
+        "sha256": "2676180fa7e4a7f3a18ce13bc7f3b6ea758e40a8b63949516b4a141798e7b649",
+        "bytes": 3785
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/gateway-playlists/gateway.bun-test.ts",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "dc7a42c40b63e2e705c3e8bf8e8b17b5626299bd",
+        "sha256": "15f4c255e2b4fbb6e140e3f081fd6d327400e96b5ea8d7da2ef4bb4f821c0878",
+        "bytes": 23764
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/monitor/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "6798c54957988a046c3f0723e810a452637ba686",
+        "sha256": "8563483228d0b5c7869f55ecff9420dbb2d2e76c8cf7eef1933cca563e64c576",
+        "bytes": 5982
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/monitor/regressions.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "f7616c7a8c4511234404341c37af33b54afca5a8",
+        "sha256": "be0507d4ed505bc75eeae12771d9861ef5bc39a0c5013e20d5cb86574ea3095e",
+        "bytes": 761
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/monitor/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "12ed73675d8f0e53678f9fd2aa8319ff66b22973",
+        "sha256": "4a6c8a3cb66cd26b2971a9292224ef4cec29ba697d0a9238c0c9e7e34c148df5",
+        "bytes": 4784
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "5319b464bb9f98f375d522f3a308ef755101588f",
+        "sha256": "0c4913b4b0bab79f2a65ae5f4e6992429ddf691eaab76ac2fb3c794fe3e229eb",
+        "bytes": 5684
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/future-gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "bc8e01ba85bcd5177b33a1ba0db53930f1eb0218",
+        "sha256": "5a42adad71d842bae3695e3e6cc1f4e0d94688e01139077c4a8b27c10f04c51b",
+        "bytes": 48894
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/gate-census.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "13c56a2dc98e3bf73acba341fdb7388153a6150a",
+        "sha256": "3ee45f439fe12826c056aef2d1473ceebad3f900ba1a277e57fc87cc385f2641",
+        "bytes": 72178
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/owner-services-reconciliation/negatives.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "71e99ae8916d3c570402284062be42d5f0760158",
+        "sha256": "68f3b284babcd60ca5f05979f587f010013105d63e27de30913856f18cea37aa",
+        "bytes": 2936
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/picker-ui/defect-controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "697717010faa0847dec4eff876c69b668ea0787c",
+        "sha256": "c8de5a4031ef6218ae1e6a69f5c23ede05ba49c9d5d033e7b90fab4f7edd2e2f",
+        "bytes": 2970
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/picker-ui/negatives/Uncontrolled.svelte",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "612cc44d863b2b5c784ce7a305b5053ce93affd1",
+        "sha256": "0456f17a28e378d9cc3202acd5ca2f996665ecb7f84db94c6f7456b931b4a7b1",
+        "bytes": 293
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/playlists-cache/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "ce8802ad928d1e22c74b5b7e391cd72eb5c366e7",
+        "sha256": "8155cbfbe4d46b1d7fa9fe6c482473756788c5eae7cadca2c59fcf8c4701c373",
+        "bytes": 4873
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/playlists-cache/controls.py",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "28fcbe1163be7cee83526f2aee65d4e0b7d2a59d",
+        "sha256": "4994f8d907d1f248260d8588c2e9d17db2bae6d9b3eb15885ac198030bf61e58",
+        "bytes": 559
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/registrar/defect-controls.py",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "fc679640ad17a67717b485e708aa914024369bf8",
+        "sha256": "2152fe0fe9984a26b2b8ba82399c568874cb057ed546d41a1fdd43b14d94a072",
+        "bytes": 2736
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "726df4291fe20e1dbfd4379efde8843fe68438fc",
+        "sha256": "eac3594ac33e207c3885db9717532a43bd6bf3f88404fa8386156fef021321df",
+        "bytes": 3616
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "aa72190a37b57528a585b31a391511d147449b41",
+        "sha256": "809e3ee0db40da1f22ffca83456f0c77bcc645c0a82d0d0cb5e6e47a63384042",
+        "bytes": 5082
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-file/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "301779a6d40970b2d02b5b54ecffa5644a435db4",
+        "sha256": "ebf3ca56d8bfe4b257f89eeb3dd75fc1438d08f74efc8d3cc7d69c049fd28ad0",
+        "bytes": 2669
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-import-execution/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "2fd5ffd00223a4d73fa1664630c608b214db9161",
+        "sha256": "32b48d4fc7f21e430ab7e160efd1933a7cda679b61c9b067f8e6ef7abfe5233e",
+        "bytes": 10402
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-import-execution/future-gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "6ed94a544fab3413065b7dc120f9acca5d417447",
+        "sha256": "b452c1bdc7535f40a8b6a89b2dc3fb92ec902e5a7273568db392fc320195f12c",
+        "bytes": 82486
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-import-execution/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "63139f748936fdbd5ed0dc516334391a05b286ef",
+        "sha256": "0226387b7d1344adde0b1dde83a0ba6ba925a78692bc7f30f16bd576c724ec56",
+        "bytes": 5239
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-import-execution/upstream-type-line-relocations.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "7a9ca33a35dbf86520b00c8cbe7ed4e8f4036a33",
+        "sha256": "e49e07a6a4fec5c3b623e2efa30034b299e5e041cb194de630b340f8f5b7f18d",
+        "bytes": 18747
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "e22722f13caeef10c104644ffdedac9c02777d1d",
+        "sha256": "a0358c2e5dddd309e1b9912d254aa0754db4aeda49a073ae801628a710f75fac",
+        "bytes": 8469
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/settings-import-plan/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "d4d2aee6e3cff8dcc489194c2bf8ce99ddb6dd9a",
+        "sha256": "1c4c091441a36c798af57e9a79b42776eec427e99c227f0a141dcba46003b82b",
+        "bytes": 1120
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/shared-options/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "430c32d910015b1b8020b345d8659bdaed58aaaf",
+        "sha256": "9fe3d011af04a8a3cb3708c282c20ef72f2dc3b0eadf1e311af26b2a4eb3a840",
+        "bytes": 6263
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/shared-options/future-gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "1597f9888ebb5f89660a8efe6de6b16d890b6f3c",
+        "sha256": "f6980694ffc5f3a4591d4181f106b617814d911f13ea62e6f788636c9cdad65e",
+        "bytes": 133867
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/shared-options/negatives.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "c14d92d9bcb47b263faa28d9db7183a02756bd99",
+        "sha256": "46de5e6f9b5675656a3a83ca45ce0d7d64131668f62904c3e7560604280ccccc",
+        "bytes": 7846
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/shared-options/upstream-anchor-relocations.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "165d4e43aea80af045b337c8abb1286e22eaac91",
+        "sha256": "60ce91674f9c7f86429b82bc8964dc932ea8c28a94fa7ad008cdfc9b98e41c52",
+        "bytes": 9814
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/site-core-lifecycle/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "d373b302ec7109b965531928a5781d4b4619a600",
+        "sha256": "eac0649e74265321883428af56be3dab4a60f7de55fad47e8fbb9e5b14ca5f89",
+        "bytes": 4802
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/site-core-lifecycle/qualify-controls.py",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "6336f3b987a180ba840b0e92ba5680373cc5f6fc",
+        "sha256": "6c204a1a1b0262888adb01e9bf7077f3bd83d643dc2b88210a0f771fdc4e0db9",
+        "bytes": 2811
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/site-core-lifecycle/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "1c0158756461b8ca63578d3567ec6e2368381600",
+        "sha256": "9976163968f3619877625fd19d8e5d58adaa3f9ac3fbe26d28740404bc410d09",
+        "bytes": 6218
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/site-core-lifecycle/unexecuted-gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "7cccf2bd28443f1b6417e49a94b8034424514c19",
+        "sha256": "479bafee5e76757c4e308d192ef34e9a2f08f53b534cb58f6b4f972ea4b416b5",
+        "bytes": 5417
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/starting-owner/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "5db625864f0a9bf59b31ea0992697c364caa75f9",
+        "sha256": "b3de0706461aaa0a266b7046737d68cf0548264a30377f93a4b2fc09069b8d93",
+        "bytes": 3056
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/starting-owner/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "8a158369160ea4ac41248c4d3457c4489d6cdb87",
+        "sha256": "0e3030caea1851832a88e84f5edfd398bd0f4745277bad626384b66c1eac2382",
+        "bytes": 4768
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/svelte-pilot/page-link/check-negative.mjs",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "f7ceff26fd41240005e80f68bd2642812c3e827c",
+        "sha256": "9948c8e52ae9a572c6550c4b33dd9bbdd34d92201fa19797beda0ef33aa76858",
+        "bytes": 12028
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/svelte-pilot/page-link/check-regressions.mjs",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "10e61d0d27d9e7b532e7651183be0702b9ff5035",
+        "sha256": "d0e46f0011b0f1a37eecdeed941b7613305e0a2c8af0aafb898a28e7aa211983",
+        "bytes": 21715
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/tab-projection/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "55284c7181db0e64de247adccff54db0eeeac6eb",
+        "sha256": "3813c5caf9f055ddb6904a3d9379dfdb52a29995d1de07400e84d9159a138254",
+        "bytes": 2187
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/tab-view/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "0285aa8be2ccf444965542ab9401574fb8953b02",
+        "sha256": "862003bb337f4a10e549949e21bff43b610d20810e5f6de82a466de825433d20",
+        "bytes": 6109
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/tab-view/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "e83919a42d8b6aa9f5097bd33f41793bea077303",
+        "sha256": "2fced50da9a3353843e670d7af4b1047a7a72f944ee3874e130bd5644b0ee5f8",
+        "bytes": 7909
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/tabs/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "6bcb8c6526158639064b5d61673e88c1cba21764",
+        "sha256": "729ccc0e632a25e03d8d1658dcf10029b7ac28ffc726143d6df6f18d43a778ff",
+        "bytes": 4169
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/tabs/controls.py",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "42238cffef56fd80970b9084c4618ce2d26820f0",
+        "sha256": "3cb4780e342748822990d0882f2ff44c57714b2b4bbe190db1dd6e1709b1c402",
+        "bytes": 3887
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/ui-owner-reconciliation/gate-commands.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "e919759ed0f7c07b2573a7cd4c1f9d27487bc542",
+        "sha256": "f376da8ef7938fd49df2eae4353060e74eba24db58e7dd492518f5b64378e304",
+        "bytes": 106256
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/ui-owner-reconciliation/gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "2e4021f1f3875cee88ffeec07369653aaf40cfd5",
+        "sha256": "b0d17bf7cf87d3f0ee9edc0b6520b098b6c56de2077411047b64ba03b2077c39",
+        "bytes": 11691
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/ui-playlist-progressive/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "78c648af7c8b8c940b6117aa549839ac55a244ef",
+        "sha256": "795b389146d650295598d8a5e8ab975d7a8b16df5b5f937811d6d110563b62d6",
+        "bytes": 5619
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/ui-playlist-progressive/gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "3d0116309f3fb17f0c25f9f0b2bea68ee0885c1e",
+        "sha256": "2b40445f9dfb1162974b4e926c43b6663d6a8ac4a271d0f7e2048bd4a6cbd6ea",
+        "bytes": 51221
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/ui-read-playlist-bridge/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "20f38745df30b5cc382ccf95e45a165c0c30e7b9",
+        "sha256": "75e257805e961b8386a5dc8ba34756d23bf9286ce276023f70d0a3f92a3e2ef2",
+        "bytes": 5585
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/ui-read-playlist-bridge/gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "45c10bdf96b907325766390d0acfcdadfe1bacbf",
+        "sha256": "9e0ebb44f851e8e34a3c1db10e925f191e9b679ccc7758f888d0e972fadfae9e",
+        "bytes": 34569
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "2c876fb383b2f838d85cd28e3aa40118a2c2f40a",
+        "sha256": "4e82141a52c988a562996ef984fe25bb1358cf6495e88a9357636a8869d20ceb",
+        "bytes": 11338
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/view-publication/controls.py",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "e334a0a0a5b1d95abe1f43639ae564d6686bbe1c",
+        "sha256": "97273cd30de68ee488c239b02dee8deb8e3a6a0b08f88383a8bf6be90f7c0247",
+        "bytes": 3349
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/view-publication/future-gates.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "d009b34c5e2f3b526ce8a4a01ac3255fba0fcff5",
+        "sha256": "86af233d2dab1efb3b9e66b235094dd48d5784bd8fdb6c2e8860a0ec784cf9e6",
+        "bytes": 121787
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/view-publication/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "8d2c2d161e774e54ea84f9cb489338ba20a28884",
+        "sha256": "1fc10f33301cb84fb7b4f73cf76214390f1e1e22f353b87e8d1f2cc73337ec95",
+        "bytes": 8901
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/view-publication/type-probes.py",
+      "identity": {
+        "mode": "100644",
+        "gitBlob": "e7bb38026b1933c389e443265e01d072b61b197d",
+        "sha256": "87b8fde4bc025fb87a7b2a9285ed395b089e41ea1348f35aa1fced1f1827d8ee",
+        "bytes": 2197
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/items-music/controls.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 56305,
+        "sha256": "cfd649f7174331bbfe42cf60d1872dbbfe0290d9028a05988de07f860c60beb6",
+        "gitBlob": "e535b1eb9bb4682b31aae83d7ccea08c798b7db7"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/items-music/inherited-controls.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 77774,
+        "sha256": "2bef6c9f2269f7c024e2a5b70d00cda87c9aa0b32370496c1751bcce9df71573",
+        "gitBlob": "5452768623a0e62b2a760829a0d47d68829d97ae"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/items-music/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 98002,
+        "sha256": "db65d1070371fcf991ce4f25e88cc519bc17b4011061535ec1764f2214c2f1f3",
+        "gitBlob": "8904e89a1253910ee3e025ba0ee6d162f8056027"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/items-music/unexecuted-gates.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 57636,
+        "sha256": "57a9b0e0de118aee1f3a6bb7f4317459d9af4f6fec9438cd2a70cceb9fbfb8bd",
+        "gitBlob": "2a8ef61f840f0530f62075266c161ee40beaf27e"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/items-www/controls.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 40859,
+        "sha256": "e4ac94f7fe78e5daadc484a6303324c680934d0026f84853f7ade3570361f7a6",
+        "gitBlob": "230b567c61d2cc07b70e678394d72a4cec5c3a47"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/items-www/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 43485,
+        "sha256": "d46b8711ee6f854519114918cb88a38151bf2d2ba1ff5e208e4858356fb0d71c",
+        "gitBlob": "8943fbd09bf930a84176a7bc9d6c1bcfabbe5b11"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/items-www/unexecuted-gates.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 15665,
+        "sha256": "3facf361f3f0466b334b8cc01679da972ef903a2e102a2c7b3c30de4230b1f22",
+        "gitBlob": "96fbe933450b3ac745b1ec7c4bac548a53af0c56"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/music-ad-transport/anchor-relocations.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 17916,
+        "sha256": "c48c044af5101b712a563d01a1445d3d814cec7ddf2b7ffeb6d6e624e170dac4",
+        "gitBlob": "56d97eb5ccaaa21a1ac51b7baecb9264602d0ed2"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/music-ad-transport/final-controls.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 318994,
+        "sha256": "8898ed5cf882fa7f3b8ccb5f5b4063b667c6db77e48f8930057f626cd0eeff9c",
+        "gitBlob": "2da732ebacc769f5dc839e66d9389ff35469143b"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/music-ad-transport/final-type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 455070,
+        "sha256": "e8e50157084f51b17d99d2b2c554b9e980255f85e686ba9c9b79b6e18294b5fd",
+        "gitBlob": "3528cc5259fc53678ebff30bf18c9c80cbd6fea6"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/music-ad-transport/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 74442,
+        "sha256": "607c07b70b0bc51821357494cbee8a6b84ad23e04aec5af78aca063eb59ddd98",
+        "gitBlob": "b202a7517685ce5cf788d9793ac465704c1252f8"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/music-ad-transport/unexecuted-gates.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 82620,
+        "sha256": "0149e1ac85f4c5b551240e3bb7a53b0d0ce2422b06fae0c44a9568adec4145af",
+        "gitBlob": "cfe991f264fdec8ac3708ac6f7c938f261cee6c3"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/pointer-keys/controls.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 15817,
+        "sha256": "b9a904bcc83949a7c27df599f64cbaacaaba28f62987e42558efdc71b5537ca5",
+        "gitBlob": "cbbe6bbc1468b9b4fa5ddf09e0ad5e4c7da7be3c"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/pointer-keys/type-probes.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 5155,
+        "sha256": "07752b8c040cb62cfe2b0adc3ed113d452f5188a740f128dd445e2323945f7ca",
+        "gitBlob": "f429033a912475c48680ebf554f1f92caef510c6"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/pointer-keys/unexecuted-gates.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 14145,
+        "sha256": "bf0904f445c8f907959858243908a5181a082c6713654120541879a908ec902b",
+        "gitBlob": "6bba4140bc16d64078ab9740c799d5a2b6af51ab"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/feature-switches/controls.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 6361,
+        "sha256": "d005f3615813e554cee9dc7f39c88f193aeb27c6cc482a6cf4e5ba72c36fcddb",
+        "gitBlob": "053e6dbaab42eb4419ec2e48df8ca05b357b6989"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/feature-switches/controls/wrong-gate-scope.patch",
+      "identity": {
+        "mode": "100644",
+        "bytes": 506,
+        "sha256": "093d3e169cc308ba894fbc647df161a6a32ce6248fabe54c03c7062686c88d8c",
+        "gitBlob": "69bdc97f94fb3dbd0292add893d5f2510917d78f"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/feature-switches/future-gates.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 261662,
+        "sha256": "420809fe1b60c6c2f36d17faaa0ccf9f25b6b0986c527c8e10fd824ba8488d4e",
+        "gitBlob": "7ae1b23d99eefb4c5fc0516307d3d9c864f4e994"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/feature-switches/inherited-relocation.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 645052,
+        "sha256": "7a47b47f9ac0ece2971a99e0abba6d3406b46fb75e72f0a4939e65e1c2020c56",
+        "gitBlob": "a018a191c05ba93ede573b22b85d1276a11fa141"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "identity": {
+        "mode": "100644",
+        "bytes": 10,
+        "sha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+        "gitBlob": "336ce12bb9106afdf843063ee67c0c1970f70d37"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    },
+    {
+      "path": "tools/fixtures/feature-switches/negatives.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 12214,
+        "sha256": "2282df503a219c23faf28a17755708072c1c594782ee1a69e95d06b14ef0f0e0",
+        "gitBlob": "6202c730a0027f45b3f5a2e99cac8c8ec1a97273"
+      },
+      "preserved": true,
+      "sourceAuthority": "75c34067136cbc1b88ca663ef05566ee2ce0ae88"
+    }
+  ],
+  "rewritten": false,
+  "executionCredit": "none",
+  "relocation": {
+    "from": "each original absolute source root or historical working path",
+    "to": "{qualificationSource}/ plus the unchanged manifest-relative path",
+    "rule": "resolve anchors against frozen identities; never overwrite inherited evidence"
+  }
+}

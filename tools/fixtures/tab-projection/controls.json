@@ -1,0 +1,58 @@
+{
+  "state": "authored-unexecuted",
+  "controls": [
+    {
+      "id": "lane-reentry",
+      "test": "real-owner consumer completes without queue re-entry",
+      "file": "src/background/store/tab-projection.bun-test.ts",
+      "edits": [
+        {
+          "path": "src/background/store/local-filter-writer.ts",
+          "before": "const session = await readSessionSnapshotInLane()",
+          "after": "const session = await writer.readSession()"
+        }
+      ]
+    },
+    {
+      "id": "whole-session-export",
+      "test": "exact account projection excludes foreign records and whole-session authority",
+      "file": "src/background/store/tab-projection.bun-test.ts",
+      "edits": [
+        {
+          "path": "src/background/store/local-filter-writer.ts",
+          "before": "return { kind: \"projection\", projection: current }",
+          "after": "return { kind: \"projection\", projection: Object.assign(current, { session: session.memory }) }"
+        }
+      ]
+    },
+    {
+      "id": "private-normal-skips",
+      "test": "private projection never borrows normal skips and shares only pause",
+      "file": "src/background/store/tab-projection.bun-test.ts",
+      "edits": [
+        {
+          "path": "src/background/store/tab-projection.ts",
+          "before": "request.private ? [] : (memory.skips.get(acct) ?? []",
+          "after": "memory.skips.get(acct) ?? []"
+        },
+        {
+          "path": "src/background/store/tab-projection.ts",
+          "before": "skips: request.private ? { kind: \"private-required\" } : { kind: \"normal\", entries }",
+          "after": "skips: { kind: \"normal\", entries }"
+        }
+      ]
+    },
+    {
+      "id": "newer-filter-default",
+      "test": "newer current-account filters never become default disabled filters",
+      "file": "src/background/store/tab-projection.bun-test.ts",
+      "edits": [
+        {
+          "path": "src/background/store/tab-projection.ts",
+          "before": ": doc.kind === \"newer-version\"\n              ? { kind: \"newer-version\", version: doc.version }",
+          "after": ": doc.kind === \"newer-version\" ? { kind: \"default\", filter: defaultFilter() }"
+        }
+      ]
+    }
+  ]
+}

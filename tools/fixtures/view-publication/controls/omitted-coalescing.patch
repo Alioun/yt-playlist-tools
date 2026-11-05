@@ -1,0 +1,11 @@
+--- a/src/background/tab-view/publication.ts
++++ b/src/background/tab-view/publication.ts
+@@ -5,7 +5,7 @@
+ import type { Tabs, TabViewProducer, ViewTarget } from "../tabs/ports"
+ import { matchesViewTarget, type KnownTab } from "../tabs/tabs"
+ 
+-export const VIEW_PUBLICATION_MS = 250
++export const VIEW_PUBLICATION_MS = 0
+ export type PublicationPorts = {
+   readonly owner: Pick<ReturnType<typeof createLocalFilterWriter>, "subscribeView">
+   readonly tabs: Pick<Tabs, "known" | "publish" | "subscribeLifetime">

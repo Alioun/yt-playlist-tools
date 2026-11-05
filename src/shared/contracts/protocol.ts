@@ -4,11 +4,7 @@ import type { BuildId } from "./vocabulary"
 
 export const CONTRACT_VERSION = 1
 export type MessageHeader = { v: typeof CONTRACT_VERSION; build: BuildId }
-export type HeaderCheck =
-  | { kind: "ok"; header: MessageHeader }
-  | { kind: "invalid" }
-  | { kind: "unsupported-version"; received: number }
-  | { kind: "build-mismatch"; received: BuildId }
+export type HeaderCheck = { kind: "ok"; header: MessageHeader } | { kind: "invalid" } | { kind: "unsupported-version"; received: number } | { kind: "build-mismatch"; received: BuildId }
 
 export function inspectMessageHeader(raw: unknown, expectedBuild: BuildId): HeaderCheck {
   try {

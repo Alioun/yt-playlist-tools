@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "gateway.bun-test.ts", "consumer.bun-test.ts", "run.ts", "specimens.ts",
+    "../../../src/page/adapters/live-www-jobs.ts", "../../../src/page/adapters/live-www-queue.ts",
+    "../../../src/page/adapters/www-resolver.ts", "../../../src/page/gateway/www-queue.ts", "../../../src/page/parsers/www-queue.ts"
+  ]
+}

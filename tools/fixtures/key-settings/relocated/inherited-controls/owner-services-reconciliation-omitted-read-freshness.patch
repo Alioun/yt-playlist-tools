@@ -1,0 +1,11 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -3239,7 +3239,7 @@
+       return enqueue(async () => {
+         const plan = checkSettingsFile(window, text, settingsFileUnavailable())
+         if (plan.kind !== "import-plan") return plan
+-        const current = await readSettingsFileInLane()
++        const current = await Promise.resolve<Awaited<ReturnType<SettingsFileOwner["exportSettings"]>>>({ kind: "source", source: { kind: "settings-file-source", settings: { kind: "absent" }, accounts: [] } })
+         return current.kind === "source" ? plan : current
+       })
+     },

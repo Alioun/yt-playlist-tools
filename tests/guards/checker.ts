@@ -1,28 +1,39 @@
 import { readdirSync, readFileSync } from "node:fs"
 import { posix, resolve } from "node:path"
 import { parse } from "svelte/compiler"
-import ts from "typescript"
+// TypeScript 7's package has no compiler API, so this parser uses the TypeScript 6 alias.
+import ts from "typescript6"
 
 export const rules = ["imports", "env", "page-console", "entrypoints", "storage-writes", "running-cost"] as const
-export type Rule = typeof rules[number]
+export type Rule = (typeof rules)[number]
 export type Finding = { file: string; line: number; rule: Rule; reason: string; evidence: string }
 export type Source = { file: string; text: string }
 export type Aliases = Record<string, string[]>
 
 const layers: Record<string, readonly string[]> = {
-  shared: ["shared"], page: ["shared", "page"], site: ["shared", "site"],
-  background: ["shared", "background"], ui: ["shared", "ui"],
+  shared: ["shared"],
+  page: ["shared", "page"],
+  site: ["shared", "site"],
+  background: ["shared", "background"],
+  ui: ["shared", "ui"]
 }
 const implicitWxt = new Set([
-  "browser", "storage", "defineBackground", "defineContentScript", "defineUnlistedScript",
-  "defineAppConfig", "defineWxtPlugin", "createShadowRootUi", "createIntegratedUi",
-  "createIframeUi", "injectScript",
+  "browser",
+  "storage",
+  "defineBackground",
+  "defineContentScript",
+  "defineUnlistedScript",
+  "defineAppConfig",
+  "defineWxtPlugin",
+  "createShadowRootUi",
+  "createIntegratedUi",
+  "createIframeUi",
+  "injectScript"
 ])
 const sourceExtension = /\.(?:[cm]?[jt]sx?|svelte)$/
 const testExtension = /\.(?:test|spec|bun-test)\.[cm]?[jt]sx?$/
 const inDirectory = (file: string, directory: string) => file.startsWith(`${directory}/`)
-const browserAdapter = (file: string) => inDirectory(file, "src/site/core/adapters")
-  || inDirectory(file, "src/background/adapters") || file === "src/ui/backend/browser.ts"
+const browserAdapter = (file: string) => inDirectory(file, "src/site/core/adapters") || inDirectory(file, "src/background/adapters") || file === "src/ui/backend/browser.ts"
 const storageOwner = (file: string) => inDirectory(file, "src/background/store")
 
 export function readSources(root: string): Source[] {
@@ -46,10 +57,10 @@ export function readAliases(root: string): Aliases {
   return config.config.compilerOptions?.paths ?? {}
 }
 
-function scriptText(source: Source): string {
+export function scriptText(source: Source): string {
   if (!source.file.endsWith(".svelte")) return source.text
   const component = parse(source.text, { modern: true, filename: source.file })
-  const characters = source.text.split("").map(character => /[\r\n\u2028\u2029]/.test(character) ? character : " ")
+  const characters = source.text.split("").map(character => (/[\r\n\u2028\u2029]/.test(character) ? character : " "))
   for (const script of [component.instance, component.module]) {
     if (!script) continue
     const content = script.content
@@ -83,30 +94,38 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
     try {
       text = scriptText(source)
     } catch (error) {
-      if (!(error instanceof Error) || !("position" in error) || !Array.isArray(error.position)
-        || typeof error.position[0] !== "number") throw error
-      findings.push({ file: source.file, line: source.text.slice(0, error.position[0]).split(/\r\n|[\r\n\u2028\u2029]/).length,
-        rule: "imports", reason: "syntax-error", evidence: error.message.replace(/\s+/g, " ").trim() })
+      if (!(error instanceof Error) || !("position" in error) || !Array.isArray(error.position) || typeof error.position[0] !== "number") throw error
+      findings.push({
+        file: source.file,
+        line: source.text.slice(0, error.position[0]).split(/\r\n|[\r\n\u2028\u2029]/).length,
+        rule: "imports",
+        reason: "syntax-error",
+        evidence: error.message.replace(/\s+/g, " ").trim()
+      })
       continue
     }
-    const file = ts.createSourceFile(source.file, text, ts.ScriptTarget.Latest, true,
-      source.file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
+    const programFile = source.file.endsWith(".svelte") ? `${source.file}.ts` : source.file
+    const file = ts.createSourceFile(programFile, text, ts.ScriptTarget.Latest, true, source.file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
     const host: ts.CompilerHost = {
-      getSourceFile: name => name === source.file ? file : undefined,
-      getDefaultLibFileName: () => "", writeFile: () => {}, getCurrentDirectory: () => "/",
-      getDirectories: () => [], fileExists: name => name === source.file,
-      readFile: name => name === source.file ? file.text : undefined,
-      getCanonicalFileName: name => name, useCaseSensitiveFileNames: () => true, getNewLine: () => "\n",
+      getSourceFile: name => (name === programFile ? file : undefined),
+      getDefaultLibFileName: () => "",
+      writeFile: () => {},
+      getCurrentDirectory: () => "/",
+      getDirectories: () => [],
+      fileExists: name => name === programFile,
+      readFile: name => (name === programFile ? file.text : undefined),
+      getCanonicalFileName: name => name,
+      useCaseSensitiveFileNames: () => true,
+      getNewLine: () => "\n"
     }
-    const program = ts.createProgram([source.file], { noLib: true, noResolve: true }, host)
+    const program = ts.createProgram([programFile], { noLib: true, noResolve: true }, host)
     const checker = program.getTypeChecker()
     const seen = new Set<string>()
     function report(rule: Rule, node: ts.Node, reason: string, evidence = node.getText(file), position = node.getStart(file)) {
       const key = `${rule}:${position}:${reason}`
       if (seen.has(key)) return
       seen.add(key)
-      findings.push({ file: source.file, line: file.getLineAndCharacterOfPosition(position).line + 1,
-        rule, reason, evidence: evidence.replace(/\s+/g, " ").trim() })
+      findings.push({ file: source.file, line: file.getLineAndCharacterOfPosition(position).line + 1, rule, reason, evidence: evidence.replace(/\s+/g, " ").trim() })
     }
     function literal(node: ts.Node | undefined): string | undefined {
       if (!node) return undefined
@@ -118,18 +137,19 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
       let declaration: ts.Node | undefined = node
       while (declaration && !ts.isImportDeclaration(declaration)) declaration = declaration.parent
       if (!declaration || !ts.isImportDeclaration(declaration) || !ts.isStringLiteral(declaration.moduleSpecifier)) return undefined
-      return { module: declaration.moduleSpecifier.text,
+      return {
+        module: declaration.moduleSpecifier.text,
         name: ts.isImportSpecifier(node) ? (node.propertyName ?? node.name).text : ts.isNamespaceImport(node) ? "*" : "default",
-        typeOnly: !!declaration.importClause?.isTypeOnly || (ts.isImportSpecifier(node) && node.isTypeOnly) }
+        typeOnly: !!declaration.importClause?.isTypeOnly || (ts.isImportSpecifier(node) && node.isTypeOnly)
+      }
     }
     function unwrap(node: ts.Node): ts.Node {
-      while (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isNonNullExpression(node)
-        || ts.isSatisfiesExpression(node) || ts.isTypeAssertionExpression(node)) node = node.expression
+      while (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isNonNullExpression(node) || ts.isSatisfiesExpression(node) || ts.isTypeAssertionExpression(node))
+        node = node.expression
       return node
     }
     function symbolAt(node: ts.Identifier): ts.Symbol | undefined {
-      return ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node
-        ? checker.getShorthandAssignmentValueSymbol(node.parent) : checker.getSymbolAtLocation(node)
+      return ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node ? checker.getShorthandAssignmentValueSymbol(node.parent) : checker.getSymbolAtLocation(node)
     }
     function value(node: ts.Node, visited = new Set<ts.Symbol>()): ts.Node {
       node = unwrap(node)
@@ -138,8 +158,7 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
       if (!symbol || visited.has(symbol)) return node
       visited.add(symbol)
       const declaration = symbol.valueDeclaration
-      return declaration && ts.isVariableDeclaration(declaration) && declaration.initializer
-        ? value(declaration.initializer, visited) : node
+      return declaration && ts.isVariableDeclaration(declaration) && declaration.initializer ? value(declaration.initializer, visited) : node
     }
     function member(node: ts.Node): string | undefined {
       node = value(node)
@@ -152,8 +171,8 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
         const parts: string[] = []
         let current: ts.Node = node
         while (ts.isBindingElement(current)) {
-          const name = current.propertyName ? literal(current.propertyName)
-            ?? (ts.isComputedPropertyName(current.propertyName) ? member(current.propertyName.expression) : undefined)
+          const name = current.propertyName
+            ? (literal(current.propertyName) ?? (ts.isComputedPropertyName(current.propertyName) ? member(current.propertyName.expression) : undefined))
             : literal(current.name)
           if (!name || current.dotDotDotToken || !ts.isObjectBindingPattern(current.parent)) return undefined
           parts.unshift(name)
@@ -212,8 +231,8 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
       const targets = moduleTargets(source.file, specifier, aliases)
       if (targets.length) {
         if (targets.some(target => !target.startsWith("src/") || !allowed.includes(target.split("/")[1] ?? ""))) report("imports", node, "layer-boundary", specifier)
-      } else if ((layer === "shared" || layer === "page") && !(inDirectory(source.file, "src/shared/picker")
-        && (specifier === "svelte" || specifier.startsWith("svelte/")))) report("imports", node, "external-boundary", specifier)
+      } else if ((layer === "shared" || layer === "page") && !(inDirectory(source.file, "src/shared/picker") && (specifier === "svelte" || specifier.startsWith("svelte/"))))
+        report("imports", node, "external-boundary", specifier)
       else if (specifier.startsWith("@/") || specifier.startsWith("~/") || specifier.startsWith("#")) report("imports", node, "unresolved-alias", specifier)
     }
     function runtime(node: ts.Node): boolean {
@@ -224,11 +243,14 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
     }
     function reference(node: ts.Node): boolean {
       const parent = node.parent
-      if ((ts.isPropertyAccessExpression(parent) && parent.name === node)
-        || (ts.isPropertyAssignment(parent) && parent.name === node && !ts.isComputedPropertyName(node))
-        || ((ts.isVariableDeclaration(parent) || ts.isParameter(parent) || ts.isFunctionDeclaration(parent)
-          || ts.isBindingElement(parent) || ts.isMethodDeclaration(parent)) && parent.name === node)
-        || ts.isBindingElement(parent) || ts.isLabeledStatement(parent)) return false
+      if (
+        (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
+        (ts.isPropertyAssignment(parent) && parent.name === node && !ts.isComputedPropertyName(node)) ||
+        ((ts.isVariableDeclaration(parent) || ts.isParameter(parent) || ts.isFunctionDeclaration(parent) || ts.isBindingElement(parent) || ts.isMethodDeclaration(parent)) && parent.name === node) ||
+        ts.isBindingElement(parent) ||
+        ts.isLabeledStatement(parent)
+      )
+        return false
       return true
     }
     function broadRoot(node: ts.Node): boolean {
@@ -241,31 +263,35 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
         indexed = (ts.isNumericLiteral(index) || ts.isStringLiteralLike(index)) && /^\d+$/.test(index.text)
         if (!indexed) return false
         node = value(node.expression)
-      } else if (ts.isCallExpression(node) && property(node.expression) === "item"
-        && (ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression))) {
+      } else if (ts.isCallExpression(node) && property(node.expression) === "item" && (ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression))) {
         const index = node.arguments[0] && value(node.arguments[0])
         indexed = !!index && (ts.isNumericLiteral(index) || ts.isStringLiteralLike(index)) && /^\d+$/.test(index.text)
         if (!indexed) return false
         node = value(node.expression.expression)
       }
-      const selections = indexed ? ["document.querySelectorAll", "document.getElementsByTagName"]
-        : ["document.querySelector", "document.getElementsByTagName"]
+      const selections = indexed ? ["document.querySelectorAll", "document.getElementsByTagName"] : ["document.querySelector", "document.getElementsByTagName"]
       if (!ts.isCallExpression(node) || !selections.includes(canonical(node.expression).join("."))) return false
       const selector = node.arguments[0] && member(node.arguments[0])
       return selector === "ytd-app" || selector === "ytmusic-app" || selector === "body" || selector === "html"
     }
     function subtree(node: ts.Node): boolean {
       node = value(node)
-      return ts.isObjectLiteralExpression(node) && node.properties.some(property => ts.isPropertyAssignment(property)
-        && (literal(property.name) ?? (ts.isComputedPropertyName(property.name) ? member(property.name.expression) : undefined)) === "subtree"
-        && value(property.initializer).kind === ts.SyntaxKind.TrueKeyword)
+      return (
+        ts.isObjectLiteralExpression(node) &&
+        node.properties.some(
+          property =>
+            ts.isPropertyAssignment(property) &&
+            (literal(property.name) ?? (ts.isComputedPropertyName(property.name) ? member(property.name.expression) : undefined)) === "subtree" &&
+            value(property.initializer).kind === ts.SyntaxKind.TrueKeyword
+        )
+      )
     }
     function visit(node: ts.Node) {
       if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) checkImport(node, node.moduleSpecifier.text)
-      if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference) && node.moduleReference.expression && ts.isStringLiteralLike(node.moduleReference.expression)) checkImport(node, node.moduleReference.expression.text)
+      if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference) && node.moduleReference.expression && ts.isStringLiteralLike(node.moduleReference.expression))
+        checkImport(node, node.moduleReference.expression.text)
       if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument) && ts.isStringLiteralLike(node.argument.literal)) checkImport(node, node.argument.literal.text)
-      if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword
-        || (ts.isIdentifier(node.expression) && node.expression.text === "require"))) {
+      if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword || (ts.isIdentifier(node.expression) && node.expression.text === "require"))) {
         const specifier = node.arguments[0] && member(node.arguments[0])
         if (specifier) checkImport(node, specifier)
         else report("imports", node, "nonliteral-module", node.getText(file))
@@ -278,20 +304,24 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
           const parts = canonical(node)
           const path = parts.join(".")
           const parent = node.parent
-          const extended = (ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent))
-            && parent.expression === node && canonical(parent).length > 0
+          const extended = (ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) && parent.expression === node && canonical(parent).length > 0
           if (!extended) {
             if (parts[0] === "import.meta" && parts[1] === "env") {
               if (source.file !== "src/shared/platform.ts") report("env", node, "env-outside-platform")
-              else if (parts.length !== 3 || !ts.isPropertyAccessExpression(node)
-                || !ts.isPropertyAccessExpression(node.expression) || !ts.isMetaProperty(node.expression.expression)) report("env", node, "indirect-platform-env")
+              else if (parts.length !== 3 || !ts.isPropertyAccessExpression(node) || !ts.isPropertyAccessExpression(node.expression) || !ts.isMetaProperty(node.expression.expression))
+                report("env", node, "indirect-platform-env")
             }
             if (inDirectory(source.file, "src/page") && parts[0] === "console") report("page-console", node, "page-console")
             if (parts[0] === "setInterval" || /^(?:browser|chrome)\.alarms(?:\.|$)/.test(path)) report("running-cost", node, "clock-work")
-            if (/^(?:browser|chrome)\.(?:(?:tabs|windows)\.on\w+|webNavigation(?:\.|$)|(?:menus|contextMenus)\.(?:onShown|refresh)(?:\.|$))/.test(path)) report("running-cost", node, "browser-wide-event")
-            if ((inDirectory(source.file, "src/site") || inDirectory(source.file, "src/page")) && /^(?:(?:browser|chrome)\.)?storage\.(?:(?:local|sync|session)\.)?onChanged(?:\.|$)/.test(path)) report("running-cost", node, "page-storage-listener")
-            if ((inDirectory(source.file, "src/site/features") || inDirectory(source.file, "src/site/kit"))
-              && [...parts, property(node)].some(part => part && ["addEventListener", "MutationObserver", "ResizeObserver", "IntersectionObserver", "setTimeout", "requestAnimationFrame"].includes(part))) report("running-cost", node, "unscoped-resource")
+            if (/^(?:browser|chrome)\.(?:(?:tabs|windows)\.on\w+|webNavigation(?:\.|$)|(?:menus|contextMenus)\.(?:onShown|refresh)(?:\.|$))/.test(path))
+              report("running-cost", node, "browser-wide-event")
+            if ((inDirectory(source.file, "src/site") || inDirectory(source.file, "src/page")) && /^(?:(?:browser|chrome)\.)?storage\.(?:(?:local|sync|session)\.)?onChanged(?:\.|$)/.test(path))
+              report("running-cost", node, "page-storage-listener")
+            if (
+              (inDirectory(source.file, "src/site/features") || inDirectory(source.file, "src/site/kit")) &&
+              [...parts, property(node)].some(part => part && ["addEventListener", "MutationObserver", "ResizeObserver", "IntersectionObserver", "setTimeout", "requestAnimationFrame"].includes(part))
+            )
+              report("running-cost", node, "unscoped-resource")
           }
           if (ts.isIdentifier(node) && implicitWxt.has(node.text)) {
             const symbol = symbolAt(node)
@@ -305,8 +335,8 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
         if (ts.isCallExpression(node)) {
           const path = canonical(node.expression).join(".")
           if (!storageOwner(source.file) && /^(?:(?:browser|chrome)\.)?storage\.(?:local|sync|session)\.(?:set|remove|clear)$/.test(path)) report("storage-writes", node, "storage-write")
-          if ((path.endsWith(".observe") || property(node.expression) === "observe") && node.arguments[0] && node.arguments[1]
-            && broadRoot(node.arguments[0]) && subtree(node.arguments[1])) report("running-cost", node, "broad-subtree-observer")
+          if ((path.endsWith(".observe") || property(node.expression) === "observe") && node.arguments[0] && node.arguments[1] && broadRoot(node.arguments[0]) && subtree(node.arguments[1]))
+            report("running-cost", node, "broad-subtree-observer")
         }
       }
       ts.forEachChild(node, visit)
@@ -331,9 +361,13 @@ export function inventoryChanges(actual: Finding[], frozen: Finding[]): string[]
   const remaining = [...frozen]
   const changes: string[] = []
   for (const finding of actual) {
-    const index = remaining.findIndex(item => item.file === finding.file && item.rule === finding.rule
-      && item.reason === finding.reason && (item.reason === "entrypoint-lines"
-        ? Number(finding.evidence) <= Number(item.evidence) : item.evidence === finding.evidence))
+    const index = remaining.findIndex(
+      item =>
+        item.file === finding.file &&
+        item.rule === finding.rule &&
+        item.reason === finding.reason &&
+        (item.reason === "entrypoint-lines" ? Number(finding.evidence) <= Number(item.evidence) : item.evidence === finding.evidence)
+    )
     if (index < 0) changes.push(`New violation: ${formatFinding(finding)}`)
     else remaining.splice(index, 1)
   }

@@ -1,0 +1,58 @@
+--- a/src/background/router/ui-playlists/index.ts
++++ b/src/background/router/ui-playlists/index.ts
+@@ -13,10 +13,10 @@
+ import type { Creation, Playlists, ListOpen } from "../../playlists/playlists"
+ import type { Tabs } from "../../tabs/ports"
+ import type { createLocalFilterWriter } from "../../store/local-filter-writer"
+-import { createFirstRunReceiver, type FirstRunReceiverPorts } from "../first-run"
++import { createFirstRunReceiver, type FirstRunReceiverPorts, type FirstRunCanonicalOwner } from "../first-run"
+ import { listing, listRefresh, creationAnswer, jobOutcome, cacheStatus } from "./wire"
+ 
+-type Owner = Pick<ReturnType<typeof createLocalFilterWriter>, "readAgreement" | "agree" | "changeSetupDestination" | "readTabProjection" | "readSession">
++type Owner = FirstRunCanonicalOwner & Pick<ReturnType<typeof createLocalFilterWriter>, "readTabProjection" | "readSession">
+ type Services = { readonly kind: "ready"; readonly tabs: Tabs; readonly playlists: Playlists } | { readonly kind: "unavailable" }
+ export type UiRouterPorts = {
+   readonly native: UiRequesterPorts
+--- a/tools/fixtures/starting-owner/run.ts
++++ b/tools/fixtures/starting-owner/run.ts
+@@ -2,7 +2,7 @@
+ import { nativeFirstRunAccess } from "../../../src/background/adapters/first-run"
+ import type { NativeSender } from "../../../src/background/adapters/sender-origin"
+ import { createFirstRunReceiver } from "../../../src/background/router/first-run"
+-import { firstRunContract, type UiMessages } from "../../../src/shared/contracts/first-run"
++import { firstRunContract, type FirstRunMessages } from "../../../src/shared/contracts/first-run"
+ import { isBuildId } from "../../../src/shared/contracts/vocabulary"
+ import { isAccountKey } from "../../../src/shared/model"
+ import { createMemoryNetwork } from "../../../src/shared/rpc/memory"
+@@ -20,8 +20,8 @@
+   const deadline: Deadline = (_milliseconds, expire) => { deadlines.add(expire); return () => { deadlines.delete(expire) } }
+   const network = createMemoryNetwork<NativeSender>({ delivery: "immediate" })
+   const rpcOptions = { build, contract: firstRunContract, deadline }
+-  const background = createRpc<UiMessages, NativeSender>(network.connect({}), rpcOptions)
+-  const ui = createRpc<UiMessages, NativeSender>(network.connect(sender), rpcOptions)
++  const background = createRpc<FirstRunMessages, NativeSender>(network.connect({}), rpcOptions)
++  const ui = createRpc<FirstRunMessages, NativeSender>(network.connect(sender), rpcOptions)
+   const receiver = createFirstRunReceiver({
+     owner,
+     sender: { runtime: { id: "starting-extension", getURL: path => `chrome-extension://starting-extension${path}` },
+--- a/src/background/router/first-run.bun-test.ts
++++ b/src/background/router/first-run.bun-test.ts
+@@ -1,3 +1,4 @@
++import { objectShape } from "../../shared/contracts/object-shape"
+ import { expect, test } from "bun:test"
+ import { createFirstRunHarness, onboardingSender, check, turns, gate, buildId } from "../../../tools/fixtures/first-run-backend/harness"
+ import { runFirstRunBackendConsumer } from "../../../tools/fixtures/first-run-backend/run"
+@@ -76,7 +77,12 @@
+     const expected = kind === "agreed"
+       ? { kind: "agreed", attempt: 1, applications: [{ feature: "quick-save", state: "enabled" }] }
+       : { kind: "not-agreed", attempt: 1, reason }
+-    expect(h.answerBytes).toEqual([JSON.stringify({ v: 1, build: buildId(), id: "1", kind: "ui.change", result: { kind: "agreement", outcome: expected } })])
++    const request: unknown = JSON.parse(h.requestBytes[0] ?? "null")
++    check(objectShape(request, { v: v => v === 1, build: v => v === buildId(),
++      id: v => typeof v === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}:1$/.test(v),
++      kind: v => v === "ui.change", payload: () => true }), "namespaced first request identity")
++    expect(request).toEqual({ v: 1, build: buildId(), id: request.id, kind: "ui.change", payload: { change: selected } })
++    expect(h.answerBytes).toEqual([JSON.stringify({ v: 1, build: buildId(), id: request.id, kind: "ui.change", result: { kind: "agreement", outcome: expected } })])
+     expect(h.answerBytes.join("")).not.toMatch(/SENTINEL|stack|nested|mutations|agreement-review|fixture-device/)
+   } finally { await h.dispose() }
+ })

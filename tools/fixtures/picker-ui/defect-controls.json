@@ -1,0 +1,41 @@
+{
+  "status": "proposed-unexecuted",
+  "requiredSequence": ["verify exact baseline bytes and modes", "apply only the named type-correct mutation in the runtime executor's isolated source", "pass native and Svelte positive compilation", "run the named behavioral test and require its intended assertion failure", "restore exact bytes and modes", "rehash the restored baseline"],
+  "controls": [
+    {
+      "name": "optimistic-check-display",
+      "path": "src/ui/picker/PickerPanel.svelte",
+      "mutation": "Replace check={heldChecks.get(row.id) ?? row.check} with check={row.check}.",
+      "test": "pending removal stays checked, then a failed removal stays checked with its failure",
+      "intendedFailure": "The pending row must remain aria-checked=true before the actual remove answer."
+    },
+    {
+      "name": "uncontained-Escape",
+      "paths": ["src/ui/picker/PickerPanel.svelte", "src/ui/picker/PlaylistChooser.svelte"],
+      "mutation": "Remove stopPropagation from the panel keydown listener and from onEscapeKeydown. Keep preventDefault and the same typed close request.",
+      "test": "Escape is contained and requests closure without turning a model answer into closure",
+      "intendedFailure": "The outer keydown listener receives Escape."
+    },
+    {
+      "name": "duplicate-activation",
+      "path": "src/ui/picker/PlaylistRow.svelte",
+      "mutation": "Remove the event.repeat early return for Space and Enter, keeping the same function signature and actual model.",
+      "test": "ArrowDown, Home, End, arrows, Space and Enter activate only their intended row",
+      "intendedFailure": "A repeated Enter after the first confirmed many-mode choice issues an unwanted untick."
+    },
+    {
+      "name": "ignored-creation-refusal",
+      "path": "src/ui/picker/NewPlaylist.svelte",
+      "mutation": "Return null for a refused create outcome and include answer.kind === 'refused' in the condition that collapses the creation form.",
+      "test": "creation followed by a refused selection keeps the refusal visible and does not close the picker",
+      "intendedFailure": "The actual refusal and the inline form disappear."
+    },
+    {
+      "name": "shared-closed-model",
+      "path": "src/ui/picker/PlaylistChooser.svelte",
+      "mutation": "Move the existing PickerModel import into a module script. Add a module-level PickerModel | null cache and a typed factory taking ConstructorParameters<typeof PickerModel>[0]. Return cache ??= new PickerModel(options), and replace only the instance's new PickerModel call with that factory. This remains type-correct but shares one model across containers and opens.",
+      "tests": ["chooser is controlled, shows the supplied title, and uses independent models for independent opens", "two chooser containers release and mutate only their own model"],
+      "intendedFailure": "A closed first model is reused or a second container sends its choice through the first source."
+    }
+  ]
+}

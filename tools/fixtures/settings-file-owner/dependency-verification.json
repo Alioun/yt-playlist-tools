@@ -1,0 +1,27 @@
+{
+  "state": "static-identities-verified-no-execution",
+  "dependencies": {
+    "algorithm": "sha256 of sorted mode-NUL-path-NUL-bytes-NUL-sha256-LF records",
+    "sha256": "de76ea5f616724774b17d7cb70bb380b17bd328fa1f904a9d6bc2108a2a45dd4",
+    "entries": 35744,
+    "bytes": 364569828,
+    "environmentPathsSkippedUnopened": []
+  },
+  "generatedTypes": {
+    "algorithm": "sha256 of sorted mode-NUL-path-NUL-bytes-NUL-sha256-LF records",
+    "sha256": "4ea95466c05ef838d191ab538e9d55efd3d64f77fd4066d0fcf4acfc38ba1975",
+    "entries": 6,
+    "bytes": 6470,
+    "environmentPathsSkippedUnopened": []
+  },
+  "executablesVerified": [
+    "bun",
+    "nativeTypeScript",
+    "node",
+    "patch",
+    "python",
+    "timeout"
+  ],
+  "environmentBytesRead": false,
+  "copiedDependencies": false
+}

@@ -1,0 +1,172 @@
+{
+ "note": "Original inherited patches are unchanged. Relocated patches carry the same mutation onto the reconciled source by diff3 from the frozen input. Static dry-run only; no compile or named-red credit.",
+ "entries": [
+  {
+   "patch": "tools/fixtures/feature-switches/controls/private-blanket-rejection.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 1112,
+    "sha256": "ecfb206a6e49042aa11927ac6ff4e6c36d9d25d82b012a77060712835973de0a",
+    "gitBlob": "3e57850b010d168a65ba3a612f43c1579f5fcc2e"
+   },
+   "targets": {},
+   "inputApply": {
+    "command": [
+     "timeout",
+     "-k",
+     "10",
+     "60",
+     "/usr/bin/patch",
+     "-p1",
+     "-F",
+     "0",
+     "-t",
+     "-i",
+     "tools/fixtures/feature-switches/controls/private-blanket-rejection.patch"
+    ],
+    "returncode": 1,
+    "stdout": "patching file 'src/background/router/ui-playlists/index.ts'\n1 out of 1 hunks failed--saving rejects to 'src/background/router/ui-playlists/index.ts.rej'",
+    "stderr": ""
+   },
+   "state": "held: does not apply to the frozen input either; no relocation credit"
+  },
+  {
+   "patch": "tools/fixtures/key-settings/relocated/feature-controls/private-blanket-rejection.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 1189,
+    "sha256": "1587d2e42116ae2a9c2a856b1b16b09479f8919e02e135a3ea825e500653d571",
+    "gitBlob": "5b864a3fad995fac6c6c6b04988e13c43d82a437"
+   },
+   "targets": {
+    "src/background/router/ui-playlists/index.ts": {
+     "state": "relocated",
+     "finalTarget": {
+      "bytes": 24310,
+      "sha256": "ed488fb73afa370511fb477f2e7170a678e9c3739e9d6d8b1c0c94e1a50994f9",
+      "gitBlob": "d100c08068a6a80f76497f6f25dd824607851325"
+     },
+     "inputTarget": {
+      "bytes": 23341,
+      "sha256": "5dfa0cc28f1760d7f8d21e3b6bfcc93bb7d6ebc6194b9a019b2a54f64724c051",
+      "gitBlob": "994c7b50aa4e69584b5aa58a0ec0aa1e27e4418d"
+     }
+    }
+   },
+   "inputApply": {
+    "command": [
+     "timeout",
+     "-k",
+     "10",
+     "60",
+     "/usr/bin/patch",
+     "-p1",
+     "-F",
+     "0",
+     "-t",
+     "-i",
+     "tools/fixtures/key-settings/relocated/feature-controls/private-blanket-rejection.patch"
+    ],
+    "returncode": 0,
+    "stdout": "patching file 'src/background/router/ui-playlists/index.ts'",
+    "stderr": ""
+   },
+   "relocatedPatch": "tools/fixtures/owner-key-clear-reconciliation/relocated-controls/tools__fixtures__key-settings__relocated__feature-controls__private-blanket-rejection.patch",
+   "relocatedIdentity": {
+    "bytes": 1150,
+    "sha256": "78d489c1b5edf64f74a05d3186552de8c5b5a2172bca498b4da6e9a66ed9c431",
+    "gitBlob": "79baa5e51116b624e8d1805e31769aafe2d0bba8"
+   },
+   "relocatedDryRun": {
+    "command": [
+     "timeout",
+     "-k",
+     "10",
+     "60",
+     "/usr/bin/patch",
+     "--dry-run",
+     "-p1",
+     "-F",
+     "0",
+     "-t",
+     "-i",
+     "tools/fixtures/owner-key-clear-reconciliation/relocated-controls/tools__fixtures__key-settings__relocated__feature-controls__private-blanket-rejection.patch"
+    ],
+    "returncode": 0,
+    "stdout": "patching file 'src/background/router/ui-playlists/index.ts'",
+    "stderr": ""
+   },
+   "state": "relocated-static-only"
+  },
+  {
+   "patch": "tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 560,
+    "sha256": "6bfc7eef1d717fe4db76d13299c1f673e2713d66929c55021e8424841b312314",
+    "gitBlob": "9cb65c840963493f8f768e1f68760fbbcae08a16"
+   },
+   "targets": {},
+   "inputApply": {
+    "command": [
+     "timeout",
+     "-k",
+     "10",
+     "60",
+     "/usr/bin/patch",
+     "-p1",
+     "-F",
+     "0",
+     "-t",
+     "-i",
+     "tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch"
+    ],
+    "returncode": 1,
+    "stdout": "patching file 'src/background/adapters/starting-owner.ts'\n1 out of 1 hunks failed--saving rejects to 'src/background/adapters/starting-owner.ts.rej'",
+    "stderr": ""
+   },
+   "state": "relocated-static-only",
+   "relocatedPatch": "tools/fixtures/owner-key-clear-reconciliation/relocated-controls/tools__fixtures__settings-import-execution__controls__missing-native-forwarding.patch",
+   "relocatedIdentity": {
+    "bytes": 645,
+    "sha256": "7ae2266b00e94914483c5646a46d9f2742974aa15611d9166981613c251cb004",
+    "gitBlob": "096b2c9d11b11073354a90d5b1f4552d1eb87765"
+   },
+   "anchorLine": 111,
+   "method": "exact single-line mutation carried onto the reconciled source; original removed and added lines unchanged",
+   "relocatedDryRun": {
+    "returncode": 0,
+    "stdout": "patching file 'src/background/adapters/starting-owner.ts'"
+   }
+  },
+  {
+   "patch": "tools/fixtures/ui-owner-reconciliation/protected-repairs.patch",
+   "patchIdentity": {
+    "mode": "100644",
+    "bytes": 4309,
+    "sha256": "790e08c3a3b246b886dc320c4fff910cc10d146c0ad767de05b9c34dc6c96766",
+    "gitBlob": "bc647b0611fa26903148509fd0651ba6f0db39cc"
+   },
+   "targets": {},
+   "inputApply": {
+    "command": [
+     "timeout",
+     "-k",
+     "10",
+     "60",
+     "/usr/bin/patch",
+     "-p1",
+     "-F",
+     "0",
+     "-t",
+     "-i",
+     "tools/fixtures/ui-owner-reconciliation/protected-repairs.patch"
+    ],
+    "returncode": 1,
+    "stdout": "patching file 'src/background/router/ui-playlists/index.ts'\n1 out of 1 hunks failed--saving rejects to 'src/background/router/ui-playlists/index.ts.rej'\npatching file 'tools/fixtures/starting-owner/run.ts'\npatching file 'src/background/router/first-run.bun-test.ts'\n1 out of 2 hunks failed--saving rejects to 'src/background/router/first-run.bun-test.ts.rej'",
+    "stderr": ""
+   },
+   "state": "held: does not apply to the frozen input either; no relocation credit"
+  }
+ ]
+}

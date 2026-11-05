@@ -4,14 +4,8 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import type { AccountKey, Device, PlaylistId, VideoId } from "../model"
 import { isAccountKey, isPlaylistId, isVideoId } from "../model"
-import {
-  CONTRACT_VERSION, inspectMessageHeader, isBreakageKind, isBuildId, isChangeResult,
-  isFeatureId, isJobFailure, isJobId, isJsonValue, isPrivacy, isSite, isStream, parseJsonText
-} from "./index"
-import type {
-  BreakageKind, BuildId, ChangeResult, FeatureId, JobFailure, JobFailureReason,
-  JobId, JsonValue, Origin, Privacy, Site, Stream
-} from "./index"
+import { CONTRACT_VERSION, inspectMessageHeader, isBreakageKind, isBuildId, isChangeResult, isFeatureId, isJobFailure, isJobId, isJsonValue, isPrivacy, isSite, isStream, parseJsonText } from "./index"
+import type { BreakageKind, BuildId, ChangeResult, FeatureId, JobFailure, JobFailureReason, JobId, JsonValue, Origin, Privacy, Site, Stream } from "./index"
 
 function build(value: string): BuildId {
   if (!isBuildId(value)) throw new Error("Invalid synthetic build")
@@ -22,27 +16,76 @@ const currentBuild = build("synthetic build / local")
 const otherBuild = build("synthetic-other")
 const sites = ["www", "music"] satisfies Site[]
 const features = [
-  "auto-add", "shortcuts", "quick-save", "queue-button", "watch-button", "card-menu",
-  "browser-menu", "music-actions", "music-keys", "any-tab-keys", "gather", "sync"
+  "auto-add",
+  "shortcuts",
+  "quick-save",
+  "queue-button",
+  "watch-button",
+  "card-menu",
+  "browser-menu",
+  "music-actions",
+  "music-keys",
+  "any-tab-keys",
+  "gather",
+  "sync"
 ] satisfies FeatureId[]
 const jobs = [
-  "account", "accountLabel", "membership", "playlists", "add", "remove", "addBatch",
-  "removeBatch", "save", "unsave", "create", "channelOf", "resolveChannel", "videoInfo",
-  "queueAdd", "queueUndo", "queueAddList", "openCardMenu", "itemInfo", "queueInsert",
-  "queueRemove", "queueRemoveIds", "queueMove", "queueReinsert", "like", "library",
-  "navigate", "nowPlaying", "castState"
+  "account",
+  "accountLabel",
+  "membership",
+  "playlists",
+  "add",
+  "remove",
+  "addBatch",
+  "removeBatch",
+  "save",
+  "unsave",
+  "create",
+  "channelOf",
+  "resolveChannel",
+  "videoInfo",
+  "queueAdd",
+  "queueUndo",
+  "queueAddList",
+  "openCardMenu",
+  "itemInfo",
+  "queueInsert",
+  "queueRemove",
+  "queueRemoveIds",
+  "queueMove",
+  "queueReinsert",
+  "like",
+  "library",
+  "navigate",
+  "nowPlaying",
+  "castState"
 ] satisfies JobId[]
 const streams = ["player", "nav", "nowPlaying", "queue"] satisfies Stream[]
 const breakageKinds = [
-  "missing", "threw", "timeout", "rejected", "unrecognised", "no-effect", "anchor-missing",
-  "item-unrecognised", "cosmetic", "cannot-measure", "fell-back", "quiet-route-noisy", "resolver-ambiguous"
+  "missing",
+  "threw",
+  "timeout",
+  "rejected",
+  "unrecognised",
+  "no-effect",
+  "anchor-missing",
+  "item-unrecognised",
+  "cosmetic",
+  "cannot-measure",
+  "fell-back",
+  "quiet-route-noisy",
+  "resolver-ambiguous"
 ] satisfies BreakageKind[]
 const privacy = ["PRIVATE", "UNLISTED", "PUBLIC"] satisfies Privacy[]
 
 describe("C0 vocabulary", () => {
   for (const [name, predicate, values] of [
-    ["Site", isSite, sites], ["FeatureId", isFeatureId, features], ["JobId", isJobId, jobs],
-    ["Stream", isStream, streams], ["BreakageKind", isBreakageKind, breakageKinds], ["Privacy", isPrivacy, privacy]
+    ["Site", isSite, sites],
+    ["FeatureId", isFeatureId, features],
+    ["JobId", isJobId, jobs],
+    ["Stream", isStream, streams],
+    ["BreakageKind", isBreakageKind, breakageKinds],
+    ["Privacy", isPrivacy, privacy]
   ] satisfies [string, (value: unknown) => boolean, string[]][]) {
     test(`${name} accepts its complete prescribed catalogue`, () => {
       for (const value of values) expect(predicate(value)).toBe(true)
@@ -100,15 +143,39 @@ describe("strict JSON data boundary", () => {
       expect(parseJsonText(text)).toEqual({ ok: false })
     }
     let coercions = 0
-    expect(parseJsonText({ toString() { coercions++; return "{}" } })).toEqual({ ok: false })
+    expect(
+      parseJsonText({
+        toString() {
+          coercions++
+          return "{}"
+        }
+      })
+    ).toEqual({ ok: false })
     expect(coercions).toBe(0)
   })
 
   test("rejects non-JSON values at the root and nested in arrays or objects", () => {
-    class Instance { value = 1 }
+    class Instance {
+      value = 1
+    }
     class ArrayInstance extends Array {}
-    for (const value of [undefined, 1n, () => null, Symbol("synthetic"), NaN, Infinity, -Infinity,
-      new Date(0), new Map(), new Set(), new Instance(), new ArrayInstance(), new Number(1), new Uint8Array([1]), /synthetic/]) {
+    for (const value of [
+      undefined,
+      1n,
+      () => null,
+      Symbol("synthetic"),
+      NaN,
+      Infinity,
+      -Infinity,
+      new Date(0),
+      new Map(),
+      new Set(),
+      new Instance(),
+      new ArrayInstance(),
+      new Number(1),
+      new Uint8Array([1]),
+      /synthetic/
+    ]) {
       expect(isJsonValue(value)).toBe(false)
       expect(isJsonValue({ nested: value })).toBe(false)
       expect(isJsonValue([value])).toBe(false)
@@ -116,9 +183,15 @@ describe("strict JSON data boundary", () => {
   })
 
   test("rejects sparse arrays and properties that serialization would discard", () => {
-    for (const value of [Array(1), [1, , 3], Object.assign([1], { extra: 2 }),
-      Object.assign({}, { [Symbol("synthetic")]: 1 }), Object.assign([], { [Symbol("synthetic")]: 1 }),
-      Object.defineProperty({}, "hidden", { value: 1 }), Object.defineProperty([1], "0", { value: 1, enumerable: false })]) {
+    for (const value of [
+      Array(1),
+      [1, , 3],
+      Object.assign([1], { extra: 2 }),
+      Object.assign({}, { [Symbol("synthetic")]: 1 }),
+      Object.assign([], { [Symbol("synthetic")]: 1 }),
+      Object.defineProperty({}, "hidden", { value: 1 }),
+      Object.defineProperty([1], "0", { value: 1, enumerable: false })
+    ]) {
       expect(isJsonValue(value)).toBe(false)
     }
   })
@@ -141,15 +214,28 @@ describe("strict JSON data boundary", () => {
 
   test("never invokes accessors or toJSON", () => {
     let calls = 0
-    const getter = () => { calls++; throw new Error("Accessor executed") }
+    const getter = () => {
+      calls++
+      throw new Error("Accessor executed")
+    }
     for (const value of [
       Object.defineProperty({}, "field", { get: getter, enumerable: true }),
       Object.defineProperty({}, "hidden", { get: getter }),
       Object.defineProperty([1], "0", { get: getter, enumerable: true }),
       Object.defineProperty({}, "toJSON", { get: getter, enumerable: true }),
-      { toJSON() { calls++; return {} } },
-      Object.create({ get inherited() { return getter() } })
-    ]) expect(isJsonValue(value)).toBe(false)
+      {
+        toJSON() {
+          calls++
+          return {}
+        }
+      },
+      Object.create({
+        get inherited() {
+          return getter()
+        }
+      })
+    ])
+      expect(isJsonValue(value)).toBe(false)
     expect(calls).toBe(0)
   })
 
@@ -166,7 +252,14 @@ describe("strict JSON data boundary", () => {
   test("throwing reflection and revoked proxies return invalid without throwing", () => {
     const revoked = Proxy.revocable({}, {})
     revoked.revoke()
-    const throwing = new Proxy({}, { getPrototypeOf() { throw new Error("Synthetic reflection failure") } })
+    const throwing = new Proxy(
+      {},
+      {
+        getPrototypeOf() {
+          throw new Error("Synthetic reflection failure")
+        }
+      }
+    )
     for (const value of [revoked.proxy, throwing]) {
       expect(isJsonValue(value)).toBe(false)
       expect(isJobFailure(value)).toBe(false)
@@ -191,11 +284,26 @@ describe("exact result branches", () => {
 
   test("rejects malformed, mixed and extended gateway failure results", () => {
     const failure = { ok: false, reason: "failed" }
-    for (const value of [null, [], {}, { ok: false }, { reason: "failed" }, { ok: true, reason: "failed" },
-      { ...failure, reason: "timeout" }, { ...failure, reason: "noTab" }, { ...failure, reason: "constructor" },
-      { ...failure, reason: null }, { ...failure, reason: 1 }, { ...failure, status: 1 }, { ...failure, status: undefined },
-      { ...failure, data: null }, { ...failure, route: "synthetic" }, { ...failure, refused: "private" },
-      { ...failure, extra: true }, ...[99, 600, 200.5, NaN, Infinity, "200", null, undefined].map(http => ({ ...failure, http }))]) {
+    for (const value of [
+      null,
+      [],
+      {},
+      { ok: false },
+      { reason: "failed" },
+      { ok: true, reason: "failed" },
+      { ...failure, reason: "timeout" },
+      { ...failure, reason: "noTab" },
+      { ...failure, reason: "constructor" },
+      { ...failure, reason: null },
+      { ...failure, reason: 1 },
+      { ...failure, status: 1 },
+      { ...failure, status: undefined },
+      { ...failure, data: null },
+      { ...failure, route: "synthetic" },
+      { ...failure, refused: "private" },
+      { ...failure, extra: true },
+      ...[99, 600, 200.5, NaN, Infinity, "200", null, undefined].map(http => ({ ...failure, http }))
+    ]) {
       expect(isJobFailure(value)).toBe(false)
     }
     expect(isJobFailure(Object.create(failure))).toBe(false)
@@ -207,20 +315,59 @@ describe("exact result branches", () => {
       expect(isChangeResult(result)).toBe(true)
       expect(isChangeResult(JSON.parse(JSON.stringify(result)))).toBe(true)
     }
-    for (const value of [null, [], {}, { ok: false }, { ok: 1 }, { ok: "true" }, { refused: "unknown" },
-      { refused: "constructor" }, { refused: null }, { refused: 1 }, { refused: undefined },
-      { ok: true, refused: "private" }, { ok: false, refused: "private" }, { ok: true, data: null },
-      { refused: "invalid", reason: "failed" }, { ok: true, extra: undefined }]) expect(isChangeResult(value)).toBe(false)
+    for (const value of [
+      null,
+      [],
+      {},
+      { ok: false },
+      { ok: 1 },
+      { ok: "true" },
+      { refused: "unknown" },
+      { refused: "constructor" },
+      { refused: null },
+      { refused: 1 },
+      { refused: undefined },
+      { ok: true, refused: "private" },
+      { ok: false, refused: "private" },
+      { ok: true, data: null },
+      { refused: "invalid", reason: "failed" },
+      { ok: true, extra: undefined }
+    ])
+      expect(isChangeResult(value)).toBe(false)
     expect(isChangeResult(Object.create({ ok: true }))).toBe(false)
   })
 
   test("result guards reject accessors without executing them", () => {
     let calls = 0
     for (const value of [
-      { get ok() { calls++; return false }, reason: "failed" },
-      { ok: false, get reason() { calls++; return "failed" } },
-      { ok: false, reason: "failed", get status() { calls++; return "synthetic" } },
-      { get refused() { calls++; return "private" } }
+      {
+        get ok() {
+          calls++
+          return false
+        },
+        reason: "failed"
+      },
+      {
+        ok: false,
+        get reason() {
+          calls++
+          return "failed"
+        }
+      },
+      {
+        ok: false,
+        reason: "failed",
+        get status() {
+          calls++
+          return "synthetic"
+        }
+      },
+      {
+        get refused() {
+          calls++
+          return "private"
+        }
+      }
     ]) {
       expect(isJobFailure(value)).toBe(false)
       expect(isChangeResult(value)).toBe(false)
@@ -229,10 +376,7 @@ describe("exact result branches", () => {
   })
 
   test("origin retains only the prescribed trusted metadata shapes", () => {
-    const origins: Origin[] = [
-      { kind: "tab", tabId: 1, incognito: true }, { kind: "ui", windowId: 2, incognito: false },
-      { kind: "background" }, { kind: "sync" }
-    ]
+    const origins: Origin[] = [{ kind: "tab", tabId: 1, incognito: true }, { kind: "ui", windowId: 2, incognito: false }, { kind: "background" }, { kind: "sync" }]
     expect(origins.map(origin => origin.kind)).toEqual(["tab", "ui", "background", "sync"])
   })
 })
@@ -259,12 +403,23 @@ describe("header compatibility without payload acceptance", () => {
   })
 
   test("requires own correctly typed fields on a JSON object", () => {
-    for (const raw of [null, undefined, 1, "{}", [], {}, { v: 1 }, { build: currentBuild },
+    for (const raw of [
+      null,
+      undefined,
+      1,
+      "{}",
+      [],
+      {},
+      { v: 1 },
+      { build: currentBuild },
       ...[0, -1, 1.5, "1", true, null, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1].map(v => ({ v, build: currentBuild })),
       ...["", undefined, null, 1, true, {}].map(build => ({ v: 1, build })),
-      { v: 1, build: currentBuild, payload: () => null }, { v: 1, build: currentBuild, payload: Array(1) },
-      Object.create({ v: 1, build: currentBuild }), Object.assign(Object.create({ v: 1 }), { build: currentBuild }),
-      Object.assign(Object.create({ build: currentBuild }), { v: 1 })]) {
+      { v: 1, build: currentBuild, payload: () => null },
+      { v: 1, build: currentBuild, payload: Array(1) },
+      Object.create({ v: 1, build: currentBuild }),
+      Object.assign(Object.create({ v: 1 }), { build: currentBuild }),
+      Object.assign(Object.create({ build: currentBuild }), { v: 1 })
+    ]) {
       expect(inspectMessageHeader(raw, currentBuild)).toEqual({ kind: "invalid" })
     }
   })
@@ -272,10 +427,30 @@ describe("header compatibility without payload acceptance", () => {
   test("does not invoke header or payload accessors", () => {
     let calls = 0
     for (const raw of [
-      { get v() { calls++; return 1 }, build: currentBuild },
-      { v: 1, get build() { calls++; return currentBuild } },
-      { v: 1, build: currentBuild, get payload() { calls++; return {} } }
-    ]) expect(inspectMessageHeader(raw, currentBuild)).toEqual({ kind: "invalid" })
+      {
+        get v() {
+          calls++
+          return 1
+        },
+        build: currentBuild
+      },
+      {
+        v: 1,
+        get build() {
+          calls++
+          return currentBuild
+        }
+      },
+      {
+        v: 1,
+        build: currentBuild,
+        get payload() {
+          calls++
+          return {}
+        }
+      }
+    ])
+      expect(inspectMessageHeader(raw, currentBuild)).toEqual({ kind: "invalid" })
     expect(calls).toBe(0)
   })
 
@@ -294,7 +469,12 @@ test("headless imports and boundary checks have no runtime side effects", () => 
   try {
     writeFileSync(config, "[test]\npreload = []\n")
     const result = Bun.spawnSync({
-      cmd: [process.execPath, "--no-env-file", `--config=${config}`, "--eval", `
+      cmd: [
+        process.execPath,
+        "--no-env-file",
+        `--config=${config}`,
+        "--eval",
+        `
         const effects = []
         function forbid(name) {
           return () => { effects.push(name); throw new Error("Unexpected effect " + name) }
@@ -326,8 +506,11 @@ test("headless imports and boundary checks have no runtime side effects", () => 
           !contracts.isStream("queue") || !contracts.isPrivacy("PRIVATE") || !contracts.isBreakageKind("missing")) throw new Error("Invalid vocabulary")
         if (effects.length !== 0) throw new Error("Side effects observed")
         process.stdout.write("pure contract operations passed\\n")
-      `],
-      cwd: import.meta.dir, stdout: "pipe", stderr: "pipe"
+      `
+      ],
+      cwd: import.meta.dir,
+      stdout: "pipe",
+      stderr: "pipe"
     })
     expect(result.exitCode).toBe(0)
     expect(result.stderr.toString()).toBe("")

@@ -1,0 +1,9 @@
+--- a/src/background/store/settings-edit.ts
++++ b/src/background/store/settings-edit.ts
+@@ -232,5 +232,6 @@
+       return { kind: "invalid", reason: "invalid-option" }
+     }
+   }
++  settings.musicActions.on = true
+   return { kind: "changed", settings: normalizeSettingsForWrite(settings) }
+ }

@@ -1,0 +1,12 @@
+diff --git a/src/site/core/notice/host.ts b/src/site/core/notice/host.ts
+--- a/src/site/core/notice/host.ts
++++ b/src/site/core/notice/host.ts
+@@ -24,7 +24,7 @@
+   host.dataset.site = site
+   const style = document.createElement("style"); style.textContent = toastSkin; shadow.prepend(style)
+   const root = document.createElement("div"); parentElement.append(root)
+-  scope.add(() => host.remove())
++  scope.add(() => {})
+   for (const type of ["click", "dblclick", "pointerdown", "pointerup", "mousedown", "mouseup", "contextmenu", "keydown", "keyup"]) {
+     scope.on<EventTarget, string>(host, type, event => event.stopPropagation())
+   }

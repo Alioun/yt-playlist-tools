@@ -1,0 +1,49 @@
+{
+  "path": "tools/fixtures/owner-services-reconciliation/future-bin",
+  "entries": {
+    "bun": {
+      "sha256": "a45ef1d305e14022e4ae64cbc9763bf5411e2e2eaa200b532eb95ba278f64d8a",
+      "gitBlob": "7b8ace2512654801416a08100d75ba8863d1741d",
+      "bytes": 94,
+      "mode": "100755"
+    },
+    "node": {
+      "sha256": "7491547a9745e66aa7d84df1f010e8473693af6f5d4129962408cd931edb4340",
+      "gitBlob": "7acc28e3dfd7b771522475ff155540885b53898d",
+      "bytes": 65,
+      "mode": "100755"
+    },
+    "python3": {
+      "sha256": "c810b1a9498fd4ca7c78a8879fc0480b14d8e5b168fda2880606fb51c5d2b55b",
+      "gitBlob": "d2dcea578e03c22e79e82fa840fef31e07aced03",
+      "bytes": 73,
+      "mode": "100755"
+    },
+    "sh": {
+      "sha256": "4ea5a04b46fd91acb841fe346b72726d2e81a2fd8bf4daeacb1f40c9fb30388e",
+      "gitBlob": "d32c6d89945ba7addaf5bba66916e39e6af3b348",
+      "bytes": 28,
+      "mode": "100755"
+    },
+    "timeout": {
+      "sha256": "55749b354d199bf2616e4fac2d35d11e23f5286fbc748f6bac1f1a4b4a0c4ef7",
+      "gitBlob": "0cf69efebef30fc509ef0bd9b8e8c73db742cd59",
+      "bytes": 37,
+      "mode": "100755"
+    },
+    "tsc": {
+      "sha256": "40e0f6481237af4d86ca119121f38783df20d7ee3419f1514c302d148840c3ca",
+      "gitBlob": "bbcdf54cb8ef4f08d75b91ad58fc314811ce1d62",
+      "bytes": 107,
+      "mode": "100755"
+    },
+    "tsgo": {
+      "sha256": "40e0f6481237af4d86ca119121f38783df20d7ee3419f1514c302d148840c3ca",
+      "gitBlob": "bbcdf54cb8ef4f08d75b91ad58fc314811ce1d62",
+      "bytes": 107,
+      "mode": "100755"
+    }
+  },
+  "sha256OfCanonicalEntries": "7975e3a35140c2790d1182efab5a817aa4735af0b300b1b54d69afc59e4dc474",
+  "executed": false
+}

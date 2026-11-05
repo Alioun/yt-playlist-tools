@@ -1,0 +1,208 @@
+{
+  "status": "unexecuted",
+  "compilers": {
+    "native": [
+      "node",
+      "node_modules/@typescript/native/bin/tsc",
+      "--noEmit",
+      "-p",
+      "tools/fixtures/site-core-lifecycle/tsconfig.json"
+    ],
+    "svelte": [
+      "node",
+      "node_modules/svelte-check/bin/svelte-check",
+      "--tsgo",
+      "--workspace",
+      "tools/fixtures/site-core-lifecycle",
+      "--tsconfig",
+      "./tsconfig.svelte.json",
+      "--fail-on-warnings"
+    ]
+  },
+  "probes": [
+    {
+      "path": "src/site/core/scope.type-test.ts",
+      "directiveLine": 12,
+      "errorLine": 13,
+      "compiler": "native",
+      "expectation": "A click handler cannot consume a keyboard event.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/scope.type-test.ts",
+      "directiveLine": 14,
+      "errorLine": 15,
+      "compiler": "native",
+      "expectation": "The click payload has no keyboard key.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/scope.type-test.ts",
+      "directiveLine": 16,
+      "errorLine": 17,
+      "compiler": "native",
+      "expectation": "Window event names are checked at the call.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/scope.type-test.ts",
+      "directiveLine": 20,
+      "errorLine": 21,
+      "compiler": "native",
+      "expectation": "Component props retain their required label type.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/scope.type-test.ts",
+      "directiveLine": 22,
+      "errorLine": 23,
+      "compiler": "native",
+      "expectation": "Required component props cannot be omitted.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/scope.type-test.ts",
+      "directiveLine": 24,
+      "errorLine": 25,
+      "compiler": "native",
+      "expectation": "Component callback props retain the payload type.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/scope.type-test.ts",
+      "directiveLine": 26,
+      "errorLine": 27,
+      "compiler": "native",
+      "expectation": "A Scope needs its document and cleanup error sink.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 16,
+      "errorLine": 17,
+      "compiler": "native",
+      "expectation": "Music-only features cannot be defined on www.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 18,
+      "errorLine": 19,
+      "compiler": "native",
+      "expectation": "The card menu does not run on Music.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 20,
+      "errorLine": 21,
+      "compiler": "native",
+      "expectation": "The browser menu is not a page feature.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 22,
+      "errorLine": 23,
+      "compiler": "native",
+      "expectation": "Feature IDs come from the actual TabView union.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 24,
+      "errorLine": 25,
+      "compiler": "native",
+      "expectation": "A complete Music view cannot contain a www card menu.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 28,
+      "errorLine": 29,
+      "compiler": "native",
+      "expectation": "Scope creation is a required lifecycle collaborator.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 30,
+      "errorLine": 31,
+      "compiler": "native",
+      "expectation": "The later-services context factory is required.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 32,
+      "errorLine": 33,
+      "compiler": "native",
+      "expectation": "A service factory cannot replace the host-owned scope.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 34,
+      "errorLine": 35,
+      "compiler": "native",
+      "expectation": "A service factory cannot replace the scoped current view.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 36,
+      "errorLine": 37,
+      "compiler": "native",
+      "expectation": "Context services remain concrete and typed.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/core/feature-host.type-test.ts",
+      "directiveLine": 38,
+      "errorLine": 39,
+      "compiler": "native",
+      "expectation": "Unvalidated generic view readers cannot replace ExtLink.onView.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/kit/scope-mount.type-test.ts",
+      "directiveLine": 10,
+      "errorLine": 11,
+      "compiler": "native",
+      "expectation": "The adapter does not accept numeric labels.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/kit/scope-mount.type-test.ts",
+      "directiveLine": 12,
+      "errorLine": 13,
+      "compiler": "native",
+      "expectation": "A component is a Svelte Component, not an arbitrary renderer.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "src/site/kit/scope-mount.type-test.ts",
+      "directiveLine": 14,
+      "errorLine": 15,
+      "compiler": "native",
+      "expectation": "Asynchronous Svelte teardown needs an error sink.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "tools/fixtures/site-core-lifecycle/svelte-props.ts",
+      "directiveLine": 7,
+      "errorLine": 8,
+      "compiler": "svelte",
+      "expectation": "svelte-check must preserve the real component's label type.",
+      "status": "unexecuted"
+    },
+    {
+      "path": "tools/fixtures/site-core-lifecycle/svelte-props.ts",
+      "directiveLine": 9,
+      "errorLine": 10,
+      "compiler": "svelte",
+      "expectation": "The real component requires its teardown callback.",
+      "status": "unexecuted"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /opt/homebrew/Cellar/node/26.12.1_1/bin/node "$@"

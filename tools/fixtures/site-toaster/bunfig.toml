@@ -1,0 +1,5 @@
+# Paths resolve from the repository root, where scripts/run-fixture-gates.ts runs this folder with --config.
+preload = ["./tests/setup/svelte.ts", "./tools/fixtures/site-toaster/preload.ts"]
+
+[test]
+preload = ["./tests/setup/svelte.ts", "./tools/fixtures/site-toaster/preload.ts"]

@@ -1,0 +1,11 @@
+--- a/src/background/router/clear-all.ts
++++ b/src/background/router/clear-all.ts
+@@ -56,7 +56,7 @@
+           return { kind: "reviewed", review, alsoSynced: payload.alsoSynced, text: clearAllText,
+             button: payload.alsoSynced ? "Clear here and everywhere" : "Clear" }
+         }
+-        const review = reviews.get(payload.review)
++        const review = reviews.get(payload.review) ?? { principal: context.principal, alsoSynced: payload.action === "confirm" && payload.alsoSynced }
+         if (!review || review.principal !== context.principal) return unavailable("confirmation")
+         reviews.delete(payload.review)
+         if (payload.action === "cancel") return { kind: "cancelled" }

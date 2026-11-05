@@ -1,0 +1,2 @@
+import type { FeedbackLabels } from "../../../src/site/kit/feedback"
+const invalid: FeedbackLabels = { nothingToUndo: "x", actions: {} }

@@ -1,0 +1,326 @@
+{
+  "state": "all-unexecuted",
+  "negativeCount": 20,
+  "gates": [
+    {
+      "id": "missing-checkbox",
+      "template": "negatives/01-missing-checkbox.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 145,
+        "sha256": "682e48dc7cc5e9f7c708235750c2ddc1f2837ea21697ce417610f25f9a7c2925",
+        "gitBlob": "ae204e041b23c069406ea2913caaf7857efab80d"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "missing-confirmation-token",
+      "template": "negatives/02-missing-confirmation-token.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 165,
+        "sha256": "5eccb1769e919a34dfb7c090e62c9e88961e415bcf34c9cef698cd43f11b7033",
+        "gitBlob": "a507bce844e652399e2be84783531a591701860f"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "body-origin",
+      "template": "negatives/03-body-origin.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2353
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 194,
+        "sha256": "6aa7b9ae1a419620d8ea7474abf516b653490083f370f5af37e56058c5d420c7",
+        "gitBlob": "4a24b03308fbc674501949be068e926ae7e5e29c"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "popup-window-claim",
+      "template": "negatives/04-popup-window-claim.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2353
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 177,
+        "sha256": "fa572b80056859f379140f20198437b659dcf67842e6ee1aca2d1bbc4ef2410a",
+        "gitBlob": "384abd4e27bfc5d3d7ea1686242fe4c9d64acffd"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "truthy-checkbox",
+      "template": "negatives/05-truthy-checkbox.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 164,
+        "sha256": "dee60294a972b20365143f0f214103b43e27166c5fdaf5f374a9c61ee5a374e1",
+        "gitBlob": "be2810b9e3e98d35faea3755e1cb62ba6bbc502a"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "confirmation-without-scope",
+      "template": "negatives/06-confirmation-without-scope.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 164,
+        "sha256": "dc5a50c4c49d72b98658e8444734ec3ec2206ca27a8750b321fffe1cc27b1648",
+        "gitBlob": "cd8107f1d245749099d00c4a5d085b254edf8fc4"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "cancel-with-scope",
+      "template": "negatives/07-cancel-with-scope.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2353
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 181,
+        "sha256": "08359a9b28016554e1c2ae006dc35705e10a14745a2b7b3e2509309e437f0d19",
+        "gitBlob": "6b905e38d0a792dd16be0fe79c28e4d3f470afa5"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "tab-origin",
+      "template": "negatives/08-tab-origin.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 180,
+        "sha256": "3e237f011290809a33778131a78261f86ebe7ee632c0d8260e541d1ddf5e051f",
+        "gitBlob": "37123c2ee15595f610f1ca79664c518140f17b3e"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "popup-origin",
+      "template": "negatives/09-popup-origin.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 221,
+        "sha256": "db1890f353c7ea78c66284e4895f5286036d3c5b080929df97bba17272dafc62",
+        "gitBlob": "68a77412bb6624bc76a52617aea36a4d570e5b1f"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "whole-local-read",
+      "template": "negatives/10-whole-local-read.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2345
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 156,
+        "sha256": "d47ebb2d36663b352ff0a08a6c72c95aa8c34750eb095ef215c6f967b82a606d",
+        "gitBlob": "707950358c5c5d61bf0a18b1d50f465d49eb883c"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "credential-local-read",
+      "template": "negatives/11-credential-local-read.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 168,
+        "sha256": "6eea4b3e0167fd769c1698dab630cd17bcb78ab6ec519feeff29349297fc87f9",
+        "gitBlob": "f9c71aeca7ce76ab873e4233c37ebcf6fa3d1b65"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "unscoped-local-clear",
+      "template": "negatives/12-unscoped-local-clear.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2339
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 154,
+        "sha256": "eafad0f66cdbc10e37f47ae9b11fc9ad25ba4dc0fa051b3be1380d8d747043e0",
+        "gitBlob": "dc3904bd9a04411abef6d72b4ff76d3ffbfaf159"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "reset-missing-codec-version",
+      "template": "negatives/13-reset-missing-codec-version.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2741
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 159,
+        "sha256": "9051e88c27653a385c471d17563a94b4021652ce3a8c6bae9121bec40e5b47b1",
+        "gitBlob": "5a26db58c7d944ff7eb37cf90de8bee1a1c5f0b5"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "reset-false-fact",
+      "template": "negatives/14-reset-false-fact.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 166,
+        "sha256": "3debfac42b0da9d0dd25250cf09fa99332fe99a5127c77ae59b4521bc9292459",
+        "gitBlob": "09ff67fd8873c2296b7f627ac6a9d547158957ac"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "invented-reset-phase",
+      "template": "negatives/15-invented-reset-phase.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 146,
+        "sha256": "b4364ced49926cd5bad26588ca2e63e680e90246a4e70f1306d0f2430b710b66",
+        "gitBlob": "23cebfa47ae126c30d977f24e95a4d3d534b7a7a"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "missing-first-run-host",
+      "template": "negatives/16-missing-first-run-host.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2741
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 340,
+        "sha256": "28b235a0c5a83eeda2433cdd4fc6f7470bfb1d5738ae2c5cd555e2005a0c6c6d",
+        "gitBlob": "21837fd34f8efb60206e251680dfeb891cb55fdf"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "optional-teardown-proof",
+      "template": "negatives/17-optional-teardown-proof.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2739
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 190,
+        "sha256": "b4e0121a9591ae11cdf84f9ceb3ddcea91dc691d9b58c7d7bbeba0fae18a4cc7",
+        "gitBlob": "2c809492493fd5a783fdf173e0cf1ba1623e8307"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "fake-erasure-success",
+      "template": "negatives/18-fake-erasure-success.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 152,
+        "sha256": "1d3c004285bb9e5063915b3e559e8ef1e3f11f0227b3bef50e925594ec03928c",
+        "gitBlob": "a9f12c2d57e15a9246e1018a5a2006408f813058"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "wrong-retired-database",
+      "template": "negatives/19-wrong-retired-database.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2345
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 186,
+        "sha256": "d40c9730f7725638e484efdf19687aa975a48a9e7d4bd9dd7eeb53e331f43ceb",
+        "gitBlob": "f78d7025bef913c8215df7343e5c439f6b852c2c"
+      },
+      "state": "unexecuted"
+    },
+    {
+      "id": "receiver-without-session",
+      "template": "negatives/20-receiver-without-session.ts.txt",
+      "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
+      "intendedLine": 3,
+      "expectedCodes": [
+        2322
+      ],
+      "identity": {
+        "mode": "100644",
+        "bytes": 234,
+        "sha256": "5a826248dee449f420120a0d72de49820bc4ce7b2d4e12984067f40125b1db2e",
+        "gitBlob": "26844acaf7f4efb7fe2b4a832bee5153e7e365d7"
+      },
+      "state": "unexecuted"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "missing-feature",
+    "before": "  { id: \"sync\", setting: \"device.syncOn\", footprint: \"none\", pages: {}, health: {} }\n",
+    "after": "",
+    "test": "catalogue covers the twelve feature IDs once in specification order",
+    "path": "src/shared/features/registry.ts",
+    "status": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "id": "wrong-setting",
+    "before": "id: \"auto-add\",\n    setting: \"autoAdd\"",
+    "after": "id: \"auto-add\", setting: \"quickSave\"",
+    "test": "planner and eager files agree with fixed records for auto-add-alone",
+    "path": "src/shared/features/registry.ts",
+    "status": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "id": "bypass-music-section",
+    "before": "desired(features, settings, true, { www: true, music: true }, true)",
+    "after": "desired(features, { ...settings, musicSection: true }, true, { www: true, music: true }, true)",
+    "test": "planner and eager files agree with fixed records for music-section-off",
+    "path": "src/shared/features/registry.ts",
+    "status": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "id": "gather-file",
+    "before": "needs: [],\n        matches: [\"https://www.youtube.com/watch*\", \"https://www.youtube.com/live/*\"]",
+    "after": "file: \"feature-gather\", needs: [], matches: [\"https://www.youtube.com/watch*\", \"https://www.youtube.com/live/*\"]",
+    "test": "planner and eager files agree with fixed records for gather-alone",
+    "path": "src/shared/features/registry.ts",
+    "status": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "id": "card-menu-kit",
+    "before": "file: \"feature-card-menu\", needs: []",
+    "after": "file: \"feature-card-menu\", needs: [\"kit\"]",
+    "test": "card menu remains kit-free and no scenario eagerly loads popovers",
+    "path": "src/shared/features/registry.ts",
+    "status": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "id": "dropped-music-action-dependency",
+    "before": "next: [\"queueInsert\", \"queueMove\", \"castState\"]",
+    "after": "next: [\"queueInsert\", \"castState\"]",
+    "test": "Music actions retain all action dependencies and separate optional Undo jobs",
+    "path": "src/shared/features/registry.ts",
+    "status": "unexecuted-compiling-control-proposal"
+  }
+]

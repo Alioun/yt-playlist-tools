@@ -1,0 +1,3 @@
+import type { KeyAssignmentChange, KeySettingChange } from "../../../src/shared/contracts/key-settings"; import type { UiMessages } from "../../../src/shared/contracts/ui"; import type { SharedSettingsOwner } from "../../../src/background/router/shared-settings"
+
+export const intendedNegative: KeyAssignmentChange["target"] = { kind: "music" }

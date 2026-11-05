@@ -1,0 +1,141 @@
+{
+  "state": "five-exact-proposals-unexecuted",
+  "controls": [
+    {
+      "id": "wrong-field",
+      "patch": "controls/wrong-field.patch",
+      "target": "src/background/store/settings-edit.ts",
+      "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+      "mutatedSha256": "47f8dafb24553b682093692be826f47a8b51977bf6ae71af93dff646a1eb12eb",
+      "anchors": [
+        {
+          "before": "settings.musicActions.buttons.next = change.value",
+          "after": "settings.musicActions.buttons.queue = change.value",
+          "occurrence": 1,
+          "line": 186
+        }
+      ],
+      "namedAssertion": "native confirms musicActions.buttons.next and preserves the complete independent inventory",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "state": "unexecuted",
+      "requiredOrder": [
+        "baseline native compile and named pass",
+        "apply exact patch in a disposable full candidate",
+        "mutant native compile must pass",
+        "named behavioral assertion must fail, not an unrelated error or timeout",
+        "restore and prove byte/mode equality",
+        "native compile and named pass"
+      ]
+    },
+    {
+      "id": "lost-unrelated-fields",
+      "patch": "controls/lost-unrelated-fields.patch",
+      "target": "src/background/store/settings-edit.ts",
+      "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+      "mutatedSha256": "93ca0ae8fe8597d454657f6908038da8799bbfb1aa8f8767a7a1d67fed8a22a2",
+      "anchors": [
+        {
+          "before": "  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "after": "  Reflect.deleteProperty(settings, \"futureRoot\")\n  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "occurrence": 2,
+          "line": 278
+        }
+      ],
+      "namedAssertion": "owner confirms autoAdd.feedback and preserves the complete independent inventory",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "state": "unexecuted",
+      "requiredOrder": [
+        "baseline native compile and named pass",
+        "apply exact patch in a disposable full candidate",
+        "mutant native compile must pass",
+        "named behavioral assertion must fail, not an unrelated error or timeout",
+        "restore and prove byte/mode equality",
+        "native compile and named pass"
+      ]
+    },
+    {
+      "id": "implicit-enablement",
+      "patch": "controls/implicit-enablement.patch",
+      "target": "src/background/store/settings-edit.ts",
+      "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+      "mutatedSha256": "7e28f4451f45e81bcb710c153abb66bb3bc2960a5662a3fe57bd4803ae79af84",
+      "anchors": [
+        {
+          "before": "  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "after": "  settings.musicActions.on = true\n  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "occurrence": 2,
+          "line": 278
+        }
+      ],
+      "namedAssertion": "native stores hidden choices with the Music section and features off",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "state": "unexecuted",
+      "requiredOrder": [
+        "baseline native compile and named pass",
+        "apply exact patch in a disposable full candidate",
+        "mutant native compile must pass",
+        "named behavioral assertion must fail, not an unrelated error or timeout",
+        "restore and prove byte/mode equality",
+        "native compile and named pass"
+      ]
+    },
+    {
+      "id": "invalid-coercion",
+      "patch": "controls/invalid-coercion.patch",
+      "target": "src/background/store/settings-edit.ts",
+      "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+      "mutatedSha256": "55248ee5953a6660f0107695a94205cb6b39873ad76b88f6a74ea168279b9b22",
+      "anchors": [
+        {
+          "before": "    case \"autoAdd.feedback\":\n      if (typeof change.value !== \"boolean\") return { kind: \"invalid\", reason: \"invalid-option\" }",
+          "after": "    case \"autoAdd.feedback\":",
+          "occurrence": 1,
+          "line": 92
+        },
+        {
+          "before": "settings.autoAdd.feedback = change.value",
+          "after": "settings.autoAdd.feedback = Boolean(change.value)",
+          "occurrence": 1,
+          "line": 95
+        }
+      ],
+      "namedAssertion": "owner invalid runtime field/value inputs never coerce or stamp",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "state": "unexecuted",
+      "requiredOrder": [
+        "baseline native compile and named pass",
+        "apply exact patch in a disposable full candidate",
+        "mutant native compile must pass",
+        "named behavioral assertion must fail, not an unrelated error or timeout",
+        "restore and prove byte/mode equality",
+        "native compile and named pass"
+      ]
+    },
+    {
+      "id": "premature-success",
+      "patch": "controls/premature-success.patch",
+      "target": "src/background/store/shared-setting-execution.ts",
+      "baseSha256": "a5ff589de91827fa2c5aa941ce40410e919d4a58cffedb14645610c71ac961b3",
+      "mutatedSha256": "6b84749f44b0cdb01deedccbfff735b4205e13d4ec5bd99fa6833616f8214719",
+      "anchors": [
+        {
+          "before": "if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items }))",
+          "after": "if (!jsonObject(confirmed))",
+          "occurrence": 1,
+          "line": 107
+        }
+      ],
+      "namedAssertion": "native ignore never substitutes a write promise for a confirmed receipt",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "state": "unexecuted",
+      "requiredOrder": [
+        "baseline native compile and named pass",
+        "apply exact patch in a disposable full candidate",
+        "mutant native compile must pass",
+        "named behavioral assertion must fail, not an unrelated error or timeout",
+        "restore and prove byte/mode equality",
+        "native compile and named pass"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# TabView publication
+
+`createViewPublication` composes the canonical owner, actual Tabs, Monitor, AddFlow's private skip source and the complete TabView producer. This unit supplies no production entry wiring. Its source, tests and consumer are authored. No compiler or runtime gate was executed.
+
+The owner exports `ConfirmedViewChange` and `subscribeView(changed, revoked?)`. Existing Settings and Setup subscriptions keep their own registration and event behavior. Local Filter events follow the full write readback. Adopted sync documents and completed join effects compare decoded values, so generation-only changes do not publish. Central removal emits one `account-removed` event, including a last-choice clear. Session events compare the committed pause value and normal account skip maps. Registry, progress, cache and cooldown writes have no publication event.
+
+Targets are explicit: `all`, `account` with a privacy scope, or `tab`. Tabs creates nominal `KnownTab` handles. The constructor cannot be imported, and a requester or raw account string cannot substitute for a handle. Handles identify a known site core; fresh native lookup, two account/build pings, owner revision checks and complete view validation still govern delivery. Native calls and their resolved promises establish neither storage durability nor page display.
+
+Tabs keeps a bounded in-memory map of known cores independently of persisted registry rows. Account cleanup can delete normal registry rows while the old core remains available for a fresh no-Setup view. Publication uses the retained handle without writing a registry row. A changed account, site, privacy, window, build, missing native tab or revoked lifetime prevents sending the captured view. Private registry rows remain in memory. Global owner revision reset or Tabs disposal revokes publisher work.
+
+The scheduler keeps one pending row per actual tab ID. Its first event arms a one-shot deadline 250 ms later. Later overlapping account/all events increment the row version and retain the first deadline. Each native send attempt is at least 250 ms after the previous attempt for that tab. The producer runs at delivery time. An event during projection invalidates that result; an event during send stays pending for a later projection. Tabs deliver independently, so a blocked tab does not serialize the others. Disposal aborts pending Tabs work, removes all subscriptions and cancels one-shot timers. No retry loop, interval or browser event listener is installed.
+
+Monitor remembers contexts and enabled features from actual complete producer reads. Its generic notifications request fresh status/notice reads. Only a changed projected value emits an own-tab view event. Journal and claim bookkeeping may still notify existing generic subscribers. An unavailable read supplies no evidence of a projected change.
+
+AddFlow emits `PrivateSkipChange` only after a successful fresh session read, current account revision and active owner checks, and an actual private skip value change. Explicit skip and unskip, automatic untick and automatic add Undo share that commit point. The publisher requires this source and targets only private cores for the affected account. Normal skips continue through the canonical owner's event. Neither a listener callback nor a native send is a storage receipt.
+
+Direct sync receive and Setup tombstone cleanup remain separate incomplete work. Join tombstones already use the completed-effect hooks. Private skip authoring does not complete ARC-MSG-13 or 2.0.
+
+The fixture README lists future gates, complete EOF expectations, intended-line type probes and mutation proposals. The exact917 installation retains accepted verification repairs and native starting-owner paths. No runtime lease was granted to this unit. Historical Monitor child-wait limitations, privacy approval, native guarantees, rendering, axe, picker decisions and activation remain held.

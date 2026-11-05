@@ -38,7 +38,7 @@ The plan works whichever way these land. Each dependent item is marked inline. R
 |---|---|---|---|
 | **The name** | **Settled** by the user on 2026-10-20: Perchling for YouTube™ ([R141](resolutions.md#the-name-perchling-r141r144), [ticket 22](../issues/22-name.md)). A professional trademark search, the EU above all, is still due before launch (R144). | Every string that says "Perchling": the manifest `name`, `short_name` and `description`, the note, the disclosure, both listings, the policy, the reviewer notes and the screenshots | Only if the search finds a blocking mark: swap "Perchling for YouTube™" / "Perchling" for the new name. Nothing else changes. |
 | **Firefox data collection** (was AMO's reply) | **Settled** by decision ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)), from Mozilla's own documentation. [Ticket 23](../issues/23-ask-amo.md)'s message to AMO isn't sent. | Firefox's `data_collection_permissions` (`required: ["none"]`), the Firefox prompts (§5), the sync switch (it declares no data type), private-window settings writes (allowed), and the Bun install step (as planned) | Nothing, unless an AMO reviewer objects. Then the matching row of [§13](#13-if-an-amo-reviewer-objects)'s fallback applies. |
-| **The session cookie** | [Ticket 25](../issues/25-live-checks.md)'s final route table | The **cookie lines**: the disclosure's cookie bullet, the policy's cookie bullet, Chrome's "Authentication information" tick, and the reviewer notes' signed route | If no shipped route reads the session cookie, remove all four together; the reviewer notes then describe the same-origin request without signing (R48) |
+| **The session cookie** | [Ticket 25](../issues/25-live-checks.md)'s final route table | The **cookie lines**: the disclosure's cookie bullet, the policy's cookie bullet, Chrome's "Authentication information" tick, and the reviewer notes' signed route | If no shipped route reads the session cookie, remove all four together; the reviewer notes then describe the same-origin request without signing (R48). Ticket 25 runs after the first beta, so the first beta ships with the provisional cookie lines. If they change, the disclosure is re-pinned under a new consent version (FT-36; R190) |
 | **The reviewer endpoint list** | Ticket 25's route table | §12.1 | Fill it from the table |
 | **Exact prompt strings** | **Settled** ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)): Firefox's from its own string files, code and support articles, and Chrome's from Chromium's source. Ticket 25's check P1 ([06 §6.2.15](06-architecture.md#6215-live-checks-that-settle-the-provisional-rows)) now only glances at the real dialogs. | §5 | If a real dialog differs, adjust §5 |
 | **A support e-mail** | **Settled** by the user on 2026-10-20: none. Problems go to GitHub issues through Report a problem's prefilled forms (§16; R89). | The policy's Contact section, both stores and Diagnostics | Nothing |
@@ -74,6 +74,8 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
 
 ## 2. The 1.4.5 migration
 
+The original legacy rules in §2.1 to §2.11 apply after ruling out the recognized interim session-access path in [§2.12](#212-interim-session-access-storage). That path has separate confirmed defaults, collision, consent, historical-authorization and recovery obligations (R156–R160).
+
 ### 2.1 When it runs
 
 - **REL-MIG-01** The migration runs at the top of every background start, before the reconciler, the replicator and any message handler. Every other background module awaits the store's `ready()`; the popup, settings and the first-run page only read `storage.local`, and follow its changes ([ARC-MOD-24, ARC-MOD-25](06-architecture.md#69-the-store-module-interface)).
@@ -100,7 +102,7 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
      - `doc:settings`;
      - `unclaimed`;
      - `device`, with `consent: null`, `syncOn: false` and `upgradeNote: {state: "pending", details, opened: false}` ([2.9](#29-what-the-note-is-built-from)).
-  2. **Write** all the new keys in one `storage.local.set`.
+  2. **Write** all the new keys in one `storage.local.set`, including the validated local association between the unclaimed shortcut playlist and the actual migration-created shortcut ID (REL-MIG-34; R152).
   3. **Remove the old stores:**
      - every 1.x key and 1.5.0 developer key (REL-MIG-02) in one `storage.local.remove`, including `clientID`, `clientSecret`, `accessToken` and `refreshToken`;
      - nothing in `storage.sync`, which the migration never touches (R20);
@@ -189,7 +191,7 @@ From ticket 08.
 
   (R21)
 - **REL-MIG-21** If the converted key matches one of ticket 08's clash warnings (for example YouTube's K for Play/pause), `details.shortcut.clash` holds that warning's ID.
-- **REL-MIG-39** **A shortcut playlist with no key.** If `addToPlaylistID` survives cleaning but `watchLaterShortcut` is absent or empty, the playlist is kept: shortcut 1 is created with `key: null`, its playlist goes into `unclaimed.shortcutPlaylist`, and claiming makes it that shortcut's playlist. Playlist shortcuts stays off (REL-MIG-23). The note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (REL-CON-04). (R21)
+- **REL-MIG-39** **A shortcut playlist with no key.** If `addToPlaylistID` survives cleaning but `watchLaterShortcut` is absent or empty, the playlist is kept: shortcut 1 is created with `key: null`, its playlist goes into `unclaimed.shortcutPlaylist`, and claiming fills only that original shortcut's empty target for the claiming account, if the row still exists and its original ID is proven (R150, R152). Playlist shortcuts stays off (REL-MIG-23). The note says "Your 1.x shortcut had no key. Perchling kept its playlist. Set a key in Settings." (REL-CON-04). (R21)
 
 ### 2.6 Switches after the migration
 
@@ -226,7 +228,7 @@ From ticket 08.
 
 ### 2.9 What the note is built from
 
-- **REL-MIG-33** The migration writes `device.upgradeNote` as `{state: "pending", details: UpgradeDetails, opened: false}`:
+- **REL-MIG-33** For the original legacy path, the migration writes `device.upgradeNote` as `{state: "pending", details: UpgradeDetails, opened: false}`:
 
 ```ts
 type UpgradeDetails = {
@@ -247,14 +249,18 @@ type UpgradeDetails = {
 // seen: the note was visible at least once; reopened: it was opened a second time because it never was (REL-CON-25; R97)
 ```
 
-- **REL-MIG-34** `unclaimed` has ticket 16's shape:
+- **REL-MIG-34** `unclaimed` keeps ticket 16's data plus the minimum original-ID association (R152):
   - `from`, which is `"1.4.5"` or `"1.5.0"`;
   - `autoAdd`, a list of IDs;
   - `shortcutPlaylist`;
   - `filters`;
   - `at`.
 
-  It stays in this browser, never syncs, and is kept until it's claimed or discarded.
+  The association is validated local-only bookkeeping tying the retained shortcut playlist to the actual row created in the initial migration batch. It survives name/key edits and restart, never guesses from a replacement, and reserves that original ID against reuse while the record remains. Older records without valid provenance remain readable; their shortcut is skipped without guessing, while other eligible choices proceed. The precise additive representation is engineering work, not a new synced wire schema.
+
+  The record and association stay in this browser, never sync, and end together on claim, discard, or Clear all data.
+
+The `UpgradeDetails` declaration above describes the original legacy path only. The recognized interim path must represent unknown historical authorization and unknown prior credential presence truthfully under REL-MIG-46. It must not coerce either into a known boolean. A compatible local extension and note model remain engineering work, with no wire schema selected here.
 
 ### 2.10 Claiming the unclaimed setup
 
@@ -264,8 +270,8 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
   - Matching is by playlist ID, never by title.
 - **REL-MIG-36** IDs the claiming account doesn't own are dropped and counted.
   - If the account already has a setup, the claimed choices are merged in without replacing anything: missing auto-add playlists are added.
-  - The shortcut's playlist is used only if that shortcut has none.
-- **REL-MIG-37** The outcome shows in the note if the note is still open ([3.4](#34-agree-and-not-now)). Otherwise it shows as ticket 11's one-time popup notice ([ACC-32](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming)): "Your auto-add playlists and shortcut from 1.x are now set up for {Account}." plus, if any were dropped, "{N} of them weren't on this account and were left out."
+  - The shortcut playlist fills only the empty account target of the original migration-created row, after checking the current shared row by exact original ID. Name/key edits preserve that ID. A deleted row is never recreated, and its playlist is never rebound to a replacement. Missing or invalid provenance takes the same no-guess skip path. Other eligible choices still claim (R150, R152).
+- **REL-MIG-37** The outcome shows in the note if the note is still open ([3.4](#34-agree-and-not-now)). Otherwise it shows as the one-time popup notice ([ACC-32](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming)). It names only choices actually claimed. When the shortcut is skipped, use "Perchling checked your choices from 1.x for {Account}." and state the reason separately: "Your 1.x shortcut was deleted, so Perchling left it out." or "Perchling couldn't identify your original 1.x shortcut, so it left it out." Existing chosen targets are kept and reported as such. Only ownership drops add "Perchling left out {N} of them, because they weren't on this account." A deleted or unproven shortcut is not an ownership drop. When nothing was skipped, the existing "Your auto-add playlists and shortcut from 1.x are now set up for {Account}." remains (R150, R152).
 - **REL-MIG-38** An unclaimed setup is never used.
   - On an account that doesn't own its playlists, the popup says "Your playlists from 1.x belong to another YouTube account. Switch to it on YouTube to use them, or set up {Account} below.", with **Switch account** and **Discard**.
   - Claiming is refused from private windows.
@@ -277,11 +283,28 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 | The update lands while the add-on is disabled, or at browser start | No `onInstalled`. The migration still runs from stored state at the next start, and the note opens then (R64). |
 | 1.4.5 installed, but no 1.x key left (e.g. nothing ever set) | A fresh install: no migration, no note, and no tab opens on the update. The "!" and the popup's "Waiting for your OK" lead to first run (REL-MIG-03; R64, R76). |
 | No youtube.com access (installed on Firefox 125/126, or revoked) | The update still installs silently. The note shows "Perchling doesn't have access to YouTube in this browser, so nothing can run there yet." with **Give access to YouTube**, which requests access first thing in the click. |
+| No music.youtube.com access after the update (Firefox narrowed from `*://*.youtube.com/*`, R179) | The update still installs silently. YouTube Music features that carried over are saved on but held with "Needs site access", and **Give access** in the popup and Settings asks for music.youtube.com first thing in the click. The note asks nothing for YouTube Music. |
 | Firefox 125–139 (1.4.5's floor is 125) | Stays on 1.4.5 silently. AMO offers 2.0 only to Firefox 140 and later. |
 | Signed out, no YouTube tab, or another account at Agree | Ticket 11's outcomes, shown in the note (§3.4) |
 | The user never agrees | Everything stays inert, with the badge. 1.4.5's carried choices are kept indefinitely. |
 | AMO rolls back 2.0.0 | It lands on 1.4.5's code, which is **inert** because its credentials were deleted, and it leaves 2.0's data alone. Hence fix forward for 2.0.0 (REL-CHK-08). |
 | A later downgrade below a `schema` bump | Inert. The popup says "This version of Perchling is older than your settings. Update it to continue." ([DATA-48](04-features-accounts-data.md#410-schema-versions-and-migrations)) |
+
+### 2.12 Interim session-access storage
+
+1.5.0 never shipped, so the interim build matters here only as an upgrade source: a browser that ran a development copy of it may hold its storage (R184). The interim conversion ships switched off. It turns on only after ticket 25's live checks verify production ownership and session contracts on a real signed-in account (R187).
+
+R156–R160 record the user's answers to Q7–Q10 and Q11a on 2026-10-25. This section owns the behavioral obligations for conversion from interim session-access storage, with recovery review refined by R162, filter replacement by R163, selected-occurrence discard by R165, explicit destination choice by R166, the existing-setup requirement by R169 and independent restores of equal occurrences by R170. It does not select a wire schema or other detailed collision controls. Recovery lives in Settings › Privacy & data (R181). It selects no reset rules and no ownership mechanism.
+
+- **REL-MIG-41. Recognition and complete inventory.** Recognize the interim families `account:<digest>`, `savedAccountKeys`, `sessionConsent`, `sessionGeneration` and `legacyClaimed` before the original legacy path, even when a stored marker is empty or false or `schema:1` exists. Account bodies and the account index must both be inventoried. An unindexed valid body is still saved data. An index entry with no body must not invent a setup, account label or cache-only account. Validate against canonical boundaries without silently rekeying, truncating or dropping choices. Unrepresentable or malformed source remains intact and conversion refuses. Newer layouts remain inert under DATA-48.
+- **REL-MIG-42. Account mapping.** Preserve valid interim saved playlists, their order, filters and shortcut targets under the same canonical account key. Carried auto-add playlists take Videos without a percentage override. Preserve filter mode, on/off state and channel labels, including kept and orphaned filters. Playlist caches remain separate from setups and never sync. Do not derive an account label or ownership proof from cached titles. Preserve the effective interim required percentage and Show feedback, including the interim fallbacks of 50 % and feedback on, rather than applying released-1.4.5 defaults to this path. R157's collision rule and R159's unknown-history rule still apply. Old global playlist and filter choices remain separately unclaimed. Conversion of account choices neither claims globals nor proves their ownership (R156).
+- **REL-MIG-43. Deliberately shared shortcut row.** In nonconflicting state, create one shared row with a deliberately assigned identity and place each account's saved shortcut target under that same row ID in its own setup. Equal keys, labels or row order never identify an existing canonical row. This row and its account mapping are separate from the original legacy unclaimed shortcut association in REL-MIG-34. Do not infer that association from an interim target or marker. R150 and R152 still forbid automatic recreation or rebinding of a deleted migrated shortcut. Canonical Settings collisions follow REL-MIG-44 (R156).
+- **REL-MIG-44. Canonical precedence.** Existing canonical 2.0 documents and tombstones win over overlapping interim choices. This includes canonical shared Settings. Do not insert the conversion-created row into conflicting canonical Settings, or write dependent targets as though a row had been restored. Retain conflicting interim source saved but inactive until explicit restore or discard. Do not union missing fields or use `cachedAt`, index order, session generation or conversion time to guess the user's later edit. Nonconflicting valid choices may map only under the other obligations in this section. Unresolved source must not be destructively removed. Conversion keeps canonical precedence. Explicit recovery may replace a conflicting filter only under REL-MIG-47 and R163. Other detailed conflict presentation and explicit restore mechanics remain engineering work (R157, R163).
+- **REL-MIG-45. Fresh disclosure before activation.** Require the user to agree again to the canonical 2.0 disclosure before any converted choice activates. Retain saved choices inactive meanwhile. `sessionConsent` and `sessionGeneration` establish neither the canonical disclosure version nor its agreement time, so they never manufacture `device.consent`. Agree records the current canonical version and actual agreement time under REL-CON-16 and REL-CON-17. Old in-flight work must be retired before canonical release. Existing consent, site-access, private-window and session-generation safeguards stay enforced until equivalent target contracts are verified (R158). The 1.x safeguards leave with `src/lib` at the cutover, so no build ships until the 2.0 migration replaces them (R184).
+- **REL-MIG-46. Unknown erased authorization.** The conversion ships switched off until ticket 25's live checks pass (R187). On this recognized interim path, when historical authorization evidence has already been erased, retain an explicit local unknown state, distinct from known granted and known denied. Preserve a saved required percentage. With no saved percentage, use 50 % watched unless the user explicitly chooses immediate adding. If canonical Settings wins a collision, retain the interim percentage inactive under REL-MIG-44. Do not infer historical authorization from current credential absence, interim agreement, account choices, a session add or cached data. Do not infer prior credential presence from successful removal by name. The note must truthfully say that earlier access cannot be determined and must not use either known-history claim that 1.4.5 was adding immediately or never got access. A saved percentage is stated, not replaced by an unknown-history default. The original legacy known-authorization branches in REL-MIG-40 and R96 remain unchanged. On this path the note's Auto-add row reads "You chose {N} playlists in an earlier version of Perchling. Perchling can't tell whether that version had access to your account.", the credentials paragraph ends "This browser holds no Google sign-in for Perchling." instead of naming what was deleted, and with no saved percentage the question reads "Perchling can't tell how an earlier version added your videos. Which do you want?" with "Once half of it is watched" (the default) and "As soon as a video starts playing" (R194). Compatible local representation, truthful deletion evidence and note conditions remain engineering obligations (R159; ADR-0009 amendment of 2026-10-25).
+- **REL-MIG-47. Explicit recovery of retained globals.** Like the conversion, this stays off until ticket 25's live checks pass (R187). Retain globals left behind despite `legacyClaimed:true` inactive and show an explicit recovery section. Nothing activates until review and explicit restore. Offer item-by-item review and selection of playlists, filters and shortcut targets for explicit restore or discard, with nothing preselected. Show each item's destination and any conflict. Retain unselected items inactive (R162). Explicit discard records "do not restore" for only the selected source occurrence and retains its original data until safe cleanup. Equal sibling occurrences and unselected source remain independently unresolved and inactive. Retained discarded data is recovery evidence pending safe cleanup, not authorization to re-offer or restore it automatically. Discard authorizes no immediate source erasure, bulk discard, hidden source consumption or new cleanup authority. No cleanup deadline or eventual reclamation is promised (R165). For an old global playlist choice with no saved account and multiple verified owners, let the user explicitly choose the destination account among those verified owners. Revalidate the chosen account's ownership before restoring only to that account. Labels and cached data never establish ownership. Destination choice grants no account revival, original shortcut association, shortcut rebinding, cross-account copying, automatic restore, consent or site-access bypass, or generic conflict override (R166). Restore an old global playlist choice only to an account that already has a live 2.0 account setup. Show a verified owner without one as unavailable until the user creates a setup the normal way (ACC-20). Recovery never creates an account setup and never revives a removed one as a side effect (R169). When two separate retained entries contain the same playlist, the user may restore each one explicitly to a different freshly verified owner. Each restore consumes only its own source occurrence and restores only to its chosen account. Nothing is copied automatically, and one occurrence cannot be restored twice. Never deduplicate occurrences by playlist value or refuse a restore because a separate equal occurrence went to another account. The bar on cross-account copying still forbids copying one occurrence, or an existing canonical account's choices, to another account (R170). Agreement or seeing an account alone never authorizes restore or automatic claiming of these retained globals. Existing canonical choices and deletions remain protected except for R163's separately confirmed filter replacement. Account ownership must still be established under ACC-30 and ACC-35. For a retained filter conflicting with the canonical filter for the same playlist and account, offer **Replace this filter** after showing both versions and require separate confirmation. Replace the whole filter without merging channel lists. Keep the canonical filter until replacement succeeds, and retain unselected source inactive. This permits neither revival of a deleted account nor shortcut rebinding and grants no generic conflict override (R163). Ownership, readiness, quota, newer-version, reset, consent, R155, R161 and actual write-confirmation safeguards still apply. `legacyClaimed` proves neither ownership nor original shortcut provenance. Recovery must never automatically recreate or rebind a deleted migrated shortcut. Unresolved source must not be destructively removed. The earlier recommendation to treat these globals as permanently consumed without recovery is superseded. The recovery section is Settings › Privacy & data's "Waiting for your review", and the note links there with "Some choices from an earlier version wait for your review." and **Review in Settings** ([UI-SET-16](05-ui.md#sections), [UI-ONB-11](05-ui.md#the-upgrade-note); R181). Destinations outside R166, other conflict override or replacement semantics, compatible storage representation, ownership mechanisms, shortcut rebinding and the safe cleanup protocol remain unspecified by these decisions (R160, R162, R163, R165, R166, R169, R170). These policies choose no wire or storage schema.
+
+The current interim runtime refusal is not removed by these documentation amendments. A complete planner, compatible local unknown/conflict/recovery representation, ordered and restart-safe execution, truthful note, and verified production ownership/session contracts are still required before conversion can run. A pending legacy note alone does not authorize cleanup of interim families under REL-MIG-09. Preserve unresolved source, and do not enable only a subset of this conversion by deleting the refusal.
 
 ## 3. The upgrade note
 
@@ -312,22 +335,23 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 ### 3.2 Copy
 
 The copy rules:
+- every string goes through pstack's unslop rules, pinned ones included, and this chapter carries the result (R188);
 - `{…}` are values from `details` and the store;
 - one sentence per line;
 - the glossary's words.
 
-**REL-CON-04** The note renders this copy, with its conditions. Its layout is [05's upgrade note](05-ui.md#the-upgrade-note) (UI-ONB-06, UI-ONB-07).
+**REL-CON-04** The original legacy note renders this copy, with its conditions. Its layout is [05's upgrade note](05-ui.md#the-upgrade-note) (UI-ONB-06, UI-ONB-07).
 
 **Tab title:** YouTube Playlist Tools is now Perchling (ticket 30's S3; R98, R142). The old name in the tab tells someone who forgot 1.4.5 what this is.
 
 > # YouTube Playlist Tools is now Perchling
 >
-> **2.0 needs no Google credentials anymore.** It works through the YouTube account you're signed in to in this browser, the way YouTube's own buttons do. The client ID, client secret and sign-in tokens you set up for 1.x have been deleted from this browser.
+> **2.0 needs no Google credentials anymore.** It works through the YouTube account you're signed in to in this browser, the way YouTube's own buttons do. Perchling deleted the client ID, client secret and sign-in tokens you set up for 1.x from this browser.
 > [Remove 1.x's access from your Google account ↗](https://myaccount.google.com/permissions) · If you made a Google Cloud project just for 1.x, you can delete that too.
 >
-> **Pin Perchling to your toolbar** to see when it needs you: click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar. *(ticket 30's S2; R97, R142)*
+> **Pin Perchling to your toolbar** to see when it needs you. Click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar. *(ticket 30's S2; R97, R142)*
 >
-> **Why the new name:** Google's rules don't allow extensions to be named after YouTube, so YouTube Playlist Tools is now Perchling for YouTube™. It's the same add-on, and your settings came along.
+> **Why the new name?** Google's rules don't allow extensions to be named after YouTube, so YouTube Playlist Tools is now Perchling for YouTube™. It's the same add-on, and your settings came along.
 
 *Only if site access is missing* (placed above "Kept"):
 
@@ -340,12 +364,12 @@ This section lists only what actually carried over, and shows only when at least
 **[✓] Auto-add** · *Doesn't change the page*
 
 The row shows only when a playlist came over (`autoAdd.kept` > 0).
-- Adds to {N} playlists you chose in 1.x.
-  - *Instead, when 1.4.5 never got access (`authorised` false):* You chose {N} playlists in 1.x, but 1.x never got access to your account, so nothing has been added to them yet. (R96)
-  - *If `dropped` > 0:* {M} entries weren't playlist IDs and were left out.
+- Adds to the {N} playlists you chose in 1.x.
+  - *Instead, when 1.4.5 never got access (`authorised` false):* You chose {N} playlists in 1.x, but 1.x never got access to your account, so it hasn't added anything to them yet. (R96)
+  - *If `dropped` > 0:* Perchling left out {M} entries that weren't playlist IDs.
 - *Percentage set (`wasUnset` false):* Adds a video once you've watched {P} % of it.
   - *Unset:* the question in [3.3](#33-the-one-question-the-note-asks).
-- Auto-add now counts only what you actually watch. Skipping ahead and ads don't count.
+- Auto-add now counts only what you watch. Skipped parts and ads don't count.
 - It never adds a video twice, and it tells you when an add fails.
 - *Feedback off:* Confirmations stay off, as in 1.x. Failures now always show.
 - *Feedback on:* Confirmations stay on, as in 1.x.
@@ -358,13 +382,13 @@ The row is ticked only when `note` is `ok` or `ctrl-never-fired`. It's shown whe
 - *`ctrl-never-fired`:* {Key} never worked in 1.4.5 because of a bug. It works now.
 - *A bare or Shift-only key:* It no longer fires while you type in a search box or a comment.
 - *`clash` set:* ticket 08's warning, e.g. "YouTube uses K for Play/pause. This shortcut replaces it on YouTube."
-- *If the picker and undo keys got their keys:* Also new: Alt+Shift+P opens a playlist picker, and Alt+U undoes a save while its message is on screen. (R44; [YT-KEY-25](02-youtube.md#285-feedback-and-the-undo-key))
+- *If the picker and undo keys got their keys:* Alt+Shift+P now opens a playlist picker, and Alt+U undoes a save while its message is on screen. (R44; [YT-KEY-25](02-youtube.md#285-feedback-and-the-undo-key))
 - *`unconvertible` (unticked):* Your 1.x key ({raw}) can't be used in 2.0. Set a new one in Settings.
 - *`no-playlist` (unticked):* Your 1.x key {Key} had no playlist. Choose one after you agree.
-- *`no-key` (unticked):* Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings. (R21)
+- *`no-key` (unticked):* Your 1.x shortcut had no key. Perchling kept its playlist. Set a key in Settings. (R21)
 
 > ## New in 2.0
-> All off. Tick any you want, or switch them on later in Settings.
+> They're all off. Tick any you want, or switch them on later in Settings.
 
 Then one unticked row per other feature, with [FT-01](04-features-accounts-data.md#11-the-features)'s names and footprint tags and 05's one-line descriptions ([UI-SET-08, UI-SET-09](05-ui.md#feature-cards)):
 - Quick-save on thumbnails;
@@ -382,9 +406,11 @@ Then the disclosure ([4.1](#41-the-disclosure)), followed by **[Agree and turn o
 
 ### 3.3 The one question the note asks
 
-- **REL-CON-05** The question shows only when `details.pct.wasUnset` is true. That's the one case where 1.4.5 showed one thing and did another.
+For the recognized interim path, REL-MIG-46 governs unknown-history copy and defaults. The known-history questions below must not be shown as claims about unknown history.
 
-> 1.4.5 showed 50 % here, but it was actually adding videos as soon as they started playing. Which do you want?
+- **REL-CON-05** The original legacy question shows only when `details.pct.wasUnset` is true. That's the one case where 1.4.5 showed one thing and did another.
+
+> 1.4.5 showed 50 % here, but it added videos as soon as they started playing. Which do you want?
 > (•) As soon as a video starts playing, like 1.4.5 did
 > ( ) Once half of it is watched, as 1.4.5 showed
 
@@ -406,16 +432,16 @@ Then the disclosure ([4.1](#41-the-disclosure)), followed by **[Agree and turn o
   3. sets `upgradeNote.state = "done"`.
 
   The reconciler then registers, and claiming ([2.10](#210-claiming-the-unclaimed-setup)) starts.
-- **REL-CON-08** On Chrome, if a YouTube Music feature is ticked, or Playlist shortcuts with "Also on YouTube Music" on, the same click calls `permissions.request` for music.youtube.com **first**, before anything is awaited ([ARC-MAN-03](06-architecture.md#631-manifest-per-browser)). (Chrome has no upgraders; the rule is shared with first run, REL-CON-14; R53.)
+- **REL-CON-08** On both browsers, if a YouTube Music feature is ticked, or Playlist shortcuts with "Also on YouTube Music" on, the same click calls `permissions.request` for music.youtube.com **first**, before anything is awaited ([ARC-MAN-03](06-architecture.md#631-manifest-per-browser)). (The rule is shared with first run, REL-CON-14; R53, R179.)
 - **REL-CON-09** On Firefox, Settings sync declares no data type ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration)), so a ticked Settings sync makes Agree ask Firefox for nothing. Only under [§13](#13-if-an-amo-reviewer-objects)'s fallback, if a reviewer made sync an optional data type, would the same click first call `permissions.request({data_collection: […]})`, before anything is awaited. (R83)
 - **REL-CON-10** After Agree the note shows, in place:
 
 > ✓ **You're all set.**
 
 Then one of these, from ticket 11's outcomes:
-- Your auto-add playlists and shortcut from 1.x are now set up for {Account}: {titles}. *(If any were dropped: "{M} of them weren't on this account and were left out.")*
-- Sign in to YouTube and your 1.x playlists will be picked up. *(Signed out.)*
-- Open YouTube and your 1.x playlists will be picked up. *(No YouTube tab open.)*
+- Your auto-add playlists and shortcut from 1.x are now set up for {Account}: {titles}. Only choices actually claimed are named. If the shortcut was skipped, REL-MIG-37's line for checked choices and separate reason replace this line; titles list only claimed choices. Only ownership drops add "Perchling left out {M} of them, because they weren't on this account." (R150, R152)
+- Sign in to YouTube, and Perchling picks up your 1.x playlists. *(Signed out.)*
+- Open YouTube, and Perchling picks up your 1.x playlists. *(No YouTube tab open.)*
 - Your playlists from 1.x belong to another YouTube account. Switch to it on YouTube to use them. **[Switch account]**
 - Your features are on. *(Nothing carried over.)*
 
@@ -435,8 +461,8 @@ Then **[Open YouTube]** **[Open Settings]**.
   - Settings' dialog, or the popup's sheet, when a feature is switched on without consent: "Before this feature can run" ([FT-32](04-features-accounts-data.md#15-the-consent-gate), [UI-ONB-09](05-ui.md#the-disclosure)).
 
 > Perchling works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:
-> - **reads what you watch and listen to there:** the video or song, its channel, and how much of it you've played;
-> - **reads and changes your playlists, as you:** it lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does, using YouTube's own requests;
+> - **reads what you watch and listen to there,** meaning the video or song, its channel, and how much of it you've played;
+> - **reads and changes your playlists as you,** using YouTube's own requests. It lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does;
 > - **reads the YouTube tabs open in a window when you gather them,** or when automatic gathering does: their addresses and titles, to collect their videos. It closes those tabs only if you've asked it to; *(R138)*
 > - **signs those requests the way YouTube's page does,** with YouTube's sign-in cookie, inside the YouTube tab. It never stores that cookie or sends it anywhere else; *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
 > - **watches for the shortcut keys you set** on YouTube and YouTube Music pages, and ignores every other key. Keys you set in your browser for Keys from any tab are caught by the browser itself; *(R88)*
@@ -447,9 +473,9 @@ Then **[Open YouTube]** **[Open Settings]**.
 
   The gathering bullet and "automatic gathering" joined the text with Gather tabs (R138). 2.0 hasn't shipped, so the consent version stays 1 (REL-CON-17).
 - **REL-CON-13** On first run and the upgrade note, the buttons are **Agree and turn on {N} features**, **Agree** (when N = 0) and **Not now**. "Before this feature can run" has **Agree and turn on {Feature}** and **Cancel** (UI-ONB-09).
-- **REL-CON-14** On Chrome, when a YouTube Music feature is ticked, or Playlist shortcuts, whose preset turns "Also on YouTube Music" on, or Keys from any tab ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53, R88):
+- **REL-CON-14** On both browsers, when a YouTube Music feature is ticked, or Playlist shortcuts, whose preset turns "Also on YouTube Music" on, or Keys from any tab ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53, R88):
   - Agree calls `permissions.request` for music.youtube.com first in the click;
-  - step 1 says beforehand: "Chrome will ask for access to music.youtube.com when you agree.";
+  - step 1 says beforehand: "Chrome will ask for access to music.youtube.com when you agree.", or "Firefox will ask for access to music.youtube.com when you agree." on Firefox (R179);
   - if the user denies it, consent and the other ticks still apply. The ticked YouTube Music features, and Playlist shortcuts' "Also on YouTube Music", are saved on but held with "Needs site access", with **Give access** in the popup and Settings. Playlist shortcuts runs on YouTube, and nothing is registered or injected on music.youtube.com until access is granted ([FT-40](04-features-accounts-data.md#16-first-run), [FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). (R14, R53)
 - **Why it reads this way:**
   - **Chrome:** it names Chrome's categories in plain words (web history, user activity, website content, authentication, the account's name), says what each is for, and gets an explicit OK. That's the prominent in-product disclosure Chrome requires. The listing repeats it, because Chrome's two help pages disagree on whether the listing alone is enough (ticket 03).
@@ -466,28 +492,31 @@ First run's three steps (pick features › Before you start › Finish setting u
 ### 4.3 Consent rules
 
 - **REL-CON-16** One consent of our own gates every feature, on both browsers ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md)). It's stored as `device.consent = {v, at}`, per browser, and never synced.
+  - Interim session consent does not carry into canonical agreement. REL-MIG-45 requires fresh agreement before converted choices activate, with the actual version and time (R158).
   - It applies on Firefox too, even when Firefox shows its own data-collection prompt. Firefox's prompt covers data types; ours covers what each feature does, and it's the moment upgraders' choices take effect.
   - *Runner-up:* let Firefox's built-in consent stand in on Firefox. It lost for three reasons: it exists only when a data type is required, and 2.0 declares `none` (R83); it covers neither the feature choice nor claiming; and two consent flows mean two code paths.
+  - In "Before this feature can run", an explicit Agree stays saved if the subsequent site-access request is denied. The affected feature stays off and the popup or Settings explains the missing access. This settles FT-32 with FT-52; first-run saved-on/held behavior and Playlist shortcuts' YouTube-only exception remain unchanged (R154).
+  - If sync admission blocks a combined Agree and synced setting change because the quota is full or an addressed document has a newer version than this browser understands, refuse the whole action before persistence. Save neither consent nor the requested setting. Show the blocker and allow explicit retry after the user resolves it. Never replay the action automatically or fall back to saving consent alone. R154's site-access denial behavior and exceptions remain unchanged. This preflight refusal is distinct from rejected storage IO or uncertain partial application and promises no cross-area atomicity (R161).
 - **REL-CON-17** Consent is versioned through one constant, and 2.0 writes `v: 1`.
   - The version is bumped only when the disclosure text changes.
   - A release must change the disclosure whenever data handling changes (Chrome: "proactively disclose … if data handling practices change").
 - **REL-CON-18** When the stored `v` is lower than the build's, features pause. The popup and the note page then show "Perchling {version} handles your data in a new way. Review and agree to keep it running."
 - **REL-CON-19** A patch release can never change the consent version constant. `hotfix-freeze` enforces this (REL-CI-38).
 - **REL-CON-20** Settings › Privacy & data shows "You agreed on {date}." with **[Read it again]** and **[Withdraw and pause everything]**.
-  - Withdraw asks: "**Withdraw your consent?** Every feature stops in this browser and nothing is read from YouTube until you agree again. Your settings are kept." with **[Withdraw]** **[Cancel]**.
+  - Withdraw asks: "**Withdraw your consent?** Every feature stops in this browser, and Perchling reads nothing from YouTube until you agree again. It keeps your settings." with **[Withdraw]** **[Cancel]**.
   - Withdraw sets consent to `null`. The reconciler unregisters everything, and open tabs tear down.
+  - Withdrawal stops features at once even when unfinished migration, account-removal or sync work is tied to the old agreement. That work is retained inactive with its original evidence, accepted effects and tombstones, and is never silently resumed or discarded. A new Agree alone does not resume it, and only explicit recovery does. Withdrawal never reports immediate shutdown that rests on an unconfirmed write ([FT-35](04-features-accounts-data.md#15-the-consent-gate); R167).
 - **REL-CON-21** Consent may be given from a private window ([DATA-32](04-features-accounts-data.md#47-the-private-window-write-guard), ticket 16's write table).
 
 ## 5. Permission prompts by audience
 
 The manifests are in [06 §6.3.1](06-architecture.md#631-manifest-per-browser) (ARC-MAN-01 to ARC-MAN-05, from ticket 10 §11), and the floors in [§6.3.2](06-architecture.md#632-version-floors). In short:
-- **Both builds:** `permissions: ["storage", "scripting"]`.
-- **Chrome:**
+- **Both builds:**
+  - `permissions: ["storage", "scripting"]`;
   - `host_permissions: ["https://www.youtube.com/*"]`;
-  - `optional_host_permissions: ["https://music.youtube.com/*"]`;
-  - `minimum_chrome_version: "121"`.
+  - `optional_host_permissions: ["https://music.youtube.com/*"]` (R179; Firefox narrows from 1.4.5's `*://*.youtube.com/*`).
+- **Chrome:** `minimum_chrome_version: "121"`.
 - **Firefox:**
-  - `host_permissions: ["*://*.youtube.com/*"]`, the exact pattern 1.4.5's content script was granted;
   - `strict_min_version: "140.0"`;
   - `data_collection_permissions: {required: ["none"]}` (R83).
 - **Removed:** `identity`, `activeTab` and every Google host.
@@ -501,15 +530,17 @@ Ticket 25's check P1 now only glances at the real dialogs. If one differs, this 
 | Audience | When | What they see |
 |---|---|---|
 | **Firefox 1.4.5 upgrader** with youtube.com access (nearly all) | The update, within about a day | **Nothing from Firefox** (REL-CON-22). Then our note tab (§3). |
-| Firefox 1.4.5 upgrader **without** access (125/126 installs, or revoked) | The update | Nothing from Firefox. The note's **Give access to YouTube** opens Firefox's permission prompt for the youtube.com domain. |
+| Firefox 1.4.5 upgrader **without** access (125/126 installs, or revoked) | The update | Nothing from Firefox. The note's **Give access to YouTube** opens Firefox's permission prompt for www.youtube.com. |
+| Firefox 1.4.5 upgrader who used YouTube Music, once Firefox revokes origins no longer declared (Bug 2022704; R179) | The update | Nothing from Firefox. Their YouTube Music features are held with "Needs site access", and **Give access** asks for music.youtube.com as below. |
 | Firefox 1.4.5 upgrader on Firefox < 140 | — | Nothing. They stay on 1.4.5. |
 | Firefox upgrader, **only under [§13](#13-if-an-amo-reviewer-objects)'s fallback**, if a reviewer requires a data type | The update | The update is **held**: an app-menu badge, then about:addons: "You must approve new permissions before the updated version will install…", listing the type (e.g. "website activity"). Cancel keeps 1.4.5 and asks again at the next daily check. |
-| **Firefox new install** (140+) | Install | The header "Add Perchling for YouTube™", with no question mark. Under "Required permissions:", one line: "Access your data for sites in youtube.com domains". `storage` and `scripting` have no line at all. Under "Data collection:": "The developer says this extension doesn't require data collection." Then first run. (about:addons later lists the same grant as "Access your data for sites in the youtube.com domain".) (R83) |
+| **Firefox new install** (140+) | Install | The header "Add Perchling for YouTube™", with no question mark. Under "Required permissions:", one line: "Access your data for www.youtube.com" (R179). `storage` and `scripting` have no line at all. Under "Data collection:": "The developer says this extension doesn't require data collection." Then first run. (about:addons later lists the same grant.) (R83, R179) |
 | Firefox, Settings sync switched on | That click | **Nothing from Firefox:** sync declares no data type ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration); R83). Only under §13's fallback, with sync as an optional type, would it show "Perchling for YouTube™ requests additional data collection", then "New data collection:" with "The developer says the extension wants to collect: {type}", and Allow / Deny. |
 | **Chrome new install** | Install | Add "Perchling for YouTube™"? / It can: **Read and change your data on www.youtube.com**. Then first run. |
 | Chrome, the first thing that needs music.youtube.com: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" (at first run or later; R53) | That click | "Perchling for YouTube™" has requested additional permissions. / It could: **Read and change your data on music.youtube.com**, with Allow / Deny |
+| Firefox, the same first thing (R179) | That click | "Perchling for YouTube™ requests additional permissions." / "It wants to:" **Access your data for music.youtube.com**, with Allow / Deny. *(PROVISIONAL: read from Firefox's string files' optional-permission prompt; P1 glances at the real dialog.)* |
 | Either browser, Save from the browser's menu switched on | That click | **Nothing:** its optional `contextMenus` permission has no warning on Chrome and no message on Firefox, and Firefox grants an optional permission with no message without a dialog ([ARC-MAN-20](06-architecture.md#631-manifest-per-browser); R91) |
-| Either browser, Keys from any tab | Install, update or switch-on | **Nothing from the commands:** they carry no permission and no default key. They're listed, unbound, in the browser's shortcut settings. On Chrome, switching the feature on asks for music.youtube.com access as above (R88). |
+| Either browser, Keys from any tab | Install, update or switch-on | **Nothing from the commands:** they carry no permission and no default key. They're listed, unbound, in the browser's shortcut settings. On either browser, switching the feature on asks for music.youtube.com access as above (R88, R179). |
 | Chrome, the user restricted site access | Any time | No prompt by itself. Our **Give access** button calls Chrome's prompt. On Chrome 133+, while a feature for that site is on, the extension also calls `addHostAccessRequest` on the site's open tabs, so Chrome's extensions menu offers the grant ([FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs), [ARC-ACC-61](06-architecture.md#6212-no-tab-not-signed-in-no-site-access); PROVISIONAL). |
 | Either browser, any later 2.x | The update | **Nothing.** The hotfix lane freezes the manifest. A minor release that adds a warning would disable the Chrome extension until it's accepted and hold Firefox updates, so it needs the checklist's sign-off (REL-CHK-21). |
 
@@ -517,17 +548,20 @@ Ticket 25's check P1 now only glances at the real dialogs. If one differs, this 
   - `storage` and `scripting` were already held, and neither has a message;
   - `commands` and the optional `contextMenus` have no message, and optional permissions are never asked on update (R88, R91);
   - dropping `identity` and `activeTab` is silent;
-  - the origin is unchanged, so no message-bearing permission is new;
+  - the origin narrows from `*://*.youtube.com/*` to `https://www.youtube.com/*`, and narrowing adds no message-bearing permission; the optional music.youtube.com origin is never asked on update (R179);
   - on update, Firefox shows only added *required* data types, never `none`. (R83)
 - **REL-CON-23** Neither `storage` nor `scripting` shows an install warning on either browser. On Firefox they have no message at all (R83).
-- **REL-CON-24** Chrome asks only for www.youtube.com at install. Music.youtube.com is requested only from the click that switches on the first thing that needs it, whether that's first run's Agree, Settings or the popup: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, which includes switching Playlist shortcuts on with that option preset on. The YouTube Music section switch never asks ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
+- **REL-CON-24** Both browsers ask only for www.youtube.com at install (R179). Music.youtube.com is requested only from the click that switches on the first thing that needs it, whether that's first run's Agree, Settings or the popup: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, which includes switching Playlist shortcuts on with that option preset on. The YouTube Music section switch never asks ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
   - If the user denies the prompt raised by switching Playlist shortcuts on in Settings or the popup, Playlist shortcuts goes on and "Also on YouTube Music" turns off, with "No access to YouTube Music, so shortcuts work on YouTube only." shown in place ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). First run's Agree keeps REL-CON-14's rule. (R71)
 
 ## 6. Versioning
 
 - **REL-CI-01** Versions are `MAJOR.MINOR.PATCH`, numbers only. AMO rejects letters for MV3 ("Letters are no longer allowed"), and Chrome allows only dotted integers. `version_name` isn't used, because Firefox ignores it.
 - **REL-CI-02** `package.json`'s `version` is the one source. It feeds both manifests, and the release is tagged `v{version}`. The same number on both stores always means the same source.
-- **REL-CI-03** 2.0.0 is the first 2.x, and 1.5.0 never ships: `package.json` goes from 1.5.0 straight to `1.99.1` at the first beta.
+- **REL-CI-03** 2.0.0 is the first 2.x, and 1.5.0 never ships: `package.json` goes from 1.5.0 straight to `1.99.1` at the first beta. 2.0 replaces 1.4.5 directly (R184).
+  - From the cutover on, `main` carries 2.0 and ships nothing until 2.0 is usable. The cutover deletes the 1.x React app and `src/lib`. `package.json` stays `1.5.0`, which `scripts/release-meta.sh` refuses to release, until the owner sets `1.99.1`. That bump is the release activation (R184).
+  - 2.0 is usable once every 2.0 feature is built and the full suite and both browser builds pass. Only then does the owner activate the `1.99.1` beta (R189).
+  - No build ships between the cutover and the 2.0 migration that replaces the interim safeguards (`removeLegacyCredentials`, `retireLegacyVideoCache`), which go with `src/lib` (R184).
 - **REL-CI-04** Betas sort below the release they precede:
   - 2.0's betas are `1.99.N`, above 1.4.5 and below 2.0.0;
   - a later 2.Y's betas are `2.(Y−1).9NN`;
@@ -661,33 +695,35 @@ The name is Perchling for YouTube™ ([R141](resolutions.md#the-name-perchling-r
 
 > *(AMO only)* Formerly YouTube Playlist Tools.
 >
-> Save the video or song you're looking at to Watch Later or any of your playlists, in one click or with one key, right where you are on YouTube and YouTube Music. Every feature starts off: switch on only what you want, and YouTube looks exactly as before until you do.
+> Save the video or song you're on to Watch Later or any of your playlists, with one click or one key, right where you are on YouTube and YouTube Music. Every feature starts off. Switch on only the ones you want, and YouTube looks the same as before until you do.
 >
-> **On YouTube**
-> • Quick-save on thumbnails: one click saves a video to the playlist you pick; the arrow opens a picker that shows where it already is, and unticking takes it out.
-> • Playlist shortcuts: up to 20 keys, each saving to its own playlist, with your own labels. Alt+W saves to Watch Later.
-> • Auto-add: saves the videos you actually watch to playlists you pick, once you've watched enough of each. You choose how much, per playlist, and can filter by channel. Shorts too, if you want.
-> • Watch-page button: shows auto-add's status under the video, with Save to any playlist.
-> • Queue button on thumbnails: adds a video to the end of the queue, with Undo.
-> • Right-click a video for YouTube's own ⋮ menu, or add Save to ▸ to your browser's own right-click menu instead.
+> On YouTube
+> • Quick-save on thumbnails. One click saves a video to the playlist you pick. The arrow opens a picker that shows where the video already is, and unticking a playlist takes the video out.
+> • Playlist shortcuts. Up to 20 keys, each saving to its own playlist, with your own labels. Alt+W saves to Watch Later.
+> • Auto-add. Saves the videos you actually watch to playlists you pick, once you've watched enough of each. You set how much for each playlist, and can filter by channel. Shorts too, if you want.
+> • Watch-page button. Shows auto-add's status under the video, with Save to any playlist.
+> • Queue button on thumbnails. Adds a video to the end of the queue, with Undo.
+> • Right-click a video for YouTube's own ⋮ menu, or add Save to ▸ to your browser's right-click menu instead.
 > • Create playlists from any chooser.
-> • Gather tabs: gathers the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs, by itself too if you want. A port of GatherTube by Karim Elgazar.
+> • Gather tabs. Collects the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs, automatically too if you want. A port of GatherTube by Karim Elgazar.
 >
-> **On YouTube Music**
-> • Quick actions: Play next and Add to queue right on songs, albums and playlists; Save to playlist and Like for songs; Remove from queue for queued songs. If you want them: Save to library, Start mix, Go to album and Go to artist. Each is one click away, and you pick which buttons show.
-> • Quick-action shortcuts: a key for each, for the song you point at.
+> On YouTube Music
+> • Quick actions. Play next and Add to queue right on songs, albums and playlists, Save to playlist and Like for songs, and Remove from queue for queued songs. Save to library, Start mix, Go to album and Go to artist are there if you want them. Each is one click away, and you pick which buttons show.
+> • Quick-action shortcuts. A key for each action, for the song under your pointer.
 >
-> **Everywhere**
-> • Keys from any tab: save or like the song that's playing, or save the current video to Watch Later, while YouTube is in another tab. You set the keys in your browser.
+> Everywhere
+> • Keys from any tab. Save or like the song that's playing, or save the current video to Watch Later, while YouTube is in another tab. You set these keys in your browser.
 > • Undo on every save, and a list of what you saved since the browser started.
 > • A separate setup for each of your YouTube accounts.
-> • Settings sync across your browsers, through your browser's own sync, off until you turn it on, or save your settings to a file.
+> • Settings sync across your browsers through your browser's own sync, off until you turn it on. You can also save your settings to a file.
 >
-> **How it works**
-> It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, using the same requests YouTube's own buttons send. It needs no Google sign-in, API key or password. Nothing is sent to the developer or to anyone other than YouTube, and there are no analytics or ads. Your settings stay in your browser, and in your browser's own sync if you turn it on.
-> It relies on how YouTube's website works today, so a YouTube change can stop a feature until an update ships. Perchling tells you when that happens.
+> How it works
+> Perchling works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, and sends the same requests YouTube's own buttons send. It needs no Google sign-in, API key or password. Nothing goes to the developer or to anyone other than YouTube, and there are no analytics or ads. Your settings stay in your browser, and in your browser's own sync if you turn it on.
+> Perchling depends on how YouTube's website works today, so a change at YouTube can stop a feature until an update ships. Perchling tells you when that happens.
 >
-> Privacy policy: https://alioun.github.io/yt-playlist-tools/privacy/ · Source code: https://github.com/Alioun/yt-playlist-tools · Problems and ideas (a GitHub account is needed): https://github.com/Alioun/yt-playlist-tools/issues/new/choose
+> Privacy policy: https://alioun.github.io/yt-playlist-tools/privacy/
+> Source code: https://github.com/Alioun/yt-playlist-tools
+> Problems and ideas (needs a GitHub account): https://github.com/Alioun/yt-playlist-tools/issues/new/choose
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
@@ -700,14 +736,14 @@ The name is Perchling for YouTube™ ([R141](resolutions.md#the-name-perchling-r
 - **REL-STORE-06** These notes go to AMO's release notes (sent as `{"en-US": …}`, REL-CI-31), the GitHub release and the site. They live in `store/release-notes/2.0.0.md`.
 
 > 2.0 is a rebuild, and YouTube Playlist Tools is now Perchling for YouTube™.
-> • No Google Cloud credentials anymore: it works through the YouTube account you're signed in to. Your old client ID, secret and tokens are deleted from your browser.
-> • Your auto-add playlists, shortcut, watch percentage and toast setting carry over. Nothing runs until you've reviewed them on the page that opens after the update.
-> • Auto-add counts only what you actually watch, never adds a video twice, and no longer says "Added" when an add failed.
-> • Shortcuts no longer fire while you type, can be cleared, and Ctrl shortcuts work.
-> • New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, Save to ▸ in the browser's right-click menu, creating playlists, Shorts, YouTube Music quick actions, keys from any tab, Gather tabs, a setup per account, and settings sync.
-> • Gather tabs is a port of GatherTube by Karim Elgazar: it gathers the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs.
-> • Also new: unticking a playlist in the picker takes the video out, with Undo; the popup lists what you saved since the browser started; and you can save your settings to a file.
-> • Needs Firefox 140 or later.
+> - No more Google Cloud credentials. Perchling works through the YouTube account you're signed in to, and deletes your old client ID, secret and tokens from your browser.
+> - Your auto-add playlists, shortcut, watch percentage and toast setting carry over. Nothing runs until you've reviewed them on the page that opens after the update.
+> - Auto-add counts only what you actually watch, never adds a video twice, and no longer says "Added" when an add failed.
+> - Shortcuts no longer fire while you type, can be cleared, and Ctrl shortcuts work.
+> - New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, Save to ▸ in the browser's right-click menu, creating playlists, Shorts, YouTube Music quick actions, keys from any tab, Gather tabs, a setup per account, and settings sync.
+> - Gather tabs is a port of GatherTube by Karim Elgazar. It collects the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs.
+> - Unticking a playlist in the picker now takes the video out, with Undo. The popup lists what you saved since the browser started, and you can save your settings to a file.
+> - Needs Firefox 140 or later.
 
 - *Only under §13's fallback, not at launch (R83):* add "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account."
 - The Gather tabs line and its credit are R138's (REL-STORE-38).
@@ -783,7 +819,7 @@ Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube
 
 ### 10.2 Text
 
-- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90), and gathering tabs, with what a gather reads and what leaves (R138). (R10, R18, R43, R48, R57)
+- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). The user approved the drafted text on 2026-11-01. Its cookie bullet stays PROVISIONAL on ticket 25 (R48). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90), and gathering tabs, with what a gather reads and what leaves (R138). (R10, R18, R43, R48, R57)
 
 > # Privacy policy: Perchling for YouTube™
 >
@@ -852,42 +888,73 @@ Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube
 
 - **REL-STORE-20** These answers are kept in `store/cws-dashboard.md`, which the hotfix check freezes (REL-CI-38). They're pasted into the dashboard's Privacy tab.
 
-**Single purpose:**
-> Perchling organises what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes: automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions, or by gathering the YouTube videos open in a window into one list or playlist.
+#### Single purpose
+
+> Perchling files what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes. It does this automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions, or by gathering the YouTube videos open in a window into one list or playlist.
 
 The purpose still holds with Gather tabs: gathering files the user's own YouTube videos into their playlists and queue. Its clause is named so a reviewer finds it there (R138).
 
-**Permission justifications:**
-- **`storage`:** "Keeps the user's settings in the browser: which features are on, the playlists each feature uses per YouTube account, shortcut keys and labels, channel filters, a cached list of the user's playlists, and auto-add's watch progress (deleted after 30 days)."
-- **`scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
-- **`https://www.youtube.com/*`:** "The extension's features run on YouTube: they read which video is playing and how much has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user, and, for Gather tabs, read the addresses and titles of the YouTube tabs open in a window, to collect their videos and close those tabs when the user asks." (R138)
-- **`https://music.youtube.com/*` (optional):** "Requested only when the user switches on a YouTube Music feature, lets their playlist shortcuts work on YouTube Music too, or switches on keys from any tab: it adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab." (R53, R88)
-- **`contextMenus` (optional):** "Requested only when the user switches on Save from the browser's menu: it adds a Save to ▸ entry to the browser's right-click menu on YouTube video links and watch pages. It's given back when the user switches that off." (R91)
+#### Permission justifications
 
-**Remote code:** "No, I am not using remote code." Everything ships in the package. The extension sends YouTube's own requests and hands YouTube's command objects back to YouTube's page code; it fetches and evaluates nothing.
+`storage`
 
-**Data usage.** These follow the policy text rather than the lightest precedent (ticket 03):
+> Keeps the user's settings in the browser: which features are on, the playlists each feature uses for each YouTube account, shortcut keys and labels, channel filters, a cached list of the user's playlists, and auto-add's watch progress, which is deleted after 30 days.
+
+`scripting`
+
+> Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it.
+
+`https://www.youtube.com/*`
+
+> The extension's features run on YouTube. They read which video is playing and how much of it has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user. For Gather tabs, they read the addresses and titles of the YouTube tabs open in a window, to collect their videos and close those tabs when the user asks.
+
+`https://music.youtube.com/*` (optional)
+
+> Requested only when the user switches on a YouTube Music feature, extends their playlist shortcuts to YouTube Music, or switches on keys from any tab. It adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab.
+
+`contextMenus` (optional)
+
+> Requested only when the user switches on Save from the browser's menu. It adds a Save to ▸ entry to the browser's right-click menu on YouTube video links and watch pages, and is given back when the user switches that off.
+
+#### Remote code
+
+Choose "No, I am not using remote code." Everything ships in the package. The extension sends YouTube's own requests and hands YouTube's command objects back to YouTube's page code. It fetches and evaluates nothing.
+
+#### Data usage
+
+These follow the privacy policy rather than the lightest precedent.
 
 | Category | Tick | Because |
 |---|---|---|
-| Personally identifiable information | ✔ | The account's display name and @handle are stored, and synced if sync is on (ticket 11) |
-| Health, Financial and payment, Personal communications, Location | — | Not handled |
-| Authentication information | ✔ **PROVISIONAL (ticket 25)**: unticked if no shipped route reads the session cookie (R48) | The page reads YouTube's sign-in cookie to sign requests (ticket 10 §3) |
-| Web history | ✔ | Which videos were watched, kept as watch progress for up to 30 days, and the YouTube videos open in a window, read when the user gathers them (R138) |
-| User activity | ✔ | Playback progress, the shortcut keys pressed, clicks on our controls |
-| Website content | ✔ | Playlist names and thumbnails, video and channel titles |
+| Personally identifiable information | Yes | The account's display name and @handle are stored, and synced if sync is on |
+| Health information | No | Not handled |
+| Financial and payment information | No | Not handled |
+| Authentication information | Yes | The page reads YouTube's sign-in cookie to sign requests |
+| Personal communications | No | Not handled |
+| Location | No | Not handled |
+| Web history | Yes | Which videos were watched, kept as watch progress for up to 30 days, and the YouTube videos open in a window, read when the user gathers them |
+| User activity | Yes | Playback progress, the shortcut keys pressed, and clicks on the extension's controls |
+| Website content | Yes | Playlist names and thumbnails, and video and channel titles |
 
-**Certifications:** all three:
-- "I do not sell user data to third parties";
-- "…unrelated to my item's single purpose";
-- "…creditworthiness or for lending purposes".
+*(PROVISIONAL on ticket 25 (R48): untick Authentication information if no shipped route reads the session cookie.)*
 
-**Privacy policy URL:** `https://alioun.github.io/yt-playlist-tools/privacy/`.
+Tick all three certifications: the item doesn't sell user data to third parties, doesn't use it for purposes unrelated to its single purpose, and doesn't use it to determine creditworthiness or for lending.
 
-**Test instructions** (optional on Chrome, so given briefly):
-> Sign in to youtube.com with any Google account that has a YouTube channel. On the first-run page, tick Auto-add and Playlist shortcuts, then Agree. Pick a playlist, play any video for a few seconds with the required percentage at 0 % (Settings › YouTube › Auto-add), and press Alt+W to save to Watch later. Add to queue on thumbnails and the YouTube Music queue actions work without signing in.
+#### Privacy policy URL
 
-**Distribution:** all regions. Visibility is Unlisted during the beta and Public at launch (§8.1).
+https://alioun.github.io/yt-playlist-tools/privacy/
+
+#### Test instructions
+
+Optional on Chrome, so they're short.
+
+> Sign in to youtube.com with any Google account that has a YouTube channel. On the first-run page, tick Auto-add and Playlist shortcuts, then click Agree. Pick a playlist, set the required percentage to 0 % (Settings › YouTube › Auto-add), play any video for a few seconds, and press Alt+W to save it to Watch later. Add to queue on thumbnails and the YouTube Music queue actions work without signing in.
+
+#### Distribution
+
+All regions. Visibility is Unlisted during the beta and Public at launch (§8.1).
+
+The answers draw on ticket 03 (the data-usage ticks), ticket 10 §3 (the sign-in cookie), ticket 11 (the stored account name), R53 and R88 (YouTube Music access), R91 (`contextMenus`) and R138 (Gather tabs).
 
 ## 12. AMO
 
@@ -895,10 +962,10 @@ The purpose still holds with Gather tabs: gathering files the user's own YouTube
 
 - **REL-STORE-21** 2.0.0 and every minor release send the full template below.
   - It lives in `store/notes/reviewer-full.md`.
-  - CI fills the `{…}` placeholders from `store/notes/` and the `amo` environment's secrets (REL-CI-46).
+  - CI fills the `{…}` placeholders from `store/notes/` and the `amo` environment's secrets (REL-CI-46), only through a design the owner approved (REL-STORE-24; R186).
   - The notes describe chapter 06's mechanisms, not ticket 19's draft wording, because reviewer notes must describe the shipped package (R17, R49):
     - ADR-0008's two registrations per site ([§6.3.3](06-architecture.md#633-runtime-script-registration), ARC-MAN-08 to ARC-MAN-12);
-    - `scripting.executeScript` for switching on in open tabs, the on-demand check when the popup or settings needs an account or fresh data (Playing now's read included), and the popovers (ARC-MAN-13, ARC-MAN-15, ARC-MAN-16);
+    - `scripting.executeScript` for switching on in open tabs, the on-demand check when the popup or settings needs an account or fresh data (Playing now's read included), the popovers, and the gateway's jobs file on a page's first job (ARC-MAN-13, ARC-MAN-15, ARC-MAN-16, ARC-MAN-26; R200);
     - the start-up reconcile that registers again and re-injects into open tabs after an update ([ARC-MAN-17](06-architecture.md#633-runtime-script-registration));
     - the routes of [06 §6.2.2](06-architecture.md#622-routes) (ARC-ACC-10, ARC-ACC-11), and the resolver found by shape on first use and cached for the page ([§6.2.3](06-architecture.md#623-the-command-resolver-found-by-shape), ARC-ACC-13, ARC-ACC-14; R34, R66).
   - If no shipped route reads the session cookie, route 4 is described as the same same-origin request without signing, and the `SAPISIDHASH` wording goes (R48).
@@ -912,59 +979,74 @@ The purpose still holds with Gather tabs: gathering files the user's own YouTube
 
   (R17, R34, R48, R49, R66, R83)
 
-> **What this is.** 2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Perchling for YouTube™ (same ID and slug). 1.x used the YouTube Data API with users' own OAuth credentials; 2.0 drops that entirely: no `identity` permission, no Google hosts, no server.
->
-> **How it works.**
-> - Every request goes from an open youtube.com or music.youtube.com tab, through the user's own signed-in session, to youtube.com itself.
-> - Per site, two registrations, both made at runtime with `scripting.registerContentScripts` and only while a feature for that site is on:
->   - a `world: "MAIN"` gateway that calls YouTube's own client code;
->   - an isolated-world list: the site core, the UI kit (only if a switched-on feature draws), then one file per switched-on feature.
-> - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, the gateway and site core alone into that one tab; that core draws nothing. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs, and the older copies there retire themselves. Nothing is injected before the user's Agree.
-> - There are no static content scripts and no web-accessible resources.
-> - Two opt-in features register nothing at all. "Keys from any tab" declares three `commands` with no suggested key, which the user binds in Firefox's shortcut settings; "Save from the browser's menu" adds a Save to ▸ menu entry through the optional `contextMenus` permission, requested when the user switches it on and removed when they switch it off. When either is used, the gateway, core and UI kit are injected into that one YouTube tab with `scripting.executeScript`, to run the save there and show its message.
-> - Gather tabs reads the YouTube tabs of one window with `tabs.query({ windowId, url })`, which host access allows without the `tabs` permission. It opens YouTube's own `watch_videos` list in a tab, or adds the videos to YouTube's queue or a playlist through the routes below, then closes those tabs with `tabs.remove` if asked. Its optional automatic triggers use no alarm and no tab or window listener: on watch pages only, while a trigger that needs it is on, the site core tells the background whether the page loaded in the background.
->
-> **Routes, in order of preference:**
-> 1. YouTube's own command resolver (found by shape on first use and cached for the page: the first `default_kevlar_base.<key>` whose `instance.resolveCommand` is a function);
-> 2. YouTube's `yt-service-request` action;
-> 3. YouTube Music's own `ytmusic-app` handlers (`networkManager.fetch`, `app.queue`);
-> 4. only where none of these can do a job quietly, a same-origin `fetch` to `/youtubei/v1/…` signed in the page from YouTube's session cookie exactly as YouTube's code does (`SAPISIDHASH`). *(PROVISIONAL, ticket 25: without signing if no shipped route reads the session cookie, R48)*
->
-> Public data that needs no account (looking up a typed channel, or a video's channel when the page doesn't show it) uses the same same-origin `fetch` without signing.
->
-> No `cookies` permission, no Origin rewriting, no remote code, config or selectors.
->
-> **Endpoints:** `playlist/get_add_to_playlist`, `browse` (`FEplaylist_aggregation`; channel pages), `browse/edit_playlist` (with several actions per request when gathering), `watch_videos` (opened as a page, never fetched), `playlist/create`, `account/account_menu`, `navigation/resolve_url`, `next`, `reel/reel_item_watch`, `music/get_queue`, YouTube's queue commands through its resolver (`addToPlaylistCommand` for the queue, `playlistEditEndpoint` on the queue list, `refreshPlaylistCommand`), and like / queue commands through YouTube Music's handlers. *(PROVISIONAL: the final list is ticket 25's route table, [06 §6.2.6](06-architecture.md#626-route-table-youtubecom) and [§6.2.7](06-architecture.md#627-route-table-youtube-music).)*
->
-> **Permissions:**
-> - `storage`: settings;
-> - `scripting`: per-feature registration and reading from an open tab for the popup;
-> - `*://*.youtube.com/*`: the only site. It's the exact pattern 1.x's content script was granted, kept so the update is silent.
-> - `contextMenus` (optional): only while "Save from the browser's menu" is on.
->
-> **Data collection: `none`.** Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. Route 4 reads YouTube's session cookie in that tab only to sign requests that go to YouTube itself; the cookie is never stored, logged or sent anywhere else. *(PROVISIONAL, ticket 25: this sentence goes if no shipped route reads the session cookie, R48)* Settings sync, off by default, uses the browser's own `storage.sync`, which the developer never sees. A first-run screen discloses this and requires an explicit Agree before any feature runs. "Report a problem" only opens GitHub's new-issue page in a tab, with the version, browser, feature and status filled in for the user to see; nothing reaches the developer unless the user submits the issue on GitHub.
->
-> **Private windows:** nothing from a private session is written to any storage area (one guarded write path in the background).
->
-> **Source:** see `SOURCE_CODE_REVIEW.md` in the sources zip. Bun 1.4.3 installs the dependencies (`npx --yes bun@1.4.3 install --frozen-lockfile`); the build itself is `npm run build:firefox` on Node. CI rebuilds the sources zip this way on ARM64 and x86-64 and checks that the output is identical.
->
-> **Test account:**
-> - {email} / {password}, with backup codes {code1}, {code2} for Google's sign-in check. It's a throwaway account with a YouTube channel and three playlists.
-> - Any Google account with a YouTube channel also works.
->
-> **Try it (5 minutes):**
-> 1. On the first-run page, tick Auto-add, Playlist shortcuts and Queue button on thumbnails, then Agree.
-> 2. Sign in to youtube.com. In "Finish setting up", tick the playlist "Reviewer A".
-> 3. Set Settings › YouTube › Auto-add › required percentage to 0 %, then open any video: "Auto-added “…” to Reviewer A" appears.
-> 4. Press Alt+W: "Saved “…” to Watch later", with Undo; Alt+U undoes it while that message is on screen.
-> 5. On the home page, hover a thumbnail: the queue button adds it to the queue.
-> 6. On music.youtube.com, switch on Quick actions (Settings › YouTube Music) and hover a song: Play next.
->
-> Without signing in, the queue button and YouTube Music's queue actions still work.
+The template is plain text, and AMO shows it as written. The `*(PROVISIONAL …)*` lines are HTML comments in the file, which `scripts/amo-metadata.ts` strips.
 
-- **REL-STORE-22** Patch releases send the **hotfix template**, with the test-account lines appended: "Fixes {feature} after a YouTube change to {internal}. No permission, data or listing changes. Same build instructions as {previous version}." For a bug of our own (REL-CI-39), the first sentence is "Fixes {what went wrong} in {feature}." (R62)
-- **REL-STORE-23** Unlisted betas send the **beta template**: "Pre-release {version} of {next release}, self-distributed to testers. Same build instructions."
+```text
+What this is
+2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Perchling for YouTube™, with the same add-on ID and slug. 1.x used the YouTube Data API with each user's own OAuth credentials. 2.0 drops that entirely. It has no identity permission, no Google hosts and no server.
+
+How it works
+- Every request goes from an open youtube.com or music.youtube.com tab, through the user's own signed-in session, to youtube.com itself.
+- Each site gets two registrations, both made at runtime with scripting.registerContentScripts and only while a feature for that site is on:
+  - a world: "MAIN" gateway that calls YouTube's own client code;
+  - an isolated-world list with the site core, the UI kit (only if a switched-on feature draws), then one file per switched-on feature.
+- When the user switches a feature on, scripting.executeScript injects the same files into tabs of that site that are already open, so no reload is needed. It also loads the playlist picker (popovers.js) on first use. When the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, it injects the gateway and site core alone into that one tab, and that core draws nothing. The gateway's job code is a second world: "MAIN" file, page-jobs-www.js or page-jobs-music.js. scripting.executeScript injects it into a tab the first time that page runs a job, so a page that never runs one doesn't load it. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs, and the older copies there retire themselves. Nothing is injected before the user clicks Agree.
+- There are no static content scripts and no web-accessible resources.
+- Two opt-in features register nothing at all. "Keys from any tab" declares three commands with no suggested key, which the user binds in Firefox's shortcut settings. "Save from the browser's menu" adds a Save to ▸ menu entry through the optional contextMenus permission, which it requests when the user switches it on and removes when they switch it off. When either is used, the gateway, core and UI kit are injected into that one YouTube tab with scripting.executeScript, to run the save there and show its message.
+- Gather tabs reads the YouTube tabs of one window with tabs.query({ windowId, url }), which host access allows without the tabs permission. It opens YouTube's own watch_videos list in a tab, or adds the videos to YouTube's queue or a playlist through the routes below, then closes those tabs with tabs.remove if the user asked. Its optional automatic triggers use no alarm and no tab or window listener. On watch pages only, while a trigger that needs it is on, the site core tells the background whether the page loaded in the background.
+
+Routes, in order of preference
+1. YouTube's own command resolver, found by shape on first use and cached for the page. It is the first default_kevlar_base.<key> whose instance.resolveCommand is a function.
+2. YouTube's yt-service-request action.
+3. YouTube Music's own ytmusic-app handlers (networkManager.fetch, app.queue).
+4. Only where none of these can do a job quietly, a same-origin fetch to /youtubei/v1/… that the page signs from YouTube's session cookie the same way YouTube's code does (SAPISIDHASH).
+*(PROVISIONAL on ticket 25 (R48): if no shipped route reads the session cookie, route 4 becomes the same request without signing, and SAPISIDHASH goes.)*
+
+Public data that needs no account, such as looking up a typed channel or a video's channel when the page doesn't show it, uses the same same-origin fetch without signing.
+
+There is no cookies permission, no Origin rewriting, and no remote code, config or selectors.
+
+Endpoints
+playlist/get_add_to_playlist, browse (FEplaylist_aggregation and channel pages), browse/edit_playlist (with several actions per request when gathering), watch_videos (opened as a page, never fetched), playlist/create, account/account_menu, navigation/resolve_url, next, reel/reel_item_watch, music/get_queue, YouTube's queue commands through its resolver (addToPlaylistCommand for the queue, playlistEditEndpoint on the queue list, refreshPlaylistCommand), and like and queue commands through YouTube Music's handlers.
+*(PROVISIONAL: the final list is ticket 25's route table (06 §6.2.6 and §6.2.7).)*
+
+Permissions
+- storage holds the settings.
+- scripting registers each feature's scripts, and reads from an open tab for the popup.
+- https://www.youtube.com/* is the only site requested at install.
+- https://music.youtube.com/* is optional. Perchling requests it only when the user switches on a YouTube Music feature, extends playlist shortcuts to YouTube Music, or switches on keys from any tab.
+- contextMenus is optional, and held only while "Save from the browser's menu" is on.
+
+Data collection: none
+Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. Route 4 reads YouTube's session cookie in that tab only to sign requests that go to YouTube itself. The cookie is never stored, logged or sent anywhere else.
+*(PROVISIONAL on ticket 25 (R48): the two cookie sentences above go if no shipped route reads the session cookie.)*
+Settings sync is off by default and uses the browser's own storage.sync, which the developer never sees. A first-run screen discloses all of this and requires an explicit Agree before any feature runs. "Report a problem" only opens GitHub's new-issue page in a tab, with the version, browser, feature and status filled in for the user to see. Nothing reaches the developer unless the user submits the issue on GitHub.
+
+Private windows
+Nothing from a private session is written to any storage area. One guarded write path in the background enforces this.
+
+Source
+See SOURCE_CODE_REVIEW.md in the sources zip. Bun 1.4.3 installs the dependencies (npx --yes bun@1.4.3 install --frozen-lockfile), and the build itself is npm run build:firefox on Node. CI rebuilds the sources zip this way on ARM64 and x86-64 and checks that the output is identical.
+
+Test account
+- {email} / {password}, with the backup codes {code1} and {code2} for Google's sign-in check. It's a throwaway account with a YouTube channel and three playlists.
+- Any Google account with a YouTube channel also works.
+
+Try it (5 minutes)
+1. On the first-run page, tick Auto-add, Playlist shortcuts and Queue button on thumbnails, then click Agree.
+2. Sign in to youtube.com. In "Finish setting up", tick the playlist "Reviewer A".
+3. In Settings › YouTube › Auto-add, set the required percentage to 0 %, then open any video. The message Auto-added “…” to Reviewer A appears.
+4. Press Alt+W. The message Saved “…” to Watch later appears, with Undo. Alt+U undoes the save while that message is on screen.
+5. On the home page, hover a thumbnail. The queue button adds the video to the queue.
+6. On music.youtube.com, switch on Quick actions (Settings › YouTube Music) and hover a song to see Play next.
+
+Without signing in, the queue button and YouTube Music's queue actions still work.
+```
+
+- **REL-STORE-22** Patch releases send the **hotfix template**, `store/notes/reviewer-hotfix.md`, with the test-account lines appended: "{fix} No permission, data or listing changes. Same build instructions as {previous version}, in SOURCE_CODE_REVIEW.md in the sources zip." `{fix}` is the first line of `store/notes/hotfix/{version}.md`, which each hotfix writes. After a YouTube change it reads "Fixes {feature} after a YouTube change to {internal}.", for example "Fixes auto-add after a YouTube change to the watch page's player data." For a bug of our own (REL-CI-39), it reads "Fixes {what went wrong} in {feature}.", for example "Fixes the shortcut recorder in Playlist shortcuts." (R62)
+- **REL-STORE-23** Unlisted betas send the **beta template**, `store/notes/reviewer-beta.md`: "Pre-release {version} of {next release}, self-distributed to beta testers. Same build instructions, in SOURCE_CODE_REVIEW.md in the sources zip."
 - **REL-STORE-24** The reviewer credentials reach CI only through the `amo` environment secret `AMO_REVIEWER_LOGIN`, and never appear in the repo.
+  - CI fills them only through a design with credential-free tests that the owner approved, run from a frozen copy agents can't change. A change to that design or its helpers needs the tests and the owner's approval again (R186).
   - This isn't ADR-0005's "no Google account in CI": CI never signs in to anything. It only pastes text that AMO shows to reviewers.
   - *Runner-up:* "any Google account works", with no credentials. It lost because AMO requires test credentials when an account is needed, and reviewers may not use personal accounts.
 - **REL-STORE-25** AMO reviewers sign in from unfamiliar places, which triggers Google's verification. So the account has 2-Step Verification with backup codes, and two fresh codes go into each submission. The checklist has the user refresh them (REL-CHK-24).
@@ -985,31 +1067,50 @@ The purpose still holds with Gather tabs: gathering files the user's own YouTube
 
 > # Building Perchling for YouTube™ from source
 >
-> Built and checked on Ubuntu 24.04 **ARM64** and x86-64 with Node 24 (the AMO reviewer environment). No secrets, environment variables or network access are needed beyond the npm registry.
+> Built and checked on Ubuntu 24.04 on ARM64 and x86-64 with Node 24, the AMO reviewer environment. The build needs no secrets, environment variables or network access beyond the npm registry.
 >
-> **Bun is used only to install the dependencies, because the lockfile is Bun's. The build itself runs on Node, with your own npm.**
+> Bun only installs the dependencies, because the lockfile is Bun's. The build itself runs on Node, with your own npm.
 >
-> 1. Install the exact dependencies pinned in `bun.lock`, from the npm registry, with Bun 1.4.3 fetched through npm (nothing is installed globally):
->    `npx --yes bun@1.4.3 install --frozen-lockfile`
->    (Alternatives: `npm install --global bun@1.4.3`, or `curl -fsSL https://bun.com/install | bash -s "bun-v1.4.3"`.)
-> 2. Build the Firefox package on Node:
->    `npm run build:firefox`
->    This runs `wxt build -b firefox`; `wxt.config.ts` and `build/` use only Node APIs.
-> 3. The output is in `.output/firefox-mv3/`. Compare it with the submitted package: `diff -r .output/firefox-mv3 <unzipped submission>`.
+> 1. Install the exact dependencies pinned in `bun.lock` from the npm registry, with Bun 1.4.3 fetched through npm. Nothing is installed globally.
 >
-> `npm run build-for-amo` runs steps 1–2 for AMO's automatic builder.
+>    ```sh
+>    npx --yes bun@1.4.3 install --frozen-lockfile
+>    ```
 >
-> **What the build does:** WXT (Vite) compiles the TypeScript and Svelte sources in `src/` and bundles each entrypoint. Every third-party package comes unmodified from npm and is listed in `package.json` and `bun.lock`. The output contains no native code, so it's the same on ARM64 and x86-64; CI checks this on both for every release.
+>    Two other ways to get the same Bun are `npm install --global bun@1.4.3` and `curl -fsSL https://bun.com/install | bash -s "bun-v1.4.3"`.
 >
-> **Layout:**
-> - `src/entrypoints/`: thin WXT entrypoints.
-> - `src/background/`: storage, script registration, adds.
-> - `src/page/`: the page-world gateway that calls YouTube's own client.
-> - `src/site/`: the isolated-world core, the UI kit and the features.
-> - `src/ui/`: the popup, settings and the first-run page.
-> - `src/shared/`: shared code.
-> - `build/`: build helpers.
-> - `src/livecheck/`: a developer-only page. `build/livecheck.ts` drops it from every store build, and CI's `check:zip` verifies that.
+> 2. Build the Firefox package on Node.
+>
+>    ```sh
+>    npm run build:firefox
+>    ```
+>
+>    This runs `wxt build -b firefox`. `wxt.config.ts` and `build/` use only Node APIs.
+>
+> 3. The output is in `.output/firefox-mv3/`. Compare it with the submitted package.
+>
+>    ```sh
+>    diff -r .output/firefox-mv3 <unzipped submission>
+>    ```
+>
+> `npm run build-for-amo` runs steps 1 and 2 for AMO's automatic builder.
+>
+> ## What the build does
+>
+> WXT, on Vite, compiles the TypeScript and Svelte sources in `src/` and bundles each entrypoint. Every third-party package comes unmodified from npm and is listed in `package.json` and `bun.lock`. The output contains no native code, so it's the same on ARM64 and x86-64. CI checks this on both for every release.
+>
+> ## Layout
+>
+> | Folder | What it holds |
+> |---|---|
+> | `src/entrypoints/` | Thin WXT entrypoints |
+> | `src/background/` | Storage, script registration and adds |
+> | `src/page/` | The page-world gateway that calls YouTube's own client. Its jobs build into a second file per site, which the background injects into a tab when that page runs its first job. |
+> | `src/site/` | The isolated-world core, the UI kit and the features |
+> | `src/ui/` | The popup, settings and the first-run page |
+> | `src/shared/` | Code the other folders share |
+> | `build/` | Build helpers |
+> | `src/livecheck/` | A page for the developer only. `build/livecheck.ts` drops it from every store build, and CI's `check:zip` verifies that. |
 >
 > License: MPL-2.0.
 
@@ -1171,7 +1272,7 @@ The watch itself, with its needles, the browser watch and the inconclusive rules
 
 ### 14.6 Secrets, variables and environments
 
-- **REL-CI-46** There are two GitHub environments. Both are free on public repos, have the developer as required reviewer, and allow self-review.
+- **REL-CI-46** There are two GitHub environments. Both are free on public repos, have the developer as required reviewer, and allow self-review. A job reads their secrets only through an owner-approved design with credential-free tests, run from a frozen copy (REL-STORE-24; R186).
   - **`amo`:** the secrets `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET` and `AMO_REVIEWER_LOGIN`, The add-on's GUID and slug are public, so `release.yml` holds them itself rather than an environment variable (R21, R148).
   - **`cws`:** `CHROME_PUBLISHER_ID`, `CHROME_EXTENSION_ID`, `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL` and `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY`. Store the PEM with real newlines, because the submit path doesn't convert `\n`. (R21)
 - **REL-CI-47** Repo variables:
@@ -1372,7 +1473,7 @@ The IDs these items rest on:
 **REL-CHK-25** These are the tasks only the user can do. They're tracked in [for-the-user.md](../for-the-user.md) until done.
 
 **Decisions:**
-- Read and approve the privacy policy (§10.2), which is published under the user's name.
+- Read and approve the privacy policy (§10.2), which is published under the user's name. Done on 2026-11-01, as drafted. The cookie bullet stays PROVISIONAL on ticket 25 and goes if no shipped route reads the session cookie (R48). Ticket 25 runs after the first beta, which ships with the provisional line (R190).
 - Optionally, choose a custom domain (§10.1).
 
 The name is settled: Perchling for YouTube™, chosen on 2026-10-20 (R141). A support e-mail isn't wanted: the user decided on GitHub issues alone on 2026-10-20 (§16; R89).
@@ -1427,7 +1528,7 @@ Settled by the main session in [resolutions.md](resolutions.md), or by the ticke
 - **A `/beta/` page** (was Not pinned down): a minimal `{site}/beta/` page with the signed `.xpi` link and install steps (REL-STORE-12). R21.
 - **`FIREFOX_EXTENSION_ID` in CI** (was Not pinned down): a variable in the `amo` environment (REL-CI-46). R21.
 - **When a fresh install writes `schema: 1`** (was Not pinned down): at the first background start, before consent (REL-MIG-04). R21. Its side effect on REL-MIG-03's `onInstalled` trigger is fixed by R64, below.
-- **A shortcut playlist with no key** (was Not pinned down): the note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (REL-MIG-20, REL-MIG-39, REL-CON-04). R21.
+- **A shortcut playlist with no key** (was Not pinned down): the note says "Your 1.x shortcut had no key. Perchling kept its playlist. Set a key in Settings." (REL-MIG-20, REL-MIG-39, REL-CON-04). R21.
 - **Chrome's soak resubmission** (was Not pinned down): by hand, as Public with staged publishing (§8.1, REL-CHK-02, §18). R21.
 
 Settled in the second round:
@@ -1511,4 +1612,4 @@ The wordmark and store images, made once the name was decided ([R145–R147](res
 
 ### Not pinned down
 
-None remain; see [Resolved during assembly](#resolved-during-assembly). What still waits on the user or ticket 25's live checks is marked PROVISIONAL inline and listed in [§0](#0-provisional-inputs). Ticket 23 no longer waits: R83 settled it.
+Q7–Q10 and Q11a are settled by R156–R160 in §2.12. Detailed collision and recovery UI, compatible local representation, ordered execution and production ownership/session evidence remain outstanding as stated there. These amendments do not establish a working converter. Other inputs still waiting on the user or ticket 25's live checks are marked PROVISIONAL inline and listed in [§0](#0-provisional-inputs). Ticket 23 no longer waits. R83 settled it.

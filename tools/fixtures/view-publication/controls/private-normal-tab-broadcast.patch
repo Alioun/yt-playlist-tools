@@ -1,0 +1,11 @@
+--- a/src/background/tab-view/publication.ts
++++ b/src/background/tab-view/publication.ts
+@@ -97,7 +97,7 @@
+   const ready = ports.tabs.known({ kind: "all" }, lifetime.signal).then(() => {}, () => {})
+   subscribe(ports.owner.subscribeView(event => request(viewChangeTarget(event)), dispose))
+   subscribe(ports.monitor.subscribeView(event => request(event), dispose))
+-  subscribe(ports.privateSkips.subscribePrivateSkips(event => request({ kind: "account", acct: event.acct, scope: event.scope }), dispose))
++  subscribe(ports.privateSkips.subscribePrivateSkips(event => request({ kind: "account", acct: event.acct, scope: "all" }), dispose))
+   subscribe(ports.tabs.subscribeLifetime(dispose))
+   return { ready, dispose }
+ }

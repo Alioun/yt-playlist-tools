@@ -1,0 +1,1890 @@
+{
+  "state": "byte-and-mode-identical-unexecuted",
+  "inventories": [
+    {
+      "group": "owner170",
+      "path": "tools/fixtures/owner-services-reconciliation/gate-census.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 72178,
+        "sha256": "3ee45f439fe12826c056aef2d1473ceebad3f900ba1a277e57fc87cc385f2641",
+        "gitBlob": "13c56a2dc98e3bf73acba341fdb7388153a6150a"
+      },
+      "count": 170,
+      "entries": [
+        {
+          "index": 0,
+          "id": "format:focused",
+          "state": "unexecuted"
+        },
+        {
+          "index": 1,
+          "id": "format:whole",
+          "state": "unexecuted"
+        },
+        {
+          "index": 2,
+          "id": "format:probes",
+          "state": "unexecuted"
+        },
+        {
+          "index": 3,
+          "id": "format:behavior",
+          "state": "unexecuted"
+        },
+        {
+          "index": 4,
+          "id": "format:consumer",
+          "state": "unexecuted"
+        },
+        {
+          "index": 5,
+          "id": "format:guards",
+          "state": "unexecuted"
+        },
+        {
+          "index": 6,
+          "id": "format:controls",
+          "state": "unexecuted"
+        },
+        {
+          "index": 7,
+          "id": "file-owner:focused",
+          "state": "unexecuted"
+        },
+        {
+          "index": 8,
+          "id": "file-owner:whole",
+          "state": "unexecuted"
+        },
+        {
+          "index": 9,
+          "id": "file-owner:probes",
+          "state": "unexecuted"
+        },
+        {
+          "index": 10,
+          "id": "file-owner:behavior",
+          "state": "unexecuted"
+        },
+        {
+          "index": 11,
+          "id": "file-owner:consumer",
+          "state": "unexecuted"
+        },
+        {
+          "index": 12,
+          "id": "file-owner:guards",
+          "state": "unexecuted"
+        },
+        {
+          "index": 13,
+          "id": "file-owner:controls",
+          "state": "unexecuted"
+        },
+        {
+          "index": 14,
+          "id": "file-owner:format-focused",
+          "state": "unexecuted"
+        },
+        {
+          "index": 15,
+          "id": "file-owner:format-whole",
+          "state": "unexecuted"
+        },
+        {
+          "index": 16,
+          "id": "file-owner:format-probes",
+          "state": "unexecuted"
+        },
+        {
+          "index": 17,
+          "id": "file-owner:format-behavior",
+          "state": "unexecuted"
+        },
+        {
+          "index": 18,
+          "id": "file-owner:format-consumer",
+          "state": "unexecuted"
+        },
+        {
+          "index": 19,
+          "id": "file-owner:format-guards",
+          "state": "unexecuted"
+        },
+        {
+          "index": 20,
+          "id": "file-owner:format-controls",
+          "state": "unexecuted"
+        },
+        {
+          "index": 21,
+          "id": "accounts:focused-types",
+          "state": "unexecuted"
+        },
+        {
+          "index": 22,
+          "id": "accounts:whole-types",
+          "state": "unexecuted"
+        },
+        {
+          "index": 23,
+          "id": "accounts:focused-inclusion",
+          "state": "unexecuted"
+        },
+        {
+          "index": 24,
+          "id": "accounts:behavior",
+          "state": "unexecuted"
+        },
+        {
+          "index": 25,
+          "id": "accounts:consumer-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 26,
+          "id": "accounts:consumer-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 27,
+          "id": "accounts:regression-owner-destination",
+          "state": "unexecuted"
+        },
+        {
+          "index": 28,
+          "id": "accounts:regression-cache-auto-add",
+          "state": "unexecuted"
+        },
+        {
+          "index": 29,
+          "id": "accounts:regression-removal",
+          "state": "unexecuted"
+        },
+        {
+          "index": 30,
+          "id": "accounts:regression-session-tabs",
+          "state": "unexecuted"
+        },
+        {
+          "index": 31,
+          "id": "accounts:regression-consent-add-flow",
+          "state": "unexecuted"
+        },
+        {
+          "index": 32,
+          "id": "accounts:regression-rpc",
+          "state": "unexecuted"
+        },
+        {
+          "index": 33,
+          "id": "accounts:regression-architecture",
+          "state": "unexecuted"
+        },
+        {
+          "index": 34,
+          "id": "accounts:type-negative-01",
+          "state": "unexecuted"
+        },
+        {
+          "index": 35,
+          "id": "accounts:type-negative-02",
+          "state": "unexecuted"
+        },
+        {
+          "index": 36,
+          "id": "accounts:type-negative-03",
+          "state": "unexecuted"
+        },
+        {
+          "index": 37,
+          "id": "accounts:type-negative-04",
+          "state": "unexecuted"
+        },
+        {
+          "index": 38,
+          "id": "accounts:type-negative-05",
+          "state": "unexecuted"
+        },
+        {
+          "index": 39,
+          "id": "accounts:type-negative-06",
+          "state": "unexecuted"
+        },
+        {
+          "index": 40,
+          "id": "accounts:type-negative-07",
+          "state": "unexecuted"
+        },
+        {
+          "index": 41,
+          "id": "accounts:type-negative-08",
+          "state": "unexecuted"
+        },
+        {
+          "index": 42,
+          "id": "accounts:type-negative-09",
+          "state": "unexecuted"
+        },
+        {
+          "index": 43,
+          "id": "accounts:type-negative-10",
+          "state": "unexecuted"
+        },
+        {
+          "index": 44,
+          "id": "accounts:type-negative-11",
+          "state": "unexecuted"
+        },
+        {
+          "index": 45,
+          "id": "accounts:type-negative-12",
+          "state": "unexecuted"
+        },
+        {
+          "index": 46,
+          "id": "accounts:control-private-persistence",
+          "state": "unexecuted"
+        },
+        {
+          "index": 47,
+          "id": "accounts:control-no-setup-creation",
+          "state": "unexecuted"
+        },
+        {
+          "index": 48,
+          "id": "accounts:control-stale-revival",
+          "state": "unexecuted"
+        },
+        {
+          "index": 49,
+          "id": "accounts:control-dropped-cache-fields",
+          "state": "unexecuted"
+        },
+        {
+          "index": 50,
+          "id": "accounts:control-redundant-setup-generation",
+          "state": "unexecuted"
+        },
+        {
+          "index": 51,
+          "id": "accounts:control-false-confirmed-result",
+          "state": "unexecuted"
+        },
+        {
+          "index": 52,
+          "id": "accounts:build-chrome",
+          "state": "unexecuted"
+        },
+        {
+          "index": 53,
+          "id": "accounts:build-firefox",
+          "state": "unexecuted"
+        },
+        {
+          "index": 54,
+          "id": "publication:publication-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 55,
+          "id": "publication:extlink-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 56,
+          "id": "publication:focused-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 57,
+          "id": "publication:focused-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 58,
+          "id": "publication:focused-3",
+          "state": "unexecuted"
+        },
+        {
+          "index": 59,
+          "id": "publication:focused-4",
+          "state": "unexecuted"
+        },
+        {
+          "index": 60,
+          "id": "publication:focused-5",
+          "state": "unexecuted"
+        },
+        {
+          "index": 61,
+          "id": "publication:regression-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 62,
+          "id": "publication:regression-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 63,
+          "id": "publication:regression-3",
+          "state": "unexecuted"
+        },
+        {
+          "index": 64,
+          "id": "publication:regression-4",
+          "state": "unexecuted"
+        },
+        {
+          "index": 65,
+          "id": "publication:regression-5",
+          "state": "unexecuted"
+        },
+        {
+          "index": 66,
+          "id": "publication:regression-6",
+          "state": "unexecuted"
+        },
+        {
+          "index": 67,
+          "id": "publication:regression-7",
+          "state": "unexecuted"
+        },
+        {
+          "index": 68,
+          "id": "publication:regression-8",
+          "state": "unexecuted"
+        },
+        {
+          "index": 69,
+          "id": "publication:regression-9",
+          "state": "unexecuted"
+        },
+        {
+          "index": 70,
+          "id": "publication:regression-10",
+          "state": "unexecuted"
+        },
+        {
+          "index": 71,
+          "id": "publication:regression-11",
+          "state": "unexecuted"
+        },
+        {
+          "index": 72,
+          "id": "publication:regression-12",
+          "state": "unexecuted"
+        },
+        {
+          "index": 73,
+          "id": "publication:regression-13",
+          "state": "unexecuted"
+        },
+        {
+          "index": 74,
+          "id": "publication:regression-14",
+          "state": "unexecuted"
+        },
+        {
+          "index": 75,
+          "id": "publication:regression-15",
+          "state": "unexecuted"
+        },
+        {
+          "index": 76,
+          "id": "publication:regression-16",
+          "state": "unexecuted"
+        },
+        {
+          "index": 77,
+          "id": "publication:regression-17",
+          "state": "unexecuted"
+        },
+        {
+          "index": 78,
+          "id": "publication:regression-18",
+          "state": "unexecuted"
+        },
+        {
+          "index": 79,
+          "id": "publication:regression-19",
+          "state": "unexecuted"
+        },
+        {
+          "index": 80,
+          "id": "publication:regression-20",
+          "state": "unexecuted"
+        },
+        {
+          "index": 81,
+          "id": "publication:regression-21",
+          "state": "unexecuted"
+        },
+        {
+          "index": 82,
+          "id": "publication:regression-22",
+          "state": "unexecuted"
+        },
+        {
+          "index": 83,
+          "id": "publication:regression-23",
+          "state": "unexecuted"
+        },
+        {
+          "index": 84,
+          "id": "publication:regression-24",
+          "state": "unexecuted"
+        },
+        {
+          "index": 85,
+          "id": "publication:regression-25",
+          "state": "unexecuted"
+        },
+        {
+          "index": 86,
+          "id": "publication:regression-26",
+          "state": "unexecuted"
+        },
+        {
+          "index": 87,
+          "id": "publication:regression-27",
+          "state": "unexecuted"
+        },
+        {
+          "index": 88,
+          "id": "publication:unknown-collection-proof",
+          "state": "unexecuted"
+        },
+        {
+          "index": 89,
+          "id": "publication:complete-eof-consumer",
+          "state": "unexecuted"
+        },
+        {
+          "index": 90,
+          "id": "publication:type-publication-missing-producer",
+          "state": "unexecuted"
+        },
+        {
+          "index": 91,
+          "id": "publication:type-publication-partial-producer",
+          "state": "unexecuted"
+        },
+        {
+          "index": 92,
+          "id": "publication:type-publication-missing-validator",
+          "state": "unexecuted"
+        },
+        {
+          "index": 93,
+          "id": "publication:type-publication-invented-target",
+          "state": "unexecuted"
+        },
+        {
+          "index": 94,
+          "id": "publication:type-publication-fake-account",
+          "state": "unexecuted"
+        },
+        {
+          "index": 95,
+          "id": "publication:type-publication-privacy-mixing",
+          "state": "unexecuted"
+        },
+        {
+          "index": 96,
+          "id": "publication:type-publication-fabricated-handle",
+          "state": "unexecuted"
+        },
+        {
+          "index": 97,
+          "id": "publication:type-publication-disposed-handle",
+          "state": "unexecuted"
+        },
+        {
+          "index": 98,
+          "id": "publication:type-publication-monitor-required",
+          "state": "unexecuted"
+        },
+        {
+          "index": 99,
+          "id": "publication:type-publication-private-storage-event",
+          "state": "unexecuted"
+        },
+        {
+          "index": 100,
+          "id": "publication:type-tabs-target-account-required",
+          "state": "unexecuted"
+        },
+        {
+          "index": 101,
+          "id": "publication:type-tabs-target-not-requester",
+          "state": "unexecuted"
+        },
+        {
+          "index": 102,
+          "id": "publication:type-tabs-target-opaque",
+          "state": "unexecuted"
+        },
+        {
+          "index": 103,
+          "id": "publication:type-tabs-publish-cancellation",
+          "state": "unexecuted"
+        },
+        {
+          "index": 104,
+          "id": "publication:type-monitor-view-not-generic",
+          "state": "unexecuted"
+        },
+        {
+          "index": 105,
+          "id": "publication:type-owner-view-no-fake-account",
+          "state": "unexecuted"
+        },
+        {
+          "index": 106,
+          "id": "publication:type-owner-view-no-cache-event",
+          "state": "unexecuted"
+        },
+        {
+          "index": 107,
+          "id": "publication:control-privacy-broadcast",
+          "state": "unexecuted"
+        },
+        {
+          "index": 108,
+          "id": "publication:control-omitted-coalescing",
+          "state": "unexecuted"
+        },
+        {
+          "index": 109,
+          "id": "publication:control-stale-projection-reuse",
+          "state": "unexecuted"
+        },
+        {
+          "index": 110,
+          "id": "publication:control-missing-sync-filter-event",
+          "state": "unexecuted"
+        },
+        {
+          "index": 111,
+          "id": "publication:control-optimistic-before-readback",
+          "state": "unexecuted"
+        },
+        {
+          "index": 112,
+          "id": "publication:control-lost-removed-account",
+          "state": "unexecuted"
+        },
+        {
+          "index": 113,
+          "id": "publication:control-all-monitor-notifications",
+          "state": "unexecuted"
+        },
+        {
+          "index": 114,
+          "id": "publication:control-timer-after-disposal",
+          "state": "unexecuted"
+        },
+        {
+          "index": 115,
+          "id": "publication:preserved-monitor-61",
+          "state": "unexecuted"
+        },
+        {
+          "index": 116,
+          "id": "publication:preserved-monitor-62",
+          "state": "unexecuted"
+        },
+        {
+          "index": 117,
+          "id": "publication:preserved-monitor-63",
+          "state": "unexecuted"
+        },
+        {
+          "index": 118,
+          "id": "publication:preserved-monitor-64",
+          "state": "unexecuted"
+        },
+        {
+          "index": 119,
+          "id": "publication:private-skip-behavior",
+          "state": "unexecuted"
+        },
+        {
+          "index": 120,
+          "id": "publication:type-publication-private-source-required",
+          "state": "unexecuted"
+        },
+        {
+          "index": 121,
+          "id": "publication:type-add-flow-private-scope",
+          "state": "unexecuted"
+        },
+        {
+          "index": 122,
+          "id": "publication:control-private-normal-tab-broadcast",
+          "state": "unexecuted"
+        },
+        {
+          "index": 123,
+          "id": "publication:control-omitted-internal-private-event",
+          "state": "unexecuted"
+        },
+        {
+          "index": 124,
+          "id": "publication:control-private-notification-before-load",
+          "state": "unexecuted"
+        },
+        {
+          "index": 125,
+          "id": "publication:control-private-deadline-after-disposal",
+          "state": "unexecuted"
+        },
+        {
+          "index": 126,
+          "id": "publication:job-stream-guards",
+          "state": "unexecuted"
+        },
+        {
+          "index": 127,
+          "id": "publication:page-message-guards",
+          "state": "unexecuted"
+        },
+        {
+          "index": 128,
+          "id": "publication:complete-view-guards",
+          "state": "unexecuted"
+        },
+        {
+          "index": 129,
+          "id": "import-planner:compiler",
+          "state": "unexecuted"
+        },
+        {
+          "index": 130,
+          "id": "import-planner:whole-compiler",
+          "state": "unexecuted"
+        },
+        {
+          "index": 131,
+          "id": "import-planner:tests",
+          "state": "unexecuted"
+        },
+        {
+          "index": 132,
+          "id": "import-planner:consumer",
+          "state": "unexecuted"
+        },
+        {
+          "index": 133,
+          "id": "import-planner:guards",
+          "state": "unexecuted"
+        },
+        {
+          "index": 134,
+          "id": "import-planner:format-compiler",
+          "state": "unexecuted"
+        },
+        {
+          "index": 135,
+          "id": "import-planner:format-regression",
+          "state": "unexecuted"
+        },
+        {
+          "index": 136,
+          "id": "import-planner:probes",
+          "state": "unexecuted"
+        },
+        {
+          "index": 137,
+          "id": "import-planner:controls",
+          "state": "unexecuted"
+        },
+        {
+          "index": 138,
+          "id": "scoped-native",
+          "state": "unexecuted"
+        },
+        {
+          "index": 139,
+          "id": "scoped-native-inclusion",
+          "state": "unexecuted"
+        },
+        {
+          "index": 140,
+          "id": "whole-native",
+          "state": "unexecuted"
+        },
+        {
+          "index": 141,
+          "id": "whole-native-inclusion",
+          "state": "unexecuted"
+        },
+        {
+          "index": 142,
+          "id": "inclusion-proof",
+          "state": "unexecuted"
+        },
+        {
+          "index": 143,
+          "id": "real-svelte-compilation",
+          "state": "unexecuted"
+        },
+        {
+          "index": 144,
+          "id": "new-composed-behavior",
+          "state": "unexecuted"
+        },
+        {
+          "index": 145,
+          "id": "existing-format",
+          "state": "unexecuted"
+        },
+        {
+          "index": 146,
+          "id": "existing-file-owner",
+          "state": "unexecuted"
+        },
+        {
+          "index": 147,
+          "id": "existing-accounts",
+          "state": "unexecuted"
+        },
+        {
+          "index": 148,
+          "id": "owner-setup",
+          "state": "unexecuted"
+        },
+        {
+          "index": 149,
+          "id": "cache-auto-add",
+          "state": "unexecuted"
+        },
+        {
+          "index": 150,
+          "id": "session",
+          "state": "unexecuted"
+        },
+        {
+          "index": 151,
+          "id": "monitor",
+          "state": "unexecuted"
+        },
+        {
+          "index": 152,
+          "id": "native-facade",
+          "state": "unexecuted"
+        },
+        {
+          "index": 153,
+          "id": "publication",
+          "state": "unexecuted"
+        },
+        {
+          "index": 154,
+          "id": "architecture",
+          "state": "unexecuted"
+        },
+        {
+          "index": 155,
+          "id": "complete-consumer-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 156,
+          "id": "complete-consumer-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 157,
+          "id": "complete-consumer-eof-comparison",
+          "state": "unexecuted"
+        },
+        {
+          "index": 158,
+          "id": "build-chrome",
+          "state": "unexecuted"
+        },
+        {
+          "index": 159,
+          "id": "build-firefox",
+          "state": "unexecuted"
+        },
+        {
+          "index": 160,
+          "id": "reconciliation-private-sighting",
+          "state": "unexecuted"
+        },
+        {
+          "index": 161,
+          "id": "reconciliation-forged-capture",
+          "state": "unexecuted"
+        },
+        {
+          "index": 162,
+          "id": "reconciliation-label-shape",
+          "state": "unexecuted"
+        },
+        {
+          "index": 163,
+          "id": "reconciliation-native-origin",
+          "state": "unexecuted"
+        },
+        {
+          "index": 164,
+          "id": "reconciliation-plan-no-write",
+          "state": "unexecuted"
+        },
+        {
+          "index": 165,
+          "id": "omitted-read-freshness",
+          "state": "unexecuted"
+        },
+        {
+          "index": 166,
+          "id": "checking-writes",
+          "state": "unexecuted"
+        },
+        {
+          "index": 167,
+          "id": "lost-label-event",
+          "state": "unexecuted"
+        },
+        {
+          "index": 168,
+          "id": "bookkeeping-event-noise",
+          "state": "unexecuted"
+        },
+        {
+          "index": 169,
+          "id": "stale-label-resurrection",
+          "state": "unexecuted"
+        }
+      ]
+    },
+    {
+      "group": "import114",
+      "path": "tools/fixtures/settings-import-execution/future-gates.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 82486,
+        "sha256": "b452c1bdc7535f40a8b6a89b2dc3fb92ec902e5a7273568db392fc320195f12c",
+        "gitBlob": "6ed94a544fab3413065b7dc120f9acca5d417447"
+      },
+      "count": 114,
+      "entries": [
+        {
+          "index": 0,
+          "id": "scoped-native",
+          "state": "unexecuted"
+        },
+        {
+          "index": 1,
+          "id": "whole-native",
+          "state": "unexecuted"
+        },
+        {
+          "index": 2,
+          "id": "complete-source-inclusion",
+          "state": "unexecuted"
+        },
+        {
+          "index": 3,
+          "id": "test-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 4,
+          "id": "test-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 5,
+          "id": "test-3",
+          "state": "unexecuted"
+        },
+        {
+          "index": 6,
+          "id": "test-4",
+          "state": "unexecuted"
+        },
+        {
+          "index": 7,
+          "id": "test-5",
+          "state": "unexecuted"
+        },
+        {
+          "index": 8,
+          "id": "test-6",
+          "state": "unexecuted"
+        },
+        {
+          "index": 9,
+          "id": "test-7",
+          "state": "unexecuted"
+        },
+        {
+          "index": 10,
+          "id": "test-8",
+          "state": "unexecuted"
+        },
+        {
+          "index": 11,
+          "id": "test-9",
+          "state": "unexecuted"
+        },
+        {
+          "index": 12,
+          "id": "test-10",
+          "state": "unexecuted"
+        },
+        {
+          "index": 13,
+          "id": "test-11",
+          "state": "unexecuted"
+        },
+        {
+          "index": 14,
+          "id": "test-12",
+          "state": "unexecuted"
+        },
+        {
+          "index": 15,
+          "id": "test-13",
+          "state": "unexecuted"
+        },
+        {
+          "index": 16,
+          "id": "test-14",
+          "state": "unexecuted"
+        },
+        {
+          "index": 17,
+          "id": "test-15",
+          "state": "unexecuted"
+        },
+        {
+          "index": 18,
+          "id": "test-16",
+          "state": "unexecuted"
+        },
+        {
+          "index": 19,
+          "id": "test-17",
+          "state": "unexecuted"
+        },
+        {
+          "index": 20,
+          "id": "test-18",
+          "state": "unexecuted"
+        },
+        {
+          "index": 21,
+          "id": "test-19",
+          "state": "unexecuted"
+        },
+        {
+          "index": 22,
+          "id": "test-20",
+          "state": "unexecuted"
+        },
+        {
+          "index": 23,
+          "id": "test-21",
+          "state": "unexecuted"
+        },
+        {
+          "index": 24,
+          "id": "test-22",
+          "state": "unexecuted"
+        },
+        {
+          "index": 25,
+          "id": "test-23",
+          "state": "unexecuted"
+        },
+        {
+          "index": 26,
+          "id": "test-24",
+          "state": "unexecuted"
+        },
+        {
+          "index": 27,
+          "id": "test-25",
+          "state": "unexecuted"
+        },
+        {
+          "index": 28,
+          "id": "test-26",
+          "state": "unexecuted"
+        },
+        {
+          "index": 29,
+          "id": "test-27",
+          "state": "unexecuted"
+        },
+        {
+          "index": 30,
+          "id": "test-28",
+          "state": "unexecuted"
+        },
+        {
+          "index": 31,
+          "id": "test-29",
+          "state": "unexecuted"
+        },
+        {
+          "index": 32,
+          "id": "test-30",
+          "state": "unexecuted"
+        },
+        {
+          "index": 33,
+          "id": "test-31",
+          "state": "unexecuted"
+        },
+        {
+          "index": 34,
+          "id": "test-32",
+          "state": "unexecuted"
+        },
+        {
+          "index": 35,
+          "id": "test-33",
+          "state": "unexecuted"
+        },
+        {
+          "index": 36,
+          "id": "test-34",
+          "state": "unexecuted"
+        },
+        {
+          "index": 37,
+          "id": "test-35",
+          "state": "unexecuted"
+        },
+        {
+          "index": 38,
+          "id": "test-36",
+          "state": "unexecuted"
+        },
+        {
+          "index": 39,
+          "id": "test-37",
+          "state": "unexecuted"
+        },
+        {
+          "index": 40,
+          "id": "test-38",
+          "state": "unexecuted"
+        },
+        {
+          "index": 41,
+          "id": "test-39",
+          "state": "unexecuted"
+        },
+        {
+          "index": 42,
+          "id": "test-40",
+          "state": "unexecuted"
+        },
+        {
+          "index": 43,
+          "id": "test-41",
+          "state": "unexecuted"
+        },
+        {
+          "index": 44,
+          "id": "test-42",
+          "state": "unexecuted"
+        },
+        {
+          "index": 45,
+          "id": "test-43",
+          "state": "unexecuted"
+        },
+        {
+          "index": 46,
+          "id": "test-44",
+          "state": "unexecuted"
+        },
+        {
+          "index": 47,
+          "id": "test-45",
+          "state": "unexecuted"
+        },
+        {
+          "index": 48,
+          "id": "test-46",
+          "state": "unexecuted"
+        },
+        {
+          "index": 49,
+          "id": "test-47",
+          "state": "unexecuted"
+        },
+        {
+          "index": 50,
+          "id": "test-48",
+          "state": "unexecuted"
+        },
+        {
+          "index": 51,
+          "id": "test-49",
+          "state": "unexecuted"
+        },
+        {
+          "index": 52,
+          "id": "test-50",
+          "state": "unexecuted"
+        },
+        {
+          "index": 53,
+          "id": "test-51",
+          "state": "unexecuted"
+        },
+        {
+          "index": 54,
+          "id": "test-52",
+          "state": "unexecuted"
+        },
+        {
+          "index": 55,
+          "id": "test-53",
+          "state": "unexecuted"
+        },
+        {
+          "index": 56,
+          "id": "test-54",
+          "state": "unexecuted"
+        },
+        {
+          "index": 57,
+          "id": "test-55",
+          "state": "unexecuted"
+        },
+        {
+          "index": 58,
+          "id": "test-56",
+          "state": "unexecuted"
+        },
+        {
+          "index": 59,
+          "id": "test-57",
+          "state": "unexecuted"
+        },
+        {
+          "index": 60,
+          "id": "test-58",
+          "state": "unexecuted"
+        },
+        {
+          "index": 61,
+          "id": "test-59",
+          "state": "unexecuted"
+        },
+        {
+          "index": 62,
+          "id": "test-60",
+          "state": "unexecuted"
+        },
+        {
+          "index": 63,
+          "id": "test-61",
+          "state": "unexecuted"
+        },
+        {
+          "index": 64,
+          "id": "test-62",
+          "state": "unexecuted"
+        },
+        {
+          "index": 65,
+          "id": "test-63",
+          "state": "unexecuted"
+        },
+        {
+          "index": 66,
+          "id": "test-64",
+          "state": "unexecuted"
+        },
+        {
+          "index": 67,
+          "id": "test-65",
+          "state": "unexecuted"
+        },
+        {
+          "index": 68,
+          "id": "test-66",
+          "state": "unexecuted"
+        },
+        {
+          "index": 69,
+          "id": "test-67",
+          "state": "unexecuted"
+        },
+        {
+          "index": 70,
+          "id": "test-68",
+          "state": "unexecuted"
+        },
+        {
+          "index": 71,
+          "id": "test-69",
+          "state": "unexecuted"
+        },
+        {
+          "index": 72,
+          "id": "test-70",
+          "state": "unexecuted"
+        },
+        {
+          "index": 73,
+          "id": "test-71",
+          "state": "unexecuted"
+        },
+        {
+          "index": 74,
+          "id": "test-72",
+          "state": "unexecuted"
+        },
+        {
+          "index": 75,
+          "id": "test-73",
+          "state": "unexecuted"
+        },
+        {
+          "index": 76,
+          "id": "test-74",
+          "state": "unexecuted"
+        },
+        {
+          "index": 77,
+          "id": "test-75",
+          "state": "unexecuted"
+        },
+        {
+          "index": 78,
+          "id": "test-76",
+          "state": "unexecuted"
+        },
+        {
+          "index": 79,
+          "id": "consumer-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 80,
+          "id": "consumer-1-through-eof",
+          "state": "unexecuted"
+        },
+        {
+          "index": 81,
+          "id": "consumer-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 82,
+          "id": "consumer-2-through-eof",
+          "state": "unexecuted"
+        },
+        {
+          "index": 83,
+          "id": "consumer-repeat-through-eof",
+          "state": "unexecuted"
+        },
+        {
+          "index": 84,
+          "id": "import-negative-1-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 85,
+          "id": "import-negative-2-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 86,
+          "id": "import-negative-3-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 87,
+          "id": "import-negative-4-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 88,
+          "id": "import-negative-5-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 89,
+          "id": "import-negative-6-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 90,
+          "id": "import-negative-7-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 91,
+          "id": "import-negative-8-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 92,
+          "id": "import-negative-9-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 93,
+          "id": "import-negative-10-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 94,
+          "id": "import-negative-11-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 95,
+          "id": "import-negative-12-isolated-negative",
+          "state": "unexecuted"
+        },
+        {
+          "index": 96,
+          "id": "partitioned-admission-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 97,
+          "id": "partitioned-admission-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 98,
+          "id": "omitted-local-cleanup-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 99,
+          "id": "omitted-local-cleanup-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 100,
+          "id": "unstamped-documents-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 101,
+          "id": "unstamped-documents-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 102,
+          "id": "repeated-document-write-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 103,
+          "id": "repeated-document-write-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 104,
+          "id": "ignored-startup-marker-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 105,
+          "id": "ignored-startup-marker-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 106,
+          "id": "automatic-after-agree-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 107,
+          "id": "automatic-after-agree-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 108,
+          "id": "early-receipt-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 109,
+          "id": "early-receipt-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 110,
+          "id": "missing-native-forwarding-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 111,
+          "id": "missing-native-forwarding-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 112,
+          "id": "omitted-session-cleanup-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 113,
+          "id": "omitted-session-cleanup-red",
+          "state": "unexecuted"
+        }
+      ]
+    },
+    {
+      "group": "options85",
+      "path": "tools/fixtures/shared-options/future-gates.json",
+      "identity": {
+        "mode": "100644",
+        "bytes": 133867,
+        "sha256": "f6980694ffc5f3a4591d4181f106b617814d911f13ea62e6f788636c9cdad65e",
+        "gitBlob": "1597f9888ebb5f89660a8efe6de6b16d890b6f3c"
+      },
+      "count": 85,
+      "entries": [
+        {
+          "index": 0,
+          "id": "scoped-native",
+          "state": "unexecuted"
+        },
+        {
+          "index": 1,
+          "id": "scoped-native-inclusion",
+          "state": "unexecuted"
+        },
+        {
+          "index": 2,
+          "id": "whole-native",
+          "state": "unexecuted"
+        },
+        {
+          "index": 3,
+          "id": "whole-native-inclusion",
+          "state": "unexecuted"
+        },
+        {
+          "index": 4,
+          "id": "verify-both-inclusions",
+          "state": "unexecuted"
+        },
+        {
+          "index": 5,
+          "id": "shared-options-test-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 6,
+          "id": "shared-options-test-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 7,
+          "id": "shared-options-test-3",
+          "state": "unexecuted"
+        },
+        {
+          "index": 8,
+          "id": "shared-options-test-4",
+          "state": "unexecuted"
+        },
+        {
+          "index": 9,
+          "id": "regression-real-owner",
+          "state": "unexecuted"
+        },
+        {
+          "index": 10,
+          "id": "regression-real-native-facade",
+          "state": "unexecuted"
+        },
+        {
+          "index": 11,
+          "id": "regression-frozen-import",
+          "state": "unexecuted"
+        },
+        {
+          "index": 12,
+          "id": "regression-admission-codecs",
+          "state": "unexecuted"
+        },
+        {
+          "index": 13,
+          "id": "regression-architecture",
+          "state": "unexecuted"
+        },
+        {
+          "index": 14,
+          "id": "complete-consumer-1",
+          "state": "unexecuted"
+        },
+        {
+          "index": 15,
+          "id": "complete-consumer-2",
+          "state": "unexecuted"
+        },
+        {
+          "index": 16,
+          "id": "both-complete-consumers-through-eof",
+          "state": "unexecuted"
+        },
+        {
+          "index": 17,
+          "id": "negative-music-gather-order",
+          "state": "unexecuted"
+        },
+        {
+          "index": 18,
+          "id": "negative-music-gather-order-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 19,
+          "id": "negative-order-music-boolean",
+          "state": "unexecuted"
+        },
+        {
+          "index": 20,
+          "id": "negative-order-music-boolean-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 21,
+          "id": "negative-destination-order",
+          "state": "unexecuted"
+        },
+        {
+          "index": 22,
+          "id": "negative-destination-order-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 23,
+          "id": "negative-time-count",
+          "state": "unexecuted"
+        },
+        {
+          "index": 24,
+          "id": "negative-time-count-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 25,
+          "id": "negative-count-time",
+          "state": "unexecuted"
+        },
+        {
+          "index": 26,
+          "id": "negative-count-time-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 27,
+          "id": "negative-count-outside-choices",
+          "state": "unexecuted"
+        },
+        {
+          "index": 28,
+          "id": "negative-count-outside-choices-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 29,
+          "id": "negative-feedback-number",
+          "state": "unexecuted"
+        },
+        {
+          "index": 30,
+          "id": "negative-feedback-number-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 31,
+          "id": "negative-feature-switch",
+          "state": "unexecuted"
+        },
+        {
+          "index": 32,
+          "id": "negative-feature-switch-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 33,
+          "id": "negative-section-switch",
+          "state": "unexecuted"
+        },
+        {
+          "index": 34,
+          "id": "negative-section-switch-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 35,
+          "id": "negative-preset",
+          "state": "unexecuted"
+        },
+        {
+          "index": 36,
+          "id": "negative-preset-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 37,
+          "id": "negative-trigger-unvisited",
+          "state": "unexecuted"
+        },
+        {
+          "index": 38,
+          "id": "negative-trigger-unvisited-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 39,
+          "id": "negative-trigger-background",
+          "state": "unexecuted"
+        },
+        {
+          "index": 40,
+          "id": "negative-trigger-background-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 41,
+          "id": "negative-trigger-count",
+          "state": "unexecuted"
+        },
+        {
+          "index": 42,
+          "id": "negative-trigger-count-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 43,
+          "id": "negative-raw-path",
+          "state": "unexecuted"
+        },
+        {
+          "index": 44,
+          "id": "negative-raw-path-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 45,
+          "id": "negative-raw-settings",
+          "state": "unexecuted"
+        },
+        {
+          "index": 46,
+          "id": "negative-raw-settings-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 47,
+          "id": "negative-key-lifecycle",
+          "state": "unexecuted"
+        },
+        {
+          "index": 48,
+          "id": "negative-key-lifecycle-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 49,
+          "id": "negative-shortcut-lifecycle",
+          "state": "unexecuted"
+        },
+        {
+          "index": 50,
+          "id": "negative-shortcut-lifecycle-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 51,
+          "id": "negative-destination-account",
+          "state": "unexecuted"
+        },
+        {
+          "index": 52,
+          "id": "negative-destination-account-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 53,
+          "id": "negative-missing-forwarding",
+          "state": "unexecuted"
+        },
+        {
+          "index": 54,
+          "id": "negative-missing-forwarding-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 55,
+          "id": "control-wrong-field-baseline-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 56,
+          "id": "control-wrong-field-baseline-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 57,
+          "id": "control-wrong-field-must-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 58,
+          "id": "control-wrong-field-named-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 59,
+          "id": "control-wrong-field-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 60,
+          "id": "control-wrong-field-restored-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 61,
+          "id": "control-lost-unrelated-fields-baseline-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 62,
+          "id": "control-lost-unrelated-fields-baseline-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 63,
+          "id": "control-lost-unrelated-fields-must-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 64,
+          "id": "control-lost-unrelated-fields-named-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 65,
+          "id": "control-lost-unrelated-fields-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 66,
+          "id": "control-lost-unrelated-fields-restored-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 67,
+          "id": "control-implicit-enablement-baseline-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 68,
+          "id": "control-implicit-enablement-baseline-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 69,
+          "id": "control-implicit-enablement-must-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 70,
+          "id": "control-implicit-enablement-named-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 71,
+          "id": "control-implicit-enablement-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 72,
+          "id": "control-implicit-enablement-restored-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 73,
+          "id": "control-invalid-coercion-baseline-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 74,
+          "id": "control-invalid-coercion-baseline-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 75,
+          "id": "control-invalid-coercion-must-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 76,
+          "id": "control-invalid-coercion-named-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 77,
+          "id": "control-invalid-coercion-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 78,
+          "id": "control-invalid-coercion-restored-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 79,
+          "id": "control-premature-success-baseline-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 80,
+          "id": "control-premature-success-baseline-pass",
+          "state": "unexecuted"
+        },
+        {
+          "index": 81,
+          "id": "control-premature-success-must-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 82,
+          "id": "control-premature-success-named-red",
+          "state": "unexecuted"
+        },
+        {
+          "index": 83,
+          "id": "control-premature-success-restored-compile",
+          "state": "unexecuted"
+        },
+        {
+          "index": 84,
+          "id": "control-premature-success-restored-pass",
+          "state": "unexecuted"
+        }
+      ]
+    }
+  ],
+  "authority": "Frozen1228 pending layers retain their original acceptance state. Historical drivers grant no execution authority."
+}

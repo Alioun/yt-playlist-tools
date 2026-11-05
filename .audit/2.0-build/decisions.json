@@ -1,0 +1,300 @@
+{
+  "recordedAt": "2026-11-01",
+  "source": "Rebuilt from the coordinator thread after the untracked ledger was deleted on 2026-11-01. The owner settled each decision in that thread.",
+  "decisions": [
+    {
+      "id": "G1",
+      "topic": "DATA-58 gather record writes",
+      "answer": "A gather and an Undo may each write the session record at most twice: the close plan, then the confirmed result.",
+      "landed": "2.0/gather-decisions, DATA-58 and ARC text"
+    },
+    {
+      "id": "G2",
+      "topic": "Untitled queue toast copy",
+      "answer": "Use shorter wording.",
+      "landed": "superseded by G6"
+    },
+    {
+      "id": "G3",
+      "topic": "Card-menu proposals P1 and P2",
+      "answer": "Share the menu-button table and Items' linkedVideo.",
+      "landed": "2.0/card-menu-proposals"
+    },
+    {
+      "id": "G4",
+      "topic": "Card-menu proposal P3",
+      "answer": "openCardMenu carries the video ID and the gateway refuses a recycled card.",
+      "landed": "2.0/card-menu-proposals"
+    },
+    {
+      "id": "G5",
+      "topic": "Interrupted close",
+      "answer": "At Undo, planned tabs whose IDs no longer exist count as closed and reopen from the saved plan.",
+      "landed": "2.0/gather-decisions"
+    },
+    {
+      "id": "G6",
+      "topic": "Queue toast strings",
+      "answer": "Added “$TITLE$” to queue; Added to queue; Couldn't add “$TITLE$”; Couldn't add to queue; Couldn't confirm “$TITLE$”; Couldn't confirm the add.",
+      "landed": "2.0/queue-copy"
+    },
+    {
+      "id": "G7",
+      "topic": "Card menu after a failed page click",
+      "answer": "Do nothing and stay kit-free.",
+      "landed": "2.0/card-menu-proposals"
+    },
+    {
+      "id": "G8",
+      "topic": "One video on two cards",
+      "answer": "Every card for that video shows Added within one page view.",
+      "landed": "2.0/queue-copy"
+    },
+    {
+      "id": "G9",
+      "topic": "Private-window first pick",
+      "answer": "Confirm with \"Saved. Private windows don't keep your playlist choice.\"",
+      "landed": "2.0/picker-reset-privacy, R171"
+    },
+    {
+      "id": "G10",
+      "topic": "Refused playlist choice after a save",
+      "answer": "Stay open, show the save and the refusal, keep Undo, retry only the choice.",
+      "landed": "R172"
+    },
+    {
+      "id": "G11",
+      "topic": "Closing during a first pick",
+      "answer": "Finish both steps for the original account while consent and account authority stay valid.",
+      "landed": "R173"
+    },
+    {
+      "id": "G12",
+      "topic": "Ticked Clear all under a newer layout",
+      "answer": "Clear this browser only and leave synced settings for the newer version.",
+      "landed": "R174"
+    },
+    {
+      "id": "G13",
+      "topic": "Newer-layout Clear all copy",
+      "answer": "Cleared on this browser. Synced settings were left for the newer version of Perchling that saved them. Update Perchling here to clear them too.",
+      "landed": "R175"
+    },
+    {
+      "id": "G14",
+      "topic": "Privacy policy, REL-STORE-17",
+      "answer": "Approved as drafted in 08-release.md section 10.2. The cookie bullet goes if ticket 25 finds no shipped route reads the session cookie.",
+      "landed": "2.0/picker-reset-privacy"
+    },
+    {
+      "id": "G15",
+      "topic": "Card-menu bundle budget",
+      "answer": "Raise feature-card-menu.js from 0.5 KB to 1.25 KB gzip.",
+      "landed": "db45fa2b6"
+    },
+    {
+      "id": "G16",
+      "topic": "Import rewrote consent through Device",
+      "answer": "Move lastAccount out of the Device record.",
+      "landed": "2.0/device-last-account, R176"
+    },
+    {
+      "id": "G17",
+      "topic": "Native account removal and synced Setup tombstones",
+      "answer": "Build both in 2.0 now.",
+      "landed": "2.0/account-removal-tombstones"
+    },
+    {
+      "id": "G18",
+      "topic": "Synced tombstone expiry",
+      "answer": "Any browser expires a tombstone 30 days after its edit time, during an automatic receive pass with sync on, dropping its local copy and removing the synced copy in a separate cleanup turn. Filter tombstones go with their Setup's. ARC-MOD-21 gains an exception.",
+      "landed": "2.0/tombstone-expiry, R178"
+    },
+    {
+      "id": "G19",
+      "topic": "Cutover from 1.x",
+      "answer": "Replace 1.x now: the first cutover change deletes the 1.x React app and src/lib, and main ships nothing until 2.0 is usable. Activation of a release stays held.",
+      "landed": "pending"
+    },
+    {
+      "id": "G20",
+      "topic": "Interim 1.5.0 build",
+      "answer": "Never ship 1.5.0. 2.0 replaces 1.4.5 directly; the interim build matters only as an upgrade source path.",
+      "landed": "pending"
+    },
+    {
+      "id": "G21",
+      "topic": "Firefox host permission",
+      "answer": "Narrow to https://www.youtube.com/* on both browsers, accepting that some upgraders may need to grant access again. Amend the spec.",
+      "landed": "pending"
+    },
+    {
+      "id": "G22",
+      "topic": "Store interface",
+      "answer": "Change the spec to describe the per-operation owners as built, not a single Store.change() with one Change union.",
+      "landed": "pending"
+    },
+    {
+      "id": "G23",
+      "topic": "Vitest and test tooling",
+      "answer": "No Vite+ toolchain. Stay on bun test; delete the 322 Vitest tests with 1.x. Take the measured wins: oxlint (default plus a few type-aware rules), upstream Vite 8.3.5, AGENT=0 and explicit --timeout in both Bun runners, split the heaviest store test files and shard CI. See vite-plus-research.md.",
+      "landed": "pending"
+    },
+    {
+      "id": "G24",
+      "topic": "Recovery controls (R167, UI-SET-16, UI-ONB-11, ACC-48)",
+      "answer": "Put them in Settings > Privacy & data. The agent writes the copy with pstack unslop; no separate review round.",
+      "landed": "pending"
+    },
+    {
+      "id": "G25",
+      "topic": "Choose-mode title (N13, UI-PICK-18)",
+      "answer": "Pick the shortcut's playlist",
+      "landed": "pending"
+    },
+    {
+      "id": "G26",
+      "topic": "YouTube Music icons (UI-YM-04)",
+      "answer": "Use Material Symbols, not YouTube Music's own icon paths.",
+      "landed": "pending"
+    },
+    {
+      "id": "G27",
+      "topic": "Parity counting",
+      "answer": "Count only 2.0 code; behavior the interim build delivers stays open until 2.0 code does it.",
+      "landed": "pending"
+    },
+    {
+      "id": "G28",
+      "topic": "Store reviewer credentials in CI (REL-STORE-21, 24, REL-CI-46)",
+      "answer": "Design it now: the agent writes the design and credential-free tests, then brings them to the owner for approval before anything runs.",
+      "landed": "Owner approved the design and approval list on 2026-11-02 at 2.0/ci-reviewer-credentials-2 tip 403d3109c, after five secret-flow reviews; integrating onto compose-units. All secret-reading jobs stay off until the owner pins the actions, runs the dry run, sets up amo-reviewer and commits the turn-on."
+    },
+    {
+      "id": "G29",
+      "topic": "Interim conversion (REL-MIG-46, 47)",
+      "answer": "Stays off until ticket 25's live checks verify production ownership and session contracts on a real signed-in account.",
+      "landed": "pending"
+    },
+    {
+      "id": "G30",
+      "topic": "Copy rule",
+      "answer": "Every piece of user-facing copy goes through pstack unslop.",
+      "landed": "pending"
+    },
+    {
+      "id": "G31",
+      "topic": "Unslop scope",
+      "answer": "Unslop everything, including strings the spec pins word for word; amend the spec where wording changes.",
+      "landed": "pending"
+    },
+    {
+      "id": "G32",
+      "topic": "Choose-mode subtitle",
+      "answer": "No subtitle under \"Pick the shortcut's playlist\".",
+      "landed": "pending"
+    },
+    {
+      "id": "G33",
+      "topic": "When 2.0 is usable",
+      "answer": "Activate the 1.99.1 beta only once every 2.0 feature is built (plan wave 8) and the full suite plus browser builds pass.",
+      "landed": "pending"
+    },
+    {
+      "id": "G34",
+      "topic": "Ticket 25 timing",
+      "answer": "Run ticket 25's live checks after the first beta; ship with the provisional cookie line and re-pin if it changes.",
+      "landed": "pending"
+    },
+    {
+      "id": "G35",
+      "topic": "Music picker marks",
+      "answer": "Show no check marks on YouTube Music until ticket 25's M2 check.",
+      "landed": "pending"
+    },
+    {
+      "id": "G36",
+      "topic": "Collaborative playlists",
+      "answer": "Treat collaborative playlists the user doesn't own as not owned until the ACC-35 check.",
+      "landed": "pending"
+    },
+    {
+      "id": "G37",
+      "topic": "Formatter",
+      "answer": "One oxfmt reformat commit after all area branches merge, listed in .git-blame-ignore-revs.",
+      "landed": "pending"
+    },
+    {
+      "id": "G38",
+      "topic": "Consent disclosure wording",
+      "answer": "Reword the two colon-joined bullets through unslop and re-pin the new text as version 1 with its new digest; 2.0 hasn't shipped, so nobody agreed to the old text.",
+      "landed": "pending"
+    },
+    {
+      "id": "G39",
+      "topic": "Filter tombstone under a live Setup",
+      "answer": "Accept a synced Filter tombstone while the Setup is live when that Setup no longer auto-adds the playlist; refuse it otherwise. Amends G17's receive-side rule so Remove kept filters can't stall other browsers' sync.",
+      "landed": "2.0/store-signals"
+    },
+    {
+      "id": "G40",
+      "topic": "Marks and labels past the sync limit",
+      "answer": "For now a Missing/Full mark or label refresh past the browsers' own sync limit is not saved. SYNC-16's stay-local-until-room behavior is a queued follow-up.",
+      "landed": "pending follow-up"
+    },
+    {
+      "id": "G41",
+      "topic": "Site totals (Q-PERF-12, 13, 16)",
+      "answer": "Keep the original budgets as the target; build the lazy MAIN-world jobs file and the lazy picker first, then revisit re-baselining.",
+      "landed": "re-baselined after G42 and G43, R201"
+    },
+    {
+      "id": "G42",
+      "topic": "Lazy MAIN-world jobs file",
+      "answer": "Build it now, before the beta: the background injects the gateway's job code on a page's first job.",
+      "landed": "2.0/lazy-jobs, R200"
+    },
+    {
+      "id": "G43",
+      "topic": "Lazy picker",
+      "answer": "Build it now: split PlaylistChooser so the picker loads when it opens (Q-PERF-31).",
+      "landed": "2.0/lazy-picker"
+    },
+    {
+      "id": "G44",
+      "topic": "Background budget",
+      "answer": "Replace the provisional 25 KB with a 227.2 KB ceiling the gate enforces.",
+      "landed": "perf-budget.json"
+    },
+    {
+      "id": "G45",
+      "topic": "Re-baseline the weight budgets",
+      "answer": "Set every over-budget row to its measured size after the lazy jobs file and lazy picker; the gate holds them there.",
+      "landed": "R201"
+    },
+    {
+      "id": "G46",
+      "topic": "Background ceiling headroom",
+      "answer": "Raise the background ceiling from 227.2 to 230 KB.",
+      "landed": "R201"
+    },
+    {
+      "id": "G47",
+      "topic": "Lazy jobs file budgets",
+      "answer": "20 KB for page-jobs-www.js and 18 KB for page-jobs-music.js.",
+      "landed": "R200"
+    }
+  ],
+  "coordinatorCalls": [
+    "subscribeView registers subscriptions made before readiness.",
+    "Gather does not reopen a planned tab it cannot read.",
+    "R174: under a newer layout the synced checkbox shows when device.syncOn is true or sync.joined is set.",
+    "The 18 original feature-switches negatives were deleted; key-settings' relocated copies are the single source.",
+    "G17 receive-side cleanup clears cache, progress and session memory; a Filter tombstone under a live Setup is refused; no removal journal."
+  ],
+  "standing": {
+    "models": "Opus 5.5 only; Sol 6.1 is out of usage.",
+    "held": "production, rendering and axe, native behavior",
+    "requested": "no review, no PR"
+  }
+}

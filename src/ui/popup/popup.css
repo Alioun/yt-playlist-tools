@@ -1,0 +1,11 @@
+@import "tailwindcss" source(none);
+@source "./Popup.svelte";
+@source "./FeatureRow.svelte";
+@source "../components/Button.svelte";
+@source "../components/button.ts";
+@source "../components/Glyph.svelte";
+@source "../components/Mark.svelte";
+@source "../components/SiteTabs.svelte";
+@source "../components/Switch.svelte";
+@source "../lib";
+@import "../lib/theme.css";

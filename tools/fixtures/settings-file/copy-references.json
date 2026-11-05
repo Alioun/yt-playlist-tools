@@ -1,0 +1,22 @@
+{
+  "DATA-55.newer-format": {
+    "source": ".scratch/rebuild/spec/04-features-accounts-data.md:997",
+    "text": "This file was made by a newer version of {Product}. Update it here first."
+  },
+  "DATA-55.invalid-file": {
+    "source": ".scratch/rebuild/spec/04-features-accounts-data.md:998",
+    "text": "This isn't a {Product} settings file."
+  },
+  "DATA-54.private": {
+    "source": ".scratch/rebuild/spec/04-features-accounts-data.md:995",
+    "text": "Import settings in a normal window."
+  },
+  "DATA-54.confirmation": {
+    "source": ".scratch/rebuild/spec/04-features-accounts-data.md:992",
+    "text": "Import settings from {file}? Your shared settings, and the setups of the {N} accounts in the file, are replaced. Other accounts' setups are kept."
+  },
+  "DATA-53.private-file": {
+    "source": ".scratch/rebuild/spec/04-features-accounts-data.md:990",
+    "text": "The file holds your playlist IDs, channel filters and account names. Keep it private."
+  }
+}

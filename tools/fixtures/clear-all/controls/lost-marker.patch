@@ -1,0 +1,11 @@
+--- a/src/background/store/store-lifecycle.ts
++++ b/src/background/store/store-lifecycle.ts
+@@ -434,7 +434,7 @@
+     let confirmation: MarkerReadback
+     try {
+       const records = await deps.local.get([clearMarkerKey])
+-      confirmation = markerPresence(records) === "present" && isClearMarker(records, marker) ? { kind: "confirmed" } : { kind: "different" }
++      confirmation = { kind: "confirmed" }
+     } catch (error) {
+       confirmation = { kind: "rejected", error }
+     }

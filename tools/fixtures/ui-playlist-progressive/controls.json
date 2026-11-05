@@ -1,0 +1,150 @@
+{
+  "status": "unexecuted",
+  "restoration": "Exact original bytes and mode in finally, then restored native compilation and the same behavior test. A compiling mutant must fail the named assertion. A timeout grants no credit.",
+  "controls": [
+    {
+      "id": "progressive-withheld-refresh",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "cached rows reach the actual PickerModel while refresh and membership remain withheld",
+      "failureNeedle": ".toEqual(",
+      "replacements": [
+        {
+          "before": "if (refresh !== null) listWork(operation, 0, refresh)",
+          "after": "if (refresh !== null) { await refresh; listWork(operation, 0, refresh) }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "cached rows reach the actual PickerModel while refresh and membership remain withheld",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-cross-account-reuse",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "another account or native document cannot reuse a pending list operation",
+      "failureNeedle": ".toEqual(",
+      "replacements": [
+        {
+          "before": "existing.acct !== payload.acct || existing.site !== payload.site || existing.explicit !== payload.refresh",
+          "after": "existing.site !== payload.site || existing.explicit !== payload.refresh"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "another account or native document cannot reuse a pending list operation",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-duplicate-refresh",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "concurrent opens and numbered refresh requests share one native job",
+      "failureNeedle": ".toHaveLength(",
+      "replacements": [
+        {
+          "before": "if (payload.action === \"refresh\" && work?.generation !== payload.generation) {",
+          "after": "if (payload.action === \"refresh\") {"
+        },
+        {
+          "before": "if (payload.generation !== (work?.generation ?? 0) + 1 || (work && !work.settled)) return unavailable(\"operation\")",
+          "after": "if (!existing.active) return unavailable(\"operation\")"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "concurrent opens and numbered refresh requests share one native job",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-optimistic-cache",
+      "path": "src/background/router/ui-playlists/wire.ts",
+      "testName": "confirmed native rows do not claim cache persistence after rejected-unchanged",
+      "failureNeedle": ".toBe(",
+      "replacements": [
+        {
+          "before": "case \"failed\":\n      return { kind: \"failed\", stage: value.stage }",
+          "after": "case \"failed\": return { kind: \"committed\" }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "confirmed native rows do not claim cache persistence after rejected-unchanged",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-stale-release",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "release tombstone refuses a delayed list open without starting a job",
+      "failureNeedle": ".toEqual(",
+      "replacements": [
+        {
+          "before": "if (releasedLists.has(payload.operation)) return unavailable(\"operation\")",
+          "after": "if (false && releasedLists.has(payload.operation)) return unavailable(\"operation\")"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "release tombstone refuses a delayed list open without starting a job",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    }
+  ]
+}

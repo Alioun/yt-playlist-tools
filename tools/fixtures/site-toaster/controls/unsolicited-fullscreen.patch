@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/toaster/model.ts b/src/site/kit/toaster/model.ts
+--- a/src/site/kit/toaster/model.ts
++++ b/src/site/kit/toaster/model.ts
+@@ -45,7 +45,7 @@
+   }
+   function report(error: unknown) { try { options.onError(error) } catch {} }
+   const live = () => !scope.disposed
+-  const eligible = (entry: Entry) => !hidden && (!fullscreen || !entry.content.auto)
++  const eligible = (entry: Entry) => !hidden
+   const visible = () => live() && current !== null && eligible(current)
+   function stopClock() {
+     timer(); timer = () => {}

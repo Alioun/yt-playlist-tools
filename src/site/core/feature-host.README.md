@@ -1,0 +1,19 @@
+# Feature lifecycle host
+
+`FeatureLifecycleContext<Site>` contains the host's site, the feature's Scope, and its scoped current-view reader and subscription. The view is the actual complete `TabView`, narrowed by site. The definition ID comes from that site's actual feature union. The registry and validated view own feature availability. The host creates neither enabled-feature lists nor wire facts.
+
+`createFeatureHost` requires `createScope`, `createContext`, `onEmpty`, and `onError`. Construction and definition storage acquire no listener or scope. `connect(extLink)` explicitly subscribes to the real ExtLink lifecycle. It accepts the `onView` portion of `ExtLink<TabView>` and connects once. The host owns only this subscription. It does not dispose ExtLink or PageLink.
+
+Definitions and views can arrive in either order. The first definition for an ID wins. A definition starts once while enabled, with a new Scope on every off/on cycle. The host records ownership before constructing services and calling `start`. A null view revokes all scopes, including after account change, orphaning, or ExtLink disposal. A mismatched site is also treated as revocation. Host disposal revokes current view access and all scopes before accepting no further callbacks.
+
+View updates dispose disabled runs synchronously. A short reconciliation transaction postpones new starts until revocation and notification finish. Reentrant changes replace the current view before later notifications or starts proceed. Startup exceptions and rejected startup promises dispose the owning Scope. That definition stays failed until off/on. No retry timer runs. An obsolete rejection cannot dispose a newer run.
+
+`context.view.read()` returns the latest enabled view or null after revocation. `subscribe` immediately supplies the current view and later updates. The subscription belongs to the same Scope and its returned release is idempotent. Options, account setup, filters, statuses, and other view changes remain available without restarting a feature. A subscription callback exception reaches `onError` without skipping unrelated cleanup.
+
+`createContext(lifecycle)` returns concrete, typed service fields. The host combines those fields with its own lifecycle fields. The return type forbids `scope`, `view`, and `site`, and lifecycle fields take precedence at runtime. There is no second scope argument for feature startup. Ordinary callers can construct Scopes. TypeScript cannot prove that two ordinary Scope instances have different identities, so the design prevents factories from selecting ownership rather than adding an unconstructible brand.
+
+The fixture consumer supplies the concrete `record(value: string): void` service. Future SiteCore assembly can supply the specified `run`, `can`, scoped `watch`, `add`, `undo`, `change`, `progress`, `items`, `keys`, `report`, `expose`, `popovers`, and registry-qualified `kit` fields through the factory. Their actual contracts and implementations remain outside this unit. They must register their resources on the received Scope and check current view/account authority after asynchronous work. This host does not pretend those services exist.
+
+`onEmpty(view)` signals a live nonempty-to-empty feature-list transition after revocation. An enabled feature without a definition still counts as enabled. Initial empty views, null views, and an empty active-definition map do not emit this signal. If teardown synchronously installs a newer view, the obsolete empty transition does not retire that newer lifecycle.
+
+The future core owns what `onEmpty` does, ExtLink and PageLink teardown, the build retirement listener, `__pp`, and production entrypoints. A future on-demand probe can keep an initially empty core inert. This unit installs no globals and activates no entrypoint. All compiler and runtime gates remain unexecuted.

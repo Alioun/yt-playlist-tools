@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@import "../../../src/ui/lib/theme.css";
+@source "../../../src/ui/components";
+@source "../../../src/ui/picker";
+
+body {
+  margin: 0;
+}

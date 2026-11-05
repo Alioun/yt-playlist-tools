@@ -1,0 +1,11 @@
+--- a/src/background/store/settings-import-execution.ts
++++ b/src/background/store/settings-import-execution.ts
+@@ -177,7 +177,7 @@
+         let local = importJson(current.local), session = importJson(current.session)
+         let apply: () => Promise<void>
+         switch (effect.kind) {
+-          case "local-set": local = { ...local, ...effect.items }; apply = () => deps.local.set(effect.items); break
++          case "local-set": local = { ...local, ...effect.items }; apply = async () => { await deps.local.set(effect.items); await deps.local.set(effect.items) }; break
+           case "local-remove": for (const name of effect.names) delete local[name]; apply = () => deps.cleanup.removeLocal(effect.keys); break
+           case "session": {
+             const operation = effect.effect

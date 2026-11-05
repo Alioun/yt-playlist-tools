@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perchling for YouTube™</title>
+  <meta name="description" content="A browser extension that saves YouTube videos and songs to Watch Later or any of your playlists, in one click or with one key.">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <a href="./"><picture>
+      <source srcset="assets/lockup-on-dark.svg" media="(prefers-color-scheme: dark)">
+      <img src="assets/lockup-on-light.svg" alt="Perchling" width="177" height="48">
+    </picture></a>
+    <nav>
+      <a href="privacy/">Privacy</a>
+      <a href="https://github.com/Alioun/yt-playlist-tools">Source</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Perchling for YouTube™</h1>
+    <p class="lead">Save the video or song you're on to Watch Later or any of your playlists, with one click or one key, right where you are on YouTube and YouTube Music. Perchling is a browser extension for Firefox and Chrome. Every feature starts off, and nothing runs until you switch it on.</p>
+
+    <!-- beta:start -->
+    <div class="panel">
+      <p><strong>Perchling 2.0 is in beta.</strong> It's a rebuild of YouTube Playlist Tools. <a href="beta/">Try the beta</a> on Firefox or Chrome.</p>
+    </div>
+    <!-- beta:end -->
+
+    <h2>Get it</h2>
+    <ul>
+      <li>Firefox: <a href="https://addons.mozilla.org/firefox/addon/youtube-playlist-tools/">Firefox Add-ons</a>. Until 2.0.0 is out, Firefox Add-ons serves 1.4.5, the version before the rebuild, under its old name, YouTube Playlist Tools.</li>
+      <li>Chrome: the Chrome Web Store listing follows about a week after the Firefox release.</li>
+    </ul>
+
+    <h2>What it does</h2>
+    <ul>
+      <li>One click on a thumbnail saves the video to the playlist you pick. The picker shows where a video already is, and unticking a playlist takes the video out.</li>
+      <li>Up to 20 keys, each saving to its own playlist. Alt+W saves to Watch Later.</li>
+      <li>Auto-add saves the videos you actually watch to playlists you pick, once you've watched enough of each, and can filter by channel.</li>
+      <li>On YouTube Music, Play next, Add to queue, Save to playlist and Like are one click away on songs, albums and playlists.</li>
+      <li>Gather tabs collects the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs. It's a port of <a href="https://github.com/karimelgazar/gathertube">GatherTube</a> by Karim Elgazar.</li>
+      <li>Every save has Undo, and each of your YouTube accounts has its own setup.</li>
+    </ul>
+
+    <h2>Privacy</h2>
+    <p>Perchling has no server. It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, and keeps its settings in your browser. Nothing goes to the developer or to anyone other than YouTube, and there are no analytics or ads. The <a href="privacy/">privacy policy</a> says exactly what it handles.</p>
+
+    <h2>Source</h2>
+    <p>The source code is on <a href="https://github.com/Alioun/yt-playlist-tools">GitHub</a>, under the Mozilla Public License 2.0.</p>
+
+    <h2>Report a problem</h2>
+    <p><a href="https://github.com/Alioun/yt-playlist-tools/issues/new/choose">Open an issue on GitHub</a>, which needs a GitHub account. Features that stopped working because YouTube changed something are listed under <a href="https://github.com/Alioun/yt-playlist-tools/issues?q=is%3Aissue%20label%3Ayoutube-change">Known problems</a>. Without a GitHub account, leave a review on the extension's store page. The developer reads them.</p>
+  </main>
+
+  <footer>
+    <p>Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.</p>
+  </footer>
+</body>
+</html>

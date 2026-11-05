@@ -1,8 +1,18 @@
 import {
-  decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeStamp,
-  DOCUMENT_VERSION, documentKey,
-  type DocumentKey, type Filter, type Settings, type Setup, type Stamp,
-  type Stamped, type Tombstone
+  decodeDocument,
+  decodeFilter,
+  decodeSettings,
+  decodeSetup,
+  decodeStamp,
+  DOCUMENT_VERSION,
+  documentKey,
+  type DocumentKey,
+  type Filter,
+  type Settings,
+  type Setup,
+  type Stamp,
+  type Stamped,
+  type Tombstone
 } from "../../shared/model"
 import { isJsonValue, parseJsonText, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 
@@ -10,6 +20,10 @@ export const SINGLE_DOCUMENT_BYTES = 7600
 export const SYNC_ITEM_BYTES = 8192
 export const SYNC_BUDGET_BYTES = 96 * 1024
 export const SYNC_BUDGET_ITEMS = 480
+/** The browsers' own quota. The gap above the budget is headroom for label refreshes and marks (SYNC-16). */
+const SYNC_QUOTA_BYTES = 100 * 1024
+const SYNC_QUOTA_ITEMS = 512
+export type SyncLimits = "budget" | "quota"
 
 export type RawSyncItem = { readonly key: string; readonly value: unknown }
 export type SyncItem = { readonly key: string; readonly value: JsonValue }
@@ -19,19 +33,9 @@ export type WireInvalid = {
   reason: "json" | "shape" | "duplicate-key" | "chunk-index" | "stamp-mismatch"
 }
 export type NewerSyncDocument = { kind: "newer-version"; version: number; raw: JsonObject }
-export type EncodedSyncDocument = { baseKey: string; gen: string } & (
-  | { mode: "single"; items: readonly [SyncItem] }
-  | { mode: "chunked"; items: readonly [SyncItem, SyncItem, ...SyncItem[]] }
-)
-export type EncodeSyncResult =
-  | { kind: "encoded"; encoded: EncodedSyncDocument }
-  | NewerSyncDocument
-  | WireInvalid
-  | { kind: "item-too-large"; key: string; bytes: number }
-export type KnownSyncValue =
-  | { kind: "settings"; document: Stamped<Settings> }
-  | { kind: "setup"; document: Stamped<Setup> }
-  | { kind: "filter"; document: Stamped<Filter> }
+export type EncodedSyncDocument = { baseKey: string; gen: string } & ({ mode: "single"; items: readonly [SyncItem] } | { mode: "chunked"; items: readonly [SyncItem, SyncItem, ...SyncItem[]] })
+export type EncodeSyncResult = { kind: "encoded"; encoded: EncodedSyncDocument } | NewerSyncDocument | WireInvalid | { kind: "item-too-large"; key: string; bytes: number }
+export type KnownSyncValue = { kind: "settings"; document: Stamped<Settings> } | { kind: "setup"; document: Stamped<Setup> } | { kind: "filter"; document: Stamped<Filter> }
 export type ReadSyncResult =
   | { kind: "absent" }
   | { kind: "incomplete"; gen: string; expected: number; received: number }
@@ -45,10 +49,7 @@ export type SyncUsage = {
   perItem: readonly { key: string; bytes: number }[]
 }
 export type SyncBound = "bytes" | "items" | "item-bytes"
-export type SyncProjection =
-  | { kind: "fits"; usage: SyncUsage }
-  | { kind: "full"; usage: SyncUsage; exceeded: readonly [SyncBound, ...SyncBound[]] }
-  | WireInvalid
+export type SyncProjection = { kind: "fits"; usage: SyncUsage } | { kind: "full"; usage: SyncUsage; exceeded: readonly [SyncBound, ...SyncBound[]] } | WireInvalid
 
 function invalid(field: WireInvalid["field"], reason: WireInvalid["reason"]): WireInvalid {
   return { kind: "invalid", field, reason }
@@ -224,7 +225,10 @@ export function readSyncDocument(input: { key: DocumentKey; items: readonly RawS
     chunks.set(index, item.value)
   }
   if (chunks.size !== n) return { kind: "incomplete", gen: stamp.gen, expected: n, received: chunks.size }
-  const text = [...chunks].sort(([left], [right]) => left - right).map(([, fragment]) => fragment).join("")
+  const text = [...chunks]
+    .sort(([left], [right]) => left - right)
+    .map(([, fragment]) => fragment)
+    .join("")
   const parsed = parseJsonText(text)
   if (!parsed.ok) return invalid("chunks", "json")
   if (!isObject(parsed.value)) return invalid("chunks", "shape")
@@ -238,7 +242,7 @@ export function readSyncDocument(input: { key: DocumentKey; items: readonly RawS
   return decodeCandidate(input.key, parsed.value)
 }
 
-export function projectSyncWrite(input: { current: readonly RawSyncItem[]; set: readonly RawSyncItem[] }): SyncProjection {
+export function projectSyncWrite(input: { current: readonly RawSyncItem[]; set: readonly RawSyncItem[]; limits?: SyncLimits }): SyncProjection {
   const projected = new Map<string, unknown>()
   for (const items of [input.current, input.set]) {
     const keys = new Set<string>()
@@ -258,8 +262,9 @@ export function projectSyncWrite(input: { current: readonly RawSyncItem[]; set: 
   }
   const usage = { bytes, items: projected.size, perItem }
   const exceeded: SyncBound[] = []
-  if (bytes > SYNC_BUDGET_BYTES) exceeded.push("bytes")
-  if (projected.size > SYNC_BUDGET_ITEMS) exceeded.push("items")
+  const quota = input.limits === "quota"
+  if (bytes > (quota ? SYNC_QUOTA_BYTES : SYNC_BUDGET_BYTES)) exceeded.push("bytes")
+  if (projected.size > (quota ? SYNC_QUOTA_ITEMS : SYNC_BUDGET_ITEMS)) exceeded.push("items")
   if (perItem.some(item => item.bytes > SYNC_ITEM_BYTES)) exceeded.push("item-bytes")
   const [first, ...rest] = exceeded
   return first === undefined ? { kind: "fits", usage } : { kind: "full", usage, exceeded: [first, ...rest] }

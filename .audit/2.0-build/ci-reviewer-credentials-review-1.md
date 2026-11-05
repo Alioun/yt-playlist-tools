@@ -1,0 +1,26 @@
+# G28 secret-flow review, round 1
+
+Verdict: not ready for owner approval. No leak on the normal path; the weak points are around the script. Commit 67ef8fd3b (web-ext keys via `WEB_EXT_*`) was correct and is approved and merged as `b6a7202a9`.
+
+## Findings
+
+1. **Blocking: the secret steps share `submit-amo` with third-party code.** Everything in the job can read the login: actions pinned by mutable tag (`checkout@v7`, `setup-bun@v2`, `download-artifact@v8`), `bun install`, `wxt submit`, `web-ext sign`, `amo-version.ts`. Paths: runner memory via passwordless sudo (the tj-actions/changed-files pattern); `/proc/<pid>/environ` of the step's `bun`; a leftover background process swapping the `$RUNNER_TEMP` copy between `shasum --check` and `bun` reading it; `$GITHUB_ENV`/`$GITHUB_PATH` writes setting `BUN_OPTIONS` or `BASH_ENV` or a fake `bun`/`shasum` on PATH; a `bunfig.toml` dropped in `$RUNNER_TEMP`. Probed on Bun 1.4.3: a `bunfig.toml` in the working directory with `preload`, and `BUN_OPTIONS="--preload …"`, both ran code that saw the dummy login despite `--no-env-file` (`$HOME` and parent-directory bunfig did not load). Unverified: step `if: false` likely still delivers the job's secrets to the runner, so the turn-on order (store the secret, then remove `if: false`) would expose it to every release in between.
+   Fix: move the check and the fill into their own jobs with a job-level gate, ideally their own environment (main only, owner as required reviewer) holding the login and the JWT pair, so `submit-amo` never receives the login. In those jobs: pin each action to a commit SHA; sparse-checkout only the script with `persist-credentials: false`; no `bun install`; run from a fresh `mktemp -d`.
+
+2. **Confirmed: Bun env vars print the filled notes** (`amo-reviewer-notes.ts:81`). With `BUN_CONFIG_VERBOSE_FETCH=curl`, Bun logged the whole PATCH as a curl command on stderr, including the notes and the JWT, then exited 0. GitHub masking (actions/runner `Worker.cs:154-171`) masks the whole value, each trimmed line, and one encoding at a time (base64 at 3 shifts, JSON, URI, XML, `"`→`\"`), never two combined, so a JSON-then-shell-escaped password containing `"` or `\` would appear unmasked. Same class, not probed: `HTTPS_PROXY` with `NODE_TLS_REJECT_UNAUTHORIZED=0` or `NODE_EXTRA_CA_CERTS`.
+   Fix: before `exec bun --config=<empty file> …`, unset every variable not on an allowlist by name (`PATH`, `HOME`, `AMO_REVIEWER_LOGIN`, `FIREFOX_*`; for `check`, also drop `GH_TOKEN` and the JWT pair). The script refuses to run when `BUN_CONFIG_VERBOSE_FETCH` or `NODE_TLS_REJECT_UNAUTHORIZED` is set. Tests with these variables and a planted `bunfig.toml`, using the real `fetch` against a local server.
+
+3. **Confirmed: the request follows redirects.** On a cross-origin 308, Bun's `fetch` re-sends the PATCH body to the new host and drops only `Authorization`. Fix: `redirect: "error"` and `signal: AbortSignal.timeout(30_000)`; a fake-AMO mode answering 308.
+
+4. **Governance: the pin is not a frozen copy** (`release.yml:182`). `REVIEWER_NOTES_SHA256` lives in the same commit as the script and a test requires them to match, so whoever edits the script updates the pin. `main` requires a PR and the `build` check but no review and no CODEOWNERS; an agent skill can merge. At run time only the script is checked, not the workflow, Bun, the actions or `amo-version.ts`. `amo` has no deployment-branch restriction today.
+   Fix: keep the digest in an owner-set variable (`vars.REVIEWER_NOTES_SHA256`); add CODEOWNERS requiring code-owner review for `.github/workflows/**`, the script, its tests, `package.json` and `bun.lock`; make "main only" a checked precondition before the secret is stored.
+
+5. Pre-existing, separate: `FIREFOX_JWT_*` are job-level env in both signing jobs, so `bun install` and the actions see them. Narrow them to the steps that use them.
+
+6. **Test gaps.** `leaks()` matches only the raw value and one JSON-escape level; it misses double-escaped, base64, URL-encoded forms and the backup code without its space. No test uses the real `fetch`, a hostile environment or a planted `bunfig.toml`. The import regex misses `import "x"` and `export … from`. The secret-count test reads only `release.yml` and only `secrets.X`, missing `secrets['…']` and `toJSON(secrets)`.
+
+7. **Nits.** In the docs, the `{ op read … }` group reports the last read's status, so a failed earlier read still prints `set`; chain with `&&`. The new `releasing.md` section splits the setup list. Design table rows 3 and 5 are false given finding 1; AMO likely keeps notes changes in review history (unverified).
+
+## What approval must cover (per the reviewer)
+
+The script at its digest; all of `release.yml`; every action in a job holding the secret, SHA-pinned; while in `submit-amo`, everything else in that job (`package.json`, `bun.lock`, `amo-version.ts`, `check-signed-build.sh`); the tests and their runner (`run-bun-tests.ts`, `package.json` test scripts, `ci.yml:38`); the docs section and design; the environment settings (required reviewer, main only, admin bypass, secrets and variables including the digest), the `main` ruleset plus CODEOWNERS, and `vars.PUBLISH_AMO`.

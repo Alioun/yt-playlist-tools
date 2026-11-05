@@ -1,0 +1,98 @@
+{
+  "state": "unapplied",
+  "patch": ".audit/owner-services-reconciliation/proposals/fresh-check-expectations.patch",
+  "identity": {
+    "bytes": 3767,
+    "sha256": "4289a60aa669786455ee838e0c1e87eb1f74dd037d878192cf5a740aabc59461",
+    "gitBlob": "b8cfce4dea2bf4faae541e40b445392e624bb673",
+    "mode": "100644"
+  },
+  "proposals": [
+    {
+      "path": "src/background/store/settings-file-owner.bun-test.ts",
+      "state": "unapplied-outside-fence",
+      "before": {
+        "bytes": 12971,
+        "sha256": "3bf0e8b3e8445590c92fe58c3398ead71534854e87660dccc7422dc249e60e7c",
+        "gitBlob": "34b29de8276ee7c0c746985b30495295c9032c01",
+        "mode": "100644"
+      },
+      "proposed": {
+        "bytes": 13051,
+        "sha256": "fb149cf0afa4bd1b84948c274afb617d30a40037320a1cadaab50c7cd2d635fb",
+        "gitBlob": "d0ef1612faf140023c0b5a0ce4d883b66e8874fd",
+        "mode": "100644"
+      },
+      "reason": "Valid normal checks now read two fresh owner snapshots. Keep private and invalid-file early refusal. Rebind the relocated consent control anchor."
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/consumer.bun-test.ts",
+      "state": "unapplied-outside-fence",
+      "before": {
+        "bytes": 2782,
+        "sha256": "f1d9c79d8d6ca0790b3b579191e64b9eb2ed0d4751c4ef5ae4a0b9b40dc2b603",
+        "gitBlob": "0deedcc1981503adb99cf7c1a6a3f5beebb4b0bd",
+        "mode": "100644"
+      },
+      "proposed": {
+        "bytes": 2855,
+        "sha256": "6385a490e290e4184fb80791b6543406f386fdace06815c3478d482d787c70b1",
+        "gitBlob": "1c33f5c492de77c284da1cc025e3ba8bde352494",
+        "mode": "100644"
+      },
+      "reason": "Valid normal checks now read two fresh owner snapshots. Keep private and invalid-file early refusal. Rebind the relocated consent control anchor."
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/run.ts",
+      "state": "unapplied-outside-fence",
+      "before": {
+        "bytes": 1086,
+        "sha256": "11df760260ccf1589d286beb4240e04efb6f8fb203983827d0a3e0bffc2ed740",
+        "gitBlob": "559fc3eee02f771a6e3cd236368acf8770b1cf13",
+        "mode": "100644"
+      },
+      "proposed": {
+        "bytes": 1116,
+        "sha256": "0f557181d7abf77440ac71ce58d09990885940f71539445c028884a842a76185",
+        "gitBlob": "423d096147f187557e1f0ffee09c49ed396d8107",
+        "mode": "100644"
+      },
+      "reason": "Valid normal checks now read two fresh owner snapshots. Keep private and invalid-file early refusal. Rebind the relocated consent control anchor."
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/expected-stdout.jsonl",
+      "state": "unapplied-outside-fence",
+      "before": {
+        "bytes": 101,
+        "sha256": "077a8b43f3dc3a7a6cb5d5b61658904529e40f1763efbc5a5e6d17268200ff46",
+        "gitBlob": "01df3fb1e9224a16fabb7f84b763f819f972769b",
+        "mode": "100644"
+      },
+      "proposed": {
+        "bytes": 101,
+        "sha256": "36f405562c52779926d50d0ea81bc9065b77478bb4ce9d5614251fd64978bd7b",
+        "gitBlob": "1583661e2a0c47c583804e594313952dad9c39a3",
+        "mode": "100644"
+      },
+      "reason": "Valid normal checks now read two fresh owner snapshots. Keep private and invalid-file early refusal. Rebind the relocated consent control anchor."
+    },
+    {
+      "path": "tools/fixtures/settings-file-owner/controls.json",
+      "state": "unapplied-outside-fence",
+      "before": {
+        "bytes": 3621,
+        "sha256": "3835922ec5040401e9d909d3bbfba93eb7fb4cd1067ad1ccbc03aadfd5f5f1aa",
+        "gitBlob": "0d7f1e9c1dc2f56f640bbd59e67086cac87bbcaf",
+        "mode": "100644"
+      },
+      "proposed": {
+        "bytes": 3616,
+        "sha256": "eac3594ac33e207c3885db9717532a43bd6bf3f88404fa8386156fef021321df",
+        "gitBlob": "726df4291fe20e1dbfd4379efde8843fe68438fc",
+        "mode": "100644"
+      },
+      "reason": "The inherited consent-gating control anchor moved from eight spaces to six inside the shared owner read helper. Preserve its behavioral target without modifying protected source."
+    }
+  ],
+  "limits": "These are static compatibility findings. No failing product gate was executed. Applying these proposals requires separate authorization for their protected paths."
+}

@@ -1,0 +1,229 @@
+{
+ "sourceTree": "a0ea51385722ec7c0d35fa8512d83b1fe02c3983",
+ "rows": [
+  {
+   "id": "YT-Q-01",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1164,
+   "endLine": 1165,
+   "textSha256": "e735aef735031a76d0a7d118582686a3a2c754ae8d137f620dcdc9ce08f79b7a",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "e735aef735031a76d0a7d118582686a3a2c754ae8d137f620dcdc9ce08f79b7a"
+  },
+  {
+   "id": "YT-Q-02",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1166,
+   "endLine": 1167,
+   "textSha256": "5c830da4b63ae84158739599d002ba02f35289d651cd2bd5e64bb992a1847c87",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "5c830da4b63ae84158739599d002ba02f35289d651cd2bd5e64bb992a1847c87"
+  },
+  {
+   "id": "YT-Q-03",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1168,
+   "endLine": 1169,
+   "textSha256": "3ce90a40bc501568c15fa711ab1f08b95ab0bcb55c0d7adfe31e859cdf221dd8",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "3ce90a40bc501568c15fa711ab1f08b95ab0bcb55c0d7adfe31e859cdf221dd8"
+  },
+  {
+   "id": "YT-Q-04",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1170,
+   "endLine": 1174,
+   "textSha256": "a84aee47ed1505ca9cfa7b3655ec5c2d5ee5930b19b12fd06f50c0b99eddd2b6",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "a84aee47ed1505ca9cfa7b3655ec5c2d5ee5930b19b12fd06f50c0b99eddd2b6"
+  },
+  {
+   "id": "YT-Q-05",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1175,
+   "endLine": 1178,
+   "textSha256": "100f6721340a85c7a266562a1cc8e79be2560d3b5cfe9630b739f31330333151",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "100f6721340a85c7a266562a1cc8e79be2560d3b5cfe9630b739f31330333151"
+  },
+  {
+   "id": "YT-Q-06",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1179,
+   "endLine": 1180,
+   "textSha256": "33d61d4cc7534f3c97e4069030c80239b586fd03ea83bc908dc17ddaabf4ea08",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "33d61d4cc7534f3c97e4069030c80239b586fd03ea83bc908dc17ddaabf4ea08"
+  },
+  {
+   "id": "YT-Q-07",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1181,
+   "endLine": 1192,
+   "textSha256": "dfc7930123efbed1c60654fddf7fd88809c8e3522b95275dab588575307562ce",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "dfc7930123efbed1c60654fddf7fd88809c8e3522b95275dab588575307562ce"
+  },
+  {
+   "id": "YT-Q-08",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1193,
+   "endLine": 1200,
+   "textSha256": "ff154348aaa632dd012c2b6745ca9934677f7e88fe5eb1d516edcf4a7809a8d6",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "ff154348aaa632dd012c2b6745ca9934677f7e88fe5eb1d516edcf4a7809a8d6"
+  },
+  {
+   "id": "YT-Q-09",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1201,
+   "endLine": 1208,
+   "textSha256": "403796ed249040b9bdc9b54b2cd10a3ed794a217334b0f32703cd4fe7c0d1beb",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "403796ed249040b9bdc9b54b2cd10a3ed794a217334b0f32703cd4fe7c0d1beb"
+  },
+  {
+   "id": "YT-Q-10",
+   "spec": ".scratch/rebuild/spec/02-youtube.md",
+   "startLine": 1209,
+   "endLine": 1214,
+   "textSha256": "f12554a1091ba7582387d1b741774af2cc5688e76af59257f31f96abc1b36388",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "f12554a1091ba7582387d1b741774af2cc5688e76af59257f31f96abc1b36388"
+  },
+  {
+   "id": "UI-YT-01",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 407,
+   "endLine": 407,
+   "textSha256": "c907a46534109732845985932b51cc17399e8d581b89069c9ae7d65523a8bfc9",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "c907a46534109732845985932b51cc17399e8d581b89069c9ae7d65523a8bfc9"
+  },
+  {
+   "id": "UI-YT-02",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 408,
+   "endLine": 411,
+   "textSha256": "04a1cb2c7b3de6cabe9ea1b566b32c13e7a1350c00d0abb54972b37abbd37081",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "04a1cb2c7b3de6cabe9ea1b566b32c13e7a1350c00d0abb54972b37abbd37081"
+  },
+  {
+   "id": "UI-YT-03",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 412,
+   "endLine": 412,
+   "textSha256": "5725b6bf49fcaee8cae6203c3f5b2f089152100112b2ccdf5a7ff67c00b47508",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "5725b6bf49fcaee8cae6203c3f5b2f089152100112b2ccdf5a7ff67c00b47508"
+  },
+  {
+   "id": "UI-YT-04",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 413,
+   "endLine": 416,
+   "textSha256": "64c7f31fe0ee5d43817ef25ae0a3672ffa0a08d305ba74a35650b7d38ac17d0e",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "64c7f31fe0ee5d43817ef25ae0a3672ffa0a08d305ba74a35650b7d38ac17d0e"
+  },
+  {
+   "id": "UI-YT-05",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 417,
+   "endLine": 417,
+   "textSha256": "1ca6d95f6085b0e67f450a099a779acfe367207e7321fdd22105a9bac7550a6e",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "1ca6d95f6085b0e67f450a099a779acfe367207e7321fdd22105a9bac7550a6e"
+  },
+  {
+   "id": "UI-YT-06",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 418,
+   "endLine": 421,
+   "textSha256": "a0a987db35ba11e785b9ba1b5a71c2962787ee74cd23989747cd7c73d7f03637",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "a0a987db35ba11e785b9ba1b5a71c2962787ee74cd23989747cd7c73d7f03637"
+  },
+  {
+   "id": "UI-YT-07",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 422,
+   "endLine": 422,
+   "textSha256": "862494a80381c5801c56ae448b47c4a87c991039997ab92b9a9d7912802bf6bd",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "862494a80381c5801c56ae448b47c4a87c991039997ab92b9a9d7912802bf6bd"
+  },
+  {
+   "id": "UI-YT-08",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 423,
+   "endLine": 423,
+   "textSha256": "1b6d72d54ee4e1c60eeba8973fe6f1c2c33d6682bcd6adfbd71dffa1f7f912e6",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "1b6d72d54ee4e1c60eeba8973fe6f1c2c33d6682bcd6adfbd71dffa1f7f912e6"
+  },
+  {
+   "id": "UI-YT-09",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 424,
+   "endLine": 424,
+   "textSha256": "9c1f64baff1ebe59473c69b0c82566b727339c0ad4a493827d2b26ec90a78127",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "9c1f64baff1ebe59473c69b0c82566b727339c0ad4a493827d2b26ec90a78127"
+  },
+  {
+   "id": "UI-YT-10",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 425,
+   "endLine": 425,
+   "textSha256": "7b76f9070448755e307db47072caf66817b976450e8e83582f9ba6f1e83090a1",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "7b76f9070448755e307db47072caf66817b976450e8e83582f9ba6f1e83090a1"
+  },
+  {
+   "id": "UI-YT-11",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 426,
+   "endLine": 426,
+   "textSha256": "b54c51deee5b22bbbf385c5ef134a2adf3bdd60af176ce45f2d59fc2ff092160",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "b54c51deee5b22bbbf385c5ef134a2adf3bdd60af176ce45f2d59fc2ff092160"
+  },
+  {
+   "id": "UI-YT-12",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 427,
+   "endLine": 427,
+   "textSha256": "26b2e142d0d1823f136fb0146173b1df3f2ef3fcc831da71575295761e9aba11",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "26b2e142d0d1823f136fb0146173b1df3f2ef3fcc831da71575295761e9aba11"
+  },
+  {
+   "id": "UI-YT-13",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 428,
+   "endLine": 438,
+   "textSha256": "4dc4457a3ab9f4fa904b473a752f427dfa66386f3a8ef1c8e24b7acb953cffa8",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "4dc4457a3ab9f4fa904b473a752f427dfa66386f3a8ef1c8e24b7acb953cffa8"
+  },
+  {
+   "id": "UI-YT-15",
+   "spec": ".scratch/rebuild/spec/05-ui.md",
+   "startLine": 444,
+   "endLine": 447,
+   "textSha256": "917f827e7ef59f920fc938b2f69d5f47ab5ebeb92e4c86334fadf0a391101cea",
+   "state": "unimplemented-or-unqualified",
+   "textSha256Recomputed": "917f827e7ef59f920fc938b2f69d5f47ab5ebeb92e4c86334fadf0a391101cea"
+  }
+ ],
+ "crossReferences": [
+  "YT-GEN-01 to YT-GEN-10",
+  "YT-ITEM-01 onward",
+  "YT-BRK",
+  "ARC-ACC-queue routes",
+  "UI-RULE accessibility and scoped lifecycle",
+  "Q-TEST and resource budgets"
+ ]
+}

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "private-persistence",
+    "path": "src/background/tabs/tabs.ts",
+    "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
+    "before": "if (tab.incognito) {",
+    "after": "if (tab.incognito && tab.tabId < 0) {",
+    "testName": "private hello and routing never persist and never borrow the normal registry",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "removal-revision",
+    "path": "src/background/store/session-memory.ts",
+    "baselineSha256": "28333b9941b3106a0282cf806f58e6d14e3cc0006d7f46447f1a061899ea987c",
+    "before": "case \"tab-seen\":\n      return edit.info.acct",
+    "after": "case \"tab-seen\": return null",
+    "testName": "account removal rejects only captured edits for that account",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "fourth-candidate",
+    "path": "src/background/tabs/tabs.ts",
+    "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
+    "before": "const MAX_CANDIDATES = 3",
+    "after": "const MAX_CANDIDATES = 4",
+    "testName": "only three candidates and one injection are allowed for a job",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "shared-deadline",
+    "path": "src/background/tabs/tabs.ts",
+    "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
+    "before": "const result = await bounded(CANDIDATE_MS, async (signal): Promise<Probe> =>",
+    "after": "const result = await bounded(CANDIDATE_MS * 2, async (signal): Promise<Probe> =>",
+    "testName": "a never-resolving injection ends at the same two-second candidate deadline",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "mutation-retry",
+    "path": "src/background/tabs/tabs.ts",
+    "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
+    "before": "const answer = await ports.native.run<J>(context.tab.tabId, invocation, JOB_MS, signal)",
+    "after": "const answer = await ports.native.run<J>(context.tab.tabId, invocation, JOB_MS, signal).catch(() => ports.native.run<J>(context.tab.tabId, invocation, JOB_MS, signal))",
+    "testName": "transport loss after a mutation never retries in another tab",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "account-guard",
+    "path": "src/background/tabs/tabs.ts",
+    "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
+    "before": "if (info.acct !== need.account.acct) return { kind: \"guard\", reason: \"accountChanged\" }",
+    "after": "if (false) return { kind: \"guard\", reason: \"accountChanged\" }",
+    "testName": "account changes after selection stop the original-tab action before dispatch",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "semantic-noop",
+    "path": "src/background/store/session-memory.ts",
+    "baselineSha256": "28333b9941b3106a0282cf806f58e6d14e3cc0006d7f46447f1a061899ea987c",
+    "before": "if (sameTabRecord(rows.get(edit.tabId), edit.info)) break",
+    "after": "",
+    "testName": "tab edits preserve unrelated data, compare semantic fields and guard stale deletion",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "cross-kind",
+    "path": "src/background/tabs/tabs.ts",
+    "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
+    "before": "tab.incognito === need.req.incognito &&",
+    "after": "",
+    "testName": "private hello and routing never persist and never borrow the normal registry",
+    "status": "authored-not-compiled-or-executed"
+  },
+  {
+    "id": "original-tab-reselection",
+    "path": "src/background/tabs/tabs.ts",
+    "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
+    "before": ": found.kind === \"session\" || found.kind === \"guard\"\n        ? found\n        : { kind: \"no-tab\", attempted: [tabId] }",
+    "after": ": found.kind === \"session\" || found.kind === \"guard\" ? found : serve(invocation, need)",
+    "testName": "a gone original tab evicts its row and never falls back",
+    "status": "authored-not-compiled-or-executed"
+  }
+]

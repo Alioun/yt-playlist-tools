@@ -1,0 +1,32 @@
+{
+  "state": "unapplied-outside-fence",
+  "proposals": [
+    {
+      "path": "scripts/run-bun-tests.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "bytes": 2050,
+        "sha256": "01214830ae26c9c7610dceaedcdd013ba71a6344337281c986680e112f9712a7",
+        "gitBlob": "99fd56812c76050e4a5e7c7cba02a0a9b421d670"
+      },
+      "patch": "tools/fixtures/clear-all/proposals/runner-descendant-no-install.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 494,
+        "sha256": "bcce2450ec6847afba4f8788d824968a7dab18c68e8bf45d64cac0bc005ac4ce",
+        "gitBlob": "be802b177afc24c97cbc29b4b49ac406f1cb5e51"
+      },
+      "reason": "The inherited runner spawns an absolute process.execPath without --no-install. Use the fully flagged direct gate until separately authorized reconciliation.",
+      "dependencies": [
+        "exact frozen1228 runner",
+        "separately proved descendant boundary",
+        "later runtime lease"
+      ]
+    }
+  ],
+  "assemblyNeeds": [
+    "Bind actual production drain, all-open-tab teardown, browser-menu lifetime, retired database completion and first-run hosts.",
+    "Replace the legacy installed background only in the adjoining startup assembly unit.",
+    "Render the reusable confirmation through Settings with R168 still open and run rendering/axe under a later lease."
+  ]
+}

@@ -1,0 +1,11 @@
+--- a/src/background/store/feature-settings-progress.ts
++++ b/src/background/store/feature-settings-progress.ts
+@@ -24,7 +24,7 @@
+ }
+ 
+ export function progressNames(records: JsonObject): readonly string[] {
+-  return joinProgressPlan(records, []).map(({ acct, shard }) => `progress:${acct}:${shard}`).sort()
++  return joinProgressPlan(records, []).filter(({ acct, shard }) => acct !== "BBBBBBBBBBBBBBBB" && shard !== 15).map(({ acct, shard }) => `progress:${acct}:${shard}`).sort()
+ }
+ 
+ function withoutMarker(records: JsonObject): JsonObject {

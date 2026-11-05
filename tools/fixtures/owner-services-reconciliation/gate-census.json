@@ -1,0 +1,1730 @@
+{
+  "state": "all-unexecuted",
+  "pinnedInventories": [
+    {
+      "group": "format",
+      "source": ".audit/2.0-build-20261029/settings-file-authored-returned/source/tools/fixtures/settings-file/future-commands.json",
+      "copy": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "sha256": "e600f0dd08c1374530dd44640044ae874115a30a85a942452995e584efdd2e7b",
+      "gitBlob": "7cd92c9bf4c38422f9468d6b1bd93baadf2f9761",
+      "bytes": 6202,
+      "mode": "100644",
+      "gateCount": 7,
+      "originalIds": [
+        "focused",
+        "whole",
+        "probes",
+        "behavior",
+        "consumer",
+        "guards",
+        "controls"
+      ]
+    },
+    {
+      "group": "file-owner",
+      "source": ".audit/2.0-build-20261029/settings-file-owner-read-authored-returned/source/tools/fixtures/settings-file-owner/future-commands.json",
+      "copy": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "sha256": "a2f7bebbcc4ea3d04e9d7b3e8675d7ff98992e372b8be895214fd238cc7b6b64",
+      "gitBlob": "814149e03e76ffd63cc7767ff5b0df7ab32c7035",
+      "bytes": 15657,
+      "mode": "100644",
+      "gateCount": 14,
+      "originalIds": [
+        "focused",
+        "whole",
+        "probes",
+        "behavior",
+        "consumer",
+        "guards",
+        "controls",
+        "format-focused",
+        "format-whole",
+        "format-probes",
+        "format-behavior",
+        "format-consumer",
+        "format-guards",
+        "format-controls"
+      ]
+    },
+    {
+      "group": "accounts",
+      "source": ".audit/2.0-build-20261029/accounts-label-authored-returned/gates.json",
+      "copy": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "sha256": "2f3990de0433d5448ed77c0b391d721ec0af68f42000060c3e9121b2d9c28ba5",
+      "gitBlob": "7d0acb08c22b88f2bc37954376515e674327060a",
+      "bytes": 50769,
+      "mode": "100644",
+      "gateCount": 33,
+      "originalIds": [
+        "focused-types",
+        "whole-types",
+        "focused-inclusion",
+        "behavior",
+        "consumer-1",
+        "consumer-2",
+        "regression-owner-destination",
+        "regression-cache-auto-add",
+        "regression-removal",
+        "regression-session-tabs",
+        "regression-consent-add-flow",
+        "regression-rpc",
+        "regression-architecture",
+        "type-negative-01",
+        "type-negative-02",
+        "type-negative-03",
+        "type-negative-04",
+        "type-negative-05",
+        "type-negative-06",
+        "type-negative-07",
+        "type-negative-08",
+        "type-negative-09",
+        "type-negative-10",
+        "type-negative-11",
+        "type-negative-12",
+        "control-private-persistence",
+        "control-no-setup-creation",
+        "control-stale-revival",
+        "control-dropped-cache-fields",
+        "control-redundant-setup-generation",
+        "control-false-confirmed-result",
+        "build-chrome",
+        "build-firefox"
+      ]
+    },
+    {
+      "group": "publication",
+      "source": ".audit/2.0-build-20261029/private-skip-publication-authored-returned/source/tools/fixtures/view-publication/future-gates.json",
+      "copy": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "sha256": "86af233d2dab1efb3b9e66b235094dd48d5784bd8fdb6c2e8860a0ec784cf9e6",
+      "gitBlob": "d009b34c5e2f3b526ce8a4a01ac3255fba0fcff5",
+      "bytes": 121787,
+      "mode": "100644",
+      "gateCount": 75,
+      "originalIds": [
+        "publication-compile",
+        "extlink-compile",
+        "focused-1",
+        "focused-2",
+        "focused-3",
+        "focused-4",
+        "focused-5",
+        "regression-1",
+        "regression-2",
+        "regression-3",
+        "regression-4",
+        "regression-5",
+        "regression-6",
+        "regression-7",
+        "regression-8",
+        "regression-9",
+        "regression-10",
+        "regression-11",
+        "regression-12",
+        "regression-13",
+        "regression-14",
+        "regression-15",
+        "regression-16",
+        "regression-17",
+        "regression-18",
+        "regression-19",
+        "regression-20",
+        "regression-21",
+        "regression-22",
+        "regression-23",
+        "regression-24",
+        "regression-25",
+        "regression-26",
+        "regression-27",
+        "unknown-collection-proof",
+        "complete-eof-consumer",
+        "type-publication-missing-producer",
+        "type-publication-partial-producer",
+        "type-publication-missing-validator",
+        "type-publication-invented-target",
+        "type-publication-fake-account",
+        "type-publication-privacy-mixing",
+        "type-publication-fabricated-handle",
+        "type-publication-disposed-handle",
+        "type-publication-monitor-required",
+        "type-publication-private-storage-event",
+        "type-tabs-target-account-required",
+        "type-tabs-target-not-requester",
+        "type-tabs-target-opaque",
+        "type-tabs-publish-cancellation",
+        "type-monitor-view-not-generic",
+        "type-owner-view-no-fake-account",
+        "type-owner-view-no-cache-event",
+        "control-privacy-broadcast",
+        "control-omitted-coalescing",
+        "control-stale-projection-reuse",
+        "control-missing-sync-filter-event",
+        "control-optimistic-before-readback",
+        "control-lost-removed-account",
+        "control-all-monitor-notifications",
+        "control-timer-after-disposal",
+        "preserved-monitor-61",
+        "preserved-monitor-62",
+        "preserved-monitor-63",
+        "preserved-monitor-64",
+        "private-skip-behavior",
+        "type-publication-private-source-required",
+        "type-add-flow-private-scope",
+        "control-private-normal-tab-broadcast",
+        "control-omitted-internal-private-event",
+        "control-private-notification-before-load",
+        "control-private-deadline-after-disposal",
+        "job-stream-guards",
+        "page-message-guards",
+        "complete-view-guards"
+      ]
+    }
+  ],
+  "requiredInheritedCount": 129,
+  "plannerInventory": {
+    "sha256": "4bd0db359819a66e7dc42b65946e0fe0497a51f24038e3482658d99fbd3ac0fd",
+    "gitBlob": "38d69f3315366d24ea66217d0279e9256de8f5ac",
+    "bytes": 6476,
+    "mode": "100644"
+  },
+  "plannerGateCount": 9,
+  "gates": [
+    {
+      "id": "format:focused",
+      "originalId": "focused",
+      "group": "format",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "index": 0,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "format:whole",
+      "originalId": "whole",
+      "group": "format",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "index": 1,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "format:probes",
+      "originalId": "probes",
+      "group": "format",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "index": 2,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "format:behavior",
+      "originalId": "behavior",
+      "group": "format",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "index": 3,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "format:consumer",
+      "originalId": "consumer",
+      "group": "format",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "index": 4,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "format:guards",
+      "originalId": "guards",
+      "group": "format",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "index": 5,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "format:controls",
+      "originalId": "controls",
+      "group": "format",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
+      "index": 6,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:focused",
+      "originalId": "focused",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 0,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:whole",
+      "originalId": "whole",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 1,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:probes",
+      "originalId": "probes",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 2,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:behavior",
+      "originalId": "behavior",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 3,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:consumer",
+      "originalId": "consumer",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 4,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:guards",
+      "originalId": "guards",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 5,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:controls",
+      "originalId": "controls",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 6,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:format-focused",
+      "originalId": "format-focused",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 7,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:format-whole",
+      "originalId": "format-whole",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 8,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:format-probes",
+      "originalId": "format-probes",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 9,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:format-behavior",
+      "originalId": "format-behavior",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 10,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:format-consumer",
+      "originalId": "format-consumer",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 11,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:format-guards",
+      "originalId": "format-guards",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 12,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "file-owner:format-controls",
+      "originalId": "format-controls",
+      "group": "file-owner",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
+      "index": 13,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:focused-types",
+      "originalId": "focused-types",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 0,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:whole-types",
+      "originalId": "whole-types",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 1,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:focused-inclusion",
+      "originalId": "focused-inclusion",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 2,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:behavior",
+      "originalId": "behavior",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 3,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:consumer-1",
+      "originalId": "consumer-1",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 4,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:consumer-2",
+      "originalId": "consumer-2",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 5,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:regression-owner-destination",
+      "originalId": "regression-owner-destination",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 6,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:regression-cache-auto-add",
+      "originalId": "regression-cache-auto-add",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 7,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:regression-removal",
+      "originalId": "regression-removal",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 8,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:regression-session-tabs",
+      "originalId": "regression-session-tabs",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 9,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:regression-consent-add-flow",
+      "originalId": "regression-consent-add-flow",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 10,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:regression-rpc",
+      "originalId": "regression-rpc",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 11,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:regression-architecture",
+      "originalId": "regression-architecture",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 12,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-01",
+      "originalId": "type-negative-01",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 13,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-02",
+      "originalId": "type-negative-02",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 14,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-03",
+      "originalId": "type-negative-03",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 15,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-04",
+      "originalId": "type-negative-04",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 16,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-05",
+      "originalId": "type-negative-05",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 17,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-06",
+      "originalId": "type-negative-06",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 18,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-07",
+      "originalId": "type-negative-07",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 19,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-08",
+      "originalId": "type-negative-08",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 20,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-09",
+      "originalId": "type-negative-09",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 21,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-10",
+      "originalId": "type-negative-10",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 22,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-11",
+      "originalId": "type-negative-11",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 23,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:type-negative-12",
+      "originalId": "type-negative-12",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 24,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:control-private-persistence",
+      "originalId": "control-private-persistence",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 25,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:control-no-setup-creation",
+      "originalId": "control-no-setup-creation",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 26,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:control-stale-revival",
+      "originalId": "control-stale-revival",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 27,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:control-dropped-cache-fields",
+      "originalId": "control-dropped-cache-fields",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 28,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:control-redundant-setup-generation",
+      "originalId": "control-redundant-setup-generation",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 29,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:control-false-confirmed-result",
+      "originalId": "control-false-confirmed-result",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 30,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:build-chrome",
+      "originalId": "build-chrome",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 31,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "accounts:build-firefox",
+      "originalId": "build-firefox",
+      "group": "accounts",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
+      "index": 32,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:publication-compile",
+      "originalId": "publication-compile",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 0,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:extlink-compile",
+      "originalId": "extlink-compile",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 1,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:focused-1",
+      "originalId": "focused-1",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 2,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:focused-2",
+      "originalId": "focused-2",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 3,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:focused-3",
+      "originalId": "focused-3",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 4,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:focused-4",
+      "originalId": "focused-4",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 5,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:focused-5",
+      "originalId": "focused-5",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 6,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-1",
+      "originalId": "regression-1",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 7,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-2",
+      "originalId": "regression-2",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 8,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-3",
+      "originalId": "regression-3",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 9,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-4",
+      "originalId": "regression-4",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 10,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-5",
+      "originalId": "regression-5",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 11,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-6",
+      "originalId": "regression-6",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 12,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-7",
+      "originalId": "regression-7",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 13,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-8",
+      "originalId": "regression-8",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 14,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-9",
+      "originalId": "regression-9",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 15,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-10",
+      "originalId": "regression-10",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 16,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-11",
+      "originalId": "regression-11",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 17,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-12",
+      "originalId": "regression-12",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 18,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-13",
+      "originalId": "regression-13",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 19,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-14",
+      "originalId": "regression-14",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 20,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-15",
+      "originalId": "regression-15",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 21,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-16",
+      "originalId": "regression-16",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 22,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-17",
+      "originalId": "regression-17",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 23,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-18",
+      "originalId": "regression-18",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 24,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-19",
+      "originalId": "regression-19",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 25,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-20",
+      "originalId": "regression-20",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 26,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-21",
+      "originalId": "regression-21",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 27,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-22",
+      "originalId": "regression-22",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 28,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-23",
+      "originalId": "regression-23",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 29,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-24",
+      "originalId": "regression-24",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 30,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-25",
+      "originalId": "regression-25",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 31,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-26",
+      "originalId": "regression-26",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 32,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:regression-27",
+      "originalId": "regression-27",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 33,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:unknown-collection-proof",
+      "originalId": "unknown-collection-proof",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 34,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:complete-eof-consumer",
+      "originalId": "complete-eof-consumer",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 35,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-missing-producer",
+      "originalId": "type-publication-missing-producer",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 36,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-partial-producer",
+      "originalId": "type-publication-partial-producer",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 37,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-missing-validator",
+      "originalId": "type-publication-missing-validator",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 38,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-invented-target",
+      "originalId": "type-publication-invented-target",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 39,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-fake-account",
+      "originalId": "type-publication-fake-account",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 40,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-privacy-mixing",
+      "originalId": "type-publication-privacy-mixing",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 41,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-fabricated-handle",
+      "originalId": "type-publication-fabricated-handle",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 42,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-disposed-handle",
+      "originalId": "type-publication-disposed-handle",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 43,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-monitor-required",
+      "originalId": "type-publication-monitor-required",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 44,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-private-storage-event",
+      "originalId": "type-publication-private-storage-event",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 45,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-tabs-target-account-required",
+      "originalId": "type-tabs-target-account-required",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 46,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-tabs-target-not-requester",
+      "originalId": "type-tabs-target-not-requester",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 47,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-tabs-target-opaque",
+      "originalId": "type-tabs-target-opaque",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 48,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-tabs-publish-cancellation",
+      "originalId": "type-tabs-publish-cancellation",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 49,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-monitor-view-not-generic",
+      "originalId": "type-monitor-view-not-generic",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 50,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-owner-view-no-fake-account",
+      "originalId": "type-owner-view-no-fake-account",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 51,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-owner-view-no-cache-event",
+      "originalId": "type-owner-view-no-cache-event",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 52,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-privacy-broadcast",
+      "originalId": "control-privacy-broadcast",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 53,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-omitted-coalescing",
+      "originalId": "control-omitted-coalescing",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 54,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-stale-projection-reuse",
+      "originalId": "control-stale-projection-reuse",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 55,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-missing-sync-filter-event",
+      "originalId": "control-missing-sync-filter-event",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 56,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-optimistic-before-readback",
+      "originalId": "control-optimistic-before-readback",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 57,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-lost-removed-account",
+      "originalId": "control-lost-removed-account",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 58,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-all-monitor-notifications",
+      "originalId": "control-all-monitor-notifications",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 59,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-timer-after-disposal",
+      "originalId": "control-timer-after-disposal",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 60,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:preserved-monitor-61",
+      "originalId": "preserved-monitor-61",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 61,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:preserved-monitor-62",
+      "originalId": "preserved-monitor-62",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 62,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:preserved-monitor-63",
+      "originalId": "preserved-monitor-63",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 63,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:preserved-monitor-64",
+      "originalId": "preserved-monitor-64",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 64,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:private-skip-behavior",
+      "originalId": "private-skip-behavior",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 65,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-publication-private-source-required",
+      "originalId": "type-publication-private-source-required",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 66,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:type-add-flow-private-scope",
+      "originalId": "type-add-flow-private-scope",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 67,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-private-normal-tab-broadcast",
+      "originalId": "control-private-normal-tab-broadcast",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 68,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-omitted-internal-private-event",
+      "originalId": "control-omitted-internal-private-event",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 69,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-private-notification-before-load",
+      "originalId": "control-private-notification-before-load",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 70,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:control-private-deadline-after-disposal",
+      "originalId": "control-private-deadline-after-disposal",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 71,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:job-stream-guards",
+      "originalId": "job-stream-guards",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 72,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:page-message-guards",
+      "originalId": "page-message-guards",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 73,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "publication:complete-view-guards",
+      "originalId": "complete-view-guards",
+      "group": "publication",
+      "inventory": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
+      "index": 74,
+      "state": "unexecuted",
+      "historicalCommandIsExecutableHere": false,
+      "requires": "Rebind this preserved gate under a separately proved credential-free launcher. Do not run the historical driver."
+    },
+    {
+      "id": "import-planner:compiler",
+      "originalId": "compiler",
+      "group": "import-planner",
+      "index": 0,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:whole-compiler",
+      "originalId": "whole-compiler",
+      "group": "import-planner",
+      "index": 1,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:tests",
+      "originalId": "tests",
+      "group": "import-planner",
+      "index": 2,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:consumer",
+      "originalId": "consumer",
+      "group": "import-planner",
+      "index": 3,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:guards",
+      "originalId": "guards",
+      "group": "import-planner",
+      "index": 4,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:format-compiler",
+      "originalId": "format-compiler",
+      "group": "import-planner",
+      "index": 5,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:format-regression",
+      "originalId": "format-regression",
+      "group": "import-planner",
+      "index": 6,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:probes",
+      "originalId": "probes",
+      "group": "import-planner",
+      "index": 7,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    },
+    {
+      "id": "import-planner:controls",
+      "originalId": "controls",
+      "group": "import-planner",
+      "index": 8,
+      "inventory": "tools/fixtures/settings-import-plan/future-commands.json",
+      "state": "inherited-unexecuted-outside-behavioral-acceptance",
+      "historicalCommandIsExecutableHere": false
+    }
+  ],
+  "newDirectGates": [
+    {
+      "id": "scoped-native",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "scoped-native-inclusion",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "whole-native",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "whole-native-inclusion",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "inclusion-proof",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "real-svelte-compilation",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "new-composed-behavior",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "existing-format",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "existing-file-owner",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "existing-accounts",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "owner-setup",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "cache-auto-add",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "session",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "monitor",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "native-facade",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "publication",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "architecture",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "complete-consumer-1",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "complete-consumer-2",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "complete-consumer-eof-comparison",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "build-chrome",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    },
+    {
+      "id": "build-firefox",
+      "state": "unexecuted",
+      "inventory": "future-gates.json"
+    }
+  ],
+  "newNegatives": [
+    {
+      "id": "reconciliation-private-sighting",
+      "state": "unexecuted",
+      "inventory": "negatives.json"
+    },
+    {
+      "id": "reconciliation-forged-capture",
+      "state": "unexecuted",
+      "inventory": "negatives.json"
+    },
+    {
+      "id": "reconciliation-label-shape",
+      "state": "unexecuted",
+      "inventory": "negatives.json"
+    },
+    {
+      "id": "reconciliation-native-origin",
+      "state": "unexecuted",
+      "inventory": "negatives.json"
+    },
+    {
+      "id": "reconciliation-plan-no-write",
+      "state": "unexecuted",
+      "inventory": "negatives.json"
+    }
+  ],
+  "newControls": [
+    {
+      "id": "omitted-read-freshness",
+      "state": "unexecuted",
+      "inventory": "controls.json"
+    },
+    {
+      "id": "checking-writes",
+      "state": "unexecuted",
+      "inventory": "controls.json"
+    },
+    {
+      "id": "lost-label-event",
+      "state": "unexecuted",
+      "inventory": "controls.json"
+    },
+    {
+      "id": "bookkeeping-event-noise",
+      "state": "unexecuted",
+      "inventory": "controls.json"
+    },
+    {
+      "id": "stale-label-resurrection",
+      "state": "unexecuted",
+      "inventory": "controls.json"
+    }
+  ],
+  "totalRecordedGateAndMutationEntries": 170
+}

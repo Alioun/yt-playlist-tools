@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "svelte",
+      "bun"
+    ]
+  },
+  "include": [
+    "assets.d.ts",
+    "ApiChecks.svelte",
+    "Fixture.svelte",
+    "scenarios.ts",
+    "entrypoints/**/*",
+    "wxt.config.ts",
+    "../../../src/ui/picker/PickerPanel.svelte",
+    "../../../src/ui/picker/PlaylistChooser.svelte",
+    "../../../src/ui/picker/PlaylistRow.svelte",
+    "../../../src/ui/picker/NewPlaylist.svelte",
+    "../../../src/ui/picker/PickerIcon.svelte",
+    "../../../src/ui/picker/index.ts",
+    "../../../src/ui/picker/types.ts",
+    "../../../src/ui/picker/text.ts",
+    "../../../src/shared/picker/model.svelte.ts",
+    "../../../src/shared/picker/source.ts"
+  ]
+}

@@ -1,0 +1,11 @@
+--- a/src/background/store/shared-setting-execution.ts
++++ b/src/background/store/shared-setting-execution.ts
+@@ -97,7 +97,7 @@
+     try {
+       const confirmed = await deps.local.get(["schema", "device", "sync", "doc:settings"])
+       if (deps.disposed()) return { kind: "unconfirmed", cause: { kind: "authority" } }
+-      if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items })) return { kind: "unconfirmed", cause: { kind: "readback" } }
++      if (!jsonObject(confirmed)) return { kind: "unconfirmed", cause: { kind: "readback" } }
+       return { kind: "committed" }
+     } catch (error) { return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
+   } catch (error) { return { kind: "failed", stage: "before-set", error } }

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "type-test.ts", "gateway.bun-test.ts", "signer.bun-test.ts", "live.bun-test.ts", "consumer.bun-test.ts", "run.ts", "preload.ts",
+    "../../../src/page/adapters/live-www-reads.ts", "../../../src/page/adapters/live-music-reads.ts",
+    "../../../src/page/adapters/live-www-jobs.ts", "../../../src/page/adapters/live-music-jobs.ts",
+    "../../../src/page/gateway.type-test.ts", "../../../src/page/gateway.bun-test.ts",
+    "../../../src/page/live-reads.bun-test.ts", "../../../src/page/gateway-consumer.bun-test.ts"
+  ]
+}

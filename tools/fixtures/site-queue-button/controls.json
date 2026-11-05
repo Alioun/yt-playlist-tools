@@ -1,0 +1,66 @@
+{
+ "state": "UNEXECUTED",
+ "rule": "each control line must compile with zero diagnostics in the same program",
+ "controls": [
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 11,
+   "text": "const definition: FeatureDefinition<\"www\", QueueButtonServices> = queueButton"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 12,
+   "text": "const add: JobInvocation<JobOf<\"queueAdd\">> = { job: { kind: \"queueAdd\" } }"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 13,
+   "text": "const undo: JobInvocation<JobOf<\"queueUndo\">> = { job: { kind: \"queueUndo\", listId, setVideoId } }"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 14,
+   "text": "const lease = kit.use(scope, \"queue\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 15,
+   "text": "const reserved = kit.use(scope, \"quick-save\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 16,
+   "text": "const label: string = text.label(\"unconfirmed\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 17,
+   "text": "const named: string = text.toast(\"failed\", \"Title\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 18,
+   "text": "const message: string = i18n.message(\"queueButton_toast_added_named\", { title: \"Title\" })"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 19,
+   "text": "const plain: string = i18n.message(\"queueButton_idle\")"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 20,
+   "text": "const toast = toastOf(outcome, true)"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 21,
+   "text": "const answer = outcomeOf({ ok: false, reason: \"unconfirmed\" })"
+  },
+  {
+   "file": "src/site/features/queue-button/queue-button.type-test.ts",
+   "line": 22,
+   "text": "if (state.kind === \"added\") { const entry: { listId: QueueListId; setVideoId: SetVideoId } | null = state.entry; void entry }"
+  }
+ ]
+}

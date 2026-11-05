@@ -1,0 +1,111 @@
+[
+  {
+    "case": "first-run",
+    "held": "unavailable",
+    "agreement": {
+      "kind": "agreed",
+      "attempt": 1,
+      "applications": [
+        {
+          "feature": "quick-save",
+          "state": "enabled"
+        }
+      ]
+    },
+    "accessReads": 3
+  },
+  {
+    "case": "setup-and-auto-add",
+    "destination": {
+      "kind": "confirmed",
+      "playlist": "PL_beta"
+    },
+    "fact": {
+      "kind": "absent"
+    },
+    "changed": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_alpha",
+      "fact": {
+        "kind": "selected",
+        "takes": "videos",
+        "pct": null
+      }
+    },
+    "stale": "refused",
+    "calls": [
+      "ui.change",
+      "ui.change",
+      "ui.change",
+      "ui.change"
+    ]
+  },
+  {
+    "case": "cache-before-refresh",
+    "rows": [
+      "WL",
+      "PL_beta",
+      "PL_alpha"
+    ],
+    "nativePendingAtOpen": true,
+    "membershipPendingAtOpen": true,
+    "generation": 0,
+    "jobs": 1,
+    "cache": "committed"
+  },
+  {
+    "case": "creation-uncertainty",
+    "answer": {
+      "kind": "answered",
+      "result": {
+        "kind": "not-created",
+        "outcome": {
+          "kind": "result",
+          "tabId": 1,
+          "result": {
+            "ok": false,
+            "reason": "unconfirmed"
+          }
+        }
+      }
+    },
+    "statusSame": true,
+    "creates": 1
+  },
+  {
+    "case": "lost-answer-status",
+    "lost": {
+      "kind": "failed",
+      "failure": "transport"
+    },
+    "status": {
+      "kind": "answered",
+      "result": {
+        "kind": "created",
+        "id": "PL_created",
+        "outcome": {
+          "kind": "result",
+          "tabId": 1,
+          "result": {
+            "ok": true,
+            "route": "playlists-cache-fixture",
+            "data": {
+              "playlistId": "PL_created"
+            }
+          }
+        },
+        "cache": {
+          "kind": "committed"
+        }
+      }
+    },
+    "creates": 1
+  },
+  {
+    "case": "eof",
+    "nativeListeners": 0,
+    "localListeners": 0,
+    "deadlines": 0
+  }
+]

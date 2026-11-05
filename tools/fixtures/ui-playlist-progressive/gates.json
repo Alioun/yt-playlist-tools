@@ -1,0 +1,1573 @@
+{
+  "state": "authored-unexecuted-progressive-on-qualified-cache841",
+  "sourceAuthority": "1bc25ced85bf2b16b48f4731cf4d996034a73433",
+  "prerequisites": [
+    "Auto-add and Monitor retain the sole runtime lease. No gate is authorized by this inventory.",
+    "The coordinator reconciles this candidate against accepted auto-add and Monitor and grants the sole runtime lease for the exact resulting tree.",
+    "A complete credential-free prepared-runtime and dependency identity inventory is required. No installation or environment bytes.",
+    "Every invocation has a unique output directory and receipts. Both --no-env-file and --no-install must reach every Bun descendant. Protected launchers that violate this remain held."
+  ],
+  "commands": {
+    "focused-types": [
+      "{node}",
+      "{nativeTsc}",
+      "--noEmit",
+      "--pretty",
+      "false",
+      "--project",
+      "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+    ]
+  },
+  "requiredInclusion": [
+    "src/shared/contracts/ui.ts",
+    "src/shared/contracts/ui.bun-test.ts",
+    "src/shared/contracts/ui.type-test.ts",
+    "src/shared/contracts/ui-playlists.ts",
+    "src/shared/contracts/ui-playlists.bun-test.ts",
+    "src/shared/contracts/ui-playlists.type-test.ts",
+    "src/background/adapters/ui-requester.ts",
+    "src/background/adapters/ui-requester.bun-test.ts",
+    "src/background/adapters/ui-requester.type-test.ts",
+    "src/background/router/ui-playlists/index.ts",
+    "src/background/router/ui-playlists/wire.ts",
+    "src/background/router/ui-playlists/router.bun-test.ts",
+    "src/background/router/ui-playlists/router.type-test.ts",
+    "src/background/router/first-run.ts",
+    "src/background/router/first-run.bun-test.ts",
+    "src/ui/backend/backend.ts",
+    "src/ui/backend/core.ts",
+    "src/ui/backend/browser.ts",
+    "src/ui/backend/scripted.ts",
+    "src/ui/backend/index.ts",
+    "src/ui/backend/backend.type-test.ts",
+    "src/ui/backend/core.bun-test.ts",
+    "src/ui/backend/browser.bun-test.ts",
+    "tools/fixtures/first-run-backend/native.type-test.ts",
+    "tools/fixtures/ui-read-playlist-bridge/harness.ts",
+    "tools/fixtures/ui-read-playlist-bridge/run.ts",
+    "tools/fixtures/ui-read-playlist-bridge/consumer.bun-test.ts",
+    "tools/fixtures/ui-playlist-progressive/consumer.bun-test.ts",
+    "tools/fixtures/ui-playlist-progressive/harness.ts",
+    "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts",
+    "tools/fixtures/ui-playlist-progressive/run.ts",
+    "tools/fixtures/ui-playlist-progressive/wire.bun-test.ts",
+    "src/ui/backend/playlist-list/operation.ts",
+    "src/ui/backend/playlist-list/protocol.type-test.ts"
+  ],
+  "negativeCount": 41,
+  "gates": [
+    {
+      "id": "focused-types",
+      "category": "compiler",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "focused-file-inclusion",
+      "category": "file-inclusion",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json",
+        "--listFilesOnly"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "whole-native-types",
+      "category": "compiler",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tsconfig.json"
+      ],
+      "seconds": 540
+    },
+    {
+      "id": "whole-file-inclusion",
+      "category": "file-inclusion",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tsconfig.json",
+        "--listFilesOnly"
+      ],
+      "seconds": 540
+    },
+    {
+      "id": "type-negative-01",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui.type-test.ts",
+      "annotationLine": 52,
+      "intendedLine": 53,
+      "annotation": "// @ts-expect-error negative: invented-message. Every UI call is in the composed catalogue.",
+      "meaning": "invented-message"
+    },
+    {
+      "id": "type-negative-02",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui.type-test.ts",
+      "annotationLine": 54,
+      "intendedLine": 55,
+      "annotation": "// @ts-expect-error negative: cross-kind-answer. Account answers cannot be playlist creation answers.",
+      "meaning": "cross-kind-answer"
+    },
+    {
+      "id": "type-negative-03",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui.type-test.ts",
+      "annotationLine": 56,
+      "intendedLine": 57,
+      "annotation": "// @ts-expect-error negative: narrow-first-run. New catalogue members do not widen the first-run handler.",
+      "meaning": "narrow-first-run"
+    },
+    {
+      "id": "type-negative-04",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 8,
+      "intendedLine": 9,
+      "annotation": "// @ts-expect-error negative: wrong-payload. Playlist reads require explicit refresh intent.",
+      "meaning": "wrong-payload"
+    },
+    {
+      "id": "type-negative-05",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 10,
+      "intendedLine": 11,
+      "annotation": "// @ts-expect-error negative: invalid-site. Site validation uses the shared vocabulary.",
+      "meaning": "invalid-site"
+    },
+    {
+      "id": "type-negative-06",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 12,
+      "intendedLine": 13,
+      "annotation": "// @ts-expect-error negative: sender-privacy. A body cannot establish native privacy.",
+      "meaning": "sender-privacy"
+    },
+    {
+      "id": "type-negative-07",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 14,
+      "intendedLine": 15,
+      "annotation": "// @ts-expect-error negative: sender-tab. A body cannot establish the active native tab.",
+      "meaning": "sender-tab"
+    },
+    {
+      "id": "type-negative-08",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 16,
+      "intendedLine": 17,
+      "annotation": "// @ts-expect-error negative: body-account. Account selection calls canonical Tabs.",
+      "meaning": "body-account"
+    },
+    {
+      "id": "type-negative-09",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 18,
+      "intendedLine": 19,
+      "annotation": "// @ts-expect-error negative: unsupported-privacy. New playlist privacy uses the actual service vocabulary.",
+      "meaning": "unsupported-privacy"
+    },
+    {
+      "id": "type-negative-10",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 20,
+      "intendedLine": 21,
+      "annotation": "// @ts-expect-error negative: promised-result. A wire listing contains a completed finite refresh.",
+      "meaning": "promised-result"
+    },
+    {
+      "id": "type-negative-11",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 22,
+      "intendedLine": 23,
+      "annotation": "// @ts-expect-error negative: operation-identity. Raw strings cannot name a creation operation.",
+      "meaning": "operation-identity"
+    },
+    {
+      "id": "type-negative-12",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/shared/contracts/ui-playlists.type-test.ts",
+      "annotationLine": 24,
+      "intendedLine": 25,
+      "annotation": "// @ts-expect-error negative: submit-account. The authenticated operation retains its original account.",
+      "meaning": "submit-account"
+    },
+    {
+      "id": "type-negative-13",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/background/adapters/ui-requester.type-test.ts",
+      "annotationLine": 7,
+      "intendedLine": 8,
+      "annotation": "// @ts-expect-error negative: body-derived-requester. Only native authentication creates the private brand.",
+      "meaning": "body-derived-requester"
+    },
+    {
+      "id": "type-negative-14",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/background/router/ui-playlists/router.type-test.ts",
+      "annotationLine": 7,
+      "intendedLine": 8,
+      "annotation": "// @ts-expect-error negative: raw-owner-token. Disposable storage authority never crosses UI JSON.",
+      "meaning": "raw-owner-token"
+    },
+    {
+      "id": "type-negative-15",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/background/router/ui-playlists/router.type-test.ts",
+      "annotationLine": 9,
+      "intendedLine": 10,
+      "annotation": "// @ts-expect-error negative: raw-capture-operation. A storage capture is not a form operation identity.",
+      "meaning": "raw-capture-operation"
+    },
+    {
+      "id": "type-negative-16",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 30,
+      "intendedLine": 31,
+      "annotation": "// @ts-expect-error negative: readonly-local-set. UI storage cannot write.",
+      "meaning": "readonly-local-set"
+    },
+    {
+      "id": "type-negative-17",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 32,
+      "intendedLine": 33,
+      "annotation": "// @ts-expect-error negative: readonly-local-remove. UI storage cannot remove.",
+      "meaning": "readonly-local-remove"
+    },
+    {
+      "id": "type-negative-18",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 34,
+      "intendedLine": 35,
+      "annotation": "// @ts-expect-error negative: readonly-local-clear. UI storage cannot clear.",
+      "meaning": "readonly-local-clear"
+    },
+    {
+      "id": "type-negative-19",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 36,
+      "intendedLine": 37,
+      "annotation": "// @ts-expect-error negative: readonly-local-all. A read names its canonical keys.",
+      "meaning": "readonly-local-all"
+    },
+    {
+      "id": "type-negative-20",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 38,
+      "intendedLine": 39,
+      "annotation": "// @ts-expect-error negative: dto-origin. Origin comes from the native sender.",
+      "meaning": "dto-origin"
+    },
+    {
+      "id": "type-negative-21",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 40,
+      "intendedLine": 41,
+      "annotation": "// @ts-expect-error negative: dto-review. The review cannot cross the wire.",
+      "meaning": "dto-review"
+    },
+    {
+      "id": "type-negative-22",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 42,
+      "intendedLine": 43,
+      "annotation": "// @ts-expect-error negative: dto-promise. Permission evidence stays in its process.",
+      "meaning": "dto-promise"
+    },
+    {
+      "id": "type-negative-23",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 44,
+      "intendedLine": 45,
+      "annotation": "// @ts-expect-error negative: operation-result. Setup and agreement answers differ.",
+      "meaning": "operation-result"
+    },
+    {
+      "id": "type-negative-24",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 46,
+      "intendedLine": 47,
+      "annotation": "// @ts-expect-error negative: operation-args. The pre-consent lookup accepts no agreement body.",
+      "meaning": "operation-args"
+    },
+    {
+      "id": "type-negative-25",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 48,
+      "intendedLine": 49,
+      "annotation": "// @ts-expect-error negative: subset. Remaining unbuilt calls have no successful placeholder.",
+      "meaning": "subset"
+    },
+    {
+      "id": "type-negative-26",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 50,
+      "intendedLine": 51,
+      "annotation": "// @ts-expect-error negative: account-brand. A native account identifier is not an AccountKey.",
+      "meaning": "account-brand"
+    },
+    {
+      "id": "type-negative-27",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 52,
+      "intendedLine": 53,
+      "annotation": "// @ts-expect-error negative: playlist-brand. A raw string has not passed validation.",
+      "meaning": "playlist-brand"
+    },
+    {
+      "id": "type-negative-28",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 54,
+      "intendedLine": 55,
+      "annotation": "// @ts-expect-error negative: music-scopes. Shortcuts needs an explicit Music disposition.",
+      "meaning": "music-scopes"
+    },
+    {
+      "id": "type-negative-29",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 56,
+      "intendedLine": 57,
+      "annotation": "// @ts-expect-error negative: no-chooser. Playlist choices require an actual chooser port.",
+      "meaning": "no-chooser"
+    },
+    {
+      "id": "new-boundaries",
+      "category": "behavior",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "src/shared/contracts/ui.bun-test.ts",
+        "src/shared/contracts/ui-playlists.bun-test.ts",
+        "src/background/adapters/ui-requester.bun-test.ts",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "consumer-eof-twice",
+      "category": "consumer-eof",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "tools/fixtures/ui-read-playlist-bridge/run.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "consumer-tests",
+      "category": "behavior",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "tools/fixtures/ui-read-playlist-bridge/consumer.bun-test.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "control-omitted-authentication",
+      "path": "src/background/adapters/ui-requester.ts",
+      "testName": "native authentication refuses forged senders without service work",
+      "failureNeedle": ".toBeUndefined()",
+      "replacements": [
+        {
+          "before": "{ sender: input.sender, popupWindowId: input.windowId }",
+          "after": "{ sender: { ...input.sender, id: ports.runtime.id, url: ports.runtime.getURL(\"/popup.html\"), frameId: 0, tab: undefined }, popupWindowId: input.windowId }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "native authentication refuses forged senders without service work",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "control-private-normal-substitution",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "private requester never becomes a normal cache writer",
+      "failureNeedle": "reason: \"private\"",
+      "replacements": [
+        {
+          "before": "{ site: operation.site, req: ui.requester, refresh: payload.refresh }",
+          "after": "{ site: operation.site, req: { ...ui.requester, incognito: false }, refresh: payload.refresh }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "private requester never becomes a normal cache writer",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "control-optimistic-cache-persistence",
+      "path": "src/background/router/ui-playlists/wire.ts",
+      "testName": "confirmed creation reports uncertain cache persistence",
+      "failureNeedle": "expect(result.result.cache.kind).toBe(\"unconfirmed\")",
+      "replacements": [
+        {
+          "before": "case \"unconfirmed\":\n      return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
+          "after": "case \"unconfirmed\": return { kind: \"committed\" }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "confirmed creation reports uncertain cache persistence",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "control-uncertain-creation-retry",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "uncertain operation never creates a second service handle",
+      "failureNeedle": "expect(h.h.runs(\"create\")).toHaveLength(1)",
+      "replacements": [
+        {
+          "before": "payload.action === \"status\" || (payload.action === \"submit\" && existing?.answer",
+          "after": "payload.action === \"status\""
+        },
+        {
+          "before": "if (payload.action === \"submit\" && !operation.answer) {",
+          "after": "if (payload.action === \"submit\") {"
+        },
+        {
+          "before": "const playlist = { title: payload.title, privacy: payload.privacy,",
+          "after": "const retryHandle = ports.services.playlists.create(operation.acct, { site: operation.site, req: ui.requester })\n      const playlist = { title: payload.title, privacy: payload.privacy,"
+        },
+        {
+          "before": "operation.creation.submit(playlist)",
+          "after": "retryHandle.submit(playlist)"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "uncertain operation never creates a second service handle",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "control-duplicate-request-handling",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "duplicate request invokes its handler at most once",
+      "failureNeedle": "expect(h.counts().syncReads).toBe(1)",
+      "replacements": [
+        {
+          "before": "if (previous) return previous.kind === \"pending\" && previous.text === text ? previous.answer : Promise.resolve(undefined)",
+          "after": "if (previous && !active) return Promise.resolve(undefined)"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "duplicate request invokes its handler at most once",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "protected-backend-first-run",
+      "category": "regression",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "src/ui/backend/core.bun-test.ts",
+        "src/ui/backend/browser.bun-test.ts",
+        "src/ui/backend/mount.bun-test.ts",
+        "src/background/router/first-run.bun-test.ts",
+        "src/ui/onboarding/first-run.bun-test.ts"
+      ],
+      "seconds": 540
+    },
+    {
+      "id": "protected-tabs-native",
+      "category": "regression",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "src/background/tabs",
+        "src/background/adapters/runtime.bun-test.ts",
+        "src/background/adapters/sender-origin.bun-test.ts",
+        "src/background/adapters/tabs.bun-test.ts"
+      ],
+      "seconds": 540
+    },
+    {
+      "id": "protected-cache-owner",
+      "category": "regression",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "src/background/playlists/playlists.bun-test.ts",
+        "src/background/store/playlist-cache.bun-test.ts",
+        "src/shared/model/account-cache.bun-test.ts",
+        "src/background/store/tab-projection.bun-test.ts",
+        "src/background/store/session-memory.bun-test.ts",
+        "src/background/store/account-removal-execution.bun-test.ts"
+      ],
+      "seconds": 540
+    },
+    {
+      "id": "architecture-guards",
+      "category": "regression",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "tests/guards"
+      ],
+      "seconds": 540
+    },
+    {
+      "id": "root-build-chrome",
+      "category": "build",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{wxt}",
+        "build"
+      ],
+      "seconds": 540,
+      "held": "Separate prepared non-environment source workspace and production entry assembly are required. This authoring return grants no runtime lease."
+    },
+    {
+      "id": "root-build-firefox",
+      "category": "build",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{wxt}",
+        "build",
+        "-b",
+        "firefox"
+      ],
+      "seconds": 540,
+      "held": "Separate prepared non-environment source workspace and production entry assembly are required. This authoring return grants no runtime lease."
+    },
+    {
+      "id": "source-archive",
+      "category": "source-guard",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "scripts/check-source-rebuild.mjs",
+        "--keep"
+      ],
+      "seconds": 540,
+      "held": "Protected launcher installs dependencies and starts Bun without the required flags. Do not invoke unchanged under this dispatch. No protected repair is applied."
+    },
+    {
+      "id": "native-durability",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "native-requester-ownership",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "native-exclusion",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "privacy-approval",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "picker-policies",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "picker-source-adapter",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "rendering-axe",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "production-entry-assembly",
+      "category": "external-hold",
+      "status": "unexecuted",
+      "held": "Separate authorization and evidence required. This unit cannot discharge this hold."
+    },
+    {
+      "id": "progressive-types",
+      "category": "compiler",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "progressive-file-inclusion",
+      "category": "file-inclusion",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json",
+        "--listFilesOnly"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "progressive-behavior",
+      "category": "behavior",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts",
+        "tools/fixtures/ui-playlist-progressive/wire.bun-test.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "progressive-consumer-tests",
+      "category": "behavior",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "tools/fixtures/ui-playlist-progressive/consumer.bun-test.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "progressive-consumer-eof",
+      "category": "consumer-eof",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "--conditions=browser",
+        "--preload",
+        "./tests/setup/svelte.ts",
+        "tools/fixtures/ui-playlist-progressive/run.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "protected-picker-regression",
+      "category": "regression",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "src/shared/picker/model.bun-test.ts",
+        "src/shared/picker/consumer.bun-test.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "progressive-negative-list-open-account",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 15,
+      "intendedLine": 16,
+      "annotation": "// @ts-expect-error negative: list-open-account. Opening a list requires its account.",
+      "meaning": "list-open-account"
+    },
+    {
+      "id": "progressive-negative-list-await-generation",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 17,
+      "intendedLine": 18,
+      "annotation": "// @ts-expect-error negative: list-await-generation. Waiting names the exact refresh generation.",
+      "meaning": "list-await-generation"
+    },
+    {
+      "id": "progressive-negative-list-refresh-authority",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 19,
+      "intendedLine": 20,
+      "annotation": "// @ts-expect-error negative: list-refresh-authority. Refresh cannot replace the captured account.",
+      "meaning": "list-refresh-authority"
+    },
+    {
+      "id": "progressive-negative-list-release-no-work",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 21,
+      "intendedLine": 22,
+      "annotation": "// @ts-expect-error negative: list-release-no-work. Release cannot carry a refresh generation.",
+      "meaning": "list-release-no-work"
+    },
+    {
+      "id": "progressive-negative-list-id-brand",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 23,
+      "intendedLine": 24,
+      "annotation": "// @ts-expect-error negative: list-id-brand. Creation and list operations have different identities.",
+      "meaning": "list-id-brand"
+    },
+    {
+      "id": "progressive-negative-list-owner-capture",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-playlist-progressive/owner-capture.type-test.ts",
+      "annotationLine": 6,
+      "intendedLine": 7,
+      "annotation": "// @ts-expect-error negative: list-owner-capture. Owner capture is never a wire operation identity.",
+      "meaning": "list-owner-capture"
+    },
+    {
+      "id": "progressive-negative-list-pending-finite",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 25,
+      "intendedLine": 26,
+      "annotation": "// @ts-expect-error negative: list-pending-finite. An open answer carries finite refresh metadata.",
+      "meaning": "list-pending-finite"
+    },
+    {
+      "id": "progressive-negative-list-refreshed-finite",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 27,
+      "intendedLine": 28,
+      "annotation": "// @ts-expect-error negative: list-refreshed-finite. A completed refresh cannot carry a native callback.",
+      "meaning": "list-refreshed-finite"
+    },
+    {
+      "id": "progressive-negative-list-release-identity",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 29,
+      "intendedLine": 30,
+      "annotation": "// @ts-expect-error negative: list-release-identity. A released answer still names its operation.",
+      "meaning": "list-release-identity"
+    },
+    {
+      "id": "progressive-negative-list-withheld-no-rows",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 31,
+      "intendedLine": 32,
+      "annotation": "// @ts-expect-error negative: list-withheld-no-rows. Refused authority cannot expose refreshed rows.",
+      "meaning": "list-withheld-no-rows"
+    },
+    {
+      "id": "progressive-negative-list-readonly-time",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 33,
+      "intendedLine": 34,
+      "annotation": "// @ts-expect-error negative: list-readonly-time. Picker timestamps remain readonly.",
+      "meaning": "list-readonly-time"
+    },
+    {
+      "id": "progressive-negative-list-refresh-native-privacy",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
+      "annotationLine": 35,
+      "intendedLine": 36,
+      "annotation": "// @ts-expect-error negative: list-refresh-native-privacy. A caller cannot set native privacy.",
+      "meaning": "list-refresh-native-privacy"
+    },
+    {
+      "id": "progressive-withheld-refresh",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "cached rows reach the actual PickerModel while refresh and membership remain withheld",
+      "failureNeedle": ".toEqual(",
+      "replacements": [
+        {
+          "before": "if (refresh !== null) listWork(operation, 0, refresh)",
+          "after": "if (refresh !== null) { await refresh; listWork(operation, 0, refresh) }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "cached rows reach the actual PickerModel while refresh and membership remain withheld",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-cross-account-reuse",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "another account or native document cannot reuse a pending list operation",
+      "failureNeedle": ".toEqual(",
+      "replacements": [
+        {
+          "before": "existing.acct !== payload.acct || existing.site !== payload.site || existing.explicit !== payload.refresh",
+          "after": "existing.site !== payload.site || existing.explicit !== payload.refresh"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "another account or native document cannot reuse a pending list operation",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-duplicate-refresh",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "concurrent opens and numbered refresh requests share one native job",
+      "failureNeedle": ".toHaveLength(",
+      "replacements": [
+        {
+          "before": "if (payload.action === \"refresh\" && work?.generation !== payload.generation) {",
+          "after": "if (payload.action === \"refresh\") {"
+        },
+        {
+          "before": "if (payload.generation !== (work?.generation ?? 0) + 1 || (work && !work.settled)) return unavailable(\"operation\")",
+          "after": "if (!existing.active) return unavailable(\"operation\")"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "concurrent opens and numbered refresh requests share one native job",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-optimistic-cache",
+      "path": "src/background/router/ui-playlists/wire.ts",
+      "testName": "confirmed native rows do not claim cache persistence after rejected-unchanged",
+      "failureNeedle": ".toBe(",
+      "replacements": [
+        {
+          "before": "case \"failed\":\n      return { kind: \"failed\", stage: value.stage }",
+          "after": "case \"failed\": return { kind: \"committed\" }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "confirmed native rows do not claim cache persistence after rejected-unchanged",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    },
+    {
+      "id": "progressive-stale-release",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "release tombstone refuses a delayed list open without starting a job",
+      "failureNeedle": ".toEqual(",
+      "replacements": [
+        {
+          "before": "if (releasedLists.has(payload.operation)) return unavailable(\"operation\")",
+          "after": "if (false && releasedLists.has(payload.operation)) return unavailable(\"operation\")"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "--config",
+        "tools/fixtures/ui-playlist-progressive/bunfig.toml",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "release tombstone refuses a delayed list open without starting a job",
+        "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts"
+      ]
+    }
+  ],
+  "futureInvocation": [
+    "{python}",
+    "tools/fixtures/ui-read-playlist-bridge/qualify.py",
+    "--inventory",
+    "tools/fixtures/ui-playlist-progressive/gates.json",
+    "--lease-unit",
+    "ui-playlist-progressive",
+    "--gate",
+    "{gateId}",
+    "--runtime-lock",
+    "{preparedRuntimeLock}",
+    "--source-manifest",
+    "{exactReconciledManifest}",
+    "--lease-record",
+    "{leaseRecord}",
+    "--output",
+    "{uniqueInvocationDirectory}"
+  ],
+  "runtimeLockShape": {
+    "preparedRoot": "absolute public prepared-runtime root",
+    "classification": "credential-free-prepared-runtime",
+    "files": "complete list of relative public paths with sha256, bytes and Git-style mode",
+    "executables": {
+      "bun": "relative pinned executable",
+      "node": "relative pinned Node 24 executable",
+      "timeout": "relative pinned timeout executable",
+      "nativeTsc": "relative prepared @typescript/native/bin/tsc",
+      "wxt": "relative prepared wxt/bin/wxt.mjs"
+    }
+  },
+  "leaseShape": {
+    "cacheQualified": true,
+    "upstreamReconciled": true,
+    "soleRuntimeLease": "ui-playlist-progressive",
+    "sourceTree": "exact reconciled source tree",
+    "allBunDescendantsFlagged": true,
+    "uniqueReceiptPlan": true
+  },
+  "limits": "All commands are unexecuted. Templates become exact argv only after prepared runtime identities and the reconciled manifest are supplied. A command list is not runtime authorization.",
+  "originalGates": 56,
+  "addedGates": 23
+}

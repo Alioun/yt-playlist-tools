@@ -1,0 +1,114 @@
+{
+  "state": "unexecuted",
+  "protocol": "Blank only the selected directive, keep line count fixed, require the intended-line diagnostic, restore exact bytes/mode and pass again.",
+  "probes": [
+    {
+      "id": "import-negative-1",
+      "file": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 67,
+      "intendedDiagnosticLine": 68,
+      "directive": "  // @ts-expect-error Fixture import cleanup cannot enter native configuration.",
+      "statement": "  void createBrowserStartingLocalFilterWriter(native, { ...options, settingsImport })",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-2",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 18,
+      "intendedDiagnosticLine": 19,
+      "directive": "  // @ts-expect-error A file check cannot mint owner capture authority.",
+      "statement": "  const forged: SettingsImportConfirmation = { kind: \"import-plan\" }",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-3",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 20,
+      "intendedDiagnosticLine": 21,
+      "directive": "  // @ts-expect-error A mutation requires an explicit replacement confirmation.",
+      "statement": "  owner.importSettings(origin, { confirmation })",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-4",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 23,
+      "intendedDiagnosticLine": 24,
+      "directive": "  // @ts-expect-error Every executor requires the complete cleanup collaborator.",
+      "statement": "  createSettingsImportExecution(withoutCleanup)",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-5",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 25,
+      "intendedDiagnosticLine": 26,
+      "directive": "  // @ts-expect-error A full admitted changed-document batch cannot be empty.",
+      "statement": "  const empty: SettingsImportPlan[\"documents\"][\"changes\"] = []",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-6",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 27,
+      "intendedDiagnosticLine": 28,
+      "directive": "  // @ts-expect-error Continuations require the accepted import effect, not recovery authority.",
+      "statement": "  const mixed: SettingsImportContinuation = { v: 1, kind: \"settings-import-continuation\", accepted: recovery, next: 0 }",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-7",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 29,
+      "intendedDiagnosticLine": 30,
+      "directive": "  // @ts-expect-error Account-removal authority cannot recover a multi-account import.",
+      "statement": "  createSettingsImportExecution(deps).recover(removal)",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-8",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 31,
+      "intendedDiagnosticLine": 32,
+      "directive": "  // @ts-expect-error Accepted JSON is not a one-use recovery permit.",
+      "statement": "  createSettingsImportExecution(deps).recover(accepted)",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-9",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 33,
+      "intendedDiagnosticLine": 34,
+      "directive": "  // @ts-expect-error Partial results cannot become terminal receipts.",
+      "statement": "  const early: Extract<SettingsImportResult, { kind: \"committed\" }> = { kind: \"failed\", stage: \"documents\", applied: true, error: null }",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-10",
+      "file": "src/background/store/settings-import-execution.type-test.ts",
+      "directiveLine": 36,
+      "intendedDiagnosticLine": 37,
+      "directive": "  // @ts-expect-error The derived native owner must forward the final mutation API.",
+      "statement": "  const missingForwarding: SettingsImportOwner = withoutImport",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-11",
+      "file": "tools/fixtures/settings-import-execution/owner.bun-test.ts",
+      "directiveLine": 21,
+      "intendedDiagnosticLine": 22,
+      "directive": "        // @ts-expect-error File plans cannot forge owner confirmation authority.",
+      "statement": "        expect((await h.owner.importSettings(ui, { confirmation: { kind: \"import-plan\" }, replace: \"confirmed\" })).kind).toBe(\"unavailable\")",
+      "state": "unexecuted"
+    },
+    {
+      "id": "import-negative-12",
+      "file": "tools/fixtures/settings-import-execution/owner.bun-test.ts",
+      "directiveLine": 30,
+      "intendedDiagnosticLine": 31,
+      "directive": "        // @ts-expect-error Runtime input also checks explicit confirmation.",
+      "statement": "        expect((await h.owner.importSettings(ui, input)).kind).toBe(\"unavailable\")",
+      "state": "unexecuted"
+    }
+  ]
+}

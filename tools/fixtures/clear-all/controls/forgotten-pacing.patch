@@ -1,0 +1,20 @@
+--- a/src/background/store/sync-reset.ts
++++ b/src/background/store/sync-reset.ts
+@@ -147,7 +147,7 @@
+           if (!live()) return { kind: "unavailable", reason: "disposed" }
+           const invoked = syncMutationTime(ports.pace, ports.clock)
+           if (!invoked || invoked.mono < ports.pace.nextInvocation) return { kind: "unconfirmed", stage: "marker", effects }
+-          ports.pace.nextInvocation = invoked.mono + 5000
++          ports.pace.nextInvocation = invoked.mono
+           let outcome: ResetEffect["outcome"] = { kind: "resolved" }
+           try {
+             if (marker.phase === "set") await ports.sync.set({ "s:meta": marker.metadata })
+@@ -163,7 +163,7 @@
+           if (!after) return { kind: "unavailable", reason: "clock" }
+           marker = { ...marker, phase: applied ? "remove" : marker.phase,
+             wait: outcome.kind === "rejected" ? "opaque" : "pace",
+-            notBefore: Math.max(invoked.wall + 5000, outcome.kind === "rejected" ? after.wall + 60000 : 0),
++            notBefore: Math.max(invoked.wall, outcome.kind === "rejected" ? after.wall + 60000 : 0),
+             diagnostic: outcome.kind === "rejected" ? failureDiagnostic(outcome.error) : marker.diagnostic }
+           if (marker.wait === "opaque") ownedOpaque.add(`${marker.metadata.id}:${marker.notBefore}`)
+           if (outcome.kind === "rejected") ports.pace.nextInvocation = Math.max(ports.pace.nextInvocation, after.mono + 60000)

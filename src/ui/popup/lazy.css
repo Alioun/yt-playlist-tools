@@ -1,0 +1,10 @@
+/* Q-PERF-35 rule 6: the popup's lazy parts load this sheet with them. It is the whole popup's, so once it loads
+   the cascade is the one a single sheet gives: same layers by name, every rule, after the first view's. */
+@import "tailwindcss" source(none);
+@source "./";
+@source "../components";
+@source "../features";
+@source "../picker";
+@source "../keys";
+@source "../onboarding";
+@import "../lib/theme.css";

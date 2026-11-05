@@ -1,0 +1,82 @@
+[
+  {
+    "name": "omitted-kept-filters",
+    "file": "src/background/store/settings-file-read.ts",
+    "replacements": [
+      {
+        "before": "for (const name of Object.keys(records).sort()) {",
+        "after": "for (const name of Object.keys(records).sort().filter(name => !name.endsWith(\":PL_kept\"))) {",
+        "intendedLine": 89
+      }
+    ],
+    "test": "complete canonical enumeration includes kept filters and an account without Setup",
+    "testFile": "src/background/store/settings-file-read.bun-test.ts",
+    "assertion": "The exact account plan retains PL_kept and the orphaned account.",
+    "state": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "name": "raw-device-leakage",
+    "file": "src/background/store/settings-file-read.ts",
+    "replacements": [
+      {
+        "before": "source: { kind: \"settings-file-source\", settings,",
+        "after": "source: { ...{ device: records.device }, kind: \"settings-file-source\", settings,",
+        "intendedLine": 101
+      }
+    ],
+    "test": "source and file contain only declared canonical fields",
+    "testFile": "src/background/store/settings-file-read.bun-test.ts",
+    "assertion": "The public source contains no PRIVATE marker and only its exact declared keys.",
+    "state": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "name": "consent-gating-of-export",
+    "file": "src/background/store/local-filter-writer.ts",
+    "replacements": [
+      {
+        "before": "      unavailableRecords(records) {",
+        "after": "      unavailableRecords(records) {\n          if (isJsonObject(records.device) && records.device.consent === null) return { kind: \"unavailable\", reason: \"startup\" }",
+        "intendedLine": 880
+      }
+    ],
+    "test": "actual starting owner exports before consent in private window",
+    "testFile": "src/background/store/settings-file-owner.bun-test.ts",
+    "assertion": "The private, unconsented starting owner returns the complete exact source with two reads and no writes.",
+    "state": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "name": "private-check-parsing",
+    "file": "src/background/store/settings-file-read.ts",
+    "replacements": [
+      {
+        "before": "  const planner = createImportPlanner(window)",
+        "after": "  createImportPlanner(\"normal\").importFile(text)\n  const planner = createImportPlanner(window)",
+        "intendedLine": 50
+      }
+    ],
+    "test": "private and unavailable checking never call JSON parsing",
+    "testFile": "src/background/store/settings-file-read.bun-test.ts",
+    "assertion": "The JSON.parse spy has zero calls for private and unavailable checks, then observes the normal parsing control.",
+    "state": "unexecuted-compiling-control-proposal"
+  },
+  {
+    "name": "stale-read-exposure",
+    "file": "src/background/store/settings-file-read.ts",
+    "replacements": [
+      {
+        "before": "const changed = input.unavailable() ?? input.unavailableRecords(initial)",
+        "after": "const changed = input.unavailableRecords(initial)",
+        "intendedLine": 117
+      },
+      {
+        "before": "const stopped = input.unavailable() ?? input.unavailableRecords(current)",
+        "after": "const stopped = input.unavailableRecords(current)",
+        "intendedLine": 122
+      }
+    ],
+    "test": "a lifecycle change during a read cannot expose a stale source",
+    "testFile": "src/background/store/settings-file-owner.bun-test.ts",
+    "assertion": "Disposal during the held native read returns exactly unavailable/disposed after one read.",
+    "state": "unexecuted-compiling-control-proposal"
+  }
+]

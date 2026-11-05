@@ -1,0 +1,262 @@
+[
+  {
+    "id": "lost-pause-reason",
+    "path": "src/site/kit/toaster/model.ts",
+    "sourceIdentity": {
+      "bytes": 11191,
+      "sha256": "9ace68c8fac1c015cb8bf0ebfe998030f839daf90baddf2082602a86b45d478f",
+      "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
+      "mode": "100644"
+    },
+    "line": 217,
+    "old": "else pauses.delete(reason)",
+    "new": "else pauses.clear()",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/lost-pause-reason.patch",
+    "testPath": "tools/fixtures/site-toaster/model.bun-test.ts",
+    "testName": "leaving hover retains focus and the remaining time",
+    "actualAssertionAnchor": "expect(f.toaster.read()?.remaining).toBe(4000)",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "hidden-priority-inversion",
+    "path": "src/site/kit/toaster/model.ts",
+    "sourceIdentity": {
+      "bytes": 11191,
+      "sha256": "9ace68c8fac1c015cb8bf0ebfe998030f839daf90baddf2082602a86b45d478f",
+      "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
+      "mode": "100644"
+    },
+    "line": 56,
+    "old": "entry.content.tone === \"failure\" || queued.content.tone !== \"failure\"",
+    "new": "entry.content.tone !== \"failure\" || queued.content.tone === \"failure\"",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/hidden-priority-inversion.patch",
+    "testPath": "tools/fixtures/site-toaster/model.bun-test.ts",
+    "testName": "one hidden slot keeps newest failure ahead of later confirmations",
+    "actualAssertionAnchor": "expect(f.toaster.read()?.content.text).toBe(\"new failure\")",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "unsolicited-fullscreen",
+    "path": "src/site/kit/toaster/model.ts",
+    "sourceIdentity": {
+      "bytes": 11191,
+      "sha256": "9ace68c8fac1c015cb8bf0ebfe998030f839daf90baddf2082602a86b45d478f",
+      "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
+      "mode": "100644"
+    },
+    "line": 70,
+    "old": "!hidden && (!fullscreen || !entry.content.auto)",
+    "new": "!hidden",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/unsolicited-fullscreen.patch",
+    "testPath": "tools/fixtures/site-toaster/model.bun-test.ts",
+    "testName": "automatic failures and notices wait in fullscreen; explicit outcomes show",
+    "actualAssertionAnchor": "expect(f.toaster.read()).toBeNull()",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "stale-action-capture",
+    "path": "src/site/kit/toaster/model.ts",
+    "sourceIdentity": {
+      "bytes": 11191,
+      "sha256": "9ace68c8fac1c015cb8bf0ebfe998030f839daf90baddf2082602a86b45d478f",
+      "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
+      "mode": "100644"
+    },
+    "line": 242,
+    "old": "revision !== version || current !== target || ",
+    "new": "",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/stale-action-capture.patch",
+    "testPath": "tools/fixtures/site-toaster/model.bun-test.ts",
+    "testName": "unused captured action cannot invoke an older handle after replacement",
+    "actualAssertionAnchor": "expect(calls).toBe(0)",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "stale-same-reference-completion",
+    "path": "src/site/kit/toaster/model.ts",
+    "sourceIdentity": {
+      "bytes": 11191,
+      "sha256": "9ace68c8fac1c015cb8bf0ebfe998030f839daf90baddf2082602a86b45d478f",
+      "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
+      "mode": "100644"
+    },
+    "line": 133,
+    "old": "const result = await action.run()\n      if (!live() || !contains(target) || target.generation !== actionGeneration) return",
+    "new": "const result = await action.run()\n      if (!live() || !contains(target)) return",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/stale-same-reference-completion.patch",
+    "testPath": "tools/fixtures/site-toaster/model.bun-test.ts",
+    "testName": "same-reference replacement invalidates an older in-flight completion",
+    "actualAssertionAnchor": "expect(f.toaster.read()?.content.text).toBe(\"saved\")",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "timer-loses-remaining",
+    "path": "src/site/kit/toaster/model.ts",
+    "sourceIdentity": {
+      "bytes": 11191,
+      "sha256": "9ace68c8fac1c015cb8bf0ebfe998030f839daf90baddf2082602a86b45d478f",
+      "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
+      "mode": "100644"
+    },
+    "line": 52,
+    "old": "current.remaining - Math.max(0, options.now() - since)",
+    "new": "current.remaining",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/timer-loses-remaining.patch",
+    "testPath": "tools/fixtures/site-toaster/model.bun-test.ts",
+    "testName": "leaving hover retains focus and the remaining time",
+    "actualAssertionAnchor": "expect(f.toaster.read()?.remaining).toBe(4000)",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "feedback-hides-failure",
+    "path": "src/site/kit/feedback/index.ts",
+    "sourceIdentity": {
+      "bytes": 3892,
+      "sha256": "150de77ece6d8cde198c2c8a1e867ea539898c10fabaa292fdbbc19229638bcd",
+      "gitBlob": "d2122b39f8ae1445c41cb35a5315811aaed5876e",
+      "mode": "100644"
+    },
+    "line": 64,
+    "old": "const result = toastPlan(answer.report, input.feedback)",
+    "new": "const result = input.feedback ? toastPlan(answer.report, input.feedback) : null",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/feedback-hides-failure.patch",
+    "testPath": "tools/fixtures/site-toaster/model.bun-test.ts",
+    "testName": "feedback off suppresses pending and confirmation but keeps failure",
+    "actualAssertionAnchor": "expect(f.toaster.read()?.content.tone).toBe(\"failure\")",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "duplicate-undo",
+    "path": "src/site/kit/feedback/undo.ts",
+    "sourceIdentity": {
+      "bytes": 401,
+      "sha256": "2f6ad22cea0b54020956a2c5d9e1134f30f26d45fef6f6b67533eccff7d96381",
+      "gitBlob": "5eac36e422d415dac4e81217ed0f838e823c38f0",
+      "mode": "100644"
+    },
+    "line": 9,
+    "old": "return options.format(await options.undo(options.handle))",
+    "new": "await options.undo(options.handle); return options.format(await options.undo(options.handle))",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/duplicate-undo.patch",
+    "testPath": "tools/fixtures/site-toaster/consumer.bun-test.ts",
+    "testName": "actual composed Scope Keys toaster Svelte consumer has independent expected records",
+    "actualAssertionAnchor": "expect(await consumerRecords()).toEqual(expected)",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "kit-free-svelte-import",
+    "path": "src/site/core/notice/plain.ts",
+    "sourceIdentity": {
+      "bytes": 3043,
+      "sha256": "5ba629cca643535d678a247e5da8614e0b8f45852b8e6d843b9014d3fda60ddb",
+      "gitBlob": "03e18b42af6bae16ce6830b570b5f418eb9d94ee",
+      "mode": "100644"
+    },
+    "line": 1,
+    "old": "import type { Site }",
+    "new": "export { flushSync } from \"svelte\"\nimport type { Site }",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/kit-free-svelte-import.patch",
+    "testPath": "tools/fixtures/site-toaster/architecture.bun-test.ts",
+    "testName": "kit-free runtime import closure contains no Svelte Bits UI or kit",
+    "actualAssertionAnchor": "expect(specifier === \"svelte\"",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "surviving-host",
+    "path": "src/site/core/notice/host.ts",
+    "sourceIdentity": {
+      "bytes": 4886,
+      "sha256": "e7a884add8fbfbddcaeb3eb4706b2c7e0f368fe9b38d7a776e6f66bed8e5f116",
+      "gitBlob": "4bbe00d417b341dea21907bcebf174a055276476",
+      "mode": "100644"
+    },
+    "line": 27,
+    "old": "scope.add(() => host.remove())",
+    "new": "scope.add(() => {})",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/surviving-host.patch",
+    "testPath": "tools/fixtures/site-toaster/dom.bun-test.ts",
+    "testName": "all required click pointer mouse contextmenu and key events stop at the host",
+    "actualAssertionAnchor": "expect(layer.host.isConnected).toBe(false)",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "hidden-observer-survives",
+    "path": "src/site/core/notice/host.ts",
+    "sourceIdentity": {
+      "bytes": 4886,
+      "sha256": "e7a884add8fbfbddcaeb3eb4706b2c7e0f368fe9b38d7a776e6f66bed8e5f116",
+      "gitBlob": "4bbe00d417b341dea21907bcebf174a055276476",
+      "mode": "100644"
+    },
+    "line": 74,
+    "old": "  function resume() {\n    stop()\n    if (!active || document.hidden || scope.disposed) return",
+    "new": "  function resume() {\n    stop()\n    if (!active || scope.disposed) return",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/hidden-observer-survives.patch",
+    "testPath": "tools/fixtures/site-toaster/dom.bun-test.ts",
+    "testName": "Music reads bounded surfaces at show 0.4s 1.2s, none while hidden, then restores once",
+    "actualAssertionAnchor": "expect(watched.size).toBe(0)",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "failure-loses-role",
+    "path": "src/site/kit/toaster/Toast.svelte",
+    "sourceIdentity": {
+      "bytes": 3426,
+      "sha256": "8cddaeb732bbe46902d7a651f3fc87a64f27a76d46902db2e775bdc79eec18cb",
+      "gitBlob": "8a3b976e689fa6e912fa51469a56ad04e8cfbf8a",
+      "mode": "100644"
+    },
+    "line": 27,
+    "old": "? \"alert\" : \"status\"",
+    "new": "? \"status\" : \"status\"",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/failure-loses-role.patch",
+    "testPath": "tools/fixtures/site-toaster/dom.bun-test.ts",
+    "testName": "actual Svelte uses safe text, roles, glyph rules and native action buttons",
+    "actualAssertionAnchor": "getAttribute(\"role\")).toBe(\"alert\")",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  },
+  {
+    "id": "duplicate-notice-visual",
+    "path": "src/site/core/notice/index.ts",
+    "sourceIdentity": {
+      "bytes": 2350,
+      "sha256": "71612672022514e79d516d3e5b984750d8a89c140b67e00152f122e660209f25",
+      "gitBlob": "8dbcf7023f18ddf0635157f4a54ea964eca3df15",
+      "mode": "100644"
+    },
+    "line": 53,
+    "old": "detach(); presenter = next; attach()",
+    "new": "presenter = next; attach()",
+    "occurrences": 1,
+    "patch": "tools/fixtures/site-toaster/controls/duplicate-notice-visual.patch",
+    "testPath": "tools/fixtures/site-toaster/dom.bun-test.ts",
+    "testName": "plain notice transfers current due data to kit without duplicate visuals or stale generation effects",
+    "actualAssertionAnchor": "expect(document.querySelectorAll(\"pp-toast-layer\").length).toBe(1)",
+    "status": "UNEXECUTED",
+    "expected": "positive native and real Svelte compilation; mutation compiles; named behavior assertion fails; restore bytes and modes; rehash complete tree"
+  }
+]

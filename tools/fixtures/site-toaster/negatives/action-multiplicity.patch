@@ -1,0 +1,7 @@
+diff --git a/tools/fixtures/site-toaster/isolated-negative.ts b/tools/fixtures/site-toaster/isolated-negative.ts
+--- a/tools/fixtures/site-toaster/isolated-negative.ts
++++ b/tools/fixtures/site-toaster/isolated-negative.ts
+@@ -1 +1,2 @@
+-export {}
++import type { ToastContent } from "../../../src/site/kit/toaster/types"
++const invalid: ToastContent = { text: "x", tone: "confirmation", auto: false, action: [] }

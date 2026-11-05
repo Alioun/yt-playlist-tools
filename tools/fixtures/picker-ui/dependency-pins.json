@@ -1,0 +1,148 @@
+{
+  "preparedModules": "node_modules",
+  "packages": {
+    "svelte": {
+      "path": "node_modules/svelte/package.json",
+      "version": "5.57.2",
+      "sha256": "ff172e5c3bca15a8840bdce0818fd96c7ff26fbc076f0f247bd9cb30d985eb53",
+      "bytes": 5661
+    },
+    "bits-ui": {
+      "path": "node_modules/bits-ui/package.json",
+      "version": "2.19.5",
+      "sha256": "1726b07fac31467450c7d58f58840495cd3bcedc008e790462d1fab9778a1a16",
+      "bytes": 1692
+    },
+    "svelte-toolbelt": {
+      "path": "node_modules/svelte-toolbelt/package.json",
+      "version": "0.10.6",
+      "sha256": "b0dd8c15c05e68d20b0642f9bfd72ef07740a8e6fa8e4838baeed9cb7d0ef69b",
+      "bytes": 2293
+    },
+    "clsx": {
+      "path": "node_modules/clsx/package.json",
+      "version": "2.1.1",
+      "sha256": "a5e616b9883177fb47c1fca22b6a4ab42be1c3ed6ffae8595a5c7d88630eeec2",
+      "bytes": 1192
+    },
+    "wxt": {
+      "path": "node_modules/wxt/package.json",
+      "version": "0.21.4",
+      "sha256": "bab9fe8b431038f54a42c37291c244102afe17b82d8fe048c7e2a4343eb3bc7b",
+      "bytes": 6355
+    },
+    "svelte-check": {
+      "path": "node_modules/svelte-check/package.json",
+      "version": "4.7.7",
+      "sha256": "bc83e84d22778b084407c3538c9e97c05c6affb264a249a9c8b7e28073de8eec",
+      "bytes": 1927
+    },
+    "typescript": {
+      "path": "node_modules/typescript/package.json",
+      "version": "6.0.3",
+      "sha256": "9332e97c30d3e53ed54910b89207ed657fb444066484df6e5b6965bf130865e9",
+      "bytes": 3527
+    },
+    "@typescript/native": {
+      "path": "node_modules/@typescript/native/package.json",
+      "version": "7.0.2",
+      "sha256": "3722b30210616a13a3213ded11575ba6b2dbab10c32a5ef67afca8513e27017e",
+      "bytes": 3087
+    },
+    "@testing-library/svelte": {
+      "path": "node_modules/@testing-library/svelte/package.json",
+      "version": "5.4.2",
+      "sha256": "fee8c05b66b674a5da9b9bfa86d281b998ca508f35702d323a0da9e499d8ce95",
+      "bytes": 1742
+    },
+    "@testing-library/user-event": {
+      "path": "node_modules/@testing-library/user-event/package.json",
+      "version": "14.6.8",
+      "sha256": "60d3f721ff64eb2c04048c92623e8f6c3ea66e88f2bf24f2267e869018188895",
+      "bytes": 3359
+    },
+    "@testing-library/jest-dom": {
+      "path": "node_modules/@testing-library/jest-dom/package.json",
+      "version": "7.0.1",
+      "sha256": "21fa44ff0343dc7cb3d241ea259a93f029649c4671bac280b06d45fcfaeaaa52",
+      "bytes": 4346
+    },
+    "@happy-dom/global-registrator": {
+      "path": "node_modules/@happy-dom/global-registrator/package.json",
+      "version": "21.0.3",
+      "sha256": "5440939bd155f73adb75b56683ef83b6ba643bc4b13df0532d1209ea6c68c9f3",
+      "bytes": 1396
+    },
+    "happy-dom": {
+      "path": "node_modules/happy-dom/package.json",
+      "version": "21.0.3",
+      "sha256": "6f524990531a0f13640237e75c8e3c999bf025ebe8b66ebae4a3f7a88870c96e",
+      "bytes": 1798
+    },
+    "@tailwindcss/vite": {
+      "path": "node_modules/@tailwindcss/vite/package.json",
+      "version": "4.3.3",
+      "sha256": "cba2bb8613106ca608bbd757998b2cf56a464584e3848310338fe3fe3b4761aa",
+      "bytes": 992
+    },
+    "tailwindcss": {
+      "path": "node_modules/tailwindcss/package.json",
+      "version": "4.3.3",
+      "sha256": "3dc86b46c511947ca00838aa3f1776243abe923ac347c092e60a0cbc7ae68559",
+      "bytes": 2493
+    },
+    "@sveltejs/vite-plugin-svelte": {
+      "path": "node_modules/@sveltejs/vite-plugin-svelte/package.json",
+      "version": "7.3.1",
+      "sha256": "c12c58f945517825eb264fdb22474d5fbdcdb5be924e9ce0a22089ae9a1d6824",
+      "bytes": 1271
+    },
+    "@wxt-dev/module-svelte": {
+      "path": "node_modules/@wxt-dev/module-svelte/package.json",
+      "version": "2.0.5",
+      "sha256": "d073d5f6ada37ffc6b3f41c16535a1671d156e41029c4a90277366c35bffa088",
+      "bytes": 1285
+    },
+    "playwright": {
+      "path": "node_modules/playwright/package.json",
+      "version": "1.64.1",
+      "sha256": "313d23ce667d93962d3a1ab4be80908cefe840e4d9e48f1cd5863b91f65e8e39",
+      "bytes": 1219
+    },
+    "axe-core": {
+      "available": false
+    }
+  },
+  "executables": {
+    "python": {
+      "path": "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+      "sha256": "8df4462b22d4cee3da65589d34e15ae625fe9bae73d1b38c83472f5ea6b0315a",
+      "bytes": 6079344,
+      "mode": "0o755"
+    },
+    "node": {
+      "path": "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+      "sha256": "7296c3dda88793e08d1089d839a782178c4bba6bb22f5c40ab2a75263fb071bd",
+      "bytes": 132848,
+      "mode": "0o555"
+    },
+    "bun": {
+      "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+      "sha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79",
+      "bytes": 70469776,
+      "mode": "0o755"
+    },
+    "timeout": {
+      "path": "/usr/bin/timeout",
+      "sha256": "9369876b0b70afdb01ebbe54a83c787d9be1575bd6df806ea61febaf3f801c8d",
+      "bytes": 217104,
+      "mode": "0o755"
+    },
+    "patch": {
+      "path": "/usr/bin/patch",
+      "sha256": "f76fb9a2175f06a9e939de0ffb444e413d0c492d7275cb9d1a28cfbb3857e57d",
+      "bytes": 351072,
+      "mode": "0o755"
+    }
+  }
+}

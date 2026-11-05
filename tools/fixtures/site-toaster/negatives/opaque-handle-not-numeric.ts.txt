@@ -1,0 +1,2 @@
+import type { UndoHandle } from "../../../src/background/add-flow/add-flow"
+const invalid: UndoHandle = { kind: "add", id: 1 }

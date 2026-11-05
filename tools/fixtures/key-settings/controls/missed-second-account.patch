@@ -1,0 +1,10 @@
+--- a/src/background/store/key-settings-execution.ts
++++ b/src/background/store/key-settings-execution.ts
+@@ -129,6 +129,7 @@
+         if (decoded.kind === "newer-version") return refused("update-needed")
+         if (decoded.kind === "deleted") continue
+         if (decoded.kind !== "value" || !consentObject(raw.data) || !consentObject(raw.data.targets)) return refused("invalid")
++        if (key.acct === "BBBBBBBBBBBBBBBB") continue
+         seen.add(key.acct)
+         const stored = raw.data.targets[shortcut], restore = capture?.targets.find(target => target.acct === key.acct)
+         if (change.kind === "shortcut-remove" ? stored === undefined : !restore) continue

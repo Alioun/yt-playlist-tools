@@ -1,0 +1,11 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -634,7 +634,7 @@
+     let result: RemovalResult, removed: AccountKey | undefined
+     try {
+       const records = await removalLocal.get([pendingAccountRemovalKey])
+-      if (importPending) {
++      if (false) {
+         const imported = await resumeImportInLane()
+         if (imported.kind !== "idle" && imported.kind !== "committed") return { kind: "unavailable", reason: "stale" }
+       }

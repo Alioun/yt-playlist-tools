@@ -1,0 +1,11 @@
+--- a/src/background/store/consent-recovery.ts
++++ b/src/background/store/consent-recovery.ts
+@@ -412,7 +412,7 @@
+ 
+ export function classifyConsentWork(records: JsonObject): readonly HeldWorkView[] {
+   const work: HeldWorkView[] = [...keySettingsWork(records), ...featureProgressWork(records)], read = readConsentDevice(records)
+-  if (Object.hasOwn(records, receivedResetKey)) {
++  if (false && Object.hasOwn(records, receivedResetKey)) {
+     const marker = readReceivedReset(records[receivedResetKey]), raw = records[receivedResetKey]
+     if (marker && consentObject(raw)) work.push({ kind: "sync-reset", selection: Object.freeze({ kind: "held-job-selection" }),
+       record: freezeConsentValue(raw), resume: receivedResetResumable(records) ? "current-agreement" : "explicit-recovery" })

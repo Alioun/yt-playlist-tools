@@ -1,0 +1,4 @@
+import type { SettingsPageOrigin } from "../../../src/background/store/store-lifecycle"
+
+const negative: SettingsPageOrigin = { kind: "ui", page: "popup", origin: { kind: "ui", windowId: 1, incognito: false } }
+export {}

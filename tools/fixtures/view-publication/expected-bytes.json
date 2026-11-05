@@ -1,0 +1,7 @@
+{
+  "state": "authored-unexecuted",
+  "bytes": 10397,
+  "sha256": "cc07b5aa7b0d179946aecfe4ecce3218bb778df221ec446abdf00d78a561cb5a",
+  "eof": "exactly one LF after the complete JSON object",
+  "derivation": "Independent Python construction from complete producer fields, defaults, source fixtures and scenario timeline. No expected JSONL or product module was read or executed."
+}

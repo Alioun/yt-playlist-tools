@@ -1,0 +1,10 @@
+--- a/src/background/store/sync-reset-receive.ts
++++ b/src/background/store/sync-reset-receive.ts
+@@ -194,6 +194,7 @@
+     const sync = { ...beforeCommit.sync, joined: marker.metadata.id, pushed: {}, status: "ok", editedSinceOff: false,
+       everEdited: false, resetReceived: marker.metadata }
+     try { await deps.local.set({ sync }) } catch {}
++    await deps.local.set({ device: { id: "starting-fixture", consent: null, syncOn: true } })
+     const committed = await observe(marker)
+     if (!committed || !sameSyncJson(committed.sync ?? null, sync)) return held("local")
+     marker = { ...marker, phase: "notice" }

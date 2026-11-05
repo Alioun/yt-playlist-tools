@@ -1,0 +1,70 @@
+[
+  {
+    "name": "exported-device-leakage",
+    "file": "src/shared/settings-file/index.ts",
+    "replacements": [
+      {
+        "before": "settings,\n      accounts: Object.fromEntries(accounts.sort",
+        "after": "device: { syncOn: true }, settings, accounts: Object.fromEntries(accounts.sort"
+      }
+    ],
+    "test": "export includes every supported field and kept filter in exact deterministic file bytes",
+    "assertion": "The entire exported text equals expected-file.json, which contains no Device data."
+  },
+  {
+    "name": "dropped-kept-filters",
+    "file": "src/shared/settings-file/index.ts",
+    "replacements": [
+      {
+        "before": "if (entry.document.kind === \"value\") filters.push",
+        "after": "if (entry.document.kind === \"value\" && account.setup.kind === \"value\" && account.setup.document.data.autoAdd.some(row => row.pl === entry.playlist)) filters.push"
+      }
+    ],
+    "test": "round trip retains a live filter even when its account has no chosen playlists",
+    "assertion": "PL_ONLY_KEPT survives round trip for the account with no chosen playlists."
+  },
+  {
+    "name": "wrong-account-replacement-scope",
+    "file": "src/shared/settings-file/index.ts",
+    "replacements": [
+      {
+        "before": "readonly absentAccounts: \"keep\"",
+        "after": "readonly absentAccounts: \"replace\""
+      },
+      {
+        "before": "absentAccounts: \"keep\" },",
+        "after": "absentAccounts: \"replace\" },"
+      }
+    ],
+    "test": "import plans exact account replacements and keeps absent unrelated accounts",
+    "assertion": "The replacement descriptor explicitly keeps absent accounts and lists exactly the two included accounts."
+  },
+  {
+    "name": "newer-format-acceptance",
+    "file": "src/shared/settings-file/index.ts",
+    "replacements": [
+      {
+        "before": "if (raw.format > SETTINGS_FILE_FORMAT)",
+        "after": "if (raw.format > 99)"
+      }
+    ],
+    "test": "newer format with current-shaped data is still refused",
+    "assertion": "A valid current-shaped file with format 2 yields DATA-55.newer-format, never an ImportPlan."
+  },
+  {
+    "name": "private-import-acceptance",
+    "file": "src/shared/settings-file/index.ts",
+    "replacements": [
+      {
+        "before": "if (window === \"private\")",
+        "after": "if (false)"
+      },
+      {
+        "before": "if (window !== \"normal\")",
+        "after": "if (false)"
+      }
+    ],
+    "test": "private import refuses before parsing and file privacy claims cannot override context",
+    "assertion": "A private-bound planner returns the private refusal for a valid file and for a file claiming normal privacy."
+  }
+]

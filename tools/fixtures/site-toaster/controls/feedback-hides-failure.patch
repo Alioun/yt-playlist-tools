@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/feedback/index.ts b/src/site/kit/feedback/index.ts
+--- a/src/site/kit/feedback/index.ts
++++ b/src/site/kit/feedback/index.ts
+@@ -61,7 +61,7 @@
+       const operation = toaster.begin({ keyWithoutButton: input.keyWithoutButton, pending: plan ? content(plan, input.titles, null) : null })
+       return {
+         finish(answer: { readonly report: Report; readonly titles: Titles; readonly action: ToastAction | null }) {
+-          const result = toastPlan(answer.report, input.feedback)
++          const result = input.feedback ? toastPlan(answer.report, input.feedback) : null
+           operation.finish(result ? content(result, answer.titles, answer.action) : null)
+         }, cancel: operation.cancel
+       }

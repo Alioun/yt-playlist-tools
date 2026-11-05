@@ -147,9 +147,7 @@ What's still open, and what settles it:
 
 Each is tracked in [`for-the-user.md`](for-the-user.md). The user answered every other decision on 2026-10-20: they're settled in [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99), and the name, Perchling for YouTube™, in [R141–R144](spec/resolutions.md#the-name-perchling-r141r144). They're no longer listed here.
 
-| Item | Where | Until answered, the spec assumes |
-|---|---|---|
-| Approving the privacy policy (published under the user's name) | REL-STORE-17 | The drafted text, with GitHub issues as the only contact and no support e-mail (R89) |
+None. The user approved the drafted privacy policy (REL-STORE-17) on 2026-11-01, with GitHub issues as the only contact and no support e-mail (R89). Its cookie bullet stays provisional on ticket 25 and goes if no shipped route reads the session cookie (R48). The picker and Clear all decisions of the same day are R171 to R175.
 
 ### Actions only the user can take
 

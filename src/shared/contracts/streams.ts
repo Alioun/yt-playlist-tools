@@ -12,10 +12,21 @@ import type { JsonObject } from "./json"
 export type PlayerData =
   | { ad: true; at: number; player: "watch" | "shorts" }
   | {
-      ad: false; at: number; player: "watch" | "shorts"; videoId: VideoId
-      pos: number; len: number | null; listedLength: number | null; rate: number
-      playing: boolean; seeking: boolean; content: "video" | "clip" | "made-for-kids"
-      isPostLiveDvr: boolean; isLive: boolean; isUpcoming: boolean; isLiveContent: boolean
+      ad: false
+      at: number
+      player: "watch" | "shorts"
+      videoId: VideoId
+      pos: number
+      len: number | null
+      listedLength: number | null
+      rate: number
+      playing: boolean
+      seeking: boolean
+      content: "video" | "clip" | "made-for-kids"
+      isPostLiveDvr: boolean
+      isLive: boolean
+      isUpcoming: boolean
+      isLiveContent: boolean
     }
 export type NavData = {
   pageType: PageType
@@ -34,24 +45,45 @@ const duration: Check = value => value === null || positive(value)
 const player: Check = value => value === "watch" || value === "shorts"
 function shape(value: unknown, fields: Record<string, Check>): value is JsonObject {
   try {
-    return value !== null && typeof value === "object" && isJsonValue(value) && !Array.isArray(value) &&
+    return (
+      value !== null &&
+      typeof value === "object" &&
+      isJsonValue(value) &&
+      !Array.isArray(value) &&
       Object.keys(value).length === Object.keys(fields).length &&
       Object.keys(fields).every(key => Object.hasOwn(value, key) && fields[key]?.(value[key]))
-  } catch { return false }
+    )
+  } catch {
+    return false
+  }
 }
 function playerData(value: unknown): boolean {
-  return shape(value, { ad: v => v === true, at: nonnegative, player }) || shape(value, {
-    ad: v => v === false, at: nonnegative, player, videoId: isVideoId,
-    pos: nonnegative, len: duration, listedLength: duration, rate: positive,
-    playing: boolean, seeking: boolean, content: v => v === "video" || v === "clip" || v === "made-for-kids",
-    isPostLiveDvr: boolean, isLive: boolean, isUpcoming: boolean, isLiveContent: boolean
-  })
+  return (
+    shape(value, { ad: v => v === true, at: nonnegative, player }) ||
+    shape(value, {
+      ad: v => v === false,
+      at: nonnegative,
+      player,
+      videoId: isVideoId,
+      pos: nonnegative,
+      len: duration,
+      listedLength: duration,
+      rate: positive,
+      playing: boolean,
+      seeking: boolean,
+      content: v => v === "video" || v === "clip" || v === "made-for-kids",
+      isPostLiveDvr: boolean,
+      isLive: boolean,
+      isUpcoming: boolean,
+      isLiveContent: boolean
+    })
+  )
 }
 function navData(value: unknown): boolean {
   return shape(value, {
-    pageType: isPageType, video: v => v === null || isVideoInfo(v),
-    navigation: v => shape(v, { kind: x => x === "other" }) ||
-      shape(v, { kind: x => x === "watch" || x === "shorts", videoId: isVideoId })
+    pageType: isPageType,
+    video: v => v === null || isVideoInfo(v),
+    navigation: v => shape(v, { kind: x => x === "other" }) || shape(v, { kind: x => x === "watch" || x === "shorts", videoId: isVideoId })
   })
 }
 function queueData(value: unknown): boolean {
@@ -60,14 +92,23 @@ function queueData(value: unknown): boolean {
   })
 }
 const streamGuards = {
-  player: playerData, nav: navData, nowPlaying: v => v === null || isNowPlaying(v), queue: queueData
+  player: playerData,
+  nav: navData,
+  nowPlaying: v => v === null || isNowPlaying(v),
+  queue: queueData
 } satisfies Record<Stream, Check>
 export function isStreamData<S extends Stream>(stream: S, value: unknown): value is StreamData<S> {
-  try { return isStream(stream) && streamGuards[stream](value) }
-  catch { return false }
+  try {
+    return isStream(stream) && streamGuards[stream](value)
+  } catch {
+    return false
+  }
 }
 const streamSites = {
-  player: ["www"], nav: ["www", "music"], nowPlaying: ["music"], queue: ["music"]
+  player: ["www"],
+  nav: ["www", "music"],
+  nowPlaying: ["music"],
+  queue: ["music"]
 } satisfies Record<Stream, readonly Site[]>
 export function supportsStream(site: Site, stream: Stream): boolean {
   return streamSites[stream].some(supported => supported === site)

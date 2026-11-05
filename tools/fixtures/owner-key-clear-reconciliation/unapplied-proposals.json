@@ -1,0 +1,48 @@
+{
+ "state": "UNAPPLIED; both paths are protected outside the write fence",
+ "proposals": [
+  {
+   "patch": "tools/fixtures/owner-key-clear-reconciliation/proposals/key-catalogue-includes-clear-all.patch",
+   "identity": {
+    "bytes": 1822,
+    "sha256": "af53ee6247c0c2769a384c085195770a15514a65578497a47843c1af3ef00b8f",
+    "gitBlob": "aae71a2e87d98c4689e68eb4004087ed21f1fa07",
+    "mode": "100644"
+   },
+   "dependencies": {
+    "tools/fixtures/key-settings/type-proofs.ts": {
+     "bytes": 2017,
+     "sha256": "e6df5f752d44634c414bcaf04ae31b3a1672fcd8fdf4885c54d4ef1fe99dbb45",
+     "gitBlob": "bd7bb480857303bc0c42ac3251708e835e4cbba0",
+     "mode": "100644"
+    },
+    "tools/fixtures/key-settings/wire.bun-test.ts": {
+     "bytes": 5231,
+     "sha256": "b470cdd8aed8abee5e785782d35a501378adbdcf8eb4f6083f3457b7abea36fd",
+     "gitBlob": "5d8e94161eb6ec90bf3284af76a948c58fe711c3",
+     "mode": "100644"
+    }
+   },
+   "reason": "The single UiMessages catalogue now carries ui.clearAll. These two protected key-settings assertions enumerate the old six-kind catalogue and would fail unchanged. Both original assertions are preserved; the proposal adds only \"ui.clearAll\".",
+   "staticDryRun": {
+    "returncode": 0,
+    "stdout": "patching file 'tools/fixtures/key-settings/type-proofs.ts'\npatching file 'tools/fixtures/key-settings/wire.bun-test.ts'"
+   }
+  },
+  {
+   "patch": "tools/fixtures/clear-all/proposals/runner-descendant-no-install.patch",
+   "identity": {
+    "bytes": 494,
+    "sha256": "bcce2450ec6847afba4f8788d824968a7dab18c68e8bf45d64cac0bc005ac4ce",
+    "gitBlob": "be802b177afc24c97cbc29b4b49ac406f1cb5e51",
+    "mode": "100644"
+   },
+   "reason": "Carried unchanged from the Clear-all return; still unapplied."
+  },
+  {
+   "relocation": "src/shared/copy/site-feedback.ts",
+   "into": "src/shared/copy/index.ts",
+   "reason": "The localization proposal's new file path is outside the fence. Its 28 body lines are carried byte-for-byte into the authorized copy/index.ts; see localization-conservation.json. Callers import siteFeedbackText and noticeText from ../copy instead of ../copy/site-feedback."
+  }
+ ]
+}

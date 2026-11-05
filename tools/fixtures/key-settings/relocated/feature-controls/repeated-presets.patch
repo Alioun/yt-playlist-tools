@@ -1,0 +1,10 @@
+--- a/src/background/store/feature-settings.ts
++++ b/src/background/store/feature-settings.ts
+@@ -29,6 +29,7 @@
+     settings.shortcuts.music = change.value
+   } else {
+     const path = featureSettings[change.feature]
++    if (change.value && change.feature === "shortcuts") settings.shortcuts.preset = false
+     if (change.value) {
+       if (!access) return { kind: "refused", reason: "unavailable" }
+       if ((change.feature === "music-actions" || change.feature === "music-keys") && !access.music) return { kind: "refused", reason: "site-access" }

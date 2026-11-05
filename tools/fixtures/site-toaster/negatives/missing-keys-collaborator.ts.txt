@@ -1,0 +1,2 @@
+import { createFeedback } from "../../../src/site/kit/feedback"
+declare const options: Parameters<typeof createFeedback>[0]; const { keys, ...withoutKeys } = options; createFeedback(withoutKeys)

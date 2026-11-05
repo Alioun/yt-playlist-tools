@@ -1,0 +1,11 @@
+--- a/src/background/store/feature-settings-execution.ts
++++ b/src/background/store/feature-settings-execution.ts
+@@ -20,7 +20,7 @@
+   if (!isFeatureSettingChange(change)) return { kind: "refused", reason: "invalid" }
+   let observation: Awaited<ReturnType<FeatureAccess["read"]>>
+   if (change.value && change.kind !== "music-section") {
+-    try { observation = await deps.access?.read() } catch { return { kind: "refused", reason: "unavailable" } }
++    try { observation = { www: true, music: true, browserMenu: true } } catch { return { kind: "refused", reason: "unavailable" } }
+   }
+   const planning: { value?: FeaturePlan } = {}
+   const result = await executeSettingsMutation(deps, (current, records) => {

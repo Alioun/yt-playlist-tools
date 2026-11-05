@@ -1,0 +1,11 @@
+--- a/src/background/store/sync-reset-receive.ts
++++ b/src/background/store/sync-reset-receive.ts
+@@ -186,7 +186,7 @@
+       let error: unknown
+       try { await host.removeLocal(names) } catch (failure) { error = failure }
+       const read = await observe(marker)
+-      if (!read || names.some(name => Object.hasOwn(read, name))) return held("local", error)
++      if (!read) return held("local", error)
+     }
+     records = await observe(marker) ?? {}
+     if (marker.targets.some(name => Object.hasOwn(records, name))) return held("local")

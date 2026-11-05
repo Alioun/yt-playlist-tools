@@ -1,5 +1,5 @@
 import { isShortcutId } from "../model"
-import type { Key, Settings } from "../model"
+import type { Key, Settings, ShortcutId } from "../model"
 import { keysOverlap, sameTarget } from "./match"
 import type { Binding, Conflict, ShortcutTarget, Site } from "./types"
 
@@ -31,10 +31,14 @@ export function bindingsForSite(settings: Readonly<Settings>, context: { site: S
   const musicOn = context.site === "music" && settings.musicKeys.on
   return allBindings(settings).filter(binding => {
     switch (binding.target.kind) {
-      case "playlist": return playlistsOn
-      case "picker": return context.site === "www" && playlistsOn
-      case "music": return musicOn
-      case "undo": return context.undoAvailable || playlistsOn || musicOn
+      case "playlist":
+        return playlistsOn
+      case "picker":
+        return context.site === "www" && playlistsOn
+      case "music":
+        return musicOn
+      case "undo":
+        return context.undoAvailable || playlistsOn || musicOn
     }
   })
 }
@@ -51,20 +55,21 @@ export function findConflicts(settings: Readonly<Settings>, target: ShortcutTarg
 function setKey(settings: Readonly<Settings>, target: ShortcutTarget, key: Readonly<Key> | null): Settings {
   const value = key === null ? null : { ...key }
   switch (target.kind) {
-    case "undo": return { ...settings, undoKey: value }
-    case "picker": return { ...settings, shortcuts: { ...settings.shortcuts, picker: value } }
-    case "music": return { ...settings, musicKeys: { ...settings.musicKeys, keys: { ...settings.musicKeys.keys, [target.action]: value } } }
-    case "playlist": return {
-      ...settings,
-      shortcuts: { ...settings.shortcuts, list: settings.shortcuts.list.map(shortcut => shortcut.id === target.id ? { ...shortcut, key: value } : shortcut) }
-    }
+    case "undo":
+      return { ...settings, undoKey: value }
+    case "picker":
+      return { ...settings, shortcuts: { ...settings.shortcuts, picker: value } }
+    case "music":
+      return { ...settings, musicKeys: { ...settings.musicKeys, keys: { ...settings.musicKeys.keys, [target.action]: value } } }
+    case "playlist":
+      return {
+        ...settings,
+        shortcuts: { ...settings.shortcuts, list: settings.shortcuts.list.map(shortcut => (shortcut.id === target.id ? { ...shortcut, key: value } : shortcut)) }
+      }
   }
 }
 
-export type Assignment =
-  | { kind: "missing-target" }
-  | { kind: "conflict"; conflicts: readonly Conflict[] }
-  | { kind: "assigned"; settings: Settings; cleared: readonly ShortcutTarget[] }
+export type Assignment = { kind: "missing-target" } | { kind: "conflict"; conflicts: readonly Conflict[] } | { kind: "assigned"; settings: Settings; cleared: readonly ShortcutTarget[] }
 
 export function assignKey(settings: Readonly<Settings>, target: ShortcutTarget, key: Readonly<Key> | null, replaceConflicts = false): Assignment {
   if (target.kind === "playlist" && !settings.shortcuts.list.some(shortcut => shortcut.id === target.id)) return { kind: "missing-target" }
@@ -80,12 +85,15 @@ function alt(char: string, shift = false): Key {
 }
 
 const musicPresets = [
-  { action: "next", key: alt("n") }, { action: "queue", key: alt("q") },
-  { action: "save", key: alt("p") }, { action: "picker", key: alt("p", true) },
-  { action: "like", key: alt("l") }, { action: "remove", key: alt("r") }
+  { action: "next", key: alt("n") },
+  { action: "queue", key: alt("q") },
+  { action: "save", key: alt("p") },
+  { action: "picker", key: alt("p", true) },
+  { action: "like", key: alt("l") },
+  { action: "remove", key: alt("r") }
 ] satisfies { action: keyof Settings["musicKeys"]["keys"]; key: Key }[]
 
-export type PresetRequest = { feature: "shortcuts"; shortcutId: string } | { feature: "music-keys" }
+export type PresetRequest = { feature: "shortcuts"; shortcutId: string; readonly reservedShortcutIds: ReadonlySet<ShortcutId> } | { feature: "music-keys" }
 export type PresetConflict = { target: ShortcutTarget; key: Readonly<Key>; conflicts: readonly Conflict[] }
 export type PresetResult = { kind: "applied" | "unchanged"; settings: Readonly<Settings>; blocked: readonly PresetConflict[] }
 
@@ -101,13 +109,11 @@ export function applyPresets(settings: Readonly<Settings>, request: PresetReques
     if (result.kind === "assigned") next = result.settings
   }
   if (request.feature === "shortcuts") {
-    if (!isShortcutId(request.shortcutId) || settings.shortcuts.list.some(shortcut => shortcut.id === request.shortcutId)) {
+    if (!isShortcutId(request.shortcutId) || settings.shortcuts.list.some(shortcut => shortcut.id === request.shortcutId) || request.reservedShortcutIds.has(request.shortcutId)) {
       throw new TypeError("A new six-character shortcut ID is required")
     }
     if (settings.shortcuts.list.length >= 20) throw new RangeError("At most 20 playlist shortcuts are allowed")
-    next = { ...next, shortcuts: { ...next.shortcuts, preset: true, list: [
-      ...next.shortcuts.list, { id: request.shortcutId, key: null, label: "", watchLaterOnEveryAccount: true }
-    ] } }
+    next = { ...next, shortcuts: { ...next.shortcuts, preset: true, list: [...next.shortcuts.list, { id: request.shortcutId, key: null, label: "", watchLaterOnEveryAccount: true }] } }
     offer({ kind: "playlist", id: request.shortcutId }, alt("w"))
     if (next.shortcuts.picker === null) offer({ kind: "picker" }, alt("p", true))
   } else {

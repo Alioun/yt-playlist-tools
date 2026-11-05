@@ -1,0 +1,11 @@
+--- a/src/background/store/settings-import-execution.ts
++++ b/src/background/store/settings-import-execution.ts
+@@ -267,7 +267,7 @@
+         if (!importObject(remote)) return { kind: "unavailable", reason: "inventory" }
+         sync = { kind: "on", records: remote }
+       }
+-      const plan = planSettingsImport({ parsed, local: current.local, session: current.session, sync, at: deps.now(), generation: () => deps.generation() })
++      const plan = planSettingsImport({ parsed: { ...parsed, accounts: parsed.accounts.slice(0, 1), accountCount: Math.min(1, parsed.accountCount) }, local: current.local, session: current.session, sync, at: deps.now(), generation: () => deps.generation() })
+       if (plan.kind !== "planned") return plan.kind === "refused" ? plan : { kind: "unavailable", reason: "inventory" }
+       const confirmation: SettingsImportConfirmation = Object.freeze({ [confirmationBrand]: true })
+       const scope = { ...parsed.replacement, accounts: parsed.accounts.map(account => account.account) }

@@ -1,0 +1,3 @@
+import type { ExactRecoveryResult } from "../../../../src/background/store/consent-recovery"
+declare const remaining: readonly never[]
+export const intendedNegative: ExactRecoveryResult = { kind: "recovered", job: { kind: "sync-reset", id: "reset" }, remaining }

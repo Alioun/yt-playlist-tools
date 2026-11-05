@@ -1,0 +1,3 @@
+import type { Backend } from "../../../../src/ui/backend/backend"
+export {}
+export const intendedNegative: Backend["clearAll"] = undefined

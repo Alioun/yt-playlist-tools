@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", "module": "ESNext", "moduleResolution": "Bundler",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"], "types": ["svelte", "bun"],
+    "strict": true, "noEmit": true, "skipLibCheck": true, "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true, "verbatimModuleSyntax": true
+  },
+  "include": [
+    "*.ts", "ApiChecks.svelte", "../../../src/site/kit/toaster/**/*",
+    "../../../src/site/kit/layer-host/**/*", "../../../src/site/kit/feedback/**/*",
+    "../../../src/site/core/notice/**/*", "../../../src/site/core/keys.ts",
+    "../../../src/site/core/scope.ts", "../../../src/site/kit/scope-mount.ts"
+  ],
+  "exclude": ["negatives/**"]
+}

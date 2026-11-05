@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true, "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/shared/model/account-cache.ts",
+    "../../../src/shared/model/account-cache.bun-test.ts",
+    "../../../src/shared/model/account-cache.type-test.ts",
+    "../../../src/background/store/playlist-cache.ts",
+    "../../../src/background/store/playlist-cache.bun-test.ts",
+    "../../../src/background/store/local-filter-writer.type-test.ts",
+    "../../../src/background/playlists/playlists.ts",
+    "../../../src/background/playlists/playlists.bun-test.ts",
+    "../../../src/background/playlists/playlists.type-test.ts",
+    "harness.ts", "run.ts", "consumer.bun-test.ts"
+  ]
+}

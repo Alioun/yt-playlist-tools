@@ -1,0 +1,7 @@
+diff --git a/tools/fixtures/site-toaster/isolated-negative.ts b/tools/fixtures/site-toaster/isolated-negative.ts
+--- a/tools/fixtures/site-toaster/isolated-negative.ts
++++ b/tools/fixtures/site-toaster/isolated-negative.ts
+@@ -1 +1,2 @@
+-export {}
++import type { UndoHandle } from "../../../src/background/add-flow/add-flow"
++const invalid: UndoHandle = { kind: "add", id: 1 }
