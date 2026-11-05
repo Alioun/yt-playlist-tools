@@ -3,7 +3,7 @@
     "www": {
       "page": 13.8,
       "core": 28.4,
-      "kit": 28,
+      "kit": 28.2,
       "auto-add": 5.6,
       "shortcuts": 2.0,
       "quick-save": 3.6,
@@ -21,7 +21,7 @@
     }
   },
   "totals": {
-    "www": 91.1,
+    "www": 91.3,
     "music": 84.3
   },
   "lazy": {
@@ -35,7 +35,7 @@
       "css": 8
     },
     "music": {
-      "js": 67.7,
+      "js": 67.8,
       "css": 8
     },
     "lazy": 45
@@ -46,8 +46,8 @@
     "lazy": 45
   },
   "firstRun": {
-    "js": 62.7,
-    "upgrade": 66.5
+    "js": 62.9,
+    "upgrade": 66.7
   },
   "background": 230,
   "exceptions": []
