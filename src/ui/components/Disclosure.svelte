@@ -48,7 +48,7 @@
   <div
     class={clsx(
       "text-foreground/85 space-y-3 leading-[1.55]",
-      size === "md" ? "bg-card shadow-soft mt-6 rounded-2xl border p-6 text-[13.5px]" : "mt-3 text-[12.5px]"
+      size === "md" ? "bg-card shadow-soft mt-6 rounded-2xl border p-4 text-[13.5px] sm:p-6" : "mt-3 text-[12.5px]"
     )}
   >
     <p>{disclosure.intro}</p>
@@ -62,7 +62,7 @@
     </ul>
     <p>{disclosure.closing[browser]}</p>
     <a
-      class="text-primary inline-flex items-center gap-1 font-medium underline-offset-2 hover:underline"
+      class="text-primary focus-visible:ring-ring/40 inline-flex items-center gap-1 rounded-sm font-medium underline-offset-2 outline-none hover:underline focus-visible:ring-3"
       href={disclosure.policyUrl}
       target="_blank"
       rel="noopener noreferrer"

@@ -51,8 +51,10 @@
   <div class="mt-7 flex flex-wrap items-center gap-3">
     <Button variant="brand" size="lg" {pending} onclick={() => flow.agree()}>{copy.agree(n)}</Button>
     <Button variant="outline" size="lg" disabled={pending} onclick={() => flow.notNow()}>{copy.notNow}</Button>
-    <Button variant="ghost" size="lg" class="sm:ml-auto" disabled={pending} onclick={() => flow.changeFeatures()}>
-      <Glyph name="arrow-left" />{copy.change}
-    </Button>
+    <div class="max-sm:basis-full sm:ml-auto">
+      <Button variant="ghost" size="lg" class="max-sm:-ml-4" disabled={pending} onclick={() => flow.changeFeatures()}>
+        <Glyph name="arrow-left" />{copy.change}
+      </Button>
+    </div>
   </div>
 {/if}
