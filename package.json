@@ -32,16 +32,8 @@
     "test:pilot:browser": "node tools/fixtures/svelte-pilot/check-browser.mjs"
   },
   "dependencies": {
-    "@base-ui/react": "^1.9.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "idb": "^8.0.4",
-    "lucide-react": "^1.64.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "shadcn": "4.23.0",
-    "sonner": "^2.0.8",
-    "tailwind-merge": "^3.7.0"
+    "@webext-core/isolated-element": "3.0.0",
+    "clsx": "^2.1.1"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "21.0.4",

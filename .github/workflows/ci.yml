@@ -154,9 +154,11 @@ jobs:
           EOF
 
   # One Bun process runs on one core, and the suite takes about 20 minutes
-  # that way, so its files are split across parallel jobs.
+  # that way, so its files are split across parallel jobs. The name stays
+  # literal, because G28's proof fails any computed job name. GitHub adds the
+  # shard number to each check's name.
   test-bun:
-    name: bun test (shard ${{ matrix.shard }})
+    name: bun test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
