@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Base branch:** `main` if [Alioun/yt-playlist-tools#2](https://github.com/Alioun/yt-playlist-tools/pull/2) (WXT migration) has merged. Otherwise branch off `feat/wxt-migration` and retarget to `main` once it merges. One branch and one PR for this ticket.
 
@@ -14,3 +14,9 @@
 - [x] Existing toasts are unchanged on both paths: added, duplicate, failed, no playlists selected, and no access token.
 - [x] Background tests cover auto-add with a mix of duplicate and new playlists, and confirm the shortcut add is unaffected.
 - [x] `bun run compile` and the full test suite pass.
+
+## Answer
+
+Superseded by Perchling 2.0, which keeps auto-add on its own path by construction: YT-ADD-02, YT-CF-05 and YT-CF-06.
+In `src/background/add-flow/add-flow.ts` (~749-761), only an `auto-add` request runs its filters, and they run before the membership read.
+Deliberate change in 2.0: the filter now comes before the duplicate check, not after it.

@@ -13,7 +13,7 @@ Accepted risk: the page controls this data. The videoId check catches stale data
 
 **Blocked by:** 11 (Denylist mode, end to end)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Base branch:** `main` if [Alioun/yt-playlist-tools#2](https://github.com/Alioun/yt-playlist-tools/pull/2) (WXT migration) has merged. Otherwise stack on ticket 11's branch and retarget to `main` once it merges. One branch and one PR for this ticket.
 
@@ -39,3 +39,9 @@ Accepted risk: the page controls this data. The videoId check catches stale data
 - `resolveVideoChannel(videoId, readFromPage?)` goes cache → page → `videos.list`. The page gets 1.5 s (`PAGE_READ_TIMEOUT_MS`); the bridge client itself gives up after 1 s. Auto-add and `getChannelForTab` both pass a reader for their tab.
 - `refreshListedLabel(channel)` runs in `withoutFilteredOut` right after the channel resolves. It updates the title, and the handle only when this lookup found one, so a `videos.list` fallback never erases a handle. A failed refresh is logged and doesn't stop the add.
 - Partial live check, 2026-10-05, in the built-in browser with the built bridge script run in the page (it can't load the extension): a cold load of `jNQXAC9IVRw` read `@jawed`. Right after an in-app click to another video the player still reported `jNQXAC9IVRw`, which the videoId check rejects; 4 s later it reported the new video and `@KatieCouric`. A second hop read correctly too. The part that needs the extension (no `videos.list` call during a real auto-add) is a checklist in the PR.
+
+## Answer
+
+Superseded by Perchling 2.0: YT-CF-08 and YT-CF-10 cover the page lookup and the label refresh.
+The lookup is `src/page/jobs-gateway.ts`.
+Deliberate changes in 2.0: the page read comes first, then a `next` request. There is no cache and no `videos.list` fallback.

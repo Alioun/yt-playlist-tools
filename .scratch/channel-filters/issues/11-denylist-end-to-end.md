@@ -29,7 +29,7 @@ What it covers, end to end:
 
 **Blocked by:** 10 (Separate auto-add from the shortcut path)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Base branch:** `main` if [Alioun/yt-playlist-tools#2](https://github.com/Alioun/yt-playlist-tools/pull/2) (WXT migration) has merged. Otherwise stack on ticket 10's branch and retarget to `main` once it merges. One branch and one PR for this ticket.
 
@@ -66,3 +66,9 @@ What it covers, end to end:
 - With no video in the tab, the editor shows "Open a YouTube video to add its channel." instead of the add button.
 - A blocked playlist missing from the cached playlists is named by its ID in the toast.
 - `GLOSSARY.md` gained **Channel label** and **Orphaned filter**.
+
+## Answer
+
+Superseded by Perchling 2.0: YT-CF-01–04, YT-CF-08, YT-CF-09, YT-CF-17 and YT-CF-18 cover denylist mode end to end.
+The rules live in `src/shared/rules/channel-filter.ts` (`decide`) and the toasts in `src/shared/rules/outcomes.ts`.
+Deliberate changes in 2.0: no Data API, no session channel cache, and no shared label store, because each filter's tuples carry their own labels.

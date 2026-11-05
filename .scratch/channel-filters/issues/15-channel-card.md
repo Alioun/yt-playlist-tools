@@ -16,7 +16,7 @@ Until ticket 13 lands, the card shows titles without handles. That's expected.
 
 **Blocked by:** 12 (Allowlist mode, the unknown-channel rule and mode switching)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Base branch:** `main` if [Alioun/yt-playlist-tools#2](https://github.com/Alioun/yt-playlist-tools/pull/2) (WXT migration) has merged. Otherwise stack on ticket 12's branch and retarget to `main` once it merges. One branch and one PR for this ticket.
 
@@ -41,3 +41,9 @@ Until ticket 13 lands, the card shows titles without handles. That's expected.
 - The editor's root is now a group named "Edit channel filter", which tests use to tell its buttons from the card's.
 - The README's features entry already existed (tickets 11 and 12); it now mentions the card.
 - The live check is still open: the built-in browser can't load the extension or sign in.
+
+## Answer
+
+Superseded by Perchling 2.0: YT-CF-15 and UI-YT-22 cover the "this channel" controls, including "Looking up channel…" and "Channel unknown".
+They live in `src/ui/popup/ThisVideo.svelte` and `src/site/popovers/watch-menu.ts`, plus the lookup and unknown states on `feat/channel-filter-gaps`.
+Deliberate change in 2.0: the controls sit in the popup's This video details and the watch-page button's menu, not in a card above the auto-add list.
