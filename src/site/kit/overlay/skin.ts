@@ -3,7 +3,7 @@ export const overlaySkin = `
 .stack { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none; }
 :host([data-row]) .stack { flex-direction: row; }
 .slot { display: contents; }
-.slot[hidden] { display: none; }
+.slot[hidden], .button[hidden] { display: none; }
 .button { all: unset; box-sizing: border-box; pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,.3); color: #fff; cursor: pointer; }
 .button:hover { background: rgba(0,0,0,.6); }
 .button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }

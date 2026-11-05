@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte"
   import Button from "../components/Button.svelte"
+  import Modal from "../components/Modal.svelte"
   import { PickerPanel, createPickerText, pickerHelpUrl, type PickerEvent } from "../picker"
   import { PickerModel } from "../../shared/picker/model.svelte"
   import type { HostRequest } from "./picker-host"
@@ -26,7 +27,7 @@
 </script>
 
 <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-6" role="presentation">
-  <div role="dialog" aria-modal="true" aria-label={i18n.message("picker_listLabel")} class="bg-card flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl shadow-xl">
+  <Modal onclose={() => onclose(false)} label={i18n.message("picker_listLabel")} class="bg-card fixed inset-0 m-auto flex max-h-[80vh] w-[min(28rem,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl shadow-xl">
     {#if picker && asked.kind === "choose"}
       <PickerPanel {picker} {text} purpose={asked.purpose} platform={platform.os} onoutcome={outcome} onrequestclose={() => onclose(false)}
         onhelp={action => state.page.open(pickerHelpUrl[action])} />
@@ -36,5 +37,5 @@
         <Button class="self-end" onclick={() => onclose(true)}>{i18n.message("firstRun_finish_done")}</Button>
       </div>
     {/if}
-  </div>
+  </Modal>
 </div>

@@ -128,3 +128,69 @@ test("the auto-add list ticks through the model and opens a ticked playlist's op
   await userEvent.click(screen.getByRole("radio", { name: "Videos" }))
   expect(ontakes).toHaveBeenCalledWith(alpha, "videos")
 })
+
+test("auto-add search keeps focus and can clear a query that leaves one or no matches", async () => {
+  const { source, ledger } = chooserSource()
+  const picker = new PickerModel({ source, site: "www", mode: "many" })
+  render(AutoAddList, {
+    picker,
+    text: createPickerText(i18n),
+    i18n,
+    variant: "popup",
+    defaultPct: 50,
+    ontakes: async () => true,
+    onpct: async () => true,
+    filter: createRawSnippet(() => ({ render: () => "<p>filter editor</p>" })),
+    options: new Map(),
+    filters: new Map()
+  })
+  ledger.answer("cachedList", { rows: Array.from({ length: 12 }, (_, index) => ({ id: playlist(`PL${index}`), title: `Playlist ${index}` })), at: NOW })
+  await settle()
+  const user = userEvent.setup()
+  const search = screen.getByRole("searchbox", { name: "Search playlists" })
+  await user.type(search, "11")
+  expect(screen.getByRole("searchbox", { name: "Search playlists" })).toBe(search)
+  expect(search).toHaveFocus()
+  expect(screen.getAllByRole("checkbox")).toHaveLength(1)
+  await user.type(search, "missing")
+  expect(search).toHaveFocus()
+  expect(screen.queryAllByRole("checkbox")).toHaveLength(0)
+  expect(screen.getByRole("status")).toHaveTextContent(createPickerText(i18n).label("emptySearch"))
+  await user.clear(search)
+  expect(screen.getAllByRole("checkbox")).toHaveLength(12)
+  picker.close()
+})
+
+test("a refused auto-add choice explains the failure beside its row and can be retried", async () => {
+  const alpha = playlist("PLalpha")
+  const { source, ledger } = chooserSource()
+  const picker = new PickerModel({ source, site: "www", mode: "many" })
+  const text = createPickerText(i18n)
+  render(AutoAddList, {
+    picker,
+    text,
+    i18n,
+    variant: "popup",
+    defaultPct: 50,
+    ontakes: async () => true,
+    onpct: async () => true,
+    filter: createRawSnippet(() => ({ render: () => "<p>filter editor</p>" })),
+    options: new Map(),
+    filters: new Map()
+  })
+  ledger.answer("cachedList", { rows: [{ id: alpha, title: "Alpha" }], at: NOW })
+  await settle()
+  const row = screen.getByRole("checkbox", { name: /Alpha/ })
+  await userEvent.click(row)
+  ledger.answer("choose", { refused: "sync-full" })
+  await settle()
+  expect(row).toHaveAttribute("aria-checked", "false")
+  expect(screen.getByRole("status")).toHaveTextContent(text.refusal["sync-full"])
+  expect(row).toHaveAccessibleDescription(text.refusal["sync-full"])
+  await userEvent.click(row)
+  ledger.answer("choose", { ok: true })
+  await settle()
+  expect(row).toHaveAttribute("aria-checked", "true")
+  expect(screen.queryByText(text.refusal["sync-full"])).toBeNull()
+  picker.close()
+})

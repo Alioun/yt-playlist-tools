@@ -5,10 +5,10 @@
   let { steps, current, label, formatNumber }: { steps: readonly string[]; current: number; label: string; formatNumber: (value: number) => string } = $props()
 </script>
 
-<ol class="flex items-center gap-2 text-[13px]" aria-label={label}>
+<ol class="flex items-start gap-2 text-[13px] sm:items-center" aria-label={label}>
   {#each steps as step, index (step)}
     {@const n = index + 1}
-    <li class="flex items-center gap-2" aria-current={n === current ? "step" : undefined}>
+    <li class="flex min-w-0 flex-1 flex-col items-center gap-2 text-center sm:flex-none sm:flex-row sm:text-left" aria-current={n === current ? "step" : undefined}>
       <span
         aria-hidden="true"
         class={clsx(
@@ -18,10 +18,10 @@
       >
         {#if n < current}<Glyph name="check" class="size-3.5" strokeWidth={3} />{:else}{formatNumber(n)}{/if}
       </span>
-      <span class={clsx("font-medium whitespace-nowrap", n === current ? "text-foreground" : "text-muted-foreground")}>{step}</span>
+      <span class={clsx("font-medium sm:whitespace-nowrap", n === current ? "text-foreground" : "text-muted-foreground")}>{step}</span>
     </li>
     {#if n < steps.length}
-      <li aria-hidden="true" class={clsx("h-px w-6 shrink-0 sm:w-10", n < current ? "bg-success/60" : "bg-border")}></li>
+      <li aria-hidden="true" class={clsx("mt-3 h-px w-4 shrink-0 self-start sm:mt-0 sm:w-10 sm:self-auto", n < current ? "bg-success/60" : "bg-border")}></li>
     {/if}
   {/each}
 </ol>

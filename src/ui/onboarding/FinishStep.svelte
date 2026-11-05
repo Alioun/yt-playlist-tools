@@ -35,6 +35,9 @@
   }
 </script>
 
+<svelte:window onfocus={() => setup.load()} />
+<svelte:document onvisibilitychange={() => { if (document.visibilityState === "visible") void setup.load() }} />
+
 <section aria-labelledby="{uid}-heading">
   <h1 id="{uid}-heading" tabindex="-1" data-step-heading class="text-[30px] leading-tight font-semibold tracking-[-0.022em] outline-none">{copy.heading}</h1>
 
@@ -52,13 +55,13 @@
 
     <div class="mt-7 grid gap-3">
       {#if view.youtube.kind === "no-access"}
-        <div class="border-warning-border bg-warning-soft flex flex-wrap items-center gap-3 rounded-xl border p-4">
+        <div class="border-warning-border bg-warning-soft grid grid-cols-[auto_1fr] items-start gap-3 rounded-xl border p-4 sm:flex sm:items-center">
           <Glyph name="triangle-alert" class="text-warning size-5 shrink-0" />
           <div class="min-w-0 flex-1">
             <p class="text-[14.5px] font-semibold">{copy.noAccess}</p>
             <p class="text-foreground/75 text-[13.5px]">{copy.noAccessRest}</p>
           </div>
-          <Button onclick={() => setup.giveAccess("www")}>{copy.giveAccess}</Button>
+          <Button class="col-span-2 justify-self-start sm:shrink-0" onclick={() => setup.giveAccess("www")}>{copy.giveAccess}</Button>
         </div>
       {:else if view.youtube.kind === "no-tab"}
         <div class="bg-card flex flex-wrap items-center gap-3 rounded-xl border p-4">
@@ -90,13 +93,13 @@
       {/if}
 
       {#if view.musicAccess === "missing"}
-        <div class="border-warning-border bg-warning-soft flex flex-wrap items-center gap-3 rounded-xl border p-4">
+        <div class="border-warning-border bg-warning-soft grid grid-cols-[auto_1fr] items-start gap-3 rounded-xl border p-4 sm:flex sm:items-center">
           <Glyph name="triangle-alert" class="text-warning size-5 shrink-0" />
           <div class="min-w-0 flex-1">
             <p class="text-[14.5px] font-semibold">{copy.noMusicAccess}</p>
             <p class="text-foreground/75 text-[13.5px]">{copy.noMusicAccessRest}</p>
           </div>
-          <Button onclick={() => setup.giveAccess("music")}>{copy.giveMusicAccess}</Button>
+          <Button class="col-span-2 justify-self-start sm:shrink-0" onclick={() => setup.giveAccess("music")}>{copy.giveMusicAccess}</Button>
         </div>
       {/if}
 

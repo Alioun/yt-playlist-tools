@@ -2,6 +2,7 @@
   import type { SimpleMessageKey } from "../../shared/i18n"
   import { untrack } from "svelte"
   import Button from "../components/Button.svelte"
+  import Modal from "../components/Modal.svelte"
   import Glyph from "../components/Glyph.svelte"
   import { display } from "../../shared/keys"
   import type { RecentEntry } from "../../shared/contracts/ui-pages"
@@ -31,9 +32,8 @@
   const playlist = (id: string) => `https://www.youtube.com/playlist?list=${encodeURIComponent(id)}`
 </script>
 
-<div role="dialog" aria-modal="true" aria-labelledby="recent-heading" tabindex="-1"
-  class="bg-card absolute inset-x-0 top-[58px] bottom-0 z-20 flex flex-col overflow-y-auto border-t p-4 shadow-lg"
-  onkeydown={event => { if (event.key === "Escape") { event.stopPropagation(); onclose() } }}>
+<Modal {onclose} labelledby="recent-heading"
+  class="bg-card absolute inset-x-0 top-[58px] bottom-0 z-20 flex h-[calc(100%_-_58px)] w-full flex-col overflow-y-auto border-t p-4 shadow-lg">
   <div class="flex items-start justify-between gap-2">
     <div>
       <h2 id="recent-heading" class="text-[15px] font-semibold">{i18n.message("recent_title")}</h2>
@@ -66,4 +66,4 @@
       {/each}
     </ul>
   {/if}
-</div>
+</Modal>

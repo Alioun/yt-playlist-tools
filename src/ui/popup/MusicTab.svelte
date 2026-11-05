@@ -14,9 +14,10 @@
   import type { SheetTarget } from "../features/source"
 
   // The popup's YouTube Music tab (UI-POP-16, UI-POP-18), its own chunk.
-  let { pageState, features, ontoggle, ongiveaccess, onsave }: {
+  let { pageState, features, lines, ontoggle, ongiveaccess, onsave }: {
     pageState: PageState
     features: ReturnType<typeof createFeatureCopy>
+    lines: Partial<Record<PageFeatureId, { text: string; tone: "muted" | "warning" | "destructive" }>>
     ontoggle: (feature: PageFeatureId, next: boolean) => void
     ongiveaccess: (feature: PageFeatureId) => void
     /** Opens the popup's picker sheet for the playing song (YM-POP-4). */
@@ -39,8 +40,7 @@
   }
   const facts = $derived(settings ? { settings, setup: pageState.setup, account: pageState.accountName(), signedIn: pageState.signedIn, paused: pageState.paused,
     os: platform.os, title: (id: Parameters<typeof pageState.title>[0]) => pageState.title(id) } : null)
-  const musicOn = $derived(settings ? isOn(settings, "music-actions") || isOn(settings, "music-keys") : false)
-  const keys = $derived(settings ? [...musicButtons.filter(button => button !== "bar"), "picker" as const] : [])
+  const keys = [...musicButtons.filter(button => button !== "bar"), "picker" as const]
 </script>
 
 {#if settings && facts}
@@ -59,7 +59,8 @@
         {#each ["music-actions", "music-keys"] as const as feature (feature)}
           {@const reason = heldReason(feature, settings, pageState.agreed, access)}
           <FeatureRow {feature} name={features.featureOf(feature).name} summary={summary(i18n, feature, facts)} on={isOn(settings, feature)}
-            held={reason ? i18n.message(heldMessage[reason]) : null} disabled={!pageState.editable} unfoldable={pageState.agreed} onswitch={next => ontoggle(feature, next)}>
+            held={reason ? i18n.message(heldMessage[reason]) : null} line={lines[feature]?.text ?? null} lineTone={lines[feature]?.tone}
+            disabled={!pageState.editable} unfoldable={pageState.agreed} onswitch={next => ontoggle(feature, next)}>
             {#snippet action()}
               {#if reason === "site-access"}<Button size="sm" variant="outline" onclick={() => ongiveaccess(feature)}>{i18n.message("held_giveAccess")}</Button>{/if}
             {/snippet}
@@ -94,7 +95,7 @@
           <Switch checked={settings.shortcuts.music} held={settings.shortcuts.on && settings.shortcuts.music && !access.music} label={i18n.message("music_psName")}
             disabled={!settings.shortcuts.on || !pageState.editable} onchange={alsoOnMusic} />
         </li>
-        {#if musicOn && pageState.agreed}
+        {#if (isOn(settings, "music-actions") || isOn(settings, "music-keys")) && pageState.agreed}
           <li class="flex flex-col gap-1 px-3 py-2 pl-14">
             <p class="text-[13.5px] font-medium">{i18n.message("music_saveName")}</p>
             <p class="text-muted-foreground text-[12px]">{pageState.title(pageState.setup?.setup.musicSave as never ?? null)

@@ -28,7 +28,7 @@
   const uid = $props.id()
 </script>
 
-<section id="feature-{feature}" data-feature-card={feature} aria-labelledby="{uid}-name" class={clsx("bg-card scroll-mt-6 rounded-2xl border p-5 transition-shadow")}>
+<section id="feature-{feature}" data-feature-card={feature} aria-labelledby="{uid}-name" class={clsx("bg-card scroll-mt-28 rounded-2xl border p-4 transition-shadow sm:p-5 md:scroll-mt-20")}>
   <div class="flex items-start gap-3.5">
     <span aria-hidden="true" class={clsx("inline-flex size-9 shrink-0 items-center justify-center rounded-xl", on ? "bg-accent text-primary" : "bg-muted text-muted-foreground")}>
       <Glyph name={featureGlyph[feature]} class="size-[18px]" />
@@ -45,5 +45,5 @@
     </div>
     <Switch checked={on} held={held !== null} label={name} describedby={held ? `${uid}-held` : undefined} {disabled} onchange={onswitch} />
   </div>
-  {#if on && children}<div class="mt-4 border-t pt-4 pl-[50px]">{@render children()}</div>{/if}
+  {#if on && children}<div class="mt-4 border-t pt-4 sm:pl-[50px]">{@render children()}</div>{/if}
 </section>

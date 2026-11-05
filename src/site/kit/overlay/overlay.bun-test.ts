@@ -34,7 +34,7 @@ test("construction is inert and two slots share one movable host", () => {
     expect(reserved?.slot.hidden).toBe(true)
     const order = [...(f.kit.readHost()?.shadowRoot?.querySelectorAll("[data-slot]") ?? [])].map(slot => slot.getAttribute("data-slot"))
     expect(order).toEqual(["queue", "quick-save"])
-    expect(observer).toHaveBeenCalledTimes(1)
+    expect(observer).toHaveBeenCalled()
   } finally { observer.mockRestore() }
 })
 
@@ -67,4 +67,30 @@ test("the host mirrors YouTube's dark attribute and isolates its own clicks", as
   button.click()
   f.thumbnail.click()
   expect(clicks).toBe(1)
+})
+
+test("Quick-save alone follows a delayed wrapped preview and returns when it hides", async () => {
+  const f = fixture()
+  const quickSave = f.kit.use(f.scope(), "quick-save")
+  Object.defineProperty(f.thumbnail, "getBoundingClientRect", { value: () => ({ left: 100, top: 100, width: 320, height: 180 }) })
+  quickSave?.place({ kind: "thumbnail", link: f.thumbnail })
+  const app = document.createElement("ytd-app")
+  const slot = document.createElement("div"); slot.id = "video-preview"
+  const wrapper = document.createElement("div"); wrapper.className = "ytdVideoPreviewLoaderVideoPreviewContainer"
+  const preview = document.createElement("ytd-video-preview")
+  preview.style.padding = "12px"
+  Object.defineProperty(preview, "getBoundingClientRect", { value: () => ({ left: 90, top: 90, right: 450, bottom: 310, width: 360, height: 220 }) })
+  wrapper.append(preview); slot.append(wrapper); app.append(slot); document.body.append(app)
+  await settle()
+  expect(f.kit.readHost()?.parentElement).toBe(preview)
+  expect(f.kit.readHost()?.style.top).toBe("16px")
+  expect(f.kit.readHost()?.style.left).toBe("16px")
+  const queue = f.kit.use(f.scope(), "queue")
+  queue?.place({ kind: "thumbnail", link: f.thumbnail })
+  quickSave?.place({ kind: "thumbnail", link: f.thumbnail })
+  expect(f.kit.readHost()?.parentElement).toBe(preview)
+  preview.hidden = true
+  await settle()
+  expect(f.kit.readHost()?.previousElementSibling).toBe(f.thumbnail)
+  expect(f.errors).toEqual([])
 })

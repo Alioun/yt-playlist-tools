@@ -249,7 +249,7 @@
             {/if}
           {:else if site === "music"}
             {#await styled(import("./MusicTab.svelte")) then { default: Music }}
-              <Music {pageState} {features} ontoggle={toggle} ongiveaccess={giveAccess} onsave={save} />
+              <Music {pageState} {features} {lines} ontoggle={toggle} ongiveaccess={giveAccess} onsave={save} />
             {/await}
           {/if}
         </div>

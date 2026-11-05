@@ -7,7 +7,20 @@ import FirstRun from "./FirstRun.svelte"
 import { createFirstRun } from "./flow.svelte"
 import { createSetup } from "./setup.svelte"
 import type { BrowserKind } from "./features"
-import type { AccessSite, AgreementOutcome, AgreementRequest, ChoiceOutcome, ChoiceRequest, Destination, FirstRunOwner, PermissionGrant, PermissionNeeds, SetupView, SyncedChoices } from "./owner"
+import type {
+  AccessSite,
+  AgreementOutcome,
+  AgreementRequest,
+  ChoiceOutcome,
+  ChoiceRequest,
+  Destination,
+  FirstRunOwner,
+  PermissionGrant,
+  PermissionNeeds,
+  SetupRow,
+  SetupView,
+  SyncedChoices
+} from "./owner"
 
 type Deferred<T> = { promise: Promise<T>; resolve(value: T): void; reject(error: unknown): void }
 
@@ -538,6 +551,29 @@ describe("step 3, Finish setting up", () => {
     button("Sign in").click()
     button("Open Settings").click()
     expect(script.opened).toEqual(["sign-in", "settings"])
+  })
+
+  test("returning from YouTube refreshes Finish from no tab through sign-in to playlist choices", async () => {
+    const script = scriptedOwner()
+    await agreed(script, ["Auto-add"], { kind: "agreed", attempt: 1, applications: [{ feature: "auto-add", state: "enabled" }] })
+    const rows: readonly SetupRow[] = [{ feature: "auto-add", target: { purpose: "auto-add", selection: { kind: "none" } } }]
+    script.setups[0]!.resolve({ kind: "ready", youtube: { kind: "no-tab" }, musicAccess: "not-needed", rows })
+    await settle()
+    expect(screen.getByText("Open YouTube to finish")).toBeVisible()
+    screen.getAllByRole("button", { name: "Open YouTube" })[0]!.click()
+    expect(script.opened).toEqual(["youtube"])
+
+    window.dispatchEvent(new Event("focus"))
+    script.setups[1]!.resolve({ kind: "ready", youtube: { kind: "signed-out" }, musicAccess: "not-needed", rows })
+    await settle()
+    expect(screen.queryByText("Open YouTube to finish")).toBeNull()
+    expect(button("Sign in")).toBeVisible()
+
+    document.dispatchEvent(new Event("visibilitychange"))
+    script.setups[2]!.resolve({ kind: "ready", youtube: { kind: "account", account: { name: "Alex" } }, musicAccess: "not-needed", rows })
+    await settle()
+    expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull()
+    expect(button("Choose a playlist for Auto-add")).toBeVisible()
   })
 
   test("an unreadable setup says so instead of inventing one", async () => {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte"
+  import Modal from "../components/Modal.svelte"
   import { PickerPanel, createPickerText, pickerHelpUrl } from "../picker"
   import { PickerModel } from "../../shared/picker/model.svelte"
   import { sheetSource, type SheetTarget } from "../features/source"
@@ -17,8 +18,8 @@
   onDestroy(() => { picker.close(); source.dispose() })
 </script>
 
-<div role="dialog" aria-modal="true" aria-label={i18n.message("picker_listLabel")} tabindex="-1" data-save-sheet
-  class="bg-card absolute inset-x-0 top-[58px] bottom-0 z-20 flex flex-col overflow-hidden border-t shadow-lg">
+<Modal {onclose} label={i18n.message("picker_listLabel")}
+  class="bg-card absolute inset-x-0 top-[58px] bottom-0 z-20 flex h-[calc(100%_-_58px)] w-full flex-col overflow-hidden border-t shadow-lg">
   <PickerPanel {picker} {text} purpose={{ kind: "save" }} platform={platform.os} onrequestclose={onclose} onoutcome={() => {}}
     onhelp={action => state.page.open(pickerHelpUrl[action])} />
-</div>
+</Modal>

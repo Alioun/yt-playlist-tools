@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte"
   import Button from "../components/Button.svelte"
+  import Modal from "../components/Modal.svelte"
   import Disclosure from "../components/Disclosure.svelte"
   import { createFirstRunOwner } from "../backend/first-run-owner"
   import { featurePermissionNeeds } from "../backend/shared-settings"
@@ -56,9 +57,9 @@
   }
 </script>
 
-<div role="dialog" aria-modal="true" aria-labelledby="consent-heading" tabindex="-1"
-  class={variant === "sheet" ? "bg-card absolute inset-x-0 top-[58px] bottom-0 z-20 flex flex-col overflow-y-auto border-t p-4 shadow-lg" : "bg-card flex max-h-[80vh] flex-col overflow-y-auto rounded-2xl p-6 shadow-xl"}
-  onkeydown={event => { if (event.key === "Escape") { event.stopPropagation(); onclose() } }}>
+<Modal {onclose} labelledby="consent-heading"
+  class={variant === "sheet" ? "bg-card absolute inset-x-0 top-[58px] bottom-0 z-20 flex h-[calc(100%_-_58px)] w-full flex-col overflow-y-auto border-t p-4 shadow-lg" : "bg-card fixed inset-0 m-auto flex max-h-[80vh] w-[min(36rem,calc(100vw-3rem))] flex-col overflow-y-auto rounded-2xl p-6 shadow-xl"}
+  >
   {#if loaded}
     <Disclosure context="feature" text={loaded.text.disclosure} browser={platform.browser} size={variant === "sheet" ? "sm" : "md"} level={2} headingId="consent-heading" />
     {#if result}<p role="status" class="text-warning mt-3 text-[12.5px]">{result}</p>{/if}
@@ -67,4 +68,4 @@
       <Button variant="outline" onclick={onclose}>{loaded.full.message("consentSheet_cancel")}</Button>
     </div>
   {/if}
-</div>
+</Modal>
