@@ -191,7 +191,9 @@ export function composeActions(deps: {
 }): Actions {
   const { native, owner, tabs, playlists, registrar } = deps
   const view = createAddFlowOwner(owner, deps.writable)
+  const log = deps.log ?? (line => console.info(`[Perchling] ${line}`))
   const flow = createAddFlow({
+    log,
     execution: createTabsExecution(tabs, deps.requester),
     owner: view.port,
     session: { read: () => owner.readSession(), change: change => owner.changeSession(change) },
@@ -202,7 +204,6 @@ export function composeActions(deps: {
       }),
     generation: () => crypto.randomUUID()
   })
-  const log = deps.log ?? (line => console.info(`[Perchling] ${line}`))
   const rpc = createRpc<TabActionMessages, NativeSender>(runtimeTransport(native.runtime), { build: deps.build, deadline: timerDeadline, contract: tabActionContract })
 
   async function pinned(context: TabContext, acct: AccountKey | null): Promise<boolean> {

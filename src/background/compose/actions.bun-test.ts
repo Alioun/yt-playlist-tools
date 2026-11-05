@@ -85,7 +85,8 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   const listeners = new Set<Listener>()
   const ensured: unknown[] = [],
     ticks: string[] = [],
-    opened: unknown[] = []
+    opened: unknown[] = [],
+    logs: string[] = []
   const known = { tabId: 9, acct: options.tabAccount === undefined ? a : options.tabAccount, privateTab: false } as unknown as KnownTab
   const tabs = {
     async known() {
@@ -146,7 +147,9 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
       }
     },
     requester: async () => null,
-    log: () => {},
+    log: line => {
+      logs.push(line)
+    },
     ticked: tabId => {
       ticks.push(`tick ${tabId}`)
     },
@@ -201,7 +204,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   const closeTab = (tabId: number) => {
     for (const listener of [...closedListeners]) listener(tabId)
   }
-  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab, opened }
+  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab, opened, logs }
 }
 
 test("a playlist shortcut saves the pointed video to this account's shortcut playlist, with Undo", async () => {
@@ -569,6 +572,20 @@ test("auto-add: the background applies the playlist's channel filter, so another
   expect(w.site.jobs).not.toContain("add")
   expect(w.recentAdds()).toEqual([])
   expect(tab.toasts.map(toast => [toast.text, toast.action?.kind ?? null])).toEqual([["filtered:First video:Alpha mix", null]])
+})
+
+test("auto-add: each filter decision reaches the add's console log, with its playlist, mode, channel and verdict (YT-CF-18)", async () => {
+  const cases = [
+    [allowed, "allowed", `add (auto-add) ${alpha}=added`],
+    [elsewhere, "filtered", `add (auto-add) ${alpha}=filtered`]
+  ] as const
+  for (const [channel, verdict, add] of cases) {
+    const w = autoAddWorld()
+    const tab = await watchPage(w, channel)
+    await tab.play(0, 30)
+    await until(() => tab.answers.length > 0, "the background's answer")
+    expect(w.logs).toEqual([`filter ${alpha} allow ${channel} ${verdict}`, add])
+  }
 })
 
 test("auto-add: progress saved when the page is left counts on the next visit, through the store", async () => {
