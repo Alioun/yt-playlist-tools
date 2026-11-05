@@ -1,5 +1,5 @@
 import { Scope, type Dispose } from "../../core/scope"
-import type { ThumbnailCorner } from "../../../shared/model/validation"
+import { thumbnailCorners, type ThumbnailCorner } from "../../../shared/model/validation"
 import { overlaySkin } from "./skin"
 
 export type OverlaySlot = "queue" | "quick-save"
@@ -14,7 +14,6 @@ export type OverlayLease = {
 export type OverlayKitOptions = { readonly owner: Scope; readonly document: Document; onError(error: unknown): void }
 
 const slots: readonly OverlaySlot[] = ["queue", "quick-save"]
-const corners: readonly ThumbnailCorner[] = ["top-left", "top-right", "bottom-left", "bottom-right"]
 const inset = 4
 const rowBelow = 100
 const tooltipDelay = 500
@@ -59,7 +58,7 @@ export function createOverlayKit(options: OverlayKitOptions) {
     const box = document.createElement("div"); box.className = "box"
     const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; tip.setAttribute("aria-hidden", "true")
     const groups = new Map<ThumbnailCorner, HTMLElement>()
-    for (const corner of corners) {
+    for (const corner of thumbnailCorners) {
       const group = document.createElement("div"); group.className = "corner"; group.dataset.corner = corner
       groups.set(corner, group); box.append(group)
     }
@@ -102,23 +101,24 @@ export function createOverlayKit(options: OverlayKitOptions) {
     const padding = preview ? getComputedStyle(preview) : null
     const top = inset + (padding ? parseFloat(padding.paddingTop) : anchor.link.offsetTop)
     const left = inset + (padding ? parseFloat(padding.paddingLeft) : anchor.link.offsetLeft)
-    const width = padding && preview ? preview.clientWidth - parseFloat(padding.paddingLeft) - parseFloat(padding.paddingRight) : anchor.link.offsetWidth
-    const height = padding && preview ? preview.clientHeight - parseFloat(padding.paddingTop) - parseFloat(padding.paddingBottom) : anchor.link.offsetHeight
     current.host.style.top = `${top}px`
     current.host.style.left = `${left}px`
-    current.host.style.width = `${Math.max(0, width - 2 * inset)}px`
-    current.host.style.height = `${Math.max(0, height - 2 * inset)}px`
+    // The thumbnail's box, also inside the preview, whose own box can hold metadata below the video.
+    current.host.style.width = `${Math.max(0, anchor.link.offsetWidth - 2 * inset)}px`
+    current.host.style.height = `${Math.max(0, anchor.link.offsetHeight - 2 * inset)}px`
     current.host.toggleAttribute("data-row", anchor.link.offsetHeight > 0 && anchor.link.offsetHeight < rowBelow)
     group(current)
   }
-  // Moves only slots whose corner changed, so a focused button keeps focus.
+  // Moving a node drops its focus, so a slot that changes corner gives focus back to its button.
   function group(current: Live) {
     for (const [index, name] of slots.entries()) {
       const slot = current.slots.get(name)
       const target = current.corners.get(current.anchors.get(name)?.corner ?? "top-left")
       if (!slot || !target || slot.parentElement === target) continue
+      const focused = current.host.shadowRoot?.activeElement
       const later = slots.slice(index + 1).map(other => current.slots.get(other)).find(other => other?.parentElement === target)
       target.insertBefore(slot, later ?? null)
+      if (focused instanceof HTMLElement && slot.contains(focused)) focused.focus({ preventScroll: true })
     }
   }
   owner.add(() => { leases.clear(); stop() })

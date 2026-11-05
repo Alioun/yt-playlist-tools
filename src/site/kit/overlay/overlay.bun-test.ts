@@ -110,3 +110,15 @@ test("each slot sits in its own corner and two slots in one corner keep queue fi
   expect(f.kit.readHost()?.style.pointerEvents).toBe("none")
   expect(f.errors).toEqual([])
 })
+
+test("a focused button keeps focus when its slot changes corner", () => {
+  const f = fixture()
+  const queue = f.kit.use(f.scope(), "queue")
+  const button = document.createElement("button")
+  queue?.slot.append(button)
+  queue?.place({ kind: "thumbnail", link: f.thumbnail, corner: "top-left" })
+  button.focus()
+  queue?.place({ kind: "thumbnail", link: f.thumbnail, corner: "bottom-right" })
+  expect(button.closest("[data-corner]")?.getAttribute("data-corner")).toBe("bottom-right")
+  expect(f.kit.readHost()?.shadowRoot?.activeElement).toBe(button)
+})

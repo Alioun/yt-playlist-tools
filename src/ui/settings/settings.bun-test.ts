@@ -81,6 +81,24 @@ test("Appearance radios move focus and request the next theme with ArrowRight", 
   expect(within(group).getByRole("radio", { name: "Dark" })).not.toBeChecked()
 })
 
+test("a refused corner save puts the select back on the saved corner", async () => {
+  const changes: unknown[] = []
+  settings(
+    { ...agreed, "doc:settings": stamped({ queueButton: { on: true, feedback: true, corner: "top-left" } }) },
+    {
+      "ui.change": payload => {
+        changes.push(payload.change)
+        return { kind: "shared-setting", outcome: { kind: "refused", reason: "unconfirmed" } }
+      }
+    }
+  )
+  const select = await screen.findByRole("combobox", { name: "Position on thumbnails" }, { timeout: 5000 })
+  await userEvent.selectOptions(select, "bottom-right")
+  await waitFor(() => expect(changes).toContainEqual({ kind: "option", field: "queueButton.corner", value: "bottom-right" }))
+  await waitFor(() => expect(select).toHaveValue("top-left"))
+  expect(await screen.findByText("Couldn't save that. Nothing changed.")).toBeTruthy()
+})
+
 test("Report radios move focus and selection with ArrowDown", async () => {
   settings(agreed, {}, "#about")
   await userEvent.click(await screen.findByRole("button", { name: "Report a problem" }))
