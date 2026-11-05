@@ -252,8 +252,12 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     const report = await actions.add({ site: "www", video, via: "auto-add", playlists: due as PlaylistId[], channel, ...named })
     if (scope.disposed) return
     const outcomes: Readonly<Partial<Record<PlaylistId, Outcome>>> = report.kind === "report" || report.kind === "stopped" ? report.outcomes : {}
+    const filters = current()?.filters ?? []
     for (const playlist of due) {
       const outcome = outcomes[playlist as PlaylistId]
+      // YT-CF-18: the background decided; a skipped playlist never reached its filter.
+      const filter = filters.find(row => row.playlist === playlist)?.state.filter
+      if (filter?.on && outcome && outcome.kind !== "skipped") context.log?.(`filter ${playlist} ${filter.mode} ${channel ?? "unknown"} ${outcome.kind === "filtered" ? "filtered" : "allowed"}`)
       if (outcome?.kind === "failed") target.failures.set(playlist, outcome.failure)
       if (outcome?.kind === "skipped") target.skippedHere.add(playlist)
       target.tracker = recordOutcome(target.tracker, { playlist, outcome: destination(outcome) })

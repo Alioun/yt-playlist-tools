@@ -6,7 +6,7 @@ import { Scope } from "../../core/scope"
 import type { SiteView } from "../../core/feature-host"
 import type { Feedback } from "../../kit/feedback"
 import type { ToastContent } from "../../kit/toaster/types"
-import { isTabView } from "../../../shared/contracts/tab-view"
+import { isTabView, type TabFilter } from "../../../shared/contracts/tab-view"
 import type { NavData, PlayerData } from "../../../shared/contracts/streams"
 import type { TabAddReport, TabAddRequest, TabProgress } from "../../../shared/contracts/tab-actions"
 import { isBuildId } from "../../../shared/contracts/vocabulary"
@@ -171,6 +171,31 @@ test("a read of a listed channel with a new title sends the label back once; an 
     await h.play(0, 60)
     expect(h.adds[0]).toMatchObject({ channel })
     expect(h.labels).toEqual(expected)
+  }
+})
+
+test("each filter decision goes to the tab's console, with its playlist, mode, channel and verdict (YT-CF-18)", async () => {
+  const channel = "UCAAAAAAAAAAAAAAAAAAAAAA", lofi = id("PL_lofi", isPlaylistId)
+  const filters: TabFilter[] = [
+    { playlist: music, state: { kind: "value", filter: { mode: "allow", on: true, channels: [[channel, "Lofi Girl"]] } } },
+    { playlist: talks, state: { kind: "value", filter: { mode: "deny", on: true, channels: [[channel, "Lofi Girl"]] } } },
+    { playlist: lofi, state: { kind: "default", filter: { mode: "allow", on: false, channels: [] } } }
+  ]
+  const playlists = [music, talks, lofi].map(pl => ({ pl, takes: "videos" as const }))
+  const cases = [
+    [{ channelId: channel }, [`filter ${music} allow ${channel} allowed`, `filter ${talks} deny ${channel} filtered`]],
+    [{ channelId: null }, [`filter ${music} allow unknown filtered`, `filter ${talks} deny unknown allowed`]]
+  ] as const
+  for (const [read, expected] of cases) {
+    const h = world({ ...wwwView({ playlists }), filters } as SiteView<"www">, { channel: read as { channelId: string } })
+    h.respond(() => ({ kind: "report", toast: null, feedback: true, undo: null, titles: {}, outcomes: {
+      [music]: read.channelId ? { kind: "added" } : { kind: "filtered", decision: "filtered-unknown-channel" },
+      [talks]: read.channelId ? { kind: "filtered", decision: "filtered" } : { kind: "added" },
+      [lofi]: { kind: "added" }
+    } }))
+    h.navigate(first, "First video")
+    await h.play(0, 60)
+    expect(h.logs).toEqual([...expected])
   }
 })
 
