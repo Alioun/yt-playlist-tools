@@ -103,15 +103,15 @@
         </div>
       {/if}
 
-      <div aria-live="polite">
-        {#if setup.accessDenied}
-          <p role="alert" class="text-warning flex items-center gap-2 text-[13px]"><Glyph name="circle-alert" class="size-4 shrink-0" />{copy.accessDenied}</p>
-        {/if}
-      </div>
+    </div>
+    <div aria-live="polite">
+      {#if setup.accessDenied}
+        <p role="alert" class="text-warning mt-3 flex items-center gap-2 text-[13px]"><Glyph name="circle-alert" class="size-4 shrink-0" />{copy.accessDenied}</p>
+      {/if}
     </div>
 
     {#if view.rows.length}
-      <ul class="bg-card mt-4 divide-y rounded-xl border" aria-label={copy.heading}>
+      <ul class="bg-card mt-3 divide-y rounded-xl border" aria-label={copy.heading}>
         {#each view.rows as row (row.feature)}
           {@const feature = text.features.featureOf(row.feature)}
           {@const choice = setup.choice(row.feature)}
@@ -129,15 +129,17 @@
               {:else if !hasAccount}
                 <span class="text-muted-foreground text-[13px]">{copy.needsAccount}</span>
               {:else}
-                <span class="flex min-w-0 flex-wrap items-center gap-2 text-[13px]">
-                  <span class="text-muted-foreground">{targetLead(row)}</span>
-                  {#if row.target.purpose !== "auto-add"}<span class="font-medium" data-selection>{selectionText(row)}</span>{/if}
-                  <Button size="sm" variant="outline" pending={choice.kind === "pending"} aria-label={copy.chooseFor(feature.name)} onclick={() => setup.choose(row)}>
-                    {copy.choose}
-                  </Button>
-                </span>
+                <Button size="sm" variant="outline" pending={choice.kind === "pending"} aria-label={copy.chooseFor(feature.name)} onclick={() => setup.choose(row)}>
+                  {copy.choose}
+                </Button>
               {/if}
             </div>
+            {#if row.target && hasAccount && !row.held}
+              <p class="text-[13px]">
+                <span class="text-muted-foreground">{targetLead(row)}</span>
+                {#if row.target.purpose !== "auto-add"}<span class="font-medium" data-selection>{selectionText(row)}</span>{/if}
+              </p>
+            {/if}
             {#if row.alsoOnMusicHeld}
               <p class="text-warning mt-1 flex items-center gap-1.5 text-[13px]"><Glyph name="triangle-alert" class="size-4 shrink-0" />{copy.alsoOnMusicHeld}</p>
             {/if}

@@ -38,19 +38,19 @@
 </script>
 
 <div class="bg-brand-wash min-h-screen">
-  <div bind:this={root} class="mx-auto max-w-[700px] px-6 pt-12 pb-10">
+  <div bind:this={root} class="mx-auto max-w-[700px] px-6 pt-8 pb-10 sm:pt-12">
     <header>
       <div class="flex items-center gap-3.5">
         <Mark src={markSrc} size={56} />
         <p class="text-[22px] leading-tight font-semibold tracking-[-0.015em]">{firstRunCopy.welcome}</p>
       </div>
       <p class="text-muted-foreground mt-4 max-w-[560px] text-[14.5px] leading-relaxed">{firstRunCopy.intro}</p>
-      <div class="mt-8 overflow-x-auto pb-1">
+      <div class="mt-6 overflow-x-auto pb-1 sm:mt-8">
         <StepIndicator steps={firstRunCopy.steps} {current} label={firstRunCopy.stepsLabel} formatNumber={session.text.number} />
       </div>
     </header>
 
-    <main class="mt-9">
+    <main class="mt-7 sm:mt-9">
       {#if flow.step === "pick"}
         <PickStep {flow} browser={session.owner.browser} text={session.text} />
       {:else if flow.step === "consent" || flow.step === "not-now"}

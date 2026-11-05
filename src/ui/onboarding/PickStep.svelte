@@ -34,7 +34,7 @@
       <div class="min-w-0 flex-1">
         <p id="{uid}-sync" class="text-[15px] leading-6 font-semibold">{features.syncFeature.name}</p>
         <p id="{uid}-sync-lead" class="text-muted-foreground text-[13.5px] leading-[1.5]">{copy.syncLead}</p>
-        <p class="text-muted-foreground/80 mt-1 text-xs">{features.syncFeature.description(browser)}</p>
+        <p class="text-muted-foreground mt-1 text-[12.5px]">{features.syncFeature.description(browser)}</p>
         <span class="mt-2.5 block"><FootprintTag footprint={features.syncFeature.footprint} label={features.footprintText[features.syncFeature.footprint]} /></span>
       </div>
       <Switch class="mt-1" checked={flow.syncOn} label={features.syncFeature.name} describedby="{uid}-sync-lead" onchange={(on) => flow.setSync(on)} />
@@ -88,7 +88,7 @@
 
   <div aria-live="polite">
     {#if flow.asksMusicAccess}
-      <p class="text-muted-foreground mt-3 flex items-center gap-2 text-[13px]"><Glyph name="info" class="size-4 shrink-0" />{copy.musicAccess[browser]}</p>
+      <p class="bg-muted/70 text-muted-foreground mt-4 flex items-center gap-2 rounded-lg px-3 py-2.5 text-[13px]"><Glyph name="info" class="size-4 shrink-0" />{copy.musicAccess[browser]}</p>
     {/if}
   </div>
 
