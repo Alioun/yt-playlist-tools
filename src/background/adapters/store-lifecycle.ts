@@ -98,16 +98,14 @@ export function createBrowserStoreLifecycle(
       set: items => native.storage.local.set(items),
       remove: keys => native.storage.local.remove([...keys]),
       async names() {
-        if (!native.storage.local.getKeys) throw new Error("Native local key inventory unavailable")
-        return native.storage.local.getKeys()
+        return native.storage.local.getKeys ? native.storage.local.getKeys() : Object.keys(await native.storage.local.get(null))
       }
     },
     consentDevice: { get: keys => native.storage.local.get([...keys]), set: items => native.storage.local.set(items) },
     session: {
       clear: () => native.storage.session.clear(),
       async names() {
-        if (!native.storage.session.getKeys) throw new Error("Native session key inventory unavailable")
-        return native.storage.session.getKeys()
+        return native.storage.session.getKeys ? native.storage.session.getKeys() : Object.keys(await native.storage.session.get(null))
       }
     },
     syncedReset: reset,

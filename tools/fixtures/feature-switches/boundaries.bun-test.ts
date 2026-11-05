@@ -235,7 +235,7 @@ test("retained-canonical startup holds incomplete cleanup and exact recovery pre
     for (const acct of ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"]) for (let shard = 0; shard < 16; shard++) records[`progress:${acct}:${shard}`] = { remembered: true }
   })
   const permissions = world("owner")
-  const access = nativeSharedSettingsAccess(permissions.permissions)
+  const access = nativeSharedSettingsAccess(permissions.permissions, true)
   const owner = createStartingLocalFilterWriter({ ...h.actor("canonical-feature"), featureAccess: access, generation: () => "feature-stamp" })
   let archived: JsonValue | undefined
   try {

@@ -38,7 +38,8 @@ export function composeStore(native: NativeBrowser, platform: Platform, teardown
     owner: {
       local: { get: keys => native.storage.local.get(keys === null ? null : [...keys]), set: items => native.storage.local.set(items) },
       startup,
-      onSyncResult: () => {}
+      onSyncResult: () => {},
+      browserMenu: platform.browser === "firefox" ? "required" : "optional"
     },
     clock,
     generation: () => crypto.randomUUID(),

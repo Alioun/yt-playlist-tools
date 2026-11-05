@@ -162,7 +162,7 @@ export function bridgeHarness(options: { readonly initial?: RemovalFixtureState;
       },
       permissions: { contains: async () => true, request: async () => true }
     }
-    const backend = createBrowserBackend(port, { build: build(), deadline: h.clock.after, browser: "chrome", ...(windowId === undefined ? {} : { windowId }) })
+    const backend = createBrowserBackend(port, { build: build(), deadline: h.clock.after, ...(windowId === undefined ? {} : { windowId }) })
     views.push(backend)
     return backend
   }

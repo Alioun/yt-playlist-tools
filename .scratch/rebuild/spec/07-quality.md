@@ -322,7 +322,7 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   - **Keys from any tab:** a fake `commands` (`onCommand`, `getAll`) drives ARC-ACC-69: the tab order, discarded tabs skipped, no answer while the feature is off or held, the 3 s badge mark, and injection on use;
   - **Save from the browser's menu:** a fake `contextMenus` and `permissions`: entries created only while the feature is on and the permission held, removed with the permission when it's switched off, and the held state after `permissions.onRemoved`;
   - **the picker's untick and its Undo, Recent adds, the settings file** (export, import, every refusal) and **the toolbar marks' priority**, in layers 1 and 3;
-  - `check:manifest` asserts the four commands with no `suggested_key`, `optional_permissions: ["contextMenus"]` and `default_locale` (Q-CI-3);
+  - `check:manifest` asserts the four commands with no `suggested_key`, `contextMenus` as optional on Chrome and required on Firefox and `default_locale` (Q-CI-3);
   - the watch list gains entries for `ytmusic-app`'s `handleNavigationEndpoint` and the library toggle's shape, which the four YouTube Music actions use (ARC-REG-09; R85).
 - **Q-TEST-46.** **The `running-cost` guard** in `tests/guards/` runs with the others ([Q-PERF-59](#768-running-cost)). It fails, with the file and line, when:
   - `setInterval` or the `alarms` API appears anywhere in `src/`;

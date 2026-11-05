@@ -38,7 +38,7 @@ export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform:
   let stopTheme = followTheme(document.documentElement, "system", scheme)
   const platform: Platform = { browser: build.browser, os: /mac/i.test(navigatorPlatform) ? "macos" : /win/i.test(navigatorPlatform) ? "windows" : "linux" }
   // The popup names its window, because it has no sender tab (ARC-MSG-06).
-  const backend = createBrowserBackend(native, { build: build.build, deadline: timerDeadline, browser: build.browser, ...(window.windowId === undefined ? {} : { windowId: window.windowId }) })
+  const backend = createBrowserBackend(native, { build: build.build, deadline: timerDeadline, ...(window.windowId === undefined ? {} : { windowId: window.windowId }) })
   const getMessage = native.i18n.getMessage
   if (typeof getMessage !== "function") throw new TypeError("Native localization getMessage is unavailable")
   const i18n = catalogue ? createBrowserI18n(native, catalogue) : createSiteI18n({ getMessage: (name, substitutions) => String(Reflect.apply(getMessage, native.i18n, [name, substitutions]) ?? "") })

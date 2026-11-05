@@ -17,7 +17,7 @@ export type BrowserBackendPort = {
 type PermissionQuery = { origins?: string[]; permissions?: ["contextMenus"] }
 const origins = { www: "https://www.youtube.com/*", music: "https://music.youtube.com/*" } as const satisfies Record<Site, string>
 
-export function createBrowserBackend(native: BrowserBackendPort, options: BackendOptions & { readonly browser: "chrome" | "firefox" }) {
+export function createBrowserBackend(native: BrowserBackendPort, options: BackendOptions) {
   function contains(query: PermissionQuery): Promise<boolean> {
     try {
       return native.permissions.contains(query).then(
@@ -39,7 +39,7 @@ export function createBrowserBackend(native: BrowserBackendPort, options: Backen
     try {
       const manifest = native.runtime.getManifest()
       const query: PermissionQuery = {}
-      if (needs.music && options.browser === "chrome" && manifest.optional_host_permissions?.includes(origins.music)) query.origins = [origins.music]
+      if (needs.music && manifest.optional_host_permissions?.includes(origins.music)) query.origins = [origins.music]
       if (needs.browserMenu && manifest.optional_permissions?.includes("contextMenus")) query.permissions = ["contextMenus"]
       if (query.origins || query.permissions) prompt = native.permissions.request(query)
     } catch {}
@@ -52,7 +52,11 @@ export function createBrowserBackend(native: BrowserBackendPort, options: Backen
   }
   function request(site: Site): Promise<boolean> {
     if (site === "music") return requestCombined({ music: true, browserMenu: false }).then(grant => grant.music)
-    return has("www")
+    let prompt: Promise<boolean> = Promise.resolve(false)
+    try {
+      prompt = native.permissions.request({ origins: [origins.www] })
+    } catch {}
+    return prompt.catch(() => false).then(() => has("www"))
   }
   const access: Access = { has, request, requestCombined, hasBrowserMenu }
   return createBackend(

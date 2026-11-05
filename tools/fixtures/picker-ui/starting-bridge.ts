@@ -128,7 +128,7 @@ export async function startingBridge() {
       },
       permissions: { contains: async () => true, request: async () => true }
     }
-    const backend = createBrowserBackend(port, { build, deadline: clock.after, browser: "chrome", ...(windowId === undefined ? {} : { windowId }) })
+    const backend = createBrowserBackend(port, { build, deadline: clock.after, ...(windowId === undefined ? {} : { windowId }) })
     views.push(backend)
     return backend
   }

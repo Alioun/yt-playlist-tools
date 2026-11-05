@@ -16,7 +16,10 @@ type NativeHosts = {
 export type BrowserStartingOwnerOptions = Pick<StartingDependencies, "local" | "startup" | "onSyncResult"> &
   Pick<StartingDependencies, "resetReceive"> &
   Partial<Pick<StartingDependencies, "now" | "generation" | "syncClock" | "syncMutationPace" | "featureAccess" | "allocateShortcut">> &
-  NativeHosts
+  NativeHosts & {
+    /** Firefox can only declare contextMenus as required, so the owner never gives it back there. */
+    readonly browserMenu?: "optional" | "required"
+  }
 
 export type BrowserStartingOwner = StartingOwner & {
   readonly session: { read: StartingOwner["readSession"]; change: StartingOwner["changeSession"] }
@@ -63,7 +66,7 @@ export function createBrowserStartingLocalFilterWriter(
       syncMutationPace: options.syncMutationPace,
       resetReceive: options.resetReceive,
       startup: options.startup,
-      featureAccess: native.permissions ? nativeSharedSettingsAccess(native.permissions) : options.featureAccess,
+      featureAccess: native.permissions ? nativeSharedSettingsAccess(native.permissions, options.browserMenu !== "required") : options.featureAccess,
       allocateShortcut: options.allocateShortcut,
       local: {
         get(keys) {

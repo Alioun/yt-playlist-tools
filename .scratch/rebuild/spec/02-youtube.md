@@ -1408,7 +1408,7 @@ It never shows on music.youtube.com, where Quick actions does this job, or outsi
 
 **YT-BM-06: feedback.** Its toasts are the add flow's (section 2.5.2), with its own Show feedback. The toast names the playlist.
 
-**YT-BM-07: the permission.** The entry needs the browser's `contextMenus` permission, which is optional and asked for only when the feature is switched on.
+**YT-BM-07: the permission.** The entry needs the browser's `contextMenus` permission. On Chrome it's optional and asked for only when the feature is switched on. On Firefox it's required and always held (ARC-MAN-20).
 - It's requested first, in the same click: the switch in Settings or the popup, or first run's Agree.
 - Neither browser shows a prompt for it, so switching on looks no different. It adds no install or update prompt.
 - Switching the feature off removes the entry and gives the permission back, so while it's off the permission isn't held at all.
