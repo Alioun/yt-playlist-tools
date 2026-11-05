@@ -226,13 +226,13 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
     for (const ms of retryMs) retries.push(scope.timeout(() => { if (host.isConnected) return; place() }, ms))
   }
   // The menu's auto-add rows: each playlist's goal or outcome, Don't auto-add, Pause and this channel's chips (UI-YT-22, YT-CF-15).
+  // The menu opens while the channel is read, so its chips show the lookup (YT-CF-15).
   async function autoAddRows(shown: ThisVideo) {
     const current = view.read()
-    const answer = await page.run<JobOf<"channelOf">>({ job: { kind: "channelOf", videoId: shown.video } })
-    const found = answer.ok && answer.data.channelId !== null ? answer.data : null
+    const channel = page.run<JobOf<"channelOf">>({ job: { kind: "channelOf", videoId: shown.video } })
+      .then(answer => answer.ok && answer.data.channelId ? { id: answer.data.channelId, title: answer.data.title ?? "", handle: answer.data.handle ?? null } : null)
     await loadNames()
-    return { view: { ...shown, channel: found?.channelId ? { id: found.channelId, title: found.title ?? "", handle: found.handle ?? null } : null },
-      names: names ?? new Map<string, string>(), paused: current?.paused === true, filters: current?.filters ?? [] }
+    return { view: shown, channel, names: names ?? new Map<string, string>(), paused: current?.paused === true, filters: current?.filters ?? [] }
   }
   async function open() {
     const current = options(view.read())

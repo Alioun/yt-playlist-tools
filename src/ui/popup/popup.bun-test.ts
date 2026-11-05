@@ -525,6 +525,26 @@ test("this channel's controls list it in a playlist's filter, and ask before cle
   ])
 })
 
+test("when the tab can't read the channel, this channel's controls stay disabled under Channel unknown (YT-CF-15)", async () => {
+  const changes: unknown[] = []
+  popup(videoSetup(), {
+    "ui.thisTab": () => thisVideo({ channel: null }),
+    "ui.filterChannel": payload => {
+      changes.push(payload.change)
+      return { kind: "confirmed" }
+    }
+  })
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  await userEvent.click(await within(card).findByRole("button", { name: "Details" }))
+  expect(within(card).getByText("Channel unknown")).toBeTruthy()
+  for (const pl of ["PLa", "PLb"]) {
+    const row = card.querySelector(`[data-channel-row=${pl}]`) as HTMLElement
+    expect(within(row).getByRole("button", { name: "Allow only" })).toBeDisabled()
+    expect(within(row).getByRole("button", { name: "Deny" })).toBeDisabled()
+  }
+  expect(changes).toEqual([])
+})
+
 test("Playing now's save offers Undo in its line, which takes the song back in the same tab as the same account (YM-POP-3)", async () => {
   const undos: unknown[] = []
   popup(
