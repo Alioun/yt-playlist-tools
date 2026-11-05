@@ -1165,9 +1165,9 @@ Clicking a card that shows saved reports *already in*. States belong to the item
 
 ## 2.10 The thumbnail Add to queue button
 
-**YT-Q-01: the feature.** Queue button on thumbnails has one option: Show feedback, on by default (YT-ADD-13).
+**YT-Q-01: the feature.** Queue button on thumbnails has two options. Position on thumbnails picks the thumbnail corner it sits in: top left (the default), top right, bottom left or bottom right. Show feedback is on by default (YT-ADD-13).
 
-**YT-Q-02: what it does.** An Add to queue button sits on recognised items' thumbnails, on hover or keyboard focus, beside quick-save (placement: [05](05-ui.md) UI-YT-07). A click puts the card's video at the end of YouTube's queue, through YouTube's own queue command. The first add starts the queue in the miniplayer, as YouTube's own Add to queue does.
+**YT-Q-02: what it does.** An Add to queue button sits on recognised items' thumbnails, on hover or keyboard focus, in the corner its option names (placement: [05](05-ui.md) UI-YT-07). A click puts the card's video at the end of YouTube's queue, through YouTube's own queue command. The first add starts the queue in the miniplayer, as YouTube's own Add to queue does.
 
 **YT-Q-03: Add to queue isn't an add.** It needs no sign-in, has no membership or duplicate check, is never channel-filtered, and ignores session skips. It works signed out, and it carries on when the account keys are missing (YT-BRK-05).
 

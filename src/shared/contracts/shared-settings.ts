@@ -1,4 +1,5 @@
 import { objectShape } from "./object-shape"
+import { isThumbnailCorner } from "../model/validation"
 import { isFirstRunFeature, type FirstRunFeature } from "./first-run"
 import type { Settings } from "../model"
 import type { featureSettings } from "../model/first-run-view"
@@ -58,6 +59,7 @@ export type SharedOptionValues = {
   readonly "shortcuts.feedback": Settings["shortcuts"]["feedback"]
   readonly "quickSave.feedback": Settings["quickSave"]["feedback"]
   readonly "queueButton.feedback": Settings["queueButton"]["feedback"]
+  readonly "queueButton.corner": Settings["queueButton"]["corner"]
   readonly "watchButton.feedback": Settings["watchButton"]["feedback"]
   readonly "browserMenu.feedback": Settings["browserMenu"]["feedback"]
   readonly "musicActions.feedback": Settings["musicActions"]["feedback"]
@@ -112,6 +114,7 @@ const optionChecks = {
   "shortcuts.feedback": boolean,
   "quickSave.feedback": boolean,
   "queueButton.feedback": boolean,
+  "queueButton.corner": isThumbnailCorner,
   "watchButton.feedback": boolean,
   "browserMenu.feedback": boolean,
   "musicActions.feedback": boolean,

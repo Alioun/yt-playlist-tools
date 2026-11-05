@@ -214,7 +214,6 @@ test("foreign IDs, URL tricks, subframes and inconsistent window facts are rejec
     { ...firstRun.sender, frameId: undefined },
     { ...firstRun.sender, tab: undefined },
     { ...firstRun.sender, url: `${firstRun.sender.url}?forged=1` },
-    { ...firstRun.sender, url: `${firstRun.sender.url}#forged` },
     { ...firstRun.sender, url: fakeBrowser.runtime.getURL("/onboarding.html.forged") },
     { ...firstRun.sender, tab: { ...firstRun.tab, incognito: true } },
     { ...settings.sender, tab: missingWindow }

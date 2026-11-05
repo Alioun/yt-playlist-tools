@@ -2,7 +2,7 @@ import { boolean, checked, list, nullable, object, oneOf, text, DecodeError } fr
 import { defaultSettings } from "./defaults"
 import { decodeKey } from "./keys"
 import type { Settings, Shortcut } from "./types"
-import { isPercent, isShortcutId } from "./validation"
+import { isPercent, isShortcutId, thumbnailCorners } from "./validation"
 
 const base = defaultSettings()
 const key = nullable(decodeKey)
@@ -36,7 +36,7 @@ const decode = object<Settings>(
       () => base.shortcuts
     ),
     quickSave: object({ on: boolean, feedback: boolean, shortsShelves: boolean }, () => base.quickSave),
-    queueButton: object({ on: boolean, feedback: boolean }, () => base.queueButton),
+    queueButton: object({ on: boolean, feedback: boolean, corner: oneOf(...thumbnailCorners) }, () => base.queueButton),
     watchButton: object({ on: boolean, feedback: boolean, shorts: boolean }, () => base.watchButton),
     cardMenu: object({ on: boolean, keepLinkMenu: boolean }, () => base.cardMenu),
     browserMenu: object({ on: boolean, feedback: boolean }, () => base.browserMenu),

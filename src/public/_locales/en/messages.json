@@ -5954,6 +5954,21 @@
   "set_qsShorts": {
     "message": "On Shorts shelves too"
   },
+  "set_qbCorner": {
+    "message": "Position on thumbnails"
+  },
+  "set_corner_topLeft": {
+    "message": "Top left"
+  },
+  "set_corner_topRight": {
+    "message": "Top right"
+  },
+  "set_corner_bottomLeft": {
+    "message": "Bottom left"
+  },
+  "set_corner_bottomRight": {
+    "message": "Bottom right"
+  },
   "set_wbShorts": {
     "message": "On Shorts too"
   },

@@ -49,6 +49,19 @@ test("construction is inert and only an enabled feature owns one overlay host", 
   } finally { listen.mockRestore() }
 })
 
+test("the button sits in the chosen corner and moves when the setting changes", async () => {
+  const f = await setup({ view: queueView({ corner: "top-right" }) })
+  const first = card()
+  layout(first.thumbnail, { top: 20, left: 30, width: 320, height: 180 })
+  f.hover(first.thumbnail, [first.element])
+  const host = f.overlayHost()
+  const cornerOfButton = () => f.button()?.closest("[data-corner]")?.getAttribute("data-corner")
+  expect(host instanceof HTMLElement ? [host.style.width, host.style.height] : null).toEqual(["312px", "172px"])
+  expect(cornerOfButton()).toBe("top-right")
+  await f.publish(queueView({ corner: "bottom-left" }))
+  expect(cornerOfButton()).toBe("bottom-left")
+})
+
 test("placement sits 4 px into the thumbnail and stacks in a row under 100 px", async () => {
   const f = await setup()
   const tall = card()

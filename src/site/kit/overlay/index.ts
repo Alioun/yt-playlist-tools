@@ -1,8 +1,9 @@
 import { Scope, type Dispose } from "../../core/scope"
+import type { ThumbnailCorner } from "../../../shared/model/validation"
 import { overlaySkin } from "./skin"
 
 export type OverlaySlot = "queue" | "quick-save"
-export type OverlayAnchor = { readonly kind: "thumbnail"; readonly link: HTMLElement }
+export type OverlayAnchor = { readonly kind: "thumbnail"; readonly link: HTMLElement; readonly corner: ThumbnailCorner }
 export type OverlayLease = {
   readonly slot: HTMLElement
   place(anchor: OverlayAnchor | null): void
@@ -13,6 +14,7 @@ export type OverlayLease = {
 export type OverlayKitOptions = { readonly owner: Scope; readonly document: Document; onError(error: unknown): void }
 
 const slots: readonly OverlaySlot[] = ["queue", "quick-save"]
+const corners: readonly ThumbnailCorner[] = ["top-left", "top-right", "bottom-left", "bottom-right"]
 const inset = 4
 const rowBelow = 100
 const tooltipDelay = 500
@@ -21,8 +23,9 @@ const isolated = ["click", "dblclick", "auxclick", "pointerdown", "pointerup", "
 type Live = {
   readonly scope: Scope
   readonly host: HTMLElement
-  readonly stack: HTMLElement
+  readonly box: HTMLElement
   readonly tip: HTMLElement
+  readonly corners: ReadonlyMap<ThumbnailCorner, HTMLElement>
   readonly slots: ReadonlyMap<OverlaySlot, HTMLElement>
   readonly anchors: Map<OverlaySlot, OverlayAnchor | null>
   latest: OverlayAnchor | null
@@ -53,16 +56,21 @@ export function createOverlayKit(options: OverlayKitOptions) {
     const host = document.createElement("pp-overlay")
     const shadow = host.attachShadow({ mode: "open" })
     const style = document.createElement("style"); style.textContent = overlaySkin
-    const stack = document.createElement("div"); stack.className = "stack"
+    const box = document.createElement("div"); box.className = "box"
     const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; tip.setAttribute("aria-hidden", "true")
+    const groups = new Map<ThumbnailCorner, HTMLElement>()
+    for (const corner of corners) {
+      const group = document.createElement("div"); group.className = "corner"; group.dataset.corner = corner
+      groups.set(corner, group); box.append(group)
+    }
     const owned = new Map<OverlaySlot, HTMLElement>()
     for (const name of slots) {
       const slot = document.createElement("div"); slot.className = "slot"; slot.dataset.slot = name; slot.hidden = true
-      owned.set(name, slot); stack.append(slot)
+      owned.set(name, slot); groups.get("top-left")?.append(slot)
     }
-    stack.append(tip)
-    shadow.append(style, stack)
-    host.style.cssText = "all: initial; position: absolute; z-index: 10; display: block;"
+    box.append(tip)
+    shadow.append(style, box)
+    host.style.cssText = "all: initial; position: absolute; z-index: 10; display: block; pointer-events: none;"
     for (const type of isolated) scope.on<EventTarget, string>(host, type, event => event.stopPropagation())
     const mirror = () => host.toggleAttribute("dark", document.documentElement.hasAttribute("dark"))
     mirror()
@@ -71,7 +79,7 @@ export function createOverlayKit(options: OverlayKitOptions) {
       if (current.latest && records.some(record => !host.contains(record.target))) layout(current)
     })
     scope.add(() => host.remove())
-    const current: Live = { scope, host, stack, tip, slots: owned, anchors: new Map(), latest: null, cancelTip: () => {} }
+    const current: Live = { scope, host, box, tip, corners: groups, slots: owned, anchors: new Map(), latest: null, cancelTip: () => {} }
     return current
   }
   function stop() {
@@ -94,9 +102,24 @@ export function createOverlayKit(options: OverlayKitOptions) {
     const padding = preview ? getComputedStyle(preview) : null
     const top = inset + (padding ? parseFloat(padding.paddingTop) : anchor.link.offsetTop)
     const left = inset + (padding ? parseFloat(padding.paddingLeft) : anchor.link.offsetLeft)
+    const width = padding && preview ? preview.clientWidth - parseFloat(padding.paddingLeft) - parseFloat(padding.paddingRight) : anchor.link.offsetWidth
+    const height = padding && preview ? preview.clientHeight - parseFloat(padding.paddingTop) - parseFloat(padding.paddingBottom) : anchor.link.offsetHeight
     current.host.style.top = `${top}px`
     current.host.style.left = `${left}px`
+    current.host.style.width = `${Math.max(0, width - 2 * inset)}px`
+    current.host.style.height = `${Math.max(0, height - 2 * inset)}px`
     current.host.toggleAttribute("data-row", anchor.link.offsetHeight > 0 && anchor.link.offsetHeight < rowBelow)
+    group(current)
+  }
+  // Moves only slots whose corner changed, so a focused button keeps focus.
+  function group(current: Live) {
+    for (const [index, name] of slots.entries()) {
+      const slot = current.slots.get(name)
+      const target = current.corners.get(current.anchors.get(name)?.corner ?? "top-left")
+      if (!slot || !target || slot.parentElement === target) continue
+      const later = slots.slice(index + 1).map(other => current.slots.get(other)).find(other => other?.parentElement === target)
+      target.insertBefore(slot, later ?? null)
+    }
   }
   owner.add(() => { leases.clear(); stop() })
 
@@ -141,7 +164,11 @@ export function createOverlayKit(options: OverlayKitOptions) {
             current.cancelTip = current.scope.timeout(() => {
               if (!active() || !target.isConnected) return
               current.tip.textContent = label()
-              current.tip.style.setProperty("--tip-top", `${target.offsetTop}px`)
+              const box = current.box.getBoundingClientRect(), shown = target.getBoundingClientRect()
+              const right = target.closest(".corner")?.getAttribute("data-corner")?.endsWith("right") === true
+              current.tip.style.top = `${shown.top - box.top}px`
+              current.tip.style.left = right ? "" : `${shown.right - box.left + 8}px`
+              current.tip.style.right = right ? `${box.right - shown.left + 8}px` : ""
               current.tip.hidden = false
             }, tooltipDelay)
           }

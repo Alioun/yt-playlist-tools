@@ -208,7 +208,7 @@ describe("canonical conversion", () => {
             list: [{ id: "save01", key: key("s", { shift: true }), label: "", watchLaterOnEveryAccount: false }]
           },
           quickSave: { on: false, feedback: true, shortsShelves: false },
-          queueButton: { on: false, feedback: true },
+          queueButton: { on: false, feedback: true, corner: "top-left" },
           watchButton: { on: false, feedback: true, shorts: false },
           cardMenu: { on: false, keepLinkMenu: false },
           browserMenu: { on: false, feedback: true },

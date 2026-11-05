@@ -10,6 +10,7 @@
   import type { PageState } from "../../lib/page-state.svelte"
   import FeatureSwitchCard from "../FeatureSwitchCard.svelte"
   import OptionSwitch from "../OptionSwitch.svelte"
+  import CornerOption from "../CornerOption.svelte"
   import { GatherRow } from "../../lib/gather.svelte"
 
   // Settings › YouTube (UI-SET-10).
@@ -68,6 +69,7 @@
       <OptionSwitch {pageState} field="quickSave.feedback" checked={settings.quickSave.feedback} label={i18n.message("set_feedback")} />
     </FeatureSwitchCard>
     <FeatureSwitchCard {pageState} {features} feature="queue-button">
+      <CornerOption {pageState} value={settings.queueButton.corner} />
       <OptionSwitch {pageState} field="queueButton.feedback" checked={settings.queueButton.feedback} label={i18n.message("set_feedback")} />
     </FeatureSwitchCard>
     <FeatureSwitchCard {pageState} {features} feature="watch-button">

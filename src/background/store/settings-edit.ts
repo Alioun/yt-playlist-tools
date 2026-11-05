@@ -1,4 +1,4 @@
-import { decodeSettings, isPercent, normalizeSettingsForWrite } from "../../shared/model"
+import { decodeSettings, isPercent, isThumbnailCorner, normalizeSettingsForWrite } from "../../shared/model"
 import type { Settings } from "../../shared/model"
 
 type Snapshot<T> = T extends object ? { readonly [P in keyof T]: Snapshot<T[P]> } : T
@@ -65,6 +65,12 @@ function changeOption(current: Snapshot<Settings>, change: SharedOptionChange): 
       if (current.queueButton.feedback === change.value) return { kind: "unchanged" }
       settings = decodeSettings(current)
       settings.queueButton.feedback = change.value
+      break
+    case "queueButton.corner":
+      if (!isThumbnailCorner(change.value)) return { kind: "invalid", reason: "invalid-option" }
+      if (current.queueButton.corner === change.value) return { kind: "unchanged" }
+      settings = decodeSettings(current)
+      settings.queueButton.corner = change.value
       break
     case "watchButton.feedback":
       if (typeof change.value !== "boolean") return { kind: "invalid", reason: "invalid-option" }

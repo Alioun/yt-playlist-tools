@@ -4,6 +4,11 @@ export type ChannelId = string & { readonly __brand: "ChannelId" }
 export type VideoId = string & { readonly __brand: "VideoId" }
 export type ShortcutId = string & { readonly __brand: "ShortcutId" }
 
+export const thumbnailCorners = ["top-left", "top-right", "bottom-left", "bottom-right"] as const
+export type ThumbnailCorner = (typeof thumbnailCorners)[number]
+export function isThumbnailCorner(value: unknown): value is ThumbnailCorner {
+  return thumbnailCorners.some(corner => corner === value)
+}
 export function isAccountKey(value: unknown): value is AccountKey {
   return typeof value === "string" && /^[A-Za-z0-9_-]{16}$/.test(value)
 }

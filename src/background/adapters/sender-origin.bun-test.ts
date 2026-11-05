@@ -35,6 +35,14 @@ function resolve(sender: Sender, popupWindowId: unknown = windowId) {
   return resolveSenderOrigin(nativePorts, { sender, popupWindowId })
 }
 
+test("a page on a hash route is still that page", async () => {
+  for (const hash of ["#youtube", "#queue-button&PL_saved"]) {
+    expect(await resolve({ ...settings, url: `${settings.url}${hash}` })).toMatchObject({ kind: "ui", page: "settings" })
+  }
+  expect(await resolve({ ...firstRun, url: `${firstRun.url}#step` })).toMatchObject({ kind: "ui", page: "onboarding" })
+  expect(await resolve({ ...settings, url: `${settings.url}?forged=1` })).toEqual({ kind: "unavailable", reason: "identity" })
+})
+
 test("exact tabless popup accepts only its supplied native window", async () => {
   for (const frameId of [undefined, 0]) {
     expect(await resolve({ ...popup, frameId })).toEqual({
@@ -97,16 +105,13 @@ test("foreign extensions, other pages, URL tricks, subframes and wrong tab attac
     { ...content, frameId: undefined },
     { ...popup, url: fakeBrowser.runtime.getURL("/other.html") },
     { ...popup, url: popup.url + "?windowId=1" },
-    { ...popup, url: popup.url + "#popup" },
     { ...popup, url: popup.url + ".forged" },
     { ...settings, url: settings.url + "?forged=1" },
-    { ...settings, url: settings.url + "#forged" },
     { ...settings, url: settings.url + "/suffix" },
     { ...firstRun, id: "foreign-extension" },
     { ...firstRun, frameId: 1 },
     { ...firstRun, frameId: undefined },
     { ...firstRun, url: firstRun.url + "?forged=1" },
-    { ...firstRun, url: firstRun.url + "#forged" },
     { ...firstRun, url: firstRun.url + ".forged" },
     { ...popup, url: firstRun.url },
     { ...music, id: "foreign-extension" },

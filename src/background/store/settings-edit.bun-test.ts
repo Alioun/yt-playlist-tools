@@ -73,7 +73,7 @@ function fixtureSuite(change: typeof changeSharedSetting, dependencies: Dependen
       sectionFuture: { preset: "opaque" }
     },
     quickSave: { on: false, feedback: true, shortsShelves: true },
-    queueButton: { on: true, feedback: false },
+    queueButton: { on: true, feedback: false, corner: "top-left" },
     watchButton: { on: false, feedback: true, shorts: true },
     cardMenu: { on: true, keepLinkMenu: true },
     browserMenu: { on: false, feedback: false },

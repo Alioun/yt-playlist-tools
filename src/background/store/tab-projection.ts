@@ -117,7 +117,7 @@ function projectSettings(raw: unknown): SettingsView {
       list: s.shortcuts.list.map(row => ({ id: row.id, label: row.label, key: projectKey(row.key), watchLaterOnEveryAccount: row.watchLaterOnEveryAccount }))
     },
     quickSave: { on: s.quickSave.on, feedback: s.quickSave.feedback, shortsShelves: s.quickSave.shortsShelves },
-    queueButton: { on: s.queueButton.on, feedback: s.queueButton.feedback },
+    queueButton: { on: s.queueButton.on, feedback: s.queueButton.feedback, corner: s.queueButton.corner },
     watchButton: { on: s.watchButton.on, feedback: s.watchButton.feedback, shorts: s.watchButton.shorts },
     cardMenu: { on: s.cardMenu.on, keepLinkMenu: s.cardMenu.keepLinkMenu },
     browserMenu: { on: s.browserMenu.on, feedback: s.browserMenu.feedback },

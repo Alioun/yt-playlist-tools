@@ -160,7 +160,7 @@ function start(context: FeatureContext<"www", QuickSaveServices>): void {
     const link = thumbnailOf(target)
     if (!link) return
     shown = { target, link, title: target.element.querySelector(titles)?.textContent?.trim() || undefined }
-    lease.place({ kind: "thumbnail", link })
+    lease.place({ kind: "thumbnail", link, corner: "top-left" })
     void loadNames()
     render()
   }

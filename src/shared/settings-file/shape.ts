@@ -23,7 +23,7 @@ export const settingsShape = fields<Settings>({
   autoAdd: fields<Settings["autoAdd"]>({ on: value, feedback: value, pct: value, toolbarTick: value, toolbarPaused: value }),
   shortcuts: fields<Settings["shortcuts"]>({ on: value, feedback: value, music: value, preset: value, picker: key, list: list(shortcut) }),
   quickSave: fields<Settings["quickSave"]>({ on: value, feedback: value, shortsShelves: value }),
-  queueButton: fields<Settings["queueButton"]>({ on: value, feedback: value }),
+  queueButton: fields<Settings["queueButton"]>({ on: value, feedback: value, corner: value }),
   watchButton: fields<Settings["watchButton"]>({ on: value, feedback: value, shorts: value }),
   cardMenu: fields<Settings["cardMenu"]>({ on: value, keepLinkMenu: value }),
   browserMenu: fields<Settings["browserMenu"]>({ on: value, feedback: value }),
