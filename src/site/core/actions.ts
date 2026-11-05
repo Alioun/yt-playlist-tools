@@ -77,8 +77,14 @@ export function createTabActions(options: {
     return answer.kind === "answered" && answer.result.kind === "ok"
   }
   return {
-    // A title past the contract's limit would refuse the whole add, so it is cut to fit.
-    add: request => call("tab.add", request.title && request.title.length > TITLE_LIMIT ? { ...request, title: request.title.slice(0, TITLE_LIMIT) } : request, unanswered),
+    async add(request) {
+      // A title past the contract's limit would refuse the whole add, so it is cut to fit.
+      const report = await call("tab.add", request.title && request.title.length > TITLE_LIMIT ? { ...request, title: request.title.slice(0, TITLE_LIMIT) } : request, unanswered)
+      // YT-ADD-26: each playlist's outcome, whatever Show feedback says. Auto-add's own lines carry the filter details.
+      for (const [playlist, outcome] of Object.entries("outcomes" in report ? report.outcomes : {}))
+        console.info(`[Perchling] add (${request.via}) ${playlist} ${outcome.kind === "failed" ? outcome.failure : outcome.kind}`)
+      return report
+    },
     remove: request => call("tab.remove", request, unanswered),
     undo: handle => call("tab.undo", handle, unanswered),
     gatherUndo: id => call("tab.gatherUndo", { id }, unanswered),
