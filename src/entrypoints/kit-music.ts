@@ -5,5 +5,5 @@ import { createMusicQuick } from "../site/kit/music/quick"
 import { startKit } from "../site/kit/start"
 
 export default defineUnlistedScript(() => {
-  startKit("music", namespaces, lib, createMusicQuick)
+  startKit("music", namespaces, lib, { quick: createMusicQuick })
 })

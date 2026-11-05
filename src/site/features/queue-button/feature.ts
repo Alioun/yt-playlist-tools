@@ -28,7 +28,6 @@ type Authority = { readonly feedback: boolean; readonly working: boolean }
 type Shown = { readonly target: WwwItemTarget; readonly link: HTMLElement; readonly checks: Dispose[] }
 
 export const nativeQueue = "[aria-label='Add to queue']"
-export const inlinePreview = "ytd-app > #video-preview > ytd-video-preview"
 export const recheckAfterMs = [150, 900] as const
 const thumbnails = "a#thumbnail, a.yt-lockup-view-model__content-image, a.ytLockupViewModelContentImage, a.ytd-thumbnail"
 const titles = "#video-title, #video-title-link, .ytLockupMetadataViewModelTitle, .yt-lockup-metadata-view-model__title, h3"
@@ -69,15 +68,6 @@ function thumbnailOf(target: WwwItemTarget): HTMLElement | null {
 function titleOf(target: WwwItemTarget): string | undefined {
   return target.element.querySelector(titles)?.textContent?.trim() || undefined
 }
-function covering(document: Document, link: HTMLElement): HTMLElement | null {
-  const realm = document.defaultView
-  const preview = document.querySelector(inlinePreview)
-  if (!realm || !(preview instanceof realm.HTMLElement) || preview.hidden) return null
-  const box = preview.getBoundingClientRect(), thumb = link.getBoundingClientRect()
-  const x = thumb.left + thumb.width / 2, y = thumb.top + thumb.height / 2
-  return box.width > 0 && box.height > 0 && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom ? preview : null
-}
-
 function start(context: FeatureContext<"www", QueueButtonServices>): void {
   const { scope, view, document, items, page, overlay, text, notices } = context
   const lease = overlay.use(scope, "queue") ?? fail("Queue overlay slot is unavailable")
@@ -88,21 +78,18 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
   button.className = "button"
   lease.slot.append(button)
   let shown: Shown | null = null
-  let watchedPreview: Dispose = nothing
   let noticed = false
 
   function conceal() {
     const current = shown
     shown = null
-    watchedPreview(); watchedPreview = nothing
     if (current) for (const cancel of current.checks) cancel()
     lease.hideTooltip()
     lease.place(null)
   }
   function anchorOf(current: Shown): OverlayAnchor | null {
     if (current.target.element.querySelector(nativeQueue)) return null
-    const preview = covering(document, current.link)
-    return preview ? { kind: "preview", link: current.link, preview } : { kind: "thumbnail", link: current.link }
+    return { kind: "thumbnail", link: current.link }
   }
   function current(): Shown | null {
     const value = shown
@@ -127,10 +114,6 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     if (shown !== value || !current()) return
     const anchor = anchorOf(value)
     lease.place(anchor)
-    watchedPreview(); watchedPreview = nothing
-    if (anchor?.kind === "preview") {
-      watchedPreview = scope.observe(anchor.preview, { attributes: true, attributeFilter: ["hidden", "style", "class"] }, () => place(value))
-    }
     render()
   }
   function show(target: WwwItemTarget) {

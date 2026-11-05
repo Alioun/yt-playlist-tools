@@ -20,6 +20,7 @@ import queueButtonEntry from "../../entrypoints/feature-queue-button"
 import autoAddEntry from "../../entrypoints/feature-auto-add"
 import { pageGlobal } from "../global"
 import { startKit } from "../kit/start"
+import { createOverlayKit } from "../kit/overlay"
 import { emptyTabView } from "../../background/tabs/teardown"
 import { startSiteCore } from "./core"
 import { WwwItems } from "./items-www"
@@ -90,7 +91,7 @@ async function startTab(view: TabView) {
 test("the assembled core runs the real queue-button and card-menu files once the tab view switches them on", async () => {
   const tab = await startTab(withCardMenu(queueView()))
   expect(tab.core.link.state.kind).toBe("ready")
-  startKit("www", {}, {})
+  startKit("www", {}, {}, { overlay: createOverlayKit })
   queueButtonEntry.main()
   cardMenuEntry.main()
   await settle()
@@ -119,7 +120,7 @@ test("the assembled core runs the real queue-button and card-menu files once the
 test("the view the background sends at withdrawal or Clear all removes every feature the tab drew", async () => {
   const view = withCardMenu(queueView())
   const tab = await startTab(view)
-  startKit("www", {}, {})
+  startKit("www", {}, {}, { overlay: createOverlayKit })
   queueButtonEntry.main()
   cardMenuEntry.main()
   await settle()

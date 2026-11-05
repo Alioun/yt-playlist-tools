@@ -7,6 +7,7 @@ import { PickerModel, type Picked, type UntickOutcome } from "../../shared/picke
 import type { ToastPlan } from "../../shared/rules/outcomes"
 import type { AnySiteCore, SiteCore } from "../core/core"
 import type { Kit } from "../kit/install"
+import { explicitContent } from "../explicit"
 import { placePicker, type PlacementAnchor } from "./placement"
 import { pagePickerSource } from "./source"
 import { createWatchMenu } from "./watch-menu"
@@ -47,7 +48,15 @@ export function createPopovers(options: {
   function openPicker(request: OpenPicker): void {
     const core = options.core(), kit = options.kit()
     const view = core?.link.view
-    if (!core || !kit || !view || view.site !== core.site || !view.signedIn) return
+    if (!core || !kit || !view || view.site !== core.site) return
+    if (!view.signedIn) {
+      const session = kit.feedback.use(core.root)
+      if (session) {
+        const message = explicitContent({ session, actions: core.actions, i18n: core.i18n, location: window.location }, { kind: "signed-out" }, {}, {})
+        if (message) session.toaster.show(message)
+      }
+      return
+    }
     open?.close()
     const account = view.acct
     const source = pagePickerSource({

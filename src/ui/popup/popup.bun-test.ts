@@ -92,6 +92,35 @@ test("before consent it shows the waiting banner, reads no account, and switchin
   expect(sent).toEqual([])
 })
 
+test("the consent sheet contains keyboard focus, closes with Escape and restores its opener", async () => {
+  popup({ schema: 1, device: { id: "device", consent: null, syncOn: false } })
+  const opener = await screen.findByRole("switch", { name: "Queue button on thumbnails" })
+  const user = userEvent.setup()
+  await user.click(opener)
+  const sheet = await screen.findByRole("dialog", { name: "Before this feature can run" })
+  await waitFor(() => expect(sheet.contains(document.activeElement)).toBe(true))
+  within(sheet).getByRole("button", { name: "Cancel" }).focus()
+  await user.tab()
+  expect(sheet.contains(document.activeElement)).toBe(true)
+  await user.keyboard("{Escape}")
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+  await waitFor(() => expect(opener).toHaveFocus())
+})
+
+test("Recent adds contains keyboard focus and restores its opener after Escape", async () => {
+  popup({ ...agreed }, { "ui.recentAdds": () => ({ kind: "recent", entries: [] }) })
+  const opener = await screen.findByRole("button", { name: "Recent adds" })
+  const user = userEvent.setup()
+  await user.click(opener)
+  const sheet = await screen.findByRole("dialog", { name: "Recent adds" })
+  await waitFor(() => expect(sheet.contains(document.activeElement)).toBe(true))
+  await user.tab()
+  expect(sheet.contains(document.activeElement)).toBe(true)
+  await user.keyboard("{Escape}")
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+  await waitFor(() => expect(opener).toHaveFocus())
+})
+
 test("after consent the YouTube tab lists the eight rows in order, with summaries, and a switch sends its change", async () => {
   const { sent } = popup({
     ...agreed,
@@ -647,6 +676,40 @@ test("This video's Save to… opens the picker sheet, whose ticks save in the ta
   await waitFor(() => expect(adds).toEqual([{ tabId: 4, acct, request: { site: "www", video: "aaaaaaaaaaa", opener: "popup", title: "First video", via: "picker", playlist: "PLb" } }]))
   expect(reads).toEqual([{ tabId: 4, acct, site: "www", video: "aaaaaaaaaaa" }])
 }, 20_000)
+
+test("Save sheet wraps backward Tab and restores its keyboard opener after Escape", async () => {
+  popup(videoSetup(), { ...sheetList, "ui.thisTab": () => thisVideo(), "ui.membership": () => ({ kind: "unreadable" }) })
+  const user = userEvent.setup()
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  await user.click(await within(card).findByRole("button", { name: "Details" }))
+  const opener = within(card).getByRole("button", { name: "Save to…" })
+  opener.focus()
+  await user.keyboard("{Enter}")
+  const sheet = await screen.findByRole("dialog", {}, { timeout: 5000 })
+  const close = await within(sheet).findByRole("button", { name: "Close playlist picker" })
+  close.focus()
+  await user.tab({ shift: true })
+  expect(sheet.contains(document.activeElement)).toBe(true)
+  expect(close).not.toHaveFocus()
+  await user.keyboard("{Escape}")
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+  await waitFor(() => expect(opener).toHaveFocus())
+})
+
+test("Music feature refusals explain why the switch stayed on", async () => {
+  popup(
+    { ...agreed, "doc:settings": stamped({ musicActions: { on: true, feedback: true } }) },
+    {
+      "ui.change": () => ({ kind: "feature-setting", outcome: { kind: "refused", reason: "sync-full" } })
+    },
+    { www: true, music: true, browserMenu: false }
+  )
+  await userEvent.click(await screen.findByRole("tab", { name: "YouTube Music" }))
+  const control = await screen.findByRole("switch", { name: "Quick actions" })
+  await userEvent.click(control)
+  expect(control).toHaveAttribute("aria-checked", "true")
+  expect(await screen.findByText("Synced settings are full, so this wasn't saved.")).toHaveAttribute("role", "status")
+})
 
 test("Playing now's ▾ opens the picker sheet for the playing song, in its own tab (YM-POP-4)", async () => {
   const adds: unknown[] = []

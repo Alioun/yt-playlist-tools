@@ -2,9 +2,7 @@ import { Scope, type Dispose } from "../../core/scope"
 import { overlaySkin } from "./skin"
 
 export type OverlaySlot = "queue" | "quick-save"
-export type OverlayAnchor =
-  | { readonly kind: "thumbnail"; readonly link: HTMLElement }
-  | { readonly kind: "preview"; readonly link: HTMLElement; readonly preview: HTMLElement }
+export type OverlayAnchor = { readonly kind: "thumbnail"; readonly link: HTMLElement }
 export type OverlayLease = {
   readonly slot: HTMLElement
   place(anchor: OverlayAnchor | null): void
@@ -33,7 +31,16 @@ type Live = {
 
 function same(a: OverlayAnchor | null, b: OverlayAnchor | null): boolean {
   if (a === null || b === null) return a === b
-  return a.kind === b.kind && a.link === b.link && (a.kind !== "preview" || b.kind === "preview" && a.preview === b.preview)
+  return a.link === b.link
+}
+
+function coveringPreview(document: Document, link: HTMLElement): HTMLElement | null {
+  const preview = document.querySelector("ytd-app > #video-preview ytd-video-preview")
+  const realm = document.defaultView
+  if (!realm || !(preview instanceof realm.HTMLElement) || preview.hidden) return null
+  const box = preview.getBoundingClientRect(), thumb = link.getBoundingClientRect()
+  const x = thumb.left + thumb.width / 2, y = thumb.top + thumb.height / 2
+  return box.width > 0 && box.height > 0 && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom ? preview : null
 }
 
 export function createOverlayKit(options: OverlayKitOptions) {
@@ -60,8 +67,12 @@ export function createOverlayKit(options: OverlayKitOptions) {
     const mirror = () => host.toggleAttribute("dark", document.documentElement.hasAttribute("dark"))
     mirror()
     scope.observe(document.documentElement, { attributes: true, attributeFilter: ["dark"] }, mirror)
+    scope.observe(document.getElementById("video-preview") ?? document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "style", "class"] }, records => {
+      if (current.latest && records.some(record => !host.contains(record.target))) layout(current)
+    })
     scope.add(() => host.remove())
-    return { scope, host, stack, tip, slots: owned, anchors: new Map(), latest: null, cancelTip: () => {} }
+    const current: Live = { scope, host, stack, tip, slots: owned, anchors: new Map(), latest: null, cancelTip: () => {} }
+    return current
   }
   function stop() {
     const current = live
@@ -75,12 +86,14 @@ export function createOverlayKit(options: OverlayKitOptions) {
   function layout(current: Live) {
     const anchor = current.latest
     if (!anchor || !anchor.link.isConnected) { hideTip(current); current.host.remove(); return }
-    const parent = anchor.kind === "preview" ? anchor.preview : anchor.link.parentElement
+    const preview = coveringPreview(document, anchor.link)
+    const parent = preview ?? anchor.link.parentElement
     if (!parent) { current.host.remove(); return }
-    if (anchor.kind === "preview") { if (current.host.parentElement !== parent || parent.lastElementChild !== current.host) parent.append(current.host) }
+    if (preview) { if (current.host.parentElement !== parent || parent.lastElementChild !== current.host) parent.append(current.host) }
     else if (anchor.link.nextElementSibling !== current.host) anchor.link.after(current.host)
-    const top = anchor.kind === "preview" ? inset : anchor.link.offsetTop + inset
-    const left = anchor.kind === "preview" ? inset : anchor.link.offsetLeft + inset
+    const padding = preview ? getComputedStyle(preview) : null
+    const top = inset + (padding ? parseFloat(padding.paddingTop) : anchor.link.offsetTop)
+    const left = inset + (padding ? parseFloat(padding.paddingLeft) : anchor.link.offsetLeft)
     current.host.style.top = `${top}px`
     current.host.style.left = `${left}px`
     current.host.toggleAttribute("data-row", anchor.link.offsetHeight > 0 && anchor.link.offsetHeight < rowBelow)

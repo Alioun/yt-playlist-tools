@@ -210,7 +210,7 @@
 </section>
 
 <style>
-  .picker-panel { display: flex; flex-direction: column; width: 100%; min-width: 0; max-height: inherit; overflow: hidden; color: var(--foreground); background: var(--card); font-family: var(--font-sans); }
+  .picker-panel { display: flex; flex-direction: column; width: 100%; min-width: 0; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; color: var(--foreground); background: var(--card); font-family: var(--font-sans); }
   .picker-header { padding: 1rem 1rem .65rem; flex-shrink: 0; }
   .heading-row { display: flex; justify-content: space-between; align-items: start; gap: .5rem; }
   h2 { margin: .15rem 0 0; font-size: 1rem; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }

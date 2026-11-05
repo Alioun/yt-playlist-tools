@@ -118,7 +118,7 @@
 </footer>
 
 <style>
-  .new-playlist { position: sticky; bottom: 0; flex-shrink: 0; padding: .75rem 1rem; background: var(--card); border-top: 1px solid var(--border); }
+  .new-playlist { flex-shrink: 0; padding: .75rem 1rem; background: var(--card); border-top: 1px solid var(--border); }
   .new-button { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 2rem; padding: .25rem; border: 0; border-radius: .5rem; background: transparent; color: var(--primary); font: inherit; font-size: .875rem; font-weight: 550; cursor: pointer; }
   .new-button:hover { background: var(--muted); }
   form { display: grid; gap: .4rem; }

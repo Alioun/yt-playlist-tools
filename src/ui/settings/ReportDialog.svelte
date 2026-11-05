@@ -2,6 +2,7 @@
   import clsx from "clsx"
   import { untrack } from "svelte"
   import Button from "../components/Button.svelte"
+  import Modal from "../components/Modal.svelte"
   import type { FeatureId } from "../../shared/contracts/vocabulary"
   import type { createFeatureCopy } from "../onboarding/features"
   import { firstRunFeatures } from "../onboarding/features"
@@ -23,6 +24,7 @@
   const initialBroken = untrack(() => health.some(row => row.feature === feature && row.state !== "working"))
   let kind = $state<ReportKind>(initialBroken ? "not-working" : "problem")
   let copied = $state(false)
+  const uid = $props.id()
   const browser = browserLabel(navigator.userAgent, platform.browser)
   const version = `${built}${beta ? " (beta)" : ""}`
   const special = { upgrade: "report_upgrade", pages: "report_pages", other: "report_other" } as const
@@ -46,17 +48,16 @@
 </script>
 
 <div class="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-6">
-  <div role="dialog" aria-modal="true" aria-labelledby="report-title" class="bg-card flex max-h-[90vh] w-full max-w-lg flex-col gap-3 overflow-y-auto rounded-2xl p-6 shadow-xl"
-    tabindex="-1" onkeydown={event => { if (event.key === "Escape") onclose() }}>
+  <Modal {onclose} labelledby="report-title" class="bg-card fixed inset-0 m-auto flex max-h-[90vh] w-[min(32rem,calc(100vw-3rem))] flex-col gap-3 overflow-y-auto rounded-2xl p-6 shadow-xl">
     <h2 id="report-title" class="text-lg font-semibold">{i18n.message("report_title")}</h2>
     <p class="text-muted-foreground text-[13.5px]">{i18n.message("report_lead")}</p>
     <div role="radiogroup" aria-labelledby="report-title" class="flex flex-col gap-2">
       {#each kinds as [value, title, line] (value)}
-        <button type="button" role="radio" aria-checked={kind === value} onclick={() => { kind = value }}
-          class={clsx("rounded-xl border p-3 text-left", kind === value ? "border-primary ring-primary/30 ring-2" : "hover:border-foreground/20")}>
+        <label class={clsx("focus-within:ring-ring/40 cursor-pointer rounded-xl border p-3 text-left focus-within:ring-3", kind === value ? "border-primary ring-primary/30 ring-2" : "hover:border-foreground/20")}>
+          <input class="sr-only" type="radio" name="{uid}-kind" {value} checked={kind === value} onchange={() => { kind = value }} />
           <span class="block text-[14px] font-medium">{i18n.message(title)}</span>
           <span class="text-muted-foreground block text-[12.5px]">{i18n.message(line)}</span>
-        </button>
+        </label>
       {/each}
     </div>
     <label class="flex flex-col gap-1 text-[13.5px]"><span class="font-medium">{i18n.message("report_feature")}</span>
@@ -76,5 +77,5 @@
       <Button variant="outline" onclick={onclose}>{i18n.message("report_cancel")}</Button>
       <Button onclick={open}>{i18n.message("report_open")}</Button>
     </div>
-  </div>
+  </Modal>
 </div>

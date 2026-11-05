@@ -59,6 +59,42 @@ function settings(records: JsonObject, respond: ScriptedResponders = {}, hash = 
   return { opened }
 }
 
+test("Appearance radios move focus and request the next theme with ArrowRight", async () => {
+  const changes: unknown[] = []
+  settings(
+    agreed,
+    {
+      "ui.change": payload => {
+        changes.push(payload.change)
+        return { kind: "shared-setting", outcome: { kind: "refused", reason: "unconfirmed" } }
+      }
+    },
+    "#appearance"
+  )
+  const group = await screen.findByRole("radiogroup", { name: "Appearance" })
+  const light = within(group).getByRole("radio", { name: "Light" })
+  light.focus()
+  await userEvent.keyboard("{ArrowRight}")
+  expect(within(group).getByRole("radio", { name: "Dark" })).toHaveFocus()
+  await waitFor(() => expect(changes).toContainEqual({ kind: "theme", value: "dark" }))
+  await waitFor(() => expect(within(group).getByRole("radio", { name: "System" })).toBeChecked())
+  expect(within(group).getByRole("radio", { name: "Dark" })).not.toBeChecked()
+})
+
+test("Report radios move focus and selection with ArrowDown", async () => {
+  settings(agreed, {}, "#about")
+  await userEvent.click(await screen.findByRole("button", { name: "Report a problem" }))
+  const group = await screen.findByRole("radiogroup")
+  const radios = within(group).getAllByRole("radio")
+  radios[0]!.focus()
+  await userEvent.keyboard("{ArrowDown}")
+  expect(radios[1]).toHaveFocus()
+  expect(radios[1]).toBeChecked()
+  await userEvent.tab({ shift: true })
+  const buttons = within(screen.getByRole("dialog")).getAllByRole("button")
+  expect(buttons.at(-1)).toHaveFocus()
+})
+
 test("Settings opens on YouTube with every feature card, and the nav lists the eight sections", async () => {
   settings({ ...agreed, "doc:settings": stamped({ queueButton: { on: true, feedback: true } }) })
   const nav = await screen.findByRole("navigation", { name: "Settings sections" }, { timeout: 5000 })

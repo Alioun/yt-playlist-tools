@@ -55,7 +55,7 @@
   }
   async function toggle(row: PickerRow) {
     if (row.busy || readOnly) return
-    if (row.check === "on") { await picker.untick(row.id); if (open === row.id) open = null }
+    if (row.check === "on") { const answer = await picker.untick(row.id); if (answer.kind === "changed" && open === row.id) open = null }
     else await picker.tick(row.id)
   }
   async function edit(id: PlaylistId, work: () => Promise<boolean>) {
@@ -65,11 +65,14 @@
 </script>
 
 <div class="flex flex-col gap-2">
-  {#if picker.rows.length > 8}
-    <label class="border-input bg-background focus-within:ring-ring/40 sticky top-0 z-10 flex min-h-8 items-center gap-2 rounded-lg border px-2.5 focus-within:ring-3">
+  {#if picker.totalRows > 8 || picker.query !== ""}
+    <label class="border-input bg-background focus-within:ring-ring/40 flex min-h-8 items-center gap-2 rounded-lg border px-2.5 focus-within:ring-3">
       <span class="sr-only">{text.label("search")}</span>
       <input type="search" bind:value={picker.query} placeholder={text.label("search")} class="w-full bg-transparent text-sm outline-none" />
     </label>
+  {/if}
+  {#if picker.query.trim() && rows.length === 0}
+    <p role="status" class="text-muted-foreground text-[12.5px]">{text.label("emptySearch")}</p>
   {/if}
   <ul class="flex flex-col" aria-label={text.label("listLabel")}>
     {#each rows as row (row.id)}
@@ -81,7 +84,7 @@
             type="button"
             role="checkbox"
             aria-checked={row.check === "loading" ? "mixed" : ticked}
-            aria-describedby="{uid}-{row.id}-line"
+            aria-describedby={row.status.kind === "refused" ? `${uid}-${row.id}-error` : `${uid}-${row.id}-line`}
             disabled={readOnly || row.busy}
             data-autoadd-row={row.id}
             class="focus-visible:ring-ring/40 flex min-w-0 flex-1 items-center gap-2.5 rounded-md text-left outline-none focus-visible:ring-3 disabled:cursor-default"
@@ -110,6 +113,9 @@
             {/if}
           {/if}
         </div>
+        {#if row.status.kind === "refused"}
+          <p id="{uid}-{row.id}-error" role="status" class="text-destructive mb-2 text-[12.5px]">{text.refusal[row.status.reason]}</p>
+        {/if}
         {#if ticked && open === row.id}
           {@const chosen = options.get(row.id) ?? { takes: "videos", pct: null }}
           <div id="{uid}-{row.id}-options" class="bg-muted/50 mb-2 flex flex-col gap-3 rounded-lg p-3">

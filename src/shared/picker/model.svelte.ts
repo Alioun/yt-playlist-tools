@@ -137,6 +137,7 @@ export class PickerModel {
   #sortAZ = $state(false)
   #creating = $state.raw<CreateState>({ kind: "idle" })
   #ordered = $derived.by(() => this.#order())
+  readonly totalRows = $derived(this.#ordered.length)
 
   readonly rows: readonly PickerRow[] = $derived.by(() => {
     const query = this.query.trim().toLowerCase()

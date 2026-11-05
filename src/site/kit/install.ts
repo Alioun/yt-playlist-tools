@@ -9,13 +9,13 @@ import type { createMusicQuick, MusicQuick } from "./music/quick"
 import { Scope } from "../core/scope"
 import { toasterNoticePresenter } from "./feedback/notice"
 import { createFeedbackSession } from "./feedback/session"
-import { createOverlayKit, type OverlayKit } from "./overlay"
+import type { createOverlayKit, OverlayKit } from "./overlay"
 import { svelteScopeMount } from "./scope-mount"
 
 export type Kit = {
   readonly site: Site
   readonly feedback: ReturnType<typeof createFeedbackSession>
-  readonly overlay: OverlayKit
+  readonly overlay: OverlayKit | null
   readonly lib: object
   /** YouTube Music's quick actions, which only `kit-music.js` carries. */
   readonly music: MusicQuick | null
@@ -23,6 +23,7 @@ export type Kit = {
 
 const ignore = () => {}
 const viewWaitMs = 5_000
+export type KitParts = { readonly quick?: typeof createMusicQuick; readonly overlay?: typeof createOverlayKit }
 
 function viewReady(link: AnySiteCore["link"], scope: Scope): Promise<boolean> {
   if (link.view) return Promise.resolve(true)
@@ -34,7 +35,7 @@ function viewReady(link: AnySiteCore["link"], scope: Scope): Promise<boolean> {
 }
 
 /** One kit per page (06 §6.4.2): the toaster, the moving overlay and Svelte mounting for feature scopes. */
-export function installKit(core: AnySiteCore, lib: object, quick?: typeof createMusicQuick): Kit {
+export function installKit(core: AnySiteCore, lib: object, { quick, overlay: makeOverlay }: KitParts): Kit {
   const { document, i18n, keys, root, site, link } = core
   const labels = siteFeedbackText(i18n)
   const view = link.view
@@ -45,7 +46,7 @@ export function installKit(core: AnySiteCore, lib: object, quick?: typeof create
     now: () => performance.now(), onError: ignore, onCosmetic: ignore
   })
   root.add(link.onView(next => { if (next) feedback.update({ undoKey: next.undoKey, features: next.features }) }))
-  const overlay = createOverlayKit({ owner: root, document, onError: ignore })
+  const overlay = makeOverlay?.({ owner: root, document, onError: ignore }) ?? null
   const own = new Scope({ document, onError: ignore })
   root.add(() => own.dispose())
   const toaster = feedback.use(own)?.toaster

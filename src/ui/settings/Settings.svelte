@@ -87,12 +87,12 @@
 </script>
 
 <div class="bg-background text-foreground min-h-screen" data-settings>
-  <header class="bg-card/80 sticky top-0 z-10 flex h-16 items-center gap-3 border-b px-6 backdrop-blur">
+  <header class="bg-card/80 sticky top-0 z-10 flex min-h-16 flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-3 backdrop-blur sm:h-16 sm:flex-nowrap sm:px-6 sm:py-0">
     <Mark src={markSrc} size={30} />
     <span class="text-[17px] font-semibold">{i18n.message("extShortName")}</span>
     <span class="text-muted-foreground text-[15px]">{i18n.message("set_title")}</span>
     {#if pageState.agreed && pageState.acct}
-      <span class="text-muted-foreground ml-auto text-[13.5px]">{i18n.message("set_shownFor", { account: pageState.accountName() })}</span>
+      <span class="text-muted-foreground w-full truncate text-[13.5px] sm:ml-auto sm:w-auto">{i18n.message("set_shownFor", { account: pageState.accountName() })}</span>
     {/if}
   </header>
   {#if strip.length}
@@ -104,9 +104,9 @@
       {/await}
     </div>
   {/if}
-  <div class="mx-auto flex max-w-5xl gap-8 px-6 py-6">
-    <nav aria-label={i18n.message("set_navLabel")} class="sticky top-24 h-max w-48 shrink-0">
-      <ul class="flex flex-col gap-0.5">
+  <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 md:flex-row md:gap-8">
+    <nav aria-label={i18n.message("set_navLabel")} class="h-max shrink-0 md:sticky md:top-24 md:w-48">
+      <ul class="grid grid-cols-2 gap-0.5 sm:grid-cols-4 md:flex md:flex-col">
         {#each sections as section (section)}
           <li>
             <a href="#{section}" aria-current={route.section === section ? "page" : undefined}

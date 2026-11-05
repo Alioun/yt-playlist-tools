@@ -31,7 +31,7 @@
   --secondary: oklch(0.955 0.007 255);
   --secondary-foreground: oklch(0.28 0.018 262);
   --border: oklch(0.915 0.008 255);
-  --input: oklch(0.875 0.012 255);
+  --input: oklch(0.63 0.016 255);
 
   --primary: oklch(0.52 0.2 288);
   --primary-foreground: oklch(0.99 0.005 288);
@@ -65,7 +65,7 @@
   --secondary: oklch(0.27 0.013 262);
   --secondary-foreground: oklch(0.95 0.006 255);
   --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 15%);
+  --input: oklch(0.6 0.015 255);
 
   --primary: oklch(0.74 0.14 290);
   --primary-foreground: oklch(0.2 0.03 290);
