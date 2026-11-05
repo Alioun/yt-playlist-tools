@@ -1249,7 +1249,8 @@ export const authorityAcceptanceFixture = {
         },
         "queueButton": {
           "on": false,
-          "feedback": true
+          "feedback": true,
+          "corner": "top-left"
         },
         "watchButton": {
           "on": false,

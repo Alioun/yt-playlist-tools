@@ -65,7 +65,8 @@
     },
     "queueButton": {
       "on": true,
-      "feedback": false
+      "feedback": false,
+      "corner": "top-left"
     },
     "watchButton": {
       "on": true,
