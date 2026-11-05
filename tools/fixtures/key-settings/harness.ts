@@ -102,7 +102,7 @@ export function world(route: Route, initial: JsonObject = seed(), privateWindow 
       })
     }
   }
-  const featureAccess = nativeSharedSettingsAccess(h.native.permissions)
+  const featureAccess = nativeSharedSettingsAccess(h.native.permissions, true)
   const options = { ...h.options, local, syncClock: clock, now: () => wall, featureAccess, allocateShortcut: () => `new${String(++nextId).padStart(3, "0")}` }
   const generation = options.generation
   if (!generation) throw Error("Expected pinned generation collaborator")
@@ -168,7 +168,7 @@ export function world(route: Route, initial: JsonObject = seed(), privateWindow 
         getManifest: () => ({ manifest_version: 3, name: "Key fixture", version: "1.0.0", optional_host_permissions: ["https://music.youtube.com/*"], optional_permissions: ["contextMenus"] })
       }
     },
-    { build, deadline: clock.after, windowId: origin.windowId, browser: "chrome" }
+    { build, deadline: clock.after, windowId: origin.windowId }
   )
   const unsubscribe = owner.subscribeView(event => events.push(structuredClone(event)))
   function settings() {

@@ -327,11 +327,12 @@ export async function createFirstRunHarness(
             manifest_version: 3,
             name: "First-run fixture",
             version: "1.0.0",
-            host_permissions: options.browser === "firefox" && !options.missingDeclarations ? ["*://*.youtube.com/*"] : ["https://www.youtube.com/*"]
+            host_permissions: ["https://www.youtube.com/*"]
           }
           if (!options.missingDeclarations) {
-            manifest.optional_permissions = ["contextMenus"]
-            if (options.browser !== "firefox") manifest.optional_host_permissions = ["https://music.youtube.com/*"]
+            manifest.optional_host_permissions = ["https://music.youtube.com/*"]
+            if (options.browser === "firefox") manifest.permissions = ["storage", "scripting", "contextMenus"]
+            else manifest.optional_permissions = ["contextMenus"]
           }
           return manifest
         }
@@ -357,7 +358,7 @@ export async function createFirstRunHarness(
         }
       }
     }
-    const backend = createBrowserBackend(port, { build: buildId(), deadline, browser: options.browser ?? "chrome", ...(windowId === undefined ? {} : { windowId }) })
+    const backend = createBrowserBackend(port, { build: buildId(), deadline, ...(windowId === undefined ? {} : { windowId }) })
     const services: FirstRunServices = {
       account: {
         async read() {

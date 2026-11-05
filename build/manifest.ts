@@ -23,10 +23,11 @@ export function perchlingManifest({ browser, mode }: ManifestTarget): UserManife
     icons: firefox
       ? { 16: "brand/icon-16.png", 32: "brand/icon-32.png", 48: "brand/icon-48.png", 96: "brand/icon-96.png", 128: "brand/icon-128.png" }
       : { 16: "brand/icon-16.png", 32: "brand/icon-32.png", 48: "brand/icon-48.png", 128: "brand/store-128.png" },
-    permissions: ["storage", "scripting"],
+    // Firefox's optional_permissions schema rejects contextMenus and drops the entry, so the Firefox build requires it.
+    permissions: firefox ? ["storage", "scripting", "contextMenus"] : ["storage", "scripting"],
     host_permissions: ["https://www.youtube.com/*"],
     optional_host_permissions: ["https://music.youtube.com/*"],
-    optional_permissions: ["contextMenus"],
+    ...(!firefox && { optional_permissions: ["contextMenus"] }),
     action: {
       default_title: "__MSG_actionTitle__",
       default_icon: { 16: "brand/icon-16.png", 24: "brand/icon-24.png", 32: "brand/icon-32.png" }

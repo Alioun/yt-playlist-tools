@@ -349,7 +349,7 @@ export function createUiRouter(ports: UiRouterPorts) {
       if (request.kind === "ui.change" && (isFeatureSettingChange(request.payload.change) || isSharedSettingChange(request.payload.change) || isKeySettingChange(request.payload.change))) {
         const resolved = await resolveSenderOrigin(ports.native, { sender, popupWindowId: request.payload.windowId })
         if (!active || resolved.kind !== "ui" || resolved.page === "onboarding" || (resolved.page !== "popup" && request.payload.windowId !== undefined)) return { kind: "rejected" }
-        const principal = typeof sender.documentId === "string" && sender.documentId.length > 0 ? JSON.stringify([sender.id, sender.documentId, resolved.page, resolved.origin]) : undefined
+        const principal = JSON.stringify([sender.id, sender.url, sender.documentId ?? null, sender.tab?.id ?? null, resolved.page, resolved.origin])
         return {
           kind: "accepted",
           context: {

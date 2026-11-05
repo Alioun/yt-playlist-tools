@@ -19,14 +19,17 @@ test("Chrome starts one combined native request before awaiting permission obser
     await h.dispose()
   }
 })
-test("Firefox uses declared Music access and asks only for optional contextMenus", async () => {
+test("Firefox asks for YouTube Music and never for its required contextMenus", async () => {
   const h = await createFirstRunHarness({ browser: "firefox" })
   try {
     const view = h.openView()
-    expect(await view.firstRun.requestPermissions({ music: true, browserMenu: true })).toEqual({ music: true, browserMenu: true })
-    expect(h.requests).toEqual([{ permissions: ["contextMenus"] }])
+    h.grants.music = false
+    const grant = view.firstRun.requestPermissions({ music: true, browserMenu: true })
+    expect(h.order).toEqual(["request"])
+    expect(h.requests).toEqual([{ origins: ["https://music.youtube.com/*"] }])
+    expect(await grant).toEqual({ music: false, browserMenu: true })
     h.requests.length = 0
-    expect((await view.firstRun.requestPermissions({ music: true, browserMenu: false })).music).toBe(true)
+    expect(await view.firstRun.requestPermissions({ music: false, browserMenu: true })).toEqual({ music: false, browserMenu: true })
     expect(h.requests).toEqual([])
   } finally {
     await h.dispose()
@@ -202,7 +205,7 @@ test("a page hears Gather's pushes from the background only, and answers shown o
       },
       permissions: { contains: async () => true, request: async () => true }
     } as never,
-    { build: "page-test" as never, deadline: () => () => {}, browser: "chrome" }
+    { build: "page-test" as never, deadline: () => () => {} }
   )
   const heard: string[] = []
   const stop = backend.watchGather(push => {

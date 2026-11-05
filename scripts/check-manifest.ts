@@ -18,10 +18,10 @@ export function expectedManifest(build: ManifestBuild, version: string): Record<
     icons: firefox
       ? { 16: "brand/icon-16.png", 32: "brand/icon-32.png", 48: "brand/icon-48.png", 96: "brand/icon-96.png", 128: "brand/icon-128.png" }
       : { 16: "brand/icon-16.png", 32: "brand/icon-32.png", 48: "brand/icon-48.png", 128: "brand/store-128.png" },
-    permissions: ["storage", "scripting"],
+    permissions: firefox ? ["storage", "scripting", "contextMenus"] : ["storage", "scripting"],
     host_permissions: ["https://www.youtube.com/*"],
     optional_host_permissions: ["https://music.youtube.com/*"],
-    optional_permissions: ["contextMenus"],
+    ...(!firefox && { optional_permissions: ["contextMenus"] }),
     background: firefox ? { scripts: ["background.js"] } : { service_worker: "background.js" },
     action: {
       default_title: "__MSG_actionTitle__",

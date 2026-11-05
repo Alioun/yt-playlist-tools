@@ -97,7 +97,7 @@ export function world(route: Route, initial: JsonObject = seed(), privateWindow 
     }
   })
   const native = { ...h.native, permissions }
-  const options = { ...h.options, local, featureAccess: nativeSharedSettingsAccess(permissions), allocateShortcut: () => `new${String(++shortcut).padStart(3, "0")}` }
+  const options = { ...h.options, local, featureAccess: nativeSharedSettingsAccess(permissions, true), allocateShortcut: () => `new${String(++shortcut).padStart(3, "0")}` }
   const generation = options.generation,
     syncClock = options.syncClock
   if (!generation || !syncClock) throw Error("Finite fixture clock and generation are required")
@@ -196,7 +196,7 @@ export function world(route: Route, initial: JsonObject = seed(), privateWindow 
         getManifest: () => ({ manifest_version: 3, name: "Feature fixture", version: "1.0.0", optional_host_permissions: ["https://music.youtube.com/*"], optional_permissions: ["contextMenus"] })
       }
     },
-    { build, deadline: clock.after, windowId: origin.windowId, browser: "chrome" }
+    { build, deadline: clock.after, windowId: origin.windowId }
   )
   return {
     h,

@@ -125,7 +125,7 @@ test("a real removal receipt is bound to the native extension document and canno
   }
 })
 
-test("native document identity is required for removal and obsolete feature wire names are absent", async () => {
+test("removal works for a sender without a native document id, which Firefox omits, and obsolete feature wire names are absent", async () => {
   const w = world("wire")
   try {
     await w.owner.ready()
@@ -146,8 +146,8 @@ test("native document identity is required for removal and obsolete feature wire
         change: { kind: "shortcut-remove", id: row.id, expected: { id: row.id, key: keyForWire(row.key), label: row.label, watchLaterOnEveryAccount: row.watchLaterOnEveryAccount } }
       }
     })
-    expect(object(answer).result).toEqual({ kind: "key-setting", outcome: { kind: "refused", reason: "unavailable" } })
-    expect(w.h.records()).toEqual(before)
+    expect(object(answer).result).toMatchObject({ kind: "key-setting", outcome: { kind: "removed", id: row.id } })
+    expect(w.settings().shortcuts.list.some(other => other.id === row.id)).toBe(false)
   } finally {
     await w.dispose()
   }
