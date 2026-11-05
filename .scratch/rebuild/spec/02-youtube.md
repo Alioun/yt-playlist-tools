@@ -666,7 +666,7 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, which Show
 | An account that can't use playlists; an account change | Once per tab (R55) |
 | Can't measure (YT-AA-41) | Once per browser session |
 
-**YT-ADD-26: console log.** Every add logs each playlist's outcome to the tab's console, whatever Show feedback says.
+**YT-ADD-26: console log.** Every add logs each playlist's outcome to the tab's console, whatever Show feedback says. An add the background starts itself, from the popup, from YouTube's keys from any tab, or from a browser menu item that saves without a picker, logs only to the background's console.
 
 ### 2.5.3 Copy
 
