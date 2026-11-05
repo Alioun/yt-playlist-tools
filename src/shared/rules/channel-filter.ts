@@ -38,14 +38,20 @@ export function channelLabel(title: string, handle?: string): { readonly title: 
  * - `available` lists the channel, switching an off filter on in this mode and keeping its kept channels;
  * - `listed` reads Allowed or Denied, and choosing it again unlists the channel;
  * - `confirm` turns an off filter on in the other mode, which clears its `kept` channels once confirmed;
- * - `greyed` is the other mode of a filter that's on.
+ * - `greyed` is the other mode of a filter that's on;
+ * - `looking-up` and `unknown` are both modes while the channel is being read, or once it couldn't be; both are disabled.
  */
 export type ChannelControl =
   | { readonly mode: Filter["mode"]; readonly state: "available"; readonly send: { readonly action: "list"; readonly mode: Filter["mode"] | null; readonly clearListed: false } }
   | { readonly mode: Filter["mode"]; readonly state: "listed"; readonly send: { readonly action: "unlist"; readonly mode: null; readonly clearListed: false } }
   | { readonly mode: Filter["mode"]; readonly state: "confirm"; readonly kept: number; readonly send: { readonly action: "list"; readonly mode: Filter["mode"]; readonly clearListed: true } }
-  | { readonly mode: Filter["mode"]; readonly state: "greyed" }
-export function channelControls(filter: Snapshot<Filter> | undefined, channel: ChannelId): readonly [ChannelControl, ChannelControl] {
+  | { readonly mode: Filter["mode"]; readonly state: "greyed" | "looking-up" | "unknown" }
+export function channelControls(filter: Snapshot<Filter> | undefined, channel: ChannelId | "looking-up" | "unknown"): readonly [ChannelControl, ChannelControl] {
+  if (!isChannelId(channel))
+    return [
+      { mode: "allow", state: channel },
+      { mode: "deny", state: channel }
+    ]
   const current: Snapshot<Filter> = filter ?? { mode: "deny", on: false, channels: [] }
   const listed = current.channels.some(([id]) => id === channel)
   const control = (mode: Filter["mode"]): ChannelControl => {

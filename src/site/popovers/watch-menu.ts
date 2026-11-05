@@ -1,5 +1,5 @@
 import type { PlaylistId, VideoId } from "../../shared/model"
-import type { ThisVideo } from "../../shared/contracts/this-video"
+import type { ThisVideo, VideoChannel } from "../../shared/contracts/this-video"
 import type { TabFilter } from "../../shared/contracts/tab-view"
 import type { SiteCore } from "../core/core"
 import { explicitContent } from "../explicit"
@@ -19,6 +19,8 @@ export type WatchMenuRequest = {
   /** Auto-add's rows, while it has playlists that take this video (UI-YT-22). */
   readonly autoAdd: {
     readonly view: ThisVideo
+    /** The video's channel, null when it can't be read; until it settles the chips read "Looking up channel…" (YT-CF-15). */
+    readonly channel: Promise<VideoChannel | null>
     readonly names: ReadonlyMap<string, string>
     readonly paused: boolean
     readonly filters: readonly TabFilter[]
@@ -129,11 +131,14 @@ export function createWatchMenu(options: {
       }
       toggle([i18n.message("thisVideo_dontAutoAdd"), i18n.message("thisVideo_autoAddAgain")], auto.view.state.kind === "skipped", next => core.actions.skip(request.video, next))
       toggle([i18n.message("watchMenu_pause"), i18n.message("watchMenu_resume")], auto.paused, next => core.actions.pause(next))
-      const channel = auto.view.channel
+      let channel: VideoChannel | "looking-up" | "unknown" = "looking-up"
       const heading = document.createElement("div"); heading.className = "heading"
-      heading.textContent = channel ? i18n.message("thisVideo_channelFilters", { channel: channel.title || channel.handle || channel.id }) : i18n.message("channelFilter_unknown")
+      const draws = [() => {
+        heading.textContent = typeof channel === "object" ? i18n.message("thisVideo_channelFilters", { channel: channel.title || channel.handle || channel.id })
+          : i18n.message(channel === "looking-up" ? "channelFilter_lookingUp" : "channelFilter_unknown")
+      }]
       menu.append(heading)
-      if (channel) for (const goal of auto.view.playlists) {
+      for (const goal of auto.view.playlists) {
         const line = document.createElement("div"); line.className = "chips"
         const title = document.createElement("span"); title.textContent = name(goal.pl)
         line.append(title)
@@ -142,16 +147,17 @@ export function createWatchMenu(options: {
         const gen = stored?.kind === "value" ? stored.gen ?? null : null
         const draw = () => {
           line.replaceChildren(title)
-          for (const control of channelControls(filter, channel.id)) line.append(chip(control))
+          const found = channel
+          for (const control of channelControls(filter, typeof found === "object" ? found.id : found)) line.append(chip(control, found))
         }
-        const chip = (control: ChannelControl) => {
+        const chip = (control: ChannelControl, channel: VideoChannel | string) => {
           const button = document.createElement("button"); button.type = "button"; button.setAttribute("role", "menuitemcheckbox")
           button.setAttribute("aria-pressed", String(control.state === "listed"))
           button.textContent = i18n.message(control.state === "listed" ? control.mode === "allow" ? "channelFilter_allowed" : "channelFilter_denied"
             : control.mode === "allow" ? "channelFilter_allowOnly" : "channelFilter_deny")
-          if (control.state === "greyed") {
+          if (!("send" in control) || typeof channel === "string") {
             button.setAttribute("aria-disabled", "true")
-            button.title = i18n.message(control.mode === "allow" ? "channelFilter_usesDeny" : "channelFilter_usesAllow", { playlist: name(goal.pl) })
+            if (control.state === "greyed") button.title = i18n.message(control.mode === "allow" ? "channelFilter_usesDeny" : "channelFilter_usesAllow", { playlist: name(goal.pl) })
             return button
           }
           button.addEventListener("click", async () => {
@@ -176,9 +182,12 @@ export function createWatchMenu(options: {
           })
           return button
         }
-        draw()
+        draws.push(draw)
         menu.append(line)
       }
+      const redraw = () => { for (const draw of draws) draw() }
+      redraw()
+      void auto.channel.then(found => { channel = found ?? "unknown"; redraw() })
     }
     const quick = request.quickSave
     const listed = quick?.name ?? (quick?.playlist === "WL" ? i18n.message("picker_watchLater") : null)

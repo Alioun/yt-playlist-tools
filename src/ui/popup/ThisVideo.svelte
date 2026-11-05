@@ -22,6 +22,8 @@
   let confirming = $state<{ readonly playlist: PlaylistId; readonly control: Extract<ChannelControl, { state: "confirm" }> } | null>(null)
   let again: ReturnType<typeof setTimeout> | undefined
   onDestroy(() => clearTimeout(again))
+  // The answer waits for the tab to read the channel, so the card never shows mid-lookup; one that couldn't read it
+  // keeps both controls disabled under "Channel unknown" (YT-CF-15).
   async function read() {
     const answer = await backend.call("ui.thisTab", {})
     tab = answer.kind === "answered" ? answer.result : { kind: "unavailable" }
@@ -63,7 +65,7 @@
   }
   async function channel(playlist: PlaylistId, control: ChannelControl) {
     const found = shown?.video.channel
-    if (!shown || !found || control.state === "greyed" || busy) return
+    if (!shown || !found || !("send" in control) || busy) return
     if (control.state === "confirm" && confirming?.playlist !== playlist) { confirming = { playlist, control }; return }
     confirming = null
     busy = true; failure = null
@@ -112,35 +114,32 @@
           {/each}
         </ul>
         {#if shown.video.playlists.length}
+          {@const found = shown.video.channel}
           <Button size="sm" variant="outline" class="self-start" pending={busy} onclick={() => skip(!skipped)}>
             {i18n.message(skipped ? "thisVideo_autoAddAgain" : "thisVideo_dontAutoAdd")}</Button>
           <div class="flex flex-col gap-1.5">
-            {#if shown.video.channel}
-              {@const found = shown.video.channel}
-              <p class="font-medium">{i18n.message("thisVideo_channelFilters", { channel: found.title || found.handle || found.id })}</p>
-              {#each shown.video.playlists as row (row.pl)}
-                {@const controls = channelControls(entry?.filters.get(row.pl), found.id)}
-                <div class="flex flex-wrap items-center gap-1.5" data-channel-row={row.pl}>
-                  <span class="min-w-0 flex-1 truncate">{name(row.pl)}</span>
-                  {#each controls as control (control.mode)}
-                    <Button size="sm" variant={control.state === "listed" ? "default" : "outline"} disabled={busy || control.state === "greyed"} aria-pressed={control.state === "listed"}
-                      title={control.state === "greyed" ? i18n.message(control.mode === "allow" ? "channelFilter_usesDeny" : "channelFilter_usesAllow", { playlist: name(row.pl) }) : undefined}
-                      onclick={() => channel(row.pl, control)}>{controlLabel(control)}</Button>
-                  {/each}
+            <p class={found ? "font-medium" : "text-muted-foreground"}>{found ? i18n.message("thisVideo_channelFilters", { channel: found.title || found.handle || found.id })
+              : i18n.message("channelFilter_unknown")}</p>
+            {#each shown.video.playlists as row (row.pl)}
+              {@const controls = channelControls(entry?.filters.get(row.pl), found?.id ?? "unknown")}
+              <div class="flex flex-wrap items-center gap-1.5" data-channel-row={row.pl}>
+                <span class="min-w-0 flex-1 truncate">{name(row.pl)}</span>
+                {#each controls as control (control.mode)}
+                  <Button size="sm" variant={control.state === "listed" ? "default" : "outline"} disabled={busy || !("send" in control)} aria-pressed={control.state === "listed"}
+                    title={control.state === "greyed" ? i18n.message(control.mode === "allow" ? "channelFilter_usesDeny" : "channelFilter_usesAllow", { playlist: name(row.pl) }) : undefined}
+                    onclick={() => channel(row.pl, control)}>{controlLabel(control)}</Button>
+                {/each}
+              </div>
+              {#if confirming?.playlist === row.pl}
+                {@const ask = confirming.control}
+                <div class="bg-muted flex flex-wrap items-center gap-2 rounded-lg p-2" role="alertdialog" aria-label={i18n.message("filter_switchMode")}>
+                  <span class="min-w-0 flex-1">{i18n.message(ask.mode === "allow" ? (i18n.plural(ask.kept) === "one" ? "channelFilter_turnOnAllow_one" : "channelFilter_turnOnAllow_other")
+                    : (i18n.plural(ask.kept) === "one" ? "channelFilter_turnOnDeny_one" : "channelFilter_turnOnDeny_other"), { playlist: name(row.pl), count: i18n.number(ask.kept) })}</span>
+                  <Button size="sm" onclick={() => channel(row.pl, ask)}>{i18n.message("filter_switchMode")}</Button>
+                  <Button size="sm" variant="ghost" onclick={() => { confirming = null }}>{i18n.message("filter_cancel")}</Button>
                 </div>
-                {#if confirming?.playlist === row.pl}
-                  {@const ask = confirming.control}
-                  <div class="bg-muted flex flex-wrap items-center gap-2 rounded-lg p-2" role="alertdialog" aria-label={i18n.message("filter_switchMode")}>
-                    <span class="min-w-0 flex-1">{i18n.message(ask.mode === "allow" ? (i18n.plural(ask.kept) === "one" ? "channelFilter_turnOnAllow_one" : "channelFilter_turnOnAllow_other")
-                      : (i18n.plural(ask.kept) === "one" ? "channelFilter_turnOnDeny_one" : "channelFilter_turnOnDeny_other"), { playlist: name(row.pl), count: i18n.number(ask.kept) })}</span>
-                    <Button size="sm" onclick={() => channel(row.pl, ask)}>{i18n.message("filter_switchMode")}</Button>
-                    <Button size="sm" variant="ghost" onclick={() => { confirming = null }}>{i18n.message("filter_cancel")}</Button>
-                  </div>
-                {/if}
-              {/each}
-            {:else}
-              <p class="text-muted-foreground">{i18n.message("channelFilter_unknown")}</p>
-            {/if}
+              {/if}
+            {/each}
           </div>
         {/if}
         {#if onsave}

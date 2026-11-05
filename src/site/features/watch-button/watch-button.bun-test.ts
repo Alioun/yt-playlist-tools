@@ -12,7 +12,7 @@ import { createWatchMenu, type WatchMenuRequest } from "../../popovers/watch-men
 import type { OpenPicker, Popovers } from "../../popovers/types"
 import { fit, retryMs, watchButton } from "./feature"
 import { createThisVideoChannel } from "../../core/this-video"
-import type { ThisVideo } from "../../../shared/contracts/this-video"
+import type { ThisVideo, VideoChannel } from "../../../shared/contracts/this-video"
 import { clock, labels, settle, undoKey } from "../../../../tools/fixtures/site-toaster/harness"
 import { englishI18n } from "../../../../tools/fixtures/localization/scripted"
 import { playlist, video, wireView } from "../../../../tools/fixtures/tab-view/cases"
@@ -37,7 +37,7 @@ function actionRow() {
   return buttons
 }
 
-function setup(state: "working" | "not-working" = "working", shorts = false) {
+function setup(state: "working" | "not-working" = "working", shorts = false, channelOf?: Promise<unknown>) {
   const timers = clock()
   const thisVideo = createThisVideoChannel()
   const navs: ((nav: NavData) => void)[] = []
@@ -48,7 +48,8 @@ function setup(state: "working" | "not-working" = "working", shorts = false) {
     view: { read: () => buttonView(state, shorts), subscribe: () => () => {} },
     page: { onState(listener: (state: { kind: string }) => void) { listener({ kind: "ready" }); return () => {} },
       watch(_stream: string, listener: (nav: NavData) => void) { navs.push(listener); return () => {} },
-      run: async () => ({ ok: true, route: "r", data: { videoId: video, title: "First video", length: 60, kind: "video" } }) } as never,
+      run: async ({ job }: { job: { kind: string } }) => job.kind === "channelOf" && channelOf ? channelOf
+        : { ok: true, route: "r", data: { videoId: video, title: "First video", length: 60, kind: "video" } } } as never,
     actions: { playlists: async () => ({ kind: "cached", listing: { rows: [{ id: playlist, title: "Mixes" }], at: 1 } }) } as never,
     notices: { wouldAct: feature => { notices.push(feature) } }, popovers: async () => popovers })
   running.push(() => { scope.dispose(); timers.restore(); document.body.replaceChildren() })
@@ -162,7 +163,7 @@ test("the button shows auto-add's state: a pie toward the goal while counting, t
   expect(f.button()?.textContent).toBe("")
 })
 
-function autoMenu(options: { skip?: () => boolean; filter?: { mode: "allow" | "deny"; on: boolean; channels: [string, string][] } } = {}) {
+function autoMenu(options: { skip?: () => boolean; filter?: { mode: "allow" | "deny"; on: boolean; channels: [string, string][] }; channel?: Promise<VideoChannel | null> } = {}) {
   const timers = clock()
   const root = new Scope({ document, onError: () => {} })
   const keys = new Keys({ document, blockers: { menuOpen: () => false, dialogOpen: () => false, extensionPopoverOpen: () => false }, onError: () => {} })
@@ -180,7 +181,7 @@ function autoMenu(options: { skip?: () => boolean; filter?: { mode: "allow" | "d
   running.push(() => { menu.close(); root.dispose(); keys.dispose(); timers.restore(); document.body.replaceChildren() })
   const channel = { id: "UCaaaaaaaaaaaaaaaaaaaaaa" as never, title: "Band", handle: null }
   menu.open({ video, title: "First video", anchor, status: "Auto-adds at 50 % · 30 % watched", share: .6, quickSave: null, pickerKey: null,
-    autoAdd: { view: counting({ channel }), names: new Map([[playlist, "Mixes"]]), paused: false,
+    autoAdd: { view: counting(), channel: options.channel ?? Promise.resolve(channel), names: new Map([[playlist, "Mixes"]]), paused: false,
       filters: options.filter ? [{ playlist: playlist as PlaylistId, state: { kind: "value", filter: options.filter, gen: "gen-1" } }] : [] } })
   const shadow = () => document.querySelector("pp-watch-menu")?.shadowRoot
   const rows = () => [...shadow()?.querySelectorAll("button") ?? []]
@@ -207,12 +208,44 @@ test("the menu lists auto-add's goals, Don't auto-add, Pause, this channel's chi
 
 test("a chip that would clear kept channels asks first, in the menu (YT-CF-15)", async () => {
   const m = autoMenu({ filter: { mode: "deny", on: false, channels: [["UCbbbbbbbbbbbbbbbbbbbbbb", "Talk"]] } })
+  await settle()
   m.find("Allow only").click(); await settle()
   expect(m.shadow()?.querySelector(".ask")?.textContent).toBe("Turn on Allow only for Mixes? This clears its 1 denied channel.")
   expect(m.calls).toEqual([])
   m.find("Switch").click(); await settle()
   expect(m.calls).toEqual([["channel", { playlist, channel: ["UCaaaaaaaaaaaaaaaaaaaaaa", "Band"], action: "list", mode: "allow", clearListed: true, expectedGeneration: "gen-1" }]])
   expect(m.find("Allowed")).toBeTruthy()
+})
+
+test("the menu opens while the channel is read, its chips disabled under Looking up channel…, then disabled under Channel unknown when it can't be read (YT-CF-15)", async () => {
+  let read: (answer: unknown) => void = () => {}
+  const f = setup("working", false, new Promise(resolve => { read = resolve }))
+  actionRow()
+  f.navigate(watchNav)
+  f.timers.advance(0)
+  f.thisVideo.publish(counting())
+  f.host()?.shadowRoot?.querySelector("button")?.click()
+  await settle()
+  expect(f.menus).toHaveLength(1)
+  let found: unknown = "pending"
+  void f.menus[0]?.autoAdd?.channel.then(channel => { found = channel })
+  await settle()
+  expect(found).toBe("pending")
+  read({ ok: true, route: "r", data: { channelId: "UCaaaaaaaaaaaaaaaaaaaaaa", title: "Band", handle: "@band" } })
+  await settle()
+  expect(found).toEqual({ id: "UCaaaaaaaaaaaaaaaaaaaaaa", title: "Band", handle: "@band" })
+
+  let settleChannel: (channel: VideoChannel | null) => void = () => {}
+  const m = autoMenu({ channel: new Promise(resolve => { settleChannel = resolve }) })
+  const chips = () => [...m.shadow()?.querySelectorAll(".chips button") ?? []].map(button => [button.textContent, button.getAttribute("aria-disabled")])
+  expect(m.shadow()?.querySelector(".heading")?.textContent).toBe("Looking up channel…")
+  expect(chips()).toEqual([["Allow only", "true"], ["Deny", "true"]])
+  m.find("Deny").click(); await settle()
+  settleChannel(null); await settle()
+  expect(m.shadow()?.querySelector(".heading")?.textContent).toBe("Channel unknown")
+  expect(chips()).toEqual([["Allow only", "true"], ["Deny", "true"]])
+  m.find("Deny").click(); await settle()
+  expect(m.calls).toEqual([])
 })
 
 test("in a narrow row the pill folds to its icon, unfolds with 16 px to spare, and hides rather than push Save into the overflow (UI-YT-20, UI-YT-21)", () => {

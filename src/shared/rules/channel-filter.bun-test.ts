@@ -113,3 +113,16 @@ test("this channel's controls follow YT-CF-15: an on filter offers only its mode
     )[0]
   ).toEqual({ mode: "allow", state: "confirm", kept: 3, send: { action: "list", mode: "allow", clearListed: true } })
 })
+
+test("while the channel is being read, or once it can't be, both modes are disabled whatever the filter (YT-CF-15)", () => {
+  for (const filter of [undefined, { mode: "allow" as const, on: true, channels: [] }, { mode: "deny" as const, on: false, channels: [] }]) {
+    expect(channelControls(filter, "looking-up")).toEqual([
+      { mode: "allow", state: "looking-up" },
+      { mode: "deny", state: "looking-up" }
+    ])
+    expect(channelControls(filter, "unknown")).toEqual([
+      { mode: "allow", state: "unknown" },
+      { mode: "deny", state: "unknown" }
+    ])
+  }
+})
