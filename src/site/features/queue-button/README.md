@@ -28,7 +28,7 @@ Construction and definition are inert. `start` runs only while the current quali
 
 ## Placement
 
-The overlay host sits right after the card's thumbnail link, 4 px into its offset box, and moves into search's inline preview while that preview covers the thumbnail. The slot is not drawn where the card contains YouTube's own `[aria-label='Add to queue']`. Placement re-checks at 150 ms and 900 ms after each hover, and the preview is observed only while it holds the host. Moving to another card cancels the old checks. The button never takes focus, uses `aria-disabled` rather than `disabled` to keep the tab order, and the host stops only its own click events from reaching the card.
+The button sits in the thumbnail corner that the `corner` option names, 4 px in. A change to the option moves a shown button at once. The overlay host sits right after the card's thumbnail link, 4 px into its offset box, and moves into search's inline preview while that preview covers the thumbnail. The slot is not drawn where the card contains YouTube's own `[aria-label='Add to queue']`. Placement re-checks at 150 ms and 900 ms after each hover, and the preview is observed only while it holds the host. Moving to another card cancels the old checks. The button never takes focus, uses `aria-disabled` rather than `disabled` to keep the tab order, and the host stops only its own click events from reaching the card.
 
 ## Not proven
 

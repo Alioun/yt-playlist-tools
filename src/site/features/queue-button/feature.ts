@@ -9,6 +9,7 @@ import type { Dispose, Scope } from "../../core/scope"
 import type { Feedback } from "../../kit/feedback"
 import type { OverlayAnchor, OverlayKit } from "../../kit/overlay"
 import type { ToastContent, ToastHandle } from "../../kit/toaster/types"
+import type { ThumbnailCorner } from "../../../shared/model/validation"
 import { glyph } from "./glyphs"
 import { busy, failedForMs, idle, outcomeOf, pageOutcomes, settled, toastOf, visuals, type QueueEntry, type QueueOutcome } from "./model"
 
@@ -24,7 +25,7 @@ export type QueueButtonServices = {
   readonly text: QueueButtonText
   readonly notices: QueueNotices
 }
-type Authority = { readonly feedback: boolean; readonly working: boolean }
+type Authority = { readonly feedback: boolean; readonly working: boolean; readonly corner: ThumbnailCorner }
 type Shown = { readonly target: WwwItemTarget; readonly link: HTMLElement; readonly checks: Dispose[] }
 
 export const nativeQueue = "[aria-label='Add to queue']"
@@ -40,7 +41,7 @@ function authority(view: SiteView<"www"> | null): Authority | null {
   const feature = view?.features.find(entry => entry.id === "queue-button")
   if (!view || !feature || feature.id !== "queue-button") return null
   const status = view.statuses.find(entry => entry.feature === "queue-button")
-  return { feedback: feature.options.feedback, working: status?.state !== "not-working" }
+  return { feedback: feature.options.feedback, working: status?.state !== "not-working", corner: feature.options.corner }
 }
 function supported(pointed: WwwPointed): WwwItemTarget | null {
   if (pointed.kind !== "pointed-item") return null
@@ -88,8 +89,9 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     lease.place(null)
   }
   function anchorOf(current: Shown): OverlayAnchor | null {
-    if (current.target.element.querySelector(nativeQueue)) return null
-    return { kind: "thumbnail", link: current.link }
+    const allowed = authority(view.read())
+    if (!allowed || current.target.element.querySelector(nativeQueue)) return null
+    return { kind: "thumbnail", link: current.link, corner: allowed.corner }
   }
   function current(): Shown | null {
     const value = shown
@@ -203,7 +205,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     if (stopNav === nothing) stopNav = scope.add(page.watch("nav", () => { outcomes.reset(); render() }))
   }))
   scope.add(() => { stopNav(); conceal() })
-  view.subscribe(() => render())
+  view.subscribe(() => { if (shown) place(shown) })
   lease.tooltip(button, () => {
     const value = shown
     return text.label(visuals[value ? outcomes.read(value.target.identity.videoId).kind : "idle"].label)

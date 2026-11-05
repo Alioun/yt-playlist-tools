@@ -1,7 +1,7 @@
 import type { Filter, Key, MusicAction, Settings, Setup } from "../model/types"
 import type { Snapshot } from "../model/settings-view"
 import { isKey } from "../model/keys"
-import { isAccountKey, isChannelId, isPercent, isPlaylistId, isShortcutId, isVideoId, type PlaylistId, type VideoId } from "../model/validation"
+import { isAccountKey, isChannelId, isPercent, isPlaylistId, isShortcutId, isThumbnailCorner, isVideoId, type PlaylistId, type VideoId } from "../model/validation"
 import { anchors, features, type AnchorId } from "../features/registry"
 import { objectShape } from "./object-shape"
 import { supportsJob, type AccountData } from "./jobs"
@@ -110,7 +110,7 @@ const optionChecks = {
       list: rows => Array.isArray(rows) && rows.length <= 20 && rows.every(shortcut) && unique(rows.map(row => row.id))
     }),
   "quick-save": (v: unknown) => objectShape(v, { on: v => v === true, feedback: bool, shortsShelves: bool }),
-  "queue-button": (v: unknown) => objectShape(v, { on: v => v === true, feedback: bool }),
+  "queue-button": (v: unknown) => objectShape(v, { on: v => v === true, feedback: bool, corner: isThumbnailCorner }),
   "watch-button": (v: unknown) => objectShape(v, { on: v => v === true, feedback: bool, shorts: bool }),
   "card-menu": (v: unknown) => objectShape(v, { on: v => v === true, keepLinkMenu: bool }),
   gather: (v: unknown) =>

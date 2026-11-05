@@ -158,7 +158,7 @@ test("after consent the YouTube tab lists the eight rows in order, with summarie
 })
 
 test("a feature on without site access is held with its reason and Give access", async () => {
-  popup({ ...agreed, "doc:settings": stamped({ queueButton: { on: true, feedback: true } }) }, {}, { www: false, music: false, browserMenu: false })
+  popup({ ...agreed, "doc:settings": stamped({ queueButton: { on: true, feedback: true, corner: "top-left" } }) }, {}, { www: false, music: false, browserMenu: false })
   const row = await screen.findByRole("switch", { name: "Queue button on thumbnails" })
   await screen.findAllByText("Needs site access")
   expect(row).toHaveAttribute("data-held")

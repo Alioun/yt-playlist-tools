@@ -108,7 +108,7 @@ test("a fresh install marks the empty store current, opens first run once, and r
 })
 
 test("after consent, the queue button and card menu files are registered on youtube.com in registry order", async () => {
-  await fakeBrowser.storage.local.set(agreedWith({ queueButton: { on: true, feedback: true }, cardMenu: { on: true, keepLinkMenu: false } }))
+  await fakeBrowser.storage.local.set(agreedWith({ queueButton: { on: true, feedback: true, corner: "top-left" }, cardMenu: { on: true, keepLinkMenu: false } }))
   const native = nativeRegistration(["https://www.youtube.com/*"])
   start()
   await eventually(() => native.scripts().length === 2)

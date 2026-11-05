@@ -31,7 +31,9 @@ type Caller = { readonly kind: "page"; readonly page: SenderPage } | { readonly 
 
 function callerAt(deps: SenderOriginPorts, url: string | undefined): Caller | undefined {
   if (typeof url !== "string") return undefined
-  const page = pages.find(page => url === deps.runtime.getURL(pagePaths[page]))
+  // Settings routes by hash, and the fragment never changes which page sent the message.
+  const [document] = url.split("#", 1)
+  const page = pages.find(page => document === deps.runtime.getURL(pagePaths[page]))
   if (page) return { kind: "page", page }
   const site = sites.find(site => url.startsWith(sitePrefixes[site]))
   if (site) return { kind: "site", site }

@@ -218,7 +218,6 @@ test("synthetic wrong extension, exact page, frame and content-script metadata r
     { ...sender, frameId: undefined },
     { ...sender, url: "https://www.youtube.com/watch?v=synthetic" },
     { ...sender, url: sender.url + "?forged=1" },
-    { ...sender, url: sender.url + "#forged" },
     { ...sender, url: fakeBrowser.runtime.getURL("/popup.html") },
     { ...sender, tab: undefined }
   ])

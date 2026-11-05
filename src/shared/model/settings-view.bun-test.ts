@@ -22,7 +22,7 @@ export function settingsViewAcceptance(read: typeof readSettingsView) {
     autoAdd: { on: false, feedback: true, pct: 50, toolbarTick: true, toolbarPaused: true },
     shortcuts: { on: false, feedback: true, music: true, preset: false, picker: null, list: [] },
     quickSave: { on: false, feedback: true, shortsShelves: false },
-    queueButton: { on: false, feedback: true },
+    queueButton: { on: false, feedback: true, corner: "top-left" },
     watchButton: { on: false, feedback: true, shorts: false },
     cardMenu: { on: false, keepLinkMenu: false },
     browserMenu: { on: false, feedback: true },

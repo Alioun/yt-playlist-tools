@@ -83,7 +83,7 @@ function fixtureSuite(prepare: typeof prepareDocumentBody, dependencies: Depende
         future: { char: "unknown" }
       },
       quickSave: { on: false, feedback: true, shortsShelves: true },
-      queueButton: { on: true, feedback: false },
+      queueButton: { on: true, feedback: false, corner: "top-left" },
       watchButton: { on: false, feedback: true, shorts: false },
       cardMenu: { on: true, keepLinkMenu: true },
       browserMenu: { on: false, feedback: true },
@@ -137,7 +137,7 @@ function fixtureSuite(prepare: typeof prepareDocumentBody, dependencies: Depende
       future: { char: "unknown" }
     },
     quickSave: { on: false, feedback: true, shortsShelves: true },
-    queueButton: { on: true, feedback: false },
+    queueButton: { on: true, feedback: false, corner: "top-left" },
     watchButton: { on: false, feedback: true, shorts: false },
     cardMenu: { on: true, keepLinkMenu: true },
     browserMenu: { on: false, feedback: true },

@@ -31,7 +31,7 @@ export const initial: JsonObject = {
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -107,7 +107,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -171,7 +171,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -235,7 +235,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": false, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -299,7 +299,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": false },
+      "queueButton": { "on": false, "feedback": false, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -340,6 +340,255 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
     }
   },
   {
+    "name": "queueButton.corner",
+    "change": {
+      "kind": "option",
+      "field": "queueButton.corner",
+      "value": "bottom-right"
+    },
+    "expectedSettings": {
+      "theme": "system",
+      "undoKey": {
+        "char": "n",
+        "code": "KeyN",
+        "ctrl": false,
+        "alt": true,
+        "shift": false,
+        "meta": false,
+        "futureKey": {
+          "keep": [1, null]
+        }
+      },
+      "autoAdd": {
+        "on": false,
+        "feedback": true,
+        "pct": 50,
+        "toolbarTick": true,
+        "toolbarPaused": true,
+        "futureAuto": {
+          "keep": true
+        }
+      },
+      "shortcuts": {
+        "on": false,
+        "feedback": true,
+        "music": false,
+        "preset": true,
+        "picker": {
+          "char": "n",
+          "code": "KeyN",
+          "ctrl": false,
+          "alt": true,
+          "shift": false,
+          "meta": false,
+          "futureKey": {
+            "keep": [1, null]
+          }
+        },
+        "list": [
+          {
+            "id": "save01",
+            "key": {
+              "char": "n",
+              "code": "KeyN",
+              "ctrl": false,
+              "alt": true,
+              "shift": false,
+              "meta": false,
+              "futureKey": {
+                "keep": [1, null]
+              }
+            },
+            "label": "Kept shortcut",
+            "watchLaterOnEveryAccount": true,
+            "futureRow": ["keep"]
+          }
+        ]
+      },
+      "quickSave": {
+        "on": false,
+        "feedback": true,
+        "shortsShelves": false
+      },
+      "queueButton": {
+        "on": false,
+        "feedback": true,
+        "corner": "bottom-right"
+      },
+      "watchButton": {
+        "on": false,
+        "feedback": true,
+        "shorts": false
+      },
+      "cardMenu": {
+        "on": false,
+        "keepLinkMenu": false
+      },
+      "browserMenu": {
+        "on": false,
+        "feedback": true
+      },
+      "musicSection": false,
+      "musicActions": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "buttons": {
+          "next": true,
+          "queue": true,
+          "save": false,
+          "like": false,
+          "remove": false,
+          "bar": false,
+          "library": false,
+          "mix": false,
+          "album": false,
+          "artist": false,
+          "futureButton": true
+        }
+      },
+      "musicKeys": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "keys": {
+          "next": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "queue": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "save": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "picker": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "like": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "remove": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "library": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "mix": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "album": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          },
+          "artist": {
+            "char": "n",
+            "code": "KeyN",
+            "ctrl": false,
+            "alt": true,
+            "shift": false,
+            "meta": false,
+            "futureKey": {
+              "keep": [1, null]
+            }
+          }
+        }
+      },
+      "anyTabKeys": {
+        "on": false,
+        "feedback": true
+      },
+      "gather": {
+        "on": false,
+        "feedback": true,
+        "to": "player",
+        "order": "newest",
+        "close": false,
+        "auto": {
+          "unvisited": true,
+          "after": "1d",
+          "background": true,
+          "count": true,
+          "n": 10,
+          "futureTrigger": ["keep"]
+        }
+      },
+      "futureRoot": {
+        "keep": ["unknown", 0, null]
+      }
+    }
+  },
+  {
     "name": "watchButton.feedback",
     "change": { "kind": "option", "field": "watchButton.feedback", "value": false },
     "expectedSettings": {
@@ -363,7 +612,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": false, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -427,7 +676,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": false },
@@ -491,7 +740,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -555,7 +804,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -619,7 +868,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -683,7 +932,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -747,7 +996,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -811,7 +1060,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -875,7 +1124,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": true },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -939,7 +1188,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": true },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1003,7 +1252,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": true },
       "browserMenu": { "on": false, "feedback": true },
@@ -1067,7 +1316,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1131,7 +1380,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1195,7 +1444,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1259,7 +1508,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1323,7 +1572,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1387,7 +1636,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1451,7 +1700,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1515,7 +1764,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1579,7 +1828,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1643,7 +1892,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1707,7 +1956,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1771,7 +2020,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1835,7 +2084,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1899,7 +2148,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -1963,7 +2212,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -2027,7 +2276,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -2091,7 +2340,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },
@@ -2155,7 +2404,7 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
         ]
       },
       "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
-      "queueButton": { "on": false, "feedback": true },
+      "queueButton": { "on": false, "feedback": true, "corner": "top-left" },
       "watchButton": { "on": false, "feedback": true, "shorts": false },
       "cardMenu": { "on": false, "keepLinkMenu": false },
       "browserMenu": { "on": false, "feedback": true },

@@ -95,14 +95,14 @@ test("before consent every tab shows a violet ! titled that Perchling is waiting
 })
 
 test("a feature not working shows an amber ! on its tab only, and clears back to every tab's badge", async () => {
-  const records = { ...agreedRecords, "doc:settings": { v: 1, gen: "g", at: 1, by: "d", data: { queueButton: { on: true, feedback: true } } } }
+  const records = { ...agreedRecords, "doc:settings": { v: 1, gen: "g", at: 1, by: "d", data: { queueButton: { on: true, feedback: true, corner: "top-left" } } } }
   const broken = driver(records, { broken: [7] })
   await broken.badge.refresh()
   expect(broken.calls).toEqual(["text 7 !", "color 7 #c27803", "title 7 Queue button on thumbnails isn't working in this tab"])
 })
 
 test("site access missing for a switched-on feature shows a violet ! everywhere", async () => {
-  const { badge, calls } = driver({ ...agreedRecords, "doc:settings": { v: 1, gen: "g", at: 1, by: "d", data: { queueButton: { on: true, feedback: true } } } }, { www: false })
+  const { badge, calls } = driver({ ...agreedRecords, "doc:settings": { v: 1, gen: "g", at: 1, by: "d", data: { queueButton: { on: true, feedback: true, corner: "top-left" } } } }, { www: false })
   await badge.refresh()
   expect(calls).toEqual(["text all !", "color all #7b5cd6", "title all Perchling needs site access"])
 })

@@ -96,7 +96,7 @@ test("Report radios move focus and selection with ArrowDown", async () => {
 })
 
 test("Settings opens on YouTube with every feature card, and the nav lists the eight sections", async () => {
-  settings({ ...agreed, "doc:settings": stamped({ queueButton: { on: true, feedback: true } }) })
+  settings({ ...agreed, "doc:settings": stamped({ queueButton: { on: true, feedback: true, corner: "top-left" } }) })
   const nav = await screen.findByRole("navigation", { name: "Settings sections" }, { timeout: 5000 })
   expect(
     within(nav)

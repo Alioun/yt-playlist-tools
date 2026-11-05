@@ -19,7 +19,7 @@ afterEach(async () => {
 // A signed-in YouTube tab with the queue button on, whose site core has said hello and runs the feature.
 async function queueButtonTab() {
   const world = browser({})
-  await world.seed({ "doc:settings": documented("settings", { queueButton: { on: true, feedback: true } }) })
+  await world.seed({ "doc:settings": documented("settings", { queueButton: { on: true, feedback: true, corner: "top-left" } }) })
   world.tabs.open(1, "https://www.youtube.com/", { active: true })
   const w = world.worker()
   running.push(w.background)

@@ -177,7 +177,7 @@ export function expectedSettings(): JsonObject {
       list: [{ id: "SAVE01", key: { code: "KeyX", ctrl: false, alt: true, shift: false, meta: false }, label: "Imported row", watchLaterOnEveryAccount: false, rowFuture: "row-extension" }]
     },
     quickSave: { on: false, feedback: true, shortsShelves: false },
-    queueButton: { on: false, feedback: true },
+    queueButton: { on: false, feedback: true, corner: "top-left" },
     watchButton: { on: false, feedback: true, shorts: false },
     cardMenu: { on: false, keepLinkMenu: false },
     browserMenu: { on: false, feedback: true },

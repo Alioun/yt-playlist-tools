@@ -1,3 +1,5 @@
+import type { ThumbnailCorner } from "./validation"
+
 export type Stamp = { v: number; gen: string; at: number; by: string }
 export type Stamped<T> = Stamp & { data: T }
 export type Tombstone = Stamp & { deleted: true }
@@ -55,7 +57,7 @@ export type Settings = {
     list: Shortcut[]
   }
   quickSave: { on: boolean; feedback: boolean; shortsShelves: boolean }
-  queueButton: { on: boolean; feedback: boolean }
+  queueButton: { on: boolean; feedback: boolean; corner: ThumbnailCorner }
   watchButton: { on: boolean; feedback: boolean; shorts: boolean }
   cardMenu: { on: boolean; keepLinkMenu: boolean }
   browserMenu: { on: boolean; feedback: boolean }

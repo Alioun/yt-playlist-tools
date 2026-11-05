@@ -1,3 +1,4 @@
+import type { ThumbnailCorner } from "../../../src/shared/model/validation"
 import { isQueueListId, isSetVideoId, type Job } from "../../../src/shared/contracts"
 import { isTabView, type FeatureStatus, type TabView } from "../../../src/shared/contracts/tab-view"
 import { tabHelloMessages, tabMessages, type TabHelloMessages, type TabMessages } from "../../../src/shared/contracts/tabs"
@@ -28,12 +29,12 @@ export const entryA = checked(isSetVideoId, "synthetic-entry-a")
 export const entryB = checked(isSetVideoId, "synthetic-entry-b")
 
 const brokenJobs = { working: [], "partly-working": ["queueUndo"], "not-working": ["queueAdd"] } as const satisfies Record<FeatureStatus["state"], FeatureStatus["jobs"]>
-export type QueueViewOptions = { readonly signedIn?: boolean; readonly feedback?: boolean; readonly state?: FeatureStatus["state"]; readonly on?: boolean }
+export type QueueViewOptions = { readonly signedIn?: boolean; readonly feedback?: boolean; readonly state?: FeatureStatus["state"]; readonly on?: boolean; readonly corner?: ThumbnailCorner }
 export function queueView(options: QueueViewOptions = {}): SiteView<"www"> {
-  const { signedIn = true, feedback = true, state = "working", on = true } = options
+  const { signedIn = true, feedback = true, state = "working", on = true, corner = "top-left" } = options
   const base = wireView("www", signedIn)
   if (base.site !== "www") throw Error("Expected a www specimen")
-  const features = on ? base.features.flatMap(feature => (feature.id === "queue-button" ? [{ ...feature, options: { ...feature.options, feedback } }] : [])) : []
+  const features = on ? base.features.flatMap(feature => (feature.id === "queue-button" ? [{ ...feature, options: { ...feature.options, feedback, corner } }] : [])) : []
   const value = checked(isTabView, {
     ...base,
     ...(signedIn ? { acct: expectedKey(rawIdentity) } : {}),

@@ -693,7 +693,7 @@ type Settings = {
     list: { id: string; key: Key | null; label: string; watchLaterOnEveryAccount: boolean }[] // ≤ 20
   }
   quickSave: { on: boolean; feedback: boolean; shortsShelves: boolean } // options: On Shorts shelves too, default false (R11)
-  queueButton: { on: boolean; feedback: boolean }
+  queueButton: { on: boolean; feedback: boolean; corner: "top-left" | "top-right" | "bottom-left" | "bottom-right" }
   watchButton: { on: boolean; feedback: boolean; shorts: boolean }     // feedback default true (R42); options: On Shorts too, default false (R11)
   cardMenu: { on: boolean; keepLinkMenu: boolean }                     // options: Links inside cards keep the browser's menu, default false (R11)
   browserMenu: { on: boolean; feedback: boolean }                      // Save from the browser's menu (R91)
