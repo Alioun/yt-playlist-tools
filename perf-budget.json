@@ -4,7 +4,7 @@
       "page": 13.8,
       "core": 28.3,
       "kit": 28,
-      "auto-add": 5.5,
+      "auto-add": 5.6,
       "shortcuts": 2.0,
       "quick-save": 3.6,
       "queue-button": 3.6,
@@ -21,7 +21,7 @@
     }
   },
   "totals": {
-    "www": 90.9,
+    "www": 91.0,
     "music": 84.2
   },
   "lazy": {
