@@ -20,7 +20,7 @@ Mode switching:
 
 **Blocked by:** 11 (Denylist mode, end to end)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Base branch:** `main` if [Alioun/yt-playlist-tools#2](https://github.com/Alioun/yt-playlist-tools/pull/2) (WXT migration) has merged. Otherwise stack on ticket 11's branch and retarget to `main` once it merges. One branch and one PR for this ticket.
 
@@ -42,3 +42,8 @@ Mode switching:
 - Allow and deny blocks share the one "filtered out of" toast. With an unknown channel only allowlists block, and the toast is "Couldn't identify the channel, so it was skipped for …".
 - An empty allowlist that is on says "No channels listed yet, so nothing is auto-added here."
 - The live check is still open: the built-in browser can't load the extension or sign in.
+
+## Answer
+
+Superseded by Perchling 2.0: YT-CF-02, YT-CF-04, YT-CF-11–13 and YT-CF-18, UI-PICK-20 and UI-PICK-21, and R26 for the unknown-channel outcome.
+The editor is `src/ui/components/ChannelFilterEditor.svelte`, and its writes go through `src/background/store/channel-filter-edit.ts`.

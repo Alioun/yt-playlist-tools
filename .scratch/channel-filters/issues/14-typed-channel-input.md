@@ -11,7 +11,7 @@ How each input form is handled:
 
 **Blocked by:** 11 (Denylist mode, end to end)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Base branch:** `main` if [Alioun/yt-playlist-tools#2](https://github.com/Alioun/yt-playlist-tools/pull/2) (WXT migration) has merged. Otherwise stack on ticket 11's branch and retarget to `main` once it merges. One branch and one PR for this ticket.
 
@@ -36,3 +36,9 @@ How each input form is handled:
 - The input box is the last thing in the row editor, shown only while the filter is on. Errors are inline (`role="alert"`): the exact `/c/` message, "Couldn't find that channel on YouTube.", "Couldn't look up the channel. Try again." and "<Title> is already listed." Nothing is added on any error, and the typed text stays.
 - The channel is added through `addListedChannel(playlistId, channel)`, so its label goes through `updateFilter` as before.
 - The live check is still open: confirming what `snippet.customUrl` holds needs a signed-in API call. Google's reference only says "The channel's custom URL". The code handles both answers.
+
+## Answer
+
+Superseded by Perchling 2.0: YT-CF-16 and UI-PICK-21 cover typing a channel into the editor.
+The parsing and lookup live in `src/ui/backend/channel-edit.ts`.
+Deliberate changes in 2.0: `/c/` URLs are accepted and YouTube resolves the URL itself. With no YouTube tab open, only the offline forms (`UC…` ID, `/channel/UC…`) are accepted.

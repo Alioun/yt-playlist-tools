@@ -30,6 +30,7 @@ A spec at `.scratch/channel-filters/spec.md` for per-playlist channel filters on
 - [What does auto-add tell the user when a channel filter skips a video?](issues/07-skip-feedback.md): today's toasts stay; one extra toast names the channel and every playlist it was filtered out of, with a separate wording for an unknown channel. With toasts off, filter decisions are only logged to the console.
 - [Write the channel filters spec](issues/08-write-spec.md): `spec.md` assembled from all answers; one gap (re-enabling a kept list in the other mode) went back on the map as a ticket.
 - [What does a kept list mean when a filter is turned back on in the other mode?](issues/09-off-list-mode.md): Off is an on/off switch, not a mode, so a kept list keeps its mode; turning on in the other mode asks before clearing (only if the list has channels), from the row or the card.
+- Tickets [10](issues/10-separate-auto-add-path.md) to [15](issues/15-channel-card.md): superseded by Perchling 2.0, whose channel filters are specified in `.scratch/rebuild/spec/02-youtube.md` §2.4; each ticket's Answer names its 2.0 requirements and code.
 
 ## Not yet specified
 
