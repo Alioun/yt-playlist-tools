@@ -16,11 +16,13 @@
   const uid = $props.id()
   let failed = $state(false)
   async function change(event: Event & { currentTarget: HTMLSelectElement }) {
-    const picked = event.currentTarget.value
+    const select = event.currentTarget
+    const picked = select.value
     if (!isThumbnailCorner(picked)) return
     failed = false
     const answer = await backend.change({ kind: "option", field: "queueButton.corner", value: picked })
     failed = answer.kind !== "confirmed"
+    if (failed) select.value = value
   }
 </script>
 
