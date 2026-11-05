@@ -46,7 +46,7 @@
     "@types/bun": "^1.4.4",
     "@typescript/native": "npm:typescript@7.0.2",
     "@wxt-dev/module-svelte": "2.0.5",
-    "bits-ui": "2.20.2",
+    "bits-ui": "2.20.3",
     "happy-dom": "^21.0.4",
     "oxfmt": "0.75.0",
     "oxlint": "1.90.0",
