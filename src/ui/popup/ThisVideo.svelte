@@ -16,19 +16,19 @@
   let { pageState, onsave }: { pageState: PageState; onsave?: (target: SheetTarget) => void } = $props()
   const { i18n, backend } = untrack(() => pageState.page)
   let tab = $state.raw<ThisTab | null>(null)
+  let lookingUp = $state(true)
   let open = $state(false)
   let busy = $state(false)
   let failure = $state<string | null>(null)
   let confirming = $state<{ readonly playlist: PlaylistId; readonly control: Extract<ChannelControl, { state: "confirm" }> } | null>(null)
   let again: ReturnType<typeof setTimeout> | undefined
   onDestroy(() => clearTimeout(again))
-  // The answer waits for the tab to read the channel, so the card never shows mid-lookup; one that couldn't read it
-  // keeps both controls disabled under "Channel unknown" (YT-CF-15).
-  async function read() {
-    const answer = await backend.call("ui.thisTab", {})
+  async function read(ask: { readonly channel?: false } = {}) {
+    const answer = await backend.call("ui.thisTab", ask)
     tab = answer.kind === "answered" ? answer.result : { kind: "unavailable" }
   }
-  void read()
+  // The video shows at once, and its channel controls read "Looking up channel…" until the channel is read (YT-CF-15).
+  void read({ channel: false }).then(async () => { if (shown?.video.playlists.length) await read(); lookingUp = false })
   // A change reaches the tab's page, then its auto-add, so the card reads the tab again a moment later (YT-AA-38).
   function reread() { clearTimeout(again); again = setTimeout(() => { void read() }, 400) }
 
@@ -119,9 +119,9 @@
             {i18n.message(skipped ? "thisVideo_autoAddAgain" : "thisVideo_dontAutoAdd")}</Button>
           <div class="flex flex-col gap-1.5">
             <p class={found ? "font-medium" : "text-muted-foreground"}>{found ? i18n.message("thisVideo_channelFilters", { channel: found.title || found.handle || found.id })
-              : i18n.message("channelFilter_unknown")}</p>
+              : i18n.message(lookingUp ? "channelFilter_lookingUp" : "channelFilter_unknown")}</p>
             {#each shown.video.playlists as row (row.pl)}
-              {@const controls = channelControls(entry?.filters.get(row.pl), found?.id ?? "unknown")}
+              {@const controls = channelControls(entry?.filters.get(row.pl), found?.id ?? (lookingUp ? "looking-up" : "unknown"))}
               <div class="flex flex-wrap items-center gap-1.5" data-channel-row={row.pl}>
                 <span class="min-w-0 flex-1 truncate">{name(row.pl)}</span>
                 {#each controls as control (control.mode)}

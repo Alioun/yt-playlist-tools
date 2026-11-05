@@ -51,6 +51,12 @@ test("This video is auto-add's view of the active YouTube tab, as that tab's acc
   expect(w.asked).toEqual([{ tabId: 9, kind: "bg.query", payload: { name: "auto-add" } }])
 })
 
+test("the popup's first read asks the tab without its channel, so the card shows while the channel is looked up (YT-CF-15)", async () => {
+  const w = world()
+  await w.service.thisTab(req, { channel: false })
+  expect(w.asked).toEqual([{ tabId: 9, kind: "bg.query", payload: { name: "auto-add", channel: false } }])
+})
+
 test("with auto-add following nothing there, the page's own video shows untracked", async () => {
   const w = world({ query: null })
   expect(await w.service.thisTab(req)).toEqual({

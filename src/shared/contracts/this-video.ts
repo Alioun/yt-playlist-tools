@@ -35,8 +35,10 @@ export type ThisVideoSkip = { readonly tabId: number; readonly acct: AccountKey;
 export type ThisVideoSkipAnswer = { readonly kind: "skipped" | "unskipped" } | { readonly kind: "refused"; readonly reason: "account-changed" | "unavailable" }
 
 type WindowClaim = { readonly windowId?: number }
+/** `channel: false` answers without reading the channel, so the popup shows the video while it looks the channel up (YT-CF-15). */
+export type ThisTabAsk = WindowClaim & { readonly channel?: false }
 export type ThisVideoMessages = {
-  readonly "ui.thisTab": { readonly payload: WindowClaim; readonly result: ThisTab }
+  readonly "ui.thisTab": { readonly payload: ThisTabAsk; readonly result: ThisTab }
   readonly "ui.skip": { readonly payload: WindowClaim & ThisVideoSkip; readonly result: ThisVideoSkipAnswer }
 }
 
@@ -73,7 +75,7 @@ export function isThisTab(value: unknown): value is ThisTab {
 }
 export const thisVideoContract: RpcContract<ThisVideoMessages> = {
   "ui.thisTab": {
-    payload: (value): value is ThisVideoMessages["ui.thisTab"]["payload"] => objectShape(value, {}, { windowId: natural }),
+    payload: (value): value is ThisTabAsk => objectShape(value, {}, { windowId: natural, channel: v => v === false }),
     result: isThisTab,
     // An answer waits for the tab's page to read its video and, for the menu's channel rows, the channel.
     timeoutMs: 12_000

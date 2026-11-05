@@ -324,7 +324,7 @@ export type TabAskMessages = {
   /** A YouTube Music key from any tab: save or like the playing song here, as its Save or Like key would (YM-ANY-2, YM-ANY-3). */
   "bg.music": { payload: { readonly action: "save" | "like"; readonly feedback: boolean }; result: MusicAskAnswer }
   /** What a feature exposes about this tab: auto-add's view of the playing video, for the popup's This video (06 §6.8.2). */
-  "bg.query": { payload: { readonly name: "auto-add" }; result: ThisVideo | null }
+  "bg.query": { payload: { readonly name: "auto-add"; readonly channel?: false }; result: ThisVideo | null }
 }
 /** `done` is the ✓ and `failed` the ✕ on the toolbar icon; `text` is the answer's tooltip (YM-ANY-4). */
 export type MusicAskAnswer = { readonly kind: "done" | "failed"; readonly text: string | null }
@@ -351,7 +351,7 @@ export const tabAskContract: RpcContract<TabAskMessages> = {
     timeoutMs: 30_000
   },
   "bg.query": {
-    payload: (v): v is TabAskMessages["bg.query"]["payload"] => objectShape(v, { name: oneOf("auto-add") }),
+    payload: (v): v is TabAskMessages["bg.query"]["payload"] => objectShape(v, { name: oneOf("auto-add") }, { channel: v => v === false }),
     result: (v): v is ThisVideo | null => v === null || isThisVideo(v),
     timeoutMs: 8_000
   }

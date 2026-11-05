@@ -63,7 +63,7 @@ export type UiRouterPorts = {
   }
   /** The popup's This video and its Don't auto-add (UI-POP-12, UI-POP-14). */
   readonly thisVideo?: {
-    thisTab(requester: Requester): Promise<import("../../../shared/contracts/this-video").ThisTab>
+    thisTab(requester: Requester, ask: import("../../../shared/contracts/this-video").ThisTabAsk): Promise<import("../../../shared/contracts/this-video").ThisTab>
     skip(requester: Requester, request: import("../../../shared/contracts/this-video").ThisVideoSkip): Promise<import("../../../shared/contracts/this-video").ThisVideoSkipAnswer>
   }
   /** Gather tabs' calls (ARC-MSG-16), for the authenticated requester's window. */
@@ -471,10 +471,10 @@ export function createUiRouter(ports: UiRouterPorts) {
         const answer = await ports.addUndo(ui.requester, payload)
         return active ? answer : { kind: "unavailable" }
       },
-      async "ui.thisTab"(_payload, context) {
+      async "ui.thisTab"(payload, context) {
         const ui = requireUi(context)
         if (!active || !ports.thisVideo) return { kind: "unavailable" }
-        const answer = await ports.thisVideo.thisTab(ui.requester)
+        const answer = await ports.thisVideo.thisTab(ui.requester, payload)
         return active ? answer : { kind: "unavailable" }
       },
       async "ui.skip"({ windowId: _window, ...request }, context) {

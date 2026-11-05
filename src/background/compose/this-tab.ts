@@ -4,7 +4,7 @@ import type { Registrar } from "../registrar/ports"
 import type { Requester, Tabs } from "../tabs/ports"
 import type { JobOf } from "../../shared/contracts"
 import type { TabAskMessages } from "../../shared/contracts/tab-actions"
-import type { ThisTab, ThisVideoSkip, ThisVideoSkipAnswer } from "../../shared/contracts/this-video"
+import type { ThisTab, ThisTabAsk, ThisVideoSkip, ThisVideoSkipAnswer } from "../../shared/contracts/this-video"
 import { siteBundles } from "../../shared/features/registration"
 
 type Ask = <K extends keyof TabAskMessages>(tabId: number, kind: K, payload: TabAskMessages[K]["payload"]) => Promise<{ readonly kind: string; readonly result?: unknown }>
@@ -29,11 +29,11 @@ export function composeThisTab(deps: {
     const [known] = await deps.tabs.known({ kind: "tab", tabId })
     return known && known.acct !== null && known.privateTab === req.incognito ? { tabId, acct: known.acct } : null
   }
-  async function thisTab(req: Requester): Promise<ThisTab> {
+  async function thisTab(req: Requester, ask: ThisTabAsk = {}): Promise<ThisTab> {
     if (!deps.consented()) return { kind: "unavailable" }
     const found = await youtubeTab(req, req.activeTabId)
     if (!found) return { kind: "none" }
-    const asked = await deps.ask(found.tabId, "bg.query", { name: "auto-add" }).catch(() => null)
+    const asked = await deps.ask(found.tabId, "bg.query", ask.channel === false ? { name: "auto-add", channel: false } : { name: "auto-add" }).catch(() => null)
     if (asked?.kind === "answered" && asked.result) return { kind: "video", ...found, video: asked.result as Extract<ThisTab, { kind: "video" }>["video"] }
     try {
       await deps.registrar.ensure(found.tabId, { core: true })

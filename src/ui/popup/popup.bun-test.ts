@@ -545,6 +545,37 @@ test("when the tab can't read the channel, this channel's controls stay disabled
   expect(changes).toEqual([])
 })
 
+test("this channel's controls are disabled under Looking up channel… while the channel is read, and stay disabled under Channel unknown when it can't be (YT-CF-15)", async () => {
+  const asks: unknown[] = []
+  const { scripted } = popup(videoSetup(), {
+    "ui.thisTab": payload => {
+      asks.push(payload.channel)
+      return thisVideo({ channel: null })
+    }
+  })
+  // The channel read waits until the test lets it answer, as a slow lookup in the tab would.
+  let release = () => {}
+  const held = new Promise<void>(resolve => {
+    release = resolve
+  })
+  const call = scripted.backend.call
+  scripted.backend.call = (async (kind: string, payload: { readonly channel?: false }) => {
+    if (kind === "ui.thisTab" && payload.channel !== false) await held
+    return call(kind as never, payload as never)
+  }) as typeof call
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  await userEvent.click(await within(card).findByRole("button", { name: "Details" }))
+  expect(within(card).getByText("Looking up channel…")).toBeTruthy()
+  const music = card.querySelector("[data-channel-row=PLa]") as HTMLElement
+  expect(within(music).getByRole("button", { name: "Allow only" })).toBeDisabled()
+  expect(within(music).getByRole("button", { name: "Deny" })).toBeDisabled()
+  release()
+  expect(await within(card).findByText("Channel unknown")).toBeTruthy()
+  expect(within(music).getByRole("button", { name: "Allow only" })).toBeDisabled()
+  expect(within(music).getByRole("button", { name: "Deny" })).toBeDisabled()
+  expect(asks).toEqual([false, undefined])
+})
+
 test("Playing now's save offers Undo in its line, which takes the song back in the same tab as the same account (YM-POP-3)", async () => {
   const undos: unknown[] = []
   popup(
