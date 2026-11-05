@@ -5,7 +5,6 @@ import { isAccountKey, isChannelId, isPlaylistId, isVideoId, type AccountKey, ty
 import { isKey } from "../model/keys"
 import { isAgreementAnswer, isFeatureSelection } from "./first-run"
 import type { Key } from "../model/types"
-import { isNowPlaying, type NowPlaying } from "./media"
 import type { RpcContract } from "../rpc/rpc"
 
 type WindowClaim = { readonly windowId?: number }

@@ -16,6 +16,7 @@ import { createAutoAddTabRouter } from "../router/tab-auto-add"
 import { createPageStatus } from "./page-status"
 import { createToolbarBadge, type ToolbarBadge } from "./badge"
 import { composeMonitor } from "./monitor"
+import { composeGather } from "./gather"
 import { createDiagnostics } from "./diagnostics"
 import { createTabHealthRouter } from "../router/tab-health"
 import type { SiteDiagnostics } from "../monitor/ports"
@@ -177,10 +178,6 @@ export function composeServices(deps: {
   native.permissions.onAdded.addListener(reconcileMenu)
   native.permissions.onRemoved.addListener(reconcileMenu)
   reconcileMenu()
-  const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: workingStatuses, notices: noNotices, build })
-  const unbindHello = browserTabs.bindHello(tabs, producer)
-  const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
-    monitor: { subscribeView: () => () => {} } })
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
   const gather = composeGather({
     native: { ...native, runtime },
@@ -205,7 +202,7 @@ export function composeServices(deps: {
     const id = context.tab.tabId
     if (journal && (journal.signals.some(row => row.tabId === id) || journal.counters.some(row => row.tabId === id))) await monitor.reloadPassed(context)
   }
-  const unbindHello = browserTabs.bindHello(tabs, producer, context => {
+  const unbindHello = browserTabs.bindHello(tabs, producer, (context, hello) => {
     actions.pageStarted(context.tab.tabId)
     void pageLoaded(context).catch(() => {})
     badge.loaded(context.tab.tabId)

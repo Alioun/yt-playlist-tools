@@ -72,8 +72,8 @@ async function world(options: { incognito?: boolean; registered?: AccountKey | n
 test("a registered tab loads and saves its own account's progress", async () => {
   const h = await world()
   try {
-    expect(await h.send("tab.progress.load", { acct, video })).toEqual({ len: 300, parts: [[0, 60]] })
-    expect(await h.send("tab.progress.save", { acct, video, len: 300, parts: [[0, 90]] })).toBeNull()
+    expect(await h.send("tab.progress.load", { acct, request: { video } })).toEqual({ len: 300, parts: [[0, 60]] })
+    expect(await h.send("tab.progress.save", { acct, request: { video, progress: { len: 300, parts: [[0, 90]] } } })).toBeNull()
     expect(h.loads).toEqual([{ acct, video, private: false }])
     expect(h.saves).toEqual([{ acct, video, private: false, len: 300, parts: [[0, 90]] }])
   } finally {
@@ -84,8 +84,8 @@ test("a registered tab loads and saves its own account's progress", async () => 
 test("a page claiming another account than the registry's gets nothing and writes nothing", async () => {
   const h = await world({ registered: other })
   try {
-    expect(await h.send("tab.progress.load", { acct, video })).toBeNull()
-    expect(await h.send("tab.progress.save", { acct, video, len: 300, parts: [[0, 90]] })).toBeNull()
+    expect(await h.send("tab.progress.load", { acct, request: { video } })).toBeNull()
+    expect(await h.send("tab.progress.save", { acct, request: { video, progress: { len: 300, parts: [[0, 90]] } } })).toBeNull()
     expect(h.loads).toEqual([])
     expect(h.saves).toEqual([])
   } finally {
@@ -108,8 +108,8 @@ test("a signed-out page has no progress and no can't-measure toast to claim", as
 test("a private tab's progress never reaches the store", async () => {
   const h = await world({ incognito: true })
   try {
-    expect(await h.send("tab.progress.load", { acct, video })).toBeNull()
-    expect(await h.send("tab.progress.save", { acct, video, len: 300, parts: [[0, 90]] })).toBeNull()
+    expect(await h.send("tab.progress.load", { acct, request: { video } })).toBeNull()
+    expect(await h.send("tab.progress.save", { acct, request: { video, progress: { len: 300, parts: [[0, 90]] } } })).toBeNull()
     expect(h.loads).toEqual([])
     expect(h.saves).toEqual([])
   } finally {
@@ -120,8 +120,8 @@ test("a private tab's progress never reaches the store", async () => {
 test("only the first can't-measure playback in a browser session shows its toast", async () => {
   const h = await world()
   try {
-    expect(await h.send("tab.cantMeasure", { acct })).toEqual({ show: true })
-    expect(await h.send("tab.cantMeasure", { acct })).toEqual({ show: false })
+    expect(await h.send("tab.cantMeasure", { acct, request: null })).toEqual({ show: true })
+    expect(await h.send("tab.cantMeasure", { acct, request: null })).toEqual({ show: false })
     expect(h.changes.map(change => change.edits)).toEqual([[{ kind: "shown-global", acct, scope: "normal", keys: [CANT_MEASURE_SHOWN] }]])
   } finally {
     h.dispose()

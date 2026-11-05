@@ -49,7 +49,7 @@ export type TabActions = {
   videoChanged(): void
   dispose(): void
 }
-type Messages = TabActionMessages & TabProgressMessages & TabHealthMessages
+type Messages = TabActionMessages & TabProgressMessages & TabGatherMessages & TabHealthMessages
 
 /**
  * The tab's side of a user action (06 §6.8.2). Every request carries the account PageLink trusts, which the
@@ -61,13 +61,14 @@ export function createTabActions(options: {
   readonly deadline: Deadline
   account(): AccountKey | null | undefined
 }): TabActions {
-  const rpc = createRpcCaller<Messages>(options.transport, { build: options.build, deadline: options.deadline, contract: { ...tabActionContract, ...tabProgressContract, ...tabHealthContract } })
+  const rpc = createRpcCaller<Messages>(options.transport, { build: options.build, deadline: options.deadline,
+    contract: { ...tabActionContract, ...tabProgressContract, ...tabGatherContract, ...tabHealthContract } })
   const unanswered: Unanswered = { kind: "unanswered" }
-  async function call<K extends keyof TabActionMessages, F>(kind: K, request: TabActionMessages[K]["payload"] extends { request: infer R } ? R : never, fallback: F):
-    Promise<TabActionMessages[K]["result"] | F> {
+  async function call<K extends keyof Messages, F>(kind: K, request: Messages[K]["payload"] extends { request: infer R } ? R : never, fallback: F):
+    Promise<Messages[K]["result"] | F> {
     const acct = options.account()
     if (acct === undefined) return fallback
-    const payload = { acct, request } as TabActionMessages[K]["payload"]
+    const payload = { acct, request } as Messages[K]["payload"]
     const answer = await rpc.call(kind, payload)
     return answer.kind === "answered" ? answer.result : fallback
   }
@@ -76,7 +77,8 @@ export function createTabActions(options: {
     return answer.kind === "answered" && answer.result.kind === "ok"
   }
   return {
-    add: request => call("tab.add", request, unanswered),
+    // A title past the contract's limit would refuse the whole add, so it is cut to fit.
+    add: request => call("tab.add", request.title && request.title.length > TITLE_LIMIT ? { ...request, title: request.title.slice(0, TITLE_LIMIT) } : request, unanswered),
     remove: request => call("tab.remove", request, unanswered),
     undo: handle => call("tab.undo", handle, unanswered),
     gatherUndo: id => call("tab.gatherUndo", { id }, unanswered),

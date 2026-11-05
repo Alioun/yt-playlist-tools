@@ -2972,16 +2972,16 @@
     "message": "Perchling"
   },
   "extDescription": {
-    "message": "Save to Watch Later or any playlist in one click or a shortcut, auto-add videos you've watched, and Add to queue on YouTube Music."
+    "message": "Save to Watch Later or any playlist in one click or a shortcut, auto-add what you actually watch, and Add to queue on YouTube Music."
   },
   "actionTitle": {
     "message": "Perchling"
   },
   "command_savePlayingSong": {
-    "message": "On YouTube Music, save the playing song to your quick-save playlist"
+    "message": "Save the playing song to your quick-save playlist (YouTube Music)"
   },
   "command_likePlayingSong": {
-    "message": "On YouTube Music, like or unlike the playing song"
+    "message": "Like or unlike the playing song (YouTube Music)"
   },
   "command_watchLaterCurrentVideo": {
     "message": "Save the current video to Watch later (YouTube)"

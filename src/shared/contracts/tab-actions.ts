@@ -13,7 +13,8 @@ import type { FilterChannelChange } from "./ui-pages"
  * account from its registry and refuses a request whose `acct` differs (ARC-ACC-49).
  */
 export type UndoHandle = { readonly kind: "add" | "gather" | "remove"; readonly id: string }
-export type TabAddRequest = { readonly site: Site; readonly video: VideoId } & (
+/** `title` is the video's title when the page knows it, so Recent adds can name the video (DATA-52). */
+export type TabAddRequest = { readonly site: Site; readonly video: VideoId; readonly title?: string } & (
   | { readonly via: "auto-add"; readonly playlists: readonly PlaylistId[]; readonly channel: ChannelId | null }
   | { readonly via: "shortcut"; readonly shortcut: ShortcutId }
   | { readonly via: "quick-save"; readonly opener: FeatureId }
@@ -77,6 +78,8 @@ export type TabPlaylists = { readonly kind: "cached"; readonly listing: TabListi
 export type TabCreateFailure = "rateLimited" | "publicCap" | "noChannel" | "notAllowed" | "failed"
 export type TabCreated = { readonly kind: "created"; readonly id: PlaylistId } | { readonly kind: "failed"; readonly reason: TabCreateFailure }
 export type TabDestinationChange = { readonly destination: SetupDestination; readonly expected: DestinationExpectation; readonly playlist: PlaylistId | null }
+/** Watch progress at DATA-27's checkpoints. A private tab keeps its own and never sends these (DATA-28). */
+export type TabProgress = { readonly len: number; readonly parts: readonly (readonly [number, number])[] }
 
 type Pinned<T> = { readonly acct: AccountKey | null; readonly request: T }
 /**

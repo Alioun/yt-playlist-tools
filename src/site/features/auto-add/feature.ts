@@ -1,6 +1,6 @@
 import type { JobOf } from "../../../shared/contracts"
 import type { NavData, PlayerData } from "../../../shared/contracts/streams"
-import type { TabAddReport, TabProgress, TabUndoHandle } from "../../../shared/contracts/tab-add"
+import type { TabAddReport, TabProgress, UndoHandle } from "../../../shared/contracts/tab-actions"
 import type { AutoAddText, Titles } from "../../../shared/copy"
 import type { ChannelId, PlaylistId, VideoId } from "../../../shared/model"
 import type { Failure, Outcome } from "../../../shared/rules/outcomes"
@@ -91,7 +91,7 @@ function stored(tracker: Tracker): TabProgress | null {
 }
 
 function start(context: FeatureContext<"www", AutoAddServices>): void {
-  const { scope, view, page, background, document, clock } = context
+  const { scope, view, page, actions, document, clock } = context
   const privateMemory = new Map<VideoId, RememberedProgress>()
   let playback: Playback | null = null
   let nav: NavData | null = null
@@ -157,7 +157,7 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
       else privateMemory.set(target.tracker.video, { length: entry.len, parts: entry.parts })
       return
     }
-    void background.progress.save(target.tracker.video, entry)
+    void actions.progress.save(target.tracker.video, entry)
   }
   function leave() {
     const left = playback
@@ -183,7 +183,7 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
       cantMeasureNoted: false, failures: new Map(), skippedHere: new Set() }
     playback = next
     if (current()?.private) return
-    void background.progress.load(data.videoId).then(earlier => {
+    void actions.progress.load(data.videoId).then(earlier => {
       if (scope.disposed || playback !== next || !earlier) return
       next.tracker = rememberEarlier(next.tracker, { length: earlier.len, parts: earlier.parts })
       next.saved = JSON.stringify(stored(next.tracker))
@@ -248,9 +248,10 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     const video = target.tracker.video
     const channel = await channelFor(video, due)
     if (scope.disposed) return
-    const report = await background.add({ site: "www", video, via: "auto-add", playlists: due as PlaylistId[], channel }, target.title)
+    const named = target.title === undefined ? {} : { title: target.title }
+    const report = await actions.add({ site: "www", video, via: "auto-add", playlists: due as PlaylistId[], channel, ...named })
     if (scope.disposed) return
-    const outcomes: Readonly<Partial<Record<PlaylistId, Outcome>>> = report?.kind === "report" || report?.kind === "stopped" ? report.outcomes : {}
+    const outcomes: Readonly<Partial<Record<PlaylistId, Outcome>>> = report.kind === "report" || report.kind === "stopped" ? report.outcomes : {}
     for (const playlist of due) {
       const outcome = outcomes[playlist as PlaylistId]
       if (outcome?.kind === "failed") target.failures.set(playlist, outcome.failure)
@@ -260,7 +261,7 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     if (Object.values(outcomes).some(outcome => outcome?.kind === "added") && feature(current())?.options.toolbarTick) ticked = video
     if (target.skippedHere.size) target.tracker = updateTracker(target.tracker, { settings: settingsFor(current(), video, target.skippedHere) ?? {} })
     if (progress(target.tracker).hasRun) save(target, "run")
-    if (report?.kind === "report") announce(target, report)
+    if (report.kind === "report") announce(target, report)
     evaluate(target)
   }
 
@@ -282,16 +283,16 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     }
     session.toaster.show(session.format(plan, titles, action))
   }
-  async function undo(session: Feedback, handle: TabUndoHandle) {
-    const answer = await background.undo(handle)
-    if (answer === null || answer.kind === "failed") {
-      const plan = answer?.kind === "failed" && answer.toast ? answer.toast : toastPlan({ kind: "undo-failed" }, true)
+  async function undo(session: Feedback, handle: UndoHandle) {
+    const answer = await actions.undo(handle)
+    if (answer.kind === "unanswered" || answer.kind === "failed") {
+      const plan = answer.kind === "failed" && answer.toast ? answer.toast : toastPlan({ kind: "undo-failed" }, true)
       return plan ? session.format(plan, {}, null) : null
     }
     return null
   }
   async function cantMeasure(target: Playback) {
-    const show = current()?.private ? !privateCantMeasureShown : await background.cantMeasure()
+    const show = current()?.private ? !privateCantMeasureShown : await actions.cantMeasure()
     if (current()?.private) privateCantMeasureShown = true
     const text = context.text.cantMeasure(target.title)
     if (scope.disposed) return

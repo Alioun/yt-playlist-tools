@@ -5,12 +5,11 @@ import type { SessionChange, SessionRead, SessionWrite } from "../store/session-
 import type { ViewTarget } from "../tabs/ports"
 import type { KnownTab } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
-import { tabAddMessages, type TabAddMessages } from "../../shared/contracts/tab-add"
+import { tabProgressContract, type TabProgressMessages } from "../../shared/contracts/tab-actions"
 import type { AccountKey } from "../../shared/model"
 import { createRpc, type Deadline } from "../../shared/rpc/rpc"
 import type { Transport } from "../../shared/rpc/transport"
 
-type AutoAddRoutes = Pick<TabAddMessages, "tab.progress.load" | "tab.progress.save" | "tab.cantMeasure">
 export const CANT_MEASURE_SHOWN = "auto-add:cant-measure"
 
 /**
@@ -28,9 +27,7 @@ export function createAutoAddTabRouter(deps: {
   readonly untick?: (tabId: number) => void
   now(): number
 }): { dispose(): void } {
-  const all = tabAddMessages()
-  const contract = { "tab.progress.load": all["tab.progress.load"], "tab.progress.save": all["tab.progress.save"], "tab.cantMeasure": all["tab.cantMeasure"] }
-  const rpc = createRpc<AutoAddRoutes, NativeSender>(deps.transport, { build: deps.build, deadline: deps.deadline, contract })
+  const rpc = createRpc<TabProgressMessages, NativeSender>(deps.transport, { build: deps.build, deadline: deps.deadline, contract: tabProgressContract })
   async function registered(context: TabContext, acct: AccountKey): Promise<boolean> {
     const [known] = await deps.tabs.known({ kind: "tab", tabId: context.origin.tabId })
     return known !== undefined && known.acct === acct && known.privateTab === context.origin.incognito

@@ -629,6 +629,8 @@ export type MessageParameters = {
   "anyTab_noVideoTab": readonly []
   "anyTab_noMusicTab": readonly []
   "anyTab_noMusicAccess": readonly []
+  "anyTab_musicOff": readonly []
+  "anyTab_musicUnanswered": readonly []
   "breakage_autoAdd": readonly []
   "breakage_queueButton": readonly []
   "breakage_cardMenu": readonly []
@@ -1508,9 +1510,6 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "musicFail_like": ["title"],
   "musicFail_keyBroken": ["action", "key"],
   "musicFail_keyUnavailable": ["action"],
-  "musicAction_removeQueue": [],
-  "musicAction_savePicker": [],
-  "musicAction_mixTip": [],
   "musicTip_key": ["action", "key"],
   "musicTip_named": ["action", "title"],
   "musicTip_namedKey": ["action", "key", "title"],

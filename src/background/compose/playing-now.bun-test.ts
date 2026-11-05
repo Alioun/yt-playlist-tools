@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import type { NativeBrowser } from "../adapters/browser"
 import type { Tabs } from "../tabs/ports"
 import type { Actions } from "./actions"
-import { composePlayingNow } from "./playing-now"
+import { composePlayingNow, createPlayingSave } from "./playing-now"
 import { defaultSettings } from "../../shared/model/defaults"
 import type { NowPlaying } from "../../shared/contracts"
 import type { Settings } from "../../shared/model"
@@ -61,7 +61,7 @@ function world(
 
 test("Playing now reads the tab playing audio when no YouTube Music tab is active, through the site core alone", async () => {
   const w = world()
-  expect(await w.read()).toEqual({ kind: "song", tabId: 6, song })
+  expect(await w.read()).toEqual({ kind: "song", tabId: 6, acct: "AAAAAAAAAAAAAAAA" as never, song })
   expect(w.ensured).toEqual([{ tabId: 6, what: { core: true } }])
   const active = world({ tabs: [musicTab(5, { active: true }), musicTab(6, { audible: true })] })
   expect(await active.read()).toMatchObject({ kind: "song", tabId: 5 })

@@ -45,7 +45,15 @@ export function composePlayingNow(deps: {
       const outcome = await deps.tabs.runIn<JobOf<"nowPlaying">>(tabId, { job: { kind: "nowPlaying" } }, { site: "music", req, account: { kind: "any" } })
       if (outcome.kind !== "result") continue
       const { result } = outcome
-      if (result.ok) return result.data === null ? { kind: "nothing-playing", tabId } : { kind: "song", tabId, song: result.data }
+      if (result.ok) {
+        const song = result.data
+        if (song === null) return { kind: "nothing-playing", tabId }
+        // The song names the account it was read as, so a save from the row refuses once the tab shows another (ARC-ACC-68).
+        const acct = (known ?? (await deps.tabs.known({ kind: "tab", tabId }))[0])?.acct
+        if (acct === null) return { kind: "signed-out", tabId }
+        if (acct === undefined) continue
+        return { kind: "song", tabId, acct, song }
+      }
       if (isMusicAdFailure(result)) return { kind: "ad-playing", tabId }
     }
     return { kind: "no-tab" }

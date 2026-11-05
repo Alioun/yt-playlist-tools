@@ -14,7 +14,7 @@ afterEach(() => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 
-// Without --strict: a release build fails on the four placeholders until amo-metadata.ts lets them through.
+// With --strict, as release.yml builds a release: the four placeholders pass through for the reviewer-login step.
 test("the release build keeps the reviewer notes' placeholders, even with a login in its environment", () => {
   const dir = mkdtempSync(join(tmpdir(), "amo-metadata-login-"))
   directories.push(dir)
@@ -23,7 +23,7 @@ test("the release build keeps the reviewer notes' placeholders, even with a logi
   writeFileSync(join(dir, "store/release-notes/2.0.0.md"), "Release notes.\n")
   const build = spawnSync(
     process.execPath,
-    ["--no-env-file", join(root, "scripts/amo-metadata.ts"), "--version", "2.0.0", "--kind", "major", "--channel", "stable", "--out", "dist/amo-metadata.json"],
+    ["--no-env-file", join(root, "scripts/amo-metadata.ts"), "--version", "2.0.0", "--kind", "major", "--channel", "stable", "--out", "dist/amo-metadata.json", "--strict"],
     { cwd: dir, env: { PATH: "/usr/bin:/bin", HOME: join(dir, "_home"), AMO_REVIEWER_LOGIN: login.join("\n") + "\n" }, encoding: "utf8" }
   )
   expect(build.status).toBe(0)

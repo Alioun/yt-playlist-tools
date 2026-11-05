@@ -1,14 +1,15 @@
 import { isNowPlaying, type NowPlaying } from "./media"
+import { isAccountKey, type AccountKey } from "../model/validation"
 import { objectShape } from "./object-shape"
 import type { RpcContract } from "../rpc/rpc"
 
 /**
  * The popup's Playing now row (03 §17): the song playing in the tab ARC-ACC-68 picks, read when the popup opens
- * (YM-POP-14). A save from the row goes to that `tabId`, as that tab's account (YM-POP-2, YM-POP-5).
+ * (YM-POP-14). A save from the row goes to that `tabId`, as `acct`, the account the song was read with (YM-POP-2, YM-POP-5).
  * `off` is the YouTube Music section switch, and `unavailable` covers missing consent (YM-POP-7, YM-POP-10).
  */
 export type PlayingNow =
-  | { readonly kind: "song"; readonly tabId: number; readonly song: NowPlaying }
+  | { readonly kind: "song"; readonly tabId: number; readonly acct: AccountKey; readonly song: NowPlaying }
   | { readonly kind: "nothing-playing" | "ad-playing" | "signed-out"; readonly tabId: number }
   | { readonly kind: "no-tab" | "no-access" | "off" | "unavailable" }
 export type PlayingNowMessages = {

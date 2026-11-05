@@ -1,5 +1,5 @@
 import type { FeatureId, JobData, JobInvocation, JobOf, JobResult, MembershipRow, Origin, RemovalIdentity, Site } from "../../shared/contracts"
-import type { AccountKey, ChannelId, Filter, PlaylistId, ShortcutId, VideoId } from "../../shared/model"
+import type { AccountKey, Filter, PlaylistId, ShortcutId, VideoId } from "../../shared/model"
 import { decide } from "../../shared/rules/channel-filter"
 import { failureOf, toastPlan, type ExplicitFailure, type ExplicitOutcome, type Failure, type Outcome, type ToastPlan } from "../../shared/rules/outcomes"
 import {

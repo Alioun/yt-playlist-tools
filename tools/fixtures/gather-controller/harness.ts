@@ -160,7 +160,7 @@ export type Options = {
 // Canonical owner → Tabs → AddFlow → Gather, sharing one session owner and one clock. Only the browser and YouTube's jobs are fakes.
 export function gatherFixture(options: Options = {}) {
   const tabs = tabsFixture()
-  const yt = addFlowHarness({ session: tabs.session, clock: 1_700_000_000_000 })
+  const yt = addFlowHarness({ session: tabs.session, clock: 1_700_000_000_000, recentAdds: true })
   yt.tab(1, a)
   const window = browser(tabs)
   const events: GatherEvent[] = []

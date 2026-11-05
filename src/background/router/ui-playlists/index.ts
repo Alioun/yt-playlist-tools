@@ -49,6 +49,8 @@ export type UiRouterPorts = {
   readonly firstRun: Pick<FirstRunReceiverPorts, "lookup" | "readAccess" | "startSync">
   readonly transport: Transport<NativeSender>
   readonly rpc: Omit<RpcOptions<UiMessages>, "contract">
+  /** The popup's and settings' own routes. Without them each page call answers unavailable. */
+  readonly pages?: PageReceiverPorts
   /** Reads the popup's Playing now from the YouTube Music tab it picks (YM-POP-10, YM-POP-11). */
   readonly playingNow?: (requester: Requester) => Promise<PlayingNow>
   /** Playing now's Save, in the tab the row read (ARC-ACC-68), and its Undo. */

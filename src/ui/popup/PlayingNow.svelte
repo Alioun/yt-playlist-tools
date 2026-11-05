@@ -12,7 +12,7 @@
   // Playing now (UI-POP-17): the playing song with Save to the YouTube Music quick-save playlist, answered inline.
   let { pageState, onsave }: { pageState: PageState; onsave?: (target: SheetTarget) => void } = $props()
   const { i18n, backend } = untrack(() => pageState.page)
-  let playing = $state.raw<UiPlayingNow | null>(null)
+  let playing = $state.raw<PlayingNow | null>(null)
   let saving = $state(false)
   let result = $state<string | null>(null)
   // A confirmed save offers Undo in its line, in the same tab as the same account (YM-POP-3).
@@ -23,7 +23,7 @@
     return now?.kind === "song" ? pageState.ready?.setups.find(row => row.acct === now.acct) : undefined
   })
   const target = $derived(entry && isPlaylistId(entry.setup.musicSave) ? entry.setup.musicSave : null)
-  const title = $derived(target ? pageState.title(target, playing?.kind === "playing" ? playing.acct : null) ?? i18n.message("picker_titleUnavailable") : null)
+  const title = $derived(target ? pageState.title(target, playing?.kind === "song" ? playing.acct : null) ?? i18n.message("picker_titleUnavailable") : null)
   async function save() {
     if (playing?.kind !== "song" || !target || !title) return
     saving = true; result = null; undo = null
@@ -50,7 +50,7 @@
   }
 </script>
 
-{#if playing?.kind === "playing"}
+{#if playing?.kind === "song"}
   <section class="bg-card flex flex-col gap-2 rounded-xl border p-3" aria-label={i18n.message("playing_title")} data-playing-now>
     <div class="flex items-center gap-3">
       {#if playing.song.artwork}<img src={playing.song.artwork} alt="" class="size-12 shrink-0 rounded-md object-cover" />{/if}

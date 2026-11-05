@@ -8,7 +8,7 @@ import type { Feedback } from "../../kit/feedback"
 import type { ToastContent } from "../../kit/toaster/types"
 import { isTabView } from "../../../shared/contracts/tab-view"
 import type { NavData, PlayerData } from "../../../shared/contracts/streams"
-import type { TabAddReport, TabAddRequest, TabProgress } from "../../../shared/contracts/tab-add"
+import type { TabAddReport, TabAddRequest, TabProgress } from "../../../shared/contracts/tab-actions"
 import { isBuildId } from "../../../shared/contracts/vocabulary"
 import { isAccountKey, isPlaylistId, isVideoId, type PlaylistId, type VideoId } from "../../../shared/model"
 import type { ToastPlan } from "../../../shared/rules/outcomes"
@@ -65,8 +65,8 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
       onState(listener: (state: unknown) => void) { listener({ kind: "ready", snapshot: { signedIn: true, acct, pageType: "watch", startedHidden: false, navType: "navigate" } } as never); return () => {} },
       run: async () => ({ ok: true, data: options.channel ?? { channelId: null } }) as never
     } as unknown as AutoAddServices["page"],
-    background: {
-      async add(request, title) { adds.push({ request, title }); return answer(request) },
+    actions: {
+      async add(request) { adds.push(request); return answer(request) },
       async undo() { return { kind: "undone" } },
       release(handle) { released.push(handle.id) },
       channelLabel(channel) { labels.push(channel) },
@@ -115,7 +115,7 @@ test("a video played to its playlist's goal is auto-added once, named, with the 
   await h.play(0, 49)
   expect(h.adds).toEqual([])
   await h.play(50, 80)
-  expect(h.adds).toEqual([{ request: { site: "www", video: first, via: "auto-add", playlists: [music], channel: null }, title: "First video" }])
+  expect(h.adds).toEqual([{ site: "www", video: first, via: "auto-add", playlists: [music], channel: null, title: "First video" }])
   expect(h.toasts.map(toast => [toast.text, toast.tone, toast.action?.kind ?? null])).toEqual([["saved:First video", "confirmation", "undo"]])
   expect(h.states.at(-1)).toEqual({ kind: "added", playlists: [music] })
 })
@@ -213,7 +213,7 @@ test("progress from an earlier visit adds up with this one", async () => {
   const h = world(wwwView(), { stored: { len: 100, parts: [[0, 40]] } })
   h.navigate(first)
   await h.play(40, 50)
-  expect(h.adds.map(add => add.request.video)).toEqual([first])
+  expect(h.adds.map(add => add.video)).toEqual([first])
 })
 
 test("nothing counts while YouTube's Continue watching? prompt shows", async () => {
@@ -240,7 +240,7 @@ test("a private tab keeps progress for the tab's life and never sends it", async
   h.navigate(first)
   await h.play(30, 50)
   expect(h.saves).toEqual([])
-  expect(h.adds.map(add => add.request.video)).toEqual([first])
+  expect(h.adds.map(add => add.video)).toEqual([first])
 })
 
 test("a playback that can't be measured warns once per browser session and adds nothing", async () => {
@@ -265,18 +265,18 @@ test("a session skip keeps counting, and removing it adds at once from the progr
   expect(h.states.at(-1)).toEqual({ kind: "skipped" })
   h.publish(wwwView())
   await settle()
-  expect(h.adds.map(add => add.request.via === "auto-add" ? add.request.playlists : [])).toEqual([[music]])
+  expect(h.adds.map(add => add.via === "auto-add" ? add.playlists : [])).toEqual([[music]])
 })
 
 test("each playlist fires at its own goal, and lowering a goal below the progress adds at once", async () => {
   const h = world(wwwView({ playlists: [{ pl: music, takes: "videos", pct: 20 }, { pl: talks, takes: "both", pct: 90 }] }))
   h.navigate(first)
   await h.play(0, 30)
-  expect(h.adds.map(add => add.request.via === "auto-add" ? add.request.playlists : [])).toEqual([[music]])
+  expect(h.adds.map(add => add.via === "auto-add" ? add.playlists : [])).toEqual([[music]])
   expect(h.states.at(-1)).toEqual({ kind: "partly", added: [music], pending: [talks], goal: 90 })
   h.publish(wwwView({ playlists: [{ pl: music, takes: "videos", pct: 20 }, { pl: talks, takes: "both", pct: 25 }] }))
   await settle()
-  expect(h.adds.map(add => add.request.via === "auto-add" ? add.request.playlists : [])).toEqual([[music], [talks]])
+  expect(h.adds.map(add => add.via === "auto-add" ? add.playlists : [])).toEqual([[music], [talks]])
 })
 
 test("Pause and a missing Shorts playlist leave the player alone", async () => {
