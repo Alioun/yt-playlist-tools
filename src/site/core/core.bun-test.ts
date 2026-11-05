@@ -146,6 +146,17 @@ test("the background's bg.query reads auto-add's view of the playing video from 
   expect(await tab.asks.call("bg.query", { name: "auto-add" })).toEqual({ kind: "answered", result: view })
 })
 
+test("bg.query with channel: false answers without reading the channel, which the popup asks for next (YT-CF-15)", async () => {
+  const tab = await startTab(queueView())
+  const view = { video: "aaaaaaaaaaa" as never, title: "First video", state: { kind: "counting", goal: 50, watched: 20 } as const, watched: 20,
+    playlists: [{ pl: "PL_music" as never, pct: 50, outcome: "waiting" as const }], channel: null }
+  tab.core.thisVideo.publish(view)
+  expect(await tab.asks.call("bg.query", { name: "auto-add", channel: false })).toEqual({ kind: "answered", result: view })
+  expect(tab.needs()).toBe(0)
+  await tab.asks.call("bg.query", { name: "auto-add" })
+  expect(tab.needs()).toBe(1)
+})
+
 test("the core's first job asks the background for the jobs file once, and later jobs reuse it", async () => {
   const tab = await startTab(queueView())
   const videoId = "aaaaaaaaaaa" as never

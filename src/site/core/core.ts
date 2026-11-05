@@ -124,9 +124,9 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   }
   const thisVideo = createThisVideoChannel()
   // The popup's This video names the channel, for its Allow and Deny, so the channel is read only when asked (YT-CF-15).
-  async function query(): Promise<TabAskMessages["bg.query"]["result"]> {
+  async function query(ask: TabAskMessages["bg.query"]["payload"]): Promise<TabAskMessages["bg.query"]["result"]> {
     const view = thisVideo.read()
-    if (!view) return null
+    if (!view || ask.channel === false) return view
     const answer = await page.run<JobOf<"channelOf">>({ job: { kind: "channelOf", videoId: view.video } })
     const found = answer.ok && answer.data.channelId !== null ? answer.data : null
     return { ...view, channel: found?.channelId ? { id: found.channelId, title: found.title ?? "", handle: found.handle ?? null } : null }
@@ -160,7 +160,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       "bg.gatherToast"(payload) { asks?.gatherToast(payload); return null },
       async "bg.picker"(payload) { return { kind: asks ? await asks.picker(payload) : "failed" } },
       async "bg.music"(payload) { return asks?.music ? asks.music(payload) : { kind: "failed", text: null } },
-      "bg.query": () => query()
+      "bg.query": query
     }
   })
   let disposed = false
