@@ -2,7 +2,7 @@
   "sites": {
     "www": {
       "page": 13.8,
-      "core": 28.3,
+      "core": 28.4,
       "kit": 28,
       "auto-add": 5.6,
       "shortcuts": 2.0,
@@ -13,7 +13,7 @@
     },
     "music": {
       "page": 14.0,
-      "core": 28.8,
+      "core": 28.9,
       "kit": 31.7,
       "shortcuts": 1,
       "music-actions": 7.7,
@@ -21,8 +21,8 @@
     }
   },
   "totals": {
-    "www": 91.0,
-    "music": 84.2
+    "www": 91.1,
+    "music": 84.3
   },
   "lazy": {
     "popovers": 50,
