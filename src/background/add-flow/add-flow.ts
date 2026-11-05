@@ -78,6 +78,8 @@ export type Ports = {
   now(): number
   wait(ms: number): Promise<void>
   generation(): string
+  /** The console log of each add (YT-ADD-26), which also takes each filter decision (YT-CF-18). */
+  log?(line: string): void
 }
 
 export type AddRequest = TabAddRequest | PopupAddRequest
@@ -755,6 +757,7 @@ export function createAddFlow(ports: Ports): AddFlow {
                   return false
                 }
                 const decision = decide(filter, request.channel)
+                if (filter?.on) ports.log?.(`filter ${playlist} ${filter.mode} ${request.channel ?? "unknown"} ${decision === "pass" ? "allowed" : "filtered"}`)
                 if (decision === "pass") return true
                 early[playlist] = { kind: "filtered", decision }
                 return false
