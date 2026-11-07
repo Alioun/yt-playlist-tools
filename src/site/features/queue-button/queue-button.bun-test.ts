@@ -364,6 +364,65 @@ test("moving to another card cancels the obsolete rechecks", async () => {
   expect(f.button()).not.toBeNull()
 })
 
+test("a native queue control added after all hover rechecks hides our button until removed", async () => {
+  const f = await setup()
+  const target = card()
+  f.hover(target.thumbnail, [target.element])
+  f.timers.advance(1_500)
+  const native = document.createElement("button")
+  native.setAttribute("aria-label", "Add to queue")
+  target.thumbnail.append(native)
+  await settle()
+  expect(f.button()).toBeNull()
+  native.remove()
+  await settle()
+  expect(f.button()).not.toBeNull()
+})
+
+test("a native queue title changed after all hover rechecks hides our button until cleared", async () => {
+  const f = await setup()
+  const target = card()
+  const native = document.createElement("button")
+  target.thumbnail.append(native)
+  f.hover(target.thumbnail, [target.element])
+  f.timers.advance(1_500)
+  await settle()
+  expect(f.button()).not.toBeNull()
+  native.title = "Add to queue"
+  await settle()
+  expect(f.button()).toBeNull()
+  native.removeAttribute("title")
+  await settle()
+  expect(f.button()).not.toBeNull()
+})
+
+for (const modern of [false, true]) {
+  test(`localized ${modern ? "view-model" : "renderer"} thumbnail controls keep YouTube's native queue button`, async () => {
+    const f = await setup()
+    const target = card()
+    const controls = document.createElement(modern ? "yt-thumbnail-hover-overlay-toggle-actions-view-model" : "div")
+    for (const label of ["Später ansehen", "In die Warteschlange"]) {
+      const button = document.createElement(modern ? "button" : "ytd-thumbnail-overlay-toggle-button-renderer")
+      button.setAttribute("aria-label", label)
+      controls.append(button)
+    }
+    target.thumbnail.append(controls)
+    f.hover(target.thumbnail, [target.element])
+    expect(f.button()).toBeNull()
+    expect(controls.children).toHaveLength(2)
+  })
+}
+
+test("a watch-later control alone still leaves our queue button available", async () => {
+  const f = await setup()
+  const target = card()
+  const native = document.createElement("ytd-thumbnail-overlay-toggle-button-renderer")
+  native.setAttribute("aria-label", "Watch later")
+  target.thumbnail.append(native)
+  f.hover(target.thumbnail, [target.element])
+  expect(f.button()).not.toBeNull()
+})
+
 test("search's inline preview takes the host while it covers the card", async () => {
   const f = await setup()
   const app = document.createElement("ytd-app")

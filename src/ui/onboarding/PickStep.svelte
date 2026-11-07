@@ -15,6 +15,7 @@
   const copy = $derived(text.copy.pick)
   const features = $derived(text.features)
   const groups: readonly FeatureGroup[] = ["youtube", "music", "everywhere"]
+  const previewComponent = import("./FeaturePreview.svelte")
   const uid = $props.id()
   const n = $derived(flow.picked.length)
 </script>
@@ -81,7 +82,11 @@
           checked={flow.picked.includes(feature.id)}
           badge={flow.fromSync.includes(feature.id) ? copy.fromSync : undefined}
           onchange={(on) => flow.toggle(feature.id, on)}
-        />
+        >
+          {#snippet preview()}
+            {#await previewComponent then { default: FeaturePreview }}<FeaturePreview id={feature.id} example={text.examples.byId[feature.id]} text={text.examples.text} />{/await}
+          {/snippet}
+        </FeatureChoice>
       {/each}
     </div>
   {/each}

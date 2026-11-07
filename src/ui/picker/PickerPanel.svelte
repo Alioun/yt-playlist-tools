@@ -210,21 +210,21 @@
 </section>
 
 <style>
-  .picker-panel { display: flex; flex-direction: column; width: 100%; min-width: 0; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; color: var(--foreground); background: var(--card); font-family: var(--font-sans); }
-  .picker-header { padding: 1rem 1rem .65rem; flex-shrink: 0; }
-  .heading-row { display: flex; justify-content: space-between; align-items: start; gap: .5rem; }
-  h2 { margin: .15rem 0 0; font-size: 1rem; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
-  .subtitle { margin: .3rem 0 .5rem; color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
-  .toolbar { display: flex; align-items: center; justify-content: end; gap: .5rem; margin: .5rem 0; font-size: .75rem; color: var(--muted-foreground); }
-  .search { display: flex; align-items: center; gap: .5rem; min-height: 2.25rem; border: 1px solid var(--input); border-radius: .6rem; padding: .4rem .65rem; color: var(--muted-foreground); background: var(--background); }
+  .picker-panel { display: flex; flex-direction: column; width: 100%; min-width: 0; max-height: inherit; overflow-y: auto; overscroll-behavior: contain; color: var(--foreground); background: var(--card); font-family: var(--font-sans); font-size: 16px; }
+  .picker-header { padding: 16px 16px 10.4px; flex-shrink: 0; }
+  .heading-row { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+  h2 { margin: 2.4px 0 0; font-size: 16px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+  .subtitle { margin: 4.8px 0 8px; color: var(--muted-foreground); font-size: 12.8px; line-height: 1.5; }
+  .toolbar { display: flex; align-items: center; justify-content: end; gap: 8px; margin: 8px 0; font-size: 12px; color: var(--muted-foreground); }
+  .search { display: flex; align-items: center; gap: 8px; min-height: 36px; border: 1px solid var(--input); border-radius: 9.6px; padding: 6.4px 10.4px; color: var(--muted-foreground); background: var(--background); }
   .search:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
-  input { width: 100%; min-width: 0; padding: 0; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: .875rem; outline: none; }
+  input { width: 100%; min-width: 0; padding: 0; border: 0; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; outline: none; }
   input::placeholder { color: var(--muted-foreground); }
-  .status, .error { margin: .45rem 0 0; font-size: .75rem; line-height: 1.5; overflow-wrap: anywhere; }
+  .status, .error { margin: 7.2px 0 0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
   .status { color: var(--muted-foreground); }
   .status.empty { display: none; }
   .error { color: var(--destructive); }
-  .rows { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding: 0 .4rem .5rem; flex: 1; }
+  .rows { overflow-y: auto; overscroll-behavior: contain; min-height: 0; padding: 0 6.4px 8px; flex: 1; }
   ul { list-style: none; margin: 0; padding: 0; }
-  .empty { margin: .75rem .6rem 1rem; color: var(--muted-foreground); font-size: .875rem; line-height: 1.5; }
+  .empty { margin: 12px 9.6px 16px; color: var(--muted-foreground); font-size: 14px; line-height: 1.5; }
 </style>

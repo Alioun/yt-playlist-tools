@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Checkbox } from "bits-ui"
+  import type { Snippet } from "svelte"
   import clsx from "clsx"
   import FootprintTag from "./FootprintTag.svelte"
   import Glyph from "./Glyph.svelte"
@@ -14,7 +15,8 @@
     checked,
     onchange,
     badge,
-    disabled = false
+    disabled = false,
+    preview
   }: {
     name: string
     description: string
@@ -24,6 +26,7 @@
     onchange: (next: boolean) => void
     badge?: string
     disabled?: boolean
+    preview?: Snippet
   } = $props()
 
   const uid = $props.id()
@@ -33,7 +36,7 @@
   bind:checked={() => checked, (next) => onchange(next)}
   {disabled}
   aria-labelledby="{uid}-name"
-  aria-describedby={[badge ? `${uid}-badge` : "", `${uid}-description`, `${uid}-footprint`].filter(Boolean).join(" ")}
+  aria-describedby={[badge ? `${uid}-badge` : "", `${uid}-description`, `${uid}-footprint`, preview ? `${uid}-preview` : ""].filter(Boolean).join(" ")}
   class={clsx(
     "group/pick bg-card focus-visible:ring-ring/40 flex w-full items-start gap-3.5 rounded-xl border p-4 text-left transition-[border-color,box-shadow,background-color] duration-150 outline-none focus-visible:ring-3 disabled:opacity-60",
     checked ? "border-primary/55 shadow-[0_0_0_1px_color-mix(in_oklch,var(--primary)_35%,transparent)]" : "hover:border-foreground/20"
@@ -48,6 +51,7 @@
     </span>
     <span id="{uid}-description" class="text-muted-foreground mt-0.5 block text-[13.5px] leading-[1.5]">{description}</span>
     <span class="mt-2.5 block"><FootprintTag {footprint} label={footprintLabel} id="{uid}-footprint" /></span>
+    {#if preview}<span id="{uid}-preview">{@render preview()}</span>{/if}
   </span>
   <span
     aria-hidden="true"

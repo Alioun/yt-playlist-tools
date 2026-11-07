@@ -7,6 +7,21 @@ function lookup(value: AccountLabelSeen): Extract<AccountLabelSeen, { kind: "loo
   if (value.kind !== "lookup") throw Error("Expected real owner label reservation")
   return value
 }
+
+test("a persisted fallback name can be replaced without waiting a day", async () => {
+  const initial = seed()
+  object(object(initial.local[`doc:setup:${a}`]).data).label = { name: "Unnamed account" }
+  object(initial.local[`cache:${a}`]).labelAt = epoch - 60_000
+  const h = world(initial)
+  try {
+    const captured = lookup(await h.owner.seeAccountLabel({ acct: a, private: false, at: epoch }))
+    expect((await h.owner.completeAccountLabel(captured.capture, { acct: a, label: { name: "Ceph", handle: "@cephalos_" } })).kind).toBe("committed")
+    expect(h.label()).toEqual({ name: "Ceph", handle: "@cephalos_" })
+    expect((await h.owner.seeAccountLabel({ acct: a, private: false, at: epoch + 60_000 })).kind).toBe("current")
+  } finally {
+    await h.dispose()
+  }
+})
 test("the direct owner refuses private bookkeeping before any read or write", async () => {
   const h = world()
   try {

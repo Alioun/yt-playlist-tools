@@ -118,14 +118,14 @@
 </footer>
 
 <style>
-  .new-playlist { flex-shrink: 0; padding: .75rem 1rem; background: var(--card); border-top: 1px solid var(--border); }
-  .new-button { display: flex; align-items: center; gap: .5rem; width: 100%; min-height: 2rem; padding: .25rem; border: 0; border-radius: .5rem; background: transparent; color: var(--primary); font: inherit; font-size: .875rem; font-weight: 550; cursor: pointer; }
+  .new-playlist { flex-shrink: 0; padding: 12px 16px; background: var(--card); border-top: 1px solid var(--border); }
+  .new-button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 32px; padding: 4px; border: 0; border-radius: 8px; background: transparent; color: var(--primary); font: inherit; font-size: 14px; font-weight: 550; cursor: pointer; }
   .new-button:hover { background: var(--muted); }
-  form { display: grid; gap: .4rem; }
-  label { font-size: .8rem; font-weight: 550; margin-top: .25rem; }
-  input, select { min-width: 0; width: 100%; border: 1px solid var(--input); border-radius: .5rem; padding: .5rem .65rem; color: var(--foreground); background: var(--background); font: inherit; font-size: .875rem; }
-  .form-actions { display: flex; justify-content: end; gap: .5rem; margin-top: .5rem; }
-  .error, .hint, .unavailable { margin: 0; font-size: .75rem; line-height: 1.5; overflow-wrap: anywhere; }
+  form { display: grid; gap: 6.4px; }
+  label { font-size: 12.8px; font-weight: 550; margin-top: 4px; }
+  input, select { min-width: 0; width: 100%; border: 1px solid var(--input); border-radius: 8px; padding: 8px 10.4px; color: var(--foreground); background: var(--background); font: inherit; font-size: 14px; }
+  .form-actions { display: flex; justify-content: end; gap: 8px; margin-top: 8px; }
+  .error, .hint, .unavailable { margin: 0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
   .error { color: var(--destructive); }
   .hint, .unavailable { color: var(--muted-foreground); }
   .error.empty, .hint.empty { display: none; }

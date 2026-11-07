@@ -1,11 +1,11 @@
 import { readRoutes } from "../read-port"
-import { handlerRoute, labelDefaultRoute, requestRoute } from "../gateway/port"
+import { accountLabelRoute, handlerRoute, requestRoute } from "../gateway/port"
 import type { RouteTable } from "../gateway/port"
 
 const read = (id: (typeof readRoutes)[keyof typeof readRoutes]) => ({ kind: "read" as const, id })
 export const musicRoutes = {
   account: [read(readRoutes.account)],
-  accountLabel: [requestRoute("music", "accountLabel"), labelDefaultRoute],
+  accountLabel: [accountLabelRoute, requestRoute("music", "accountLabel")],
   membership: [requestRoute("music", "membership")],
   playlists: [],
   add: [],

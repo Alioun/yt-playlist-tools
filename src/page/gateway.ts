@@ -19,6 +19,7 @@ export function createGateway(options: {
   site: SiteGateway
   page: PageReadPort
   requests?: GatewayRequestPort
+  accountMenu?: () => unknown
   queue?: WwwQueuePort
   music?: MusicPagePort
   clock?: GatewayClock

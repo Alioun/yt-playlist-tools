@@ -3217,7 +3217,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (authority(current.records).kind !== "ready") return { kind: "unavailable", reason: "stale" }
       const state = accountLabelState(current.records, request.acct)
       if (state.kind !== "label") return state.kind === "no-setup" ? { kind: "no-setup" } : { kind: "unavailable", reason: "stale" }
-      const due = labelCheckDue(state.checkedAt, request.at),
+      const due = labelCheckDue(state.checkedAt, request.at, state.label),
         items: JsonObject = {}
       const lastChanged = current.device.lastAccount !== request.acct
       if (lastChanged) items[LAST_ACCOUNT_KEY] = request.acct

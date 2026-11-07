@@ -21,7 +21,7 @@ export type PageRoute = { kind: "read"; id: RouteId }
 export type PageUiRoute = { kind: "page-ui"; id: RouteId; watchId: WatchId }
 export type MusicHandler = "menu-item" | "replay" | "queue" | "reorder" | "service" | "navigation"
 export type HandlerRoute = { kind: "handler"; handler: MusicHandler; id: RouteId; watchId: WatchId }
-export type Route = RequestRoute | PageRoute | PageUiRoute | HandlerRoute | { kind: "label-default"; id: RouteId }
+export type Route = RequestRoute | PageRoute | PageUiRoute | HandlerRoute
 export type RouteTable = { readonly [K in Job["kind"]]: readonly Route[] }
 export type GatewayNotice = (kind: BreakageKind, route: RequestRoute, job: Job["kind"], raw?: unknown) => void
 
@@ -33,7 +33,7 @@ function watchId(value: string): WatchId {
   if (!isWatchId(value)) throw new Error("Invalid gateway watch")
   return value
 }
-export const labelDefaultRoute = { kind: "label-default" as const, id: routeId("page-read.account-label-default") }
+export const accountLabelRoute = { kind: "read" as const, id: routeId("page-read.account-label") }
 export const requestWatches = {
   command: watchId("gateway.www.resolver"),
   service: watchId("gateway.www.service"),

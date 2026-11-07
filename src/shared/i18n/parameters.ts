@@ -1226,6 +1226,22 @@ export type MessageParameters = {
   "playing_oneClick": readonly ["playlist"]
   "playing_firstPick": readonly []
   "playing_artist": readonly ["artist", "title"]
+  "feature_preview_label": readonly []
+  "feature_preview_video": readonly []
+  "feature_preview_playlist": readonly []
+  "feature_preview_play_next": readonly []
+  "feature_preview_your_key": readonly []
+  "feature_example_auto_add": readonly []
+  "feature_example_shortcuts": readonly []
+  "feature_example_quick_save": readonly []
+  "feature_example_queue_button": readonly []
+  "feature_example_watch_button": readonly []
+  "feature_example_card_menu": readonly []
+  "feature_example_browser_menu": readonly []
+  "feature_example_gather": readonly []
+  "feature_example_music_actions": readonly []
+  "feature_example_music_keys": readonly []
+  "feature_example_any_tab_keys": readonly []
 }
 export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: MessageParameters[K] } = {
   "firstRun_continue_one": ["count"],

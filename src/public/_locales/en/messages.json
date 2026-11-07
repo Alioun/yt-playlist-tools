@@ -6471,5 +6471,53 @@
         "content": "$1"
       }
     }
+  },
+  "feature_preview_label": {
+    "message": "Example:"
+  },
+  "feature_preview_video": {
+    "message": "A video you want to keep"
+  },
+  "feature_preview_playlist": {
+    "message": "Watch later"
+  },
+  "feature_preview_play_next": {
+    "message": "Play next"
+  },
+  "feature_preview_your_key": {
+    "message": "Your shortcut"
+  },
+  "feature_example_auto_add": {
+    "message": "Watch a video. Once it reaches your chosen watch threshold, Perchling saves it to your playlists automatically."
+  },
+  "feature_example_shortcuts": {
+    "message": "Point at a video and press Alt+W to save it to Watch later. You can set more keys for other playlists."
+  },
+  "feature_example_quick_save": {
+    "message": "Hover a thumbnail and click the bookmark to save. The arrow opens your playlists so you can choose another."
+  },
+  "feature_example_queue_button": {
+    "message": "Hover a thumbnail and add it to the end of your queue without opening the video. Hides when YouTube already provides this button."
+  },
+  "feature_example_watch_button": {
+    "message": "Under the video you are watching, open Perchling to save it or change whether it is added automatically."
+  },
+  "feature_example_card_menu": {
+    "message": "Right-click a thumbnail to open YouTube’s video menu, including Add to queue and Save to playlist."
+  },
+  "feature_example_browser_menu": {
+    "message": "Right-click a video link, then choose Save to and a playlist in your browser’s menu."
+  },
+  "feature_example_gather": {
+    "message": "Have several YouTube tabs open? Gather their videos into one queue or playlist from the Perchling popup."
+  },
+  "feature_example_music_actions": {
+    "message": "Hover a song on YouTube Music to play it next, save it or like it using the buttons beside the row."
+  },
+  "feature_example_music_keys": {
+    "message": "Set a key for Play next, point at a song and press it. With no song pointed at, the key acts on the playing song."
+  },
+  "feature_example_any_tab_keys": {
+    "message": "While reading another tab, use a browser shortcut to save or like the song playing on YouTube Music."
   }
 }

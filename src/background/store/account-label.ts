@@ -28,8 +28,9 @@ export type AccountLabelsOwner = {
   completeAccountLabel<A extends AccountKey>(capture: PlaylistCacheCapture<A>, input: { readonly acct: NoInfer<A>; readonly label: JobData<LabelJob> }): Promise<AccountLabelWrite>
 }
 
-export function labelCheckDue(at: number | null, now: number): boolean {
-  return at === null || (now >= at && now - at >= ACCOUNT_LABEL_MS)
+export function labelCheckDue(at: number | null, now: number, label?: AccountLabel | null): boolean {
+  const missing = label === null || (label?.name === "Unnamed account" && label.handle === undefined && label.avatar === undefined)
+  return at === null || (now >= at && now - at >= (missing ? 60_000 : ACCOUNT_LABEL_MS))
 }
 
 export function sameAccountLabel(left: AccountLabel | null, right: AccountLabel | null): boolean {

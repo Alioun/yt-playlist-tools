@@ -28,7 +28,7 @@ export type QueueButtonServices = {
 type Authority = { readonly feedback: boolean; readonly working: boolean; readonly corner: ThumbnailCorner }
 type Shown = { readonly target: WwwItemTarget; readonly link: HTMLElement; readonly checks: Dispose[] }
 
-export const nativeQueue = "[aria-label='Add to queue']"
+export const nativeQueue = "[aria-label='Add to queue' i], [title='Add to queue' i], [data-tooltip-target-id='add-to-queue'], ytd-thumbnail-overlay-toggle-button-renderer + ytd-thumbnail-overlay-toggle-button-renderer"
 export const recheckAfterMs = [150, 900] as const
 const thumbnails = "a#thumbnail, a.yt-lockup-view-model__content-image, a.ytLockupViewModelContentImage, a.ytd-thumbnail"
 const titles = "#video-title, #video-title-link, .ytLockupMetadataViewModelTitle, .yt-lockup-metadata-view-model__title, h3"
@@ -69,6 +69,9 @@ function thumbnailOf(target: WwwItemTarget): HTMLElement | null {
 function titleOf(target: WwwItemTarget): string | undefined {
   return target.element.querySelector(titles)?.textContent?.trim() || undefined
 }
+function hasNativeQueue(element: Element): boolean {
+  return element.querySelector(nativeQueue) !== null || element.querySelectorAll("yt-thumbnail-hover-overlay-toggle-actions-view-model button").length > 1
+}
 function start(context: FeatureContext<"www", QueueButtonServices>): void {
   const { scope, view, document, items, page, overlay, text, notices } = context
   const lease = overlay.use(scope, "queue") ?? fail("Queue overlay slot is unavailable")
@@ -90,7 +93,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
   }
   function anchorOf(current: Shown): OverlayAnchor | null {
     const allowed = authority(view.read())
-    if (!allowed || current.target.element.querySelector(nativeQueue)) return null
+    if (!allowed || hasNativeQueue(current.target.element)) return null
     return { kind: "thumbnail", link: current.link, corner: allowed.corner }
   }
   function current(): Shown | null {
@@ -124,6 +127,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     if (!link) return
     const value: Shown = { target, link, checks: [] }
     shown = value
+    value.checks.push(scope.observe(target.element, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "title", "add-to-queue", "added-to-queue", "data-tooltip-target-id"] }, () => place(value)))
     for (const ms of recheckAfterMs) value.checks.push(scope.timeout(() => place(value), ms))
     place(value)
   }
@@ -138,7 +142,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
       if (!noticed) { noticed = true; notices.wouldAct("queue-button") }
       return
     }
-    if (shown && sameItem(shown.target, target) && current()) return
+    if (shown && sameItem(shown.target, target) && current()) { place(shown); return }
     show(target)
   }
   function announce(outcome: QueueOutcome, title: string | undefined, video: WwwItemTarget["identity"]["videoId"], revision: number, feedback: boolean) {

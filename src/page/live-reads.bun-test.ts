@@ -6,6 +6,8 @@ import { createLiveReadPort } from "./live-reads"
 import { defineRaw, installRawPlayer, trackNativeEvents } from "./live-read.specimens"
 import { rawNavigation, rawPlayer, rawQueueItem, rawSong, syntheticIdentity, syntheticNextVideo, syntheticVideo } from "./gateway.specimens"
 import { readRoutes, readWatches } from "./read-port"
+import { accountLabelRoute } from "./gateway/port"
+import { readLiveAccountMenu } from "./adapters/live-account-menu"
 
 const siteGateways = { www: wwwGateway, music: musicGateway }
 
@@ -29,7 +31,7 @@ function localPage(site: "www" | "music" = "www") {
   let navigation: unknown = rawNavigation()
   const page = createLiveReadPort({ site, window, document: doc, bindings: { navigation: { read: () => navigation } } })
   cleanups.push(() => page.dispose())
-  const gateway = createGateway({ site: siteGateways[site], page, now: () => 10 })
+  const gateway = createGateway({ site: siteGateways[site], page, accountMenu: () => readLiveAccountMenu(doc), now: () => 10 })
   cleanups.push(() => gateway.dispose())
   return {
     doc,
@@ -192,6 +194,33 @@ test("live targeted row data comes from the closest actual renderer and sets no 
   defineRaw(unrelated, "data", rawSong())
   expect(await h.gateway.run({ kind: "itemInfo" }, { target: unrelated })).toEqual({ ok: false, reason: "unavailable" })
 })
+
+test("account labels read YouTube's active account header instead of inventing a name", async () => {
+  const h = localPage()
+  const header = h.doc.createElement("ytd-active-account-header-renderer")
+  defineRaw(header, "data", { accountName: { simpleText: "Ceph" }, channelHandle: { simpleText: "@cephalos_" } })
+  h.doc.body.append(header)
+  expect(await h.gateway.run({ kind: "accountLabel" })).toEqual({ ok: true, data: { name: "Ceph", handle: "@cephalos_" }, route: accountLabelRoute.id })
+  header.remove()
+  expect(await h.gateway.run({ kind: "accountLabel" })).toEqual({ ok: false, reason: "unavailable" })
+})
+
+for (const data of [undefined, {}, { accountName: { simpleText: " " } }]) {
+  test(`the active header's displayed name is readable with incomplete Polymer data ${JSON.stringify(data)}`, async () => {
+    const h = localPage()
+    const header = h.doc.createElement("ytd-active-account-header-renderer")
+    defineRaw(header, "data", data)
+    const name = h.doc.createElement("span"),
+      handle = h.doc.createElement("span")
+    name.id = "account-name"
+    name.textContent = " Ceph "
+    handle.id = "channel-handle"
+    handle.textContent = " @cephalos_ "
+    header.append(name, handle)
+    h.doc.body.append(header)
+    expect(await h.gateway.run({ kind: "accountLabel" })).toHaveProperty("data", { name: "Ceph", handle: "@cephalos_" })
+  })
+}
 
 test("Music live metadata and explicit raw state bindings work without a player bar", async () => {
   const doc = document.implementation.createHTMLDocument("Synthetic Music"),

@@ -32,7 +32,7 @@
   let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
     browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, health,
-    signedIn: pageState.status?.kind === "status" && pageState.status.tab.kind === "site" ? pageState.status.tab.signedIn : null, evidence }) : "")
+    signedIn: pageState.tab ? pageState.signedIn : null, evidence }) : "")
   // HEALTH-22, HEALTH-23: the session's signals feed the report, and Check now runs only when clicked.
   let checking = $state(false), checkFailed = $state(false)
   async function diagnostics(check: boolean) {
