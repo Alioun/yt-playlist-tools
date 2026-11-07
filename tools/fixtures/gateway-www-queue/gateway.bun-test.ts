@@ -67,7 +67,11 @@ test("a display-only current video does not hide the newly queued entry or its U
     const panel = panelData(w.state.listId, w.state.entries)
     return [{ ...panel, contents: [{ playlistPanelVideoRenderer: { videoId: videoB, indexText: { simpleText: "1" } } }, ...panel.contents] }]
   }
-  w.scripts.push(pending(world => { world.add(videoA, listA) }))
+  w.scripts.push(
+    pending(world => {
+      world.add(videoA, listA)
+    })
+  )
   const result = queueAdd(w)
   await settle(w, 2_000)
   expect(await result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
@@ -475,9 +479,22 @@ test("panel and card parsers keep list identity, distinct entries and the card's
       ])
     ])
   ).toBeUndefined()
-  expect(parseQueuePanel([{ playlistId: listA, contents: [{ playlistPanelVideoRenderer: {
-    videoId: videoA, indexText: { simpleText: "1" }, navigationEndpoint: { watchEndpoint: { videoId: videoA, playlistId: listA } }
-  } }] }])).toBeUndefined()
+  expect(
+    parseQueuePanel([
+      {
+        playlistId: listA,
+        contents: [
+          {
+            playlistPanelVideoRenderer: {
+              videoId: videoA,
+              indexText: { simpleText: "1" },
+              navigationEndpoint: { watchEndpoint: { videoId: videoA, playlistId: listA } }
+            }
+          }
+        ]
+      }
+    ])
+  ).toBeUndefined()
   expect(parseQueueCard(card(videoA))).toEqual({ videoId: videoA, command: cardCommand(videoA) })
   expect(parseQueueCard({ ...card(videoA), videoId: videoB })).toBeUndefined()
 })
