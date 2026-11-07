@@ -52,6 +52,24 @@
   "background": 230,
   "exceptions": [
     {
+      "row": "www/page",
+      "kb": 13.9,
+      "since": "2026-11-07",
+      "why": "Modern thumbnail reads use rawProps.data() when YouTube's data property is a Symbol placeholder; the shared live-read port also probes the accessor."
+    },
+    {
+      "row": "music/page",
+      "kb": 14.1,
+      "since": "2026-11-07",
+      "why": "The Music page bundle includes the shared live-read port, including the modern thumbnail accessor support used on YouTube."
+    },
+    {
+      "row": "www/kit",
+      "kb": 28.4,
+      "since": "2026-11-07",
+      "why": "Thumbnail overlays track page pointer, mouse and drag gestures so they cannot intercept the release that ends queue reordering."
+    },
+    {
       "row": "popovers",
       "kb": 51,
       "since": "2026-11-07",
