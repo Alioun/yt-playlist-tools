@@ -11,8 +11,10 @@
 @custom-variant data-open (&[data-state="open"]);
 @custom-variant data-closed (&[data-state="closed"]);
 
-:root {
-  --radius: 0.625rem;
+:root,
+:host {
+  --radius: 10px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Ubuntu Sans", Ubuntu, Cantarell, "Noto Sans", system-ui, sans-serif;
 
   --brand-teal: #14a39a;
   --brand-violet: #7b5cd6;

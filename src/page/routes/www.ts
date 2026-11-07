@@ -1,5 +1,5 @@
 import { readRoutes } from "../read-port"
-import { cardMenuRoute, labelDefaultRoute, requestRoute } from "../gateway/port"
+import { accountLabelRoute, cardMenuRoute, requestRoute } from "../gateway/port"
 import type { RouteTable } from "../gateway/port"
 
 const read = (id: (typeof readRoutes)[keyof typeof readRoutes]) => ({ kind: "read" as const, id })
@@ -8,7 +8,7 @@ const request = (job: "accountLabel" | "membership" | "playlists" | "create") =>
 
 export const wwwRoutes = {
   account: [read(readRoutes.account)],
-  accountLabel: [...request("accountLabel"), labelDefaultRoute],
+  accountLabel: [accountLabelRoute, ...request("accountLabel")],
   membership: request("membership"),
   playlists: request("playlists"),
   add: edit("add"),

@@ -205,6 +205,7 @@ test("the diagnostics report names features and statuses, never the account", as
   )
   const report = await screen.findByText(/Perchling 2\.0\.0/, {}, { timeout: 5000 })
   expect(report.textContent).toContain("Features on: auto-add")
+  expect(report.textContent).toContain("Signed in: yes")
   expect(report.textContent).toContain("auto-add on YouTube: partly-working (membership)")
   expect(report.textContent).not.toContain(acct)
   expect(report.textContent).not.toContain("Ann")

@@ -5,7 +5,7 @@ import type { PageJobResult } from "../shared/contracts/page"
 import { readRoutes, readVocabulary, readWatches } from "./read-port"
 import type { PageReads } from "./read-gateway"
 import { field, parseChannel, parseItem, parseTargetVideo } from "./read-parsers"
-import { handlerWatches, musicHandlers, requestWatches, vocabularyFor } from "./gateway/port"
+import { accountLabelRoute, handlerWatches, musicHandlers, requestWatches, vocabularyFor } from "./gateway/port"
 import type { GatewayRequestPort, HandlerRoute, PageUiRoute, RequestRoute, RequestSpec, RouteTable } from "./gateway/port"
 import { createLanes, systemClock } from "./gateway/lanes"
 import type { GatewayClock, JobScope } from "./gateway/lanes"
@@ -14,7 +14,7 @@ import { requestFor, isWrite, needsAccount } from "./gateway/requests"
 import { attempt } from "./gateway/attempt"
 import { requestAnswer } from "./gateway/answers"
 import type { AnswerStep, ParsedJob } from "./gateway/answers"
-import { answerFailure } from "./parsers/playlists"
+import { answerFailure, parseLabel } from "./parsers/playlists"
 import type { createWwwQueue, WwwQueuePort } from "./gateway/www-queue"
 import type { createMusicContext, createMusicQueue, MusicPagePort } from "./gateway/music-queue"
 import type { createMusicQueueEdits } from "./gateway/music-queue-edit"
@@ -46,6 +46,7 @@ export function createJobsGateway(options: {
   site: SiteGateway
   reads: PageReads
   requests?: GatewayRequestPort
+  accountMenu?: () => unknown
   queue?: WwwQueuePort
   music?: MusicPagePort
   clock?: GatewayClock
@@ -270,6 +271,10 @@ export function createJobsGateway(options: {
   async function requestJob(job: Job, scope: JobScope): Promise<PageJobResult> {
     const blocked = guard.check(needsAccount(job))
     if (blocked) return blocked
+    if (job.kind === "accountLabel") {
+      const label = parseLabel(options.accountMenu?.())
+      if (label && label.name.trim()) return { ok: true, data: label, route: accountLabelRoute.id }
+    }
     const location = reads.read("location", job.kind)
     const first = requestFor(job, typeof field(location, "pathname") === "string" && String(field(location, "pathname")).startsWith("/shorts/"))
     if (!first) return { ok: false, reason: "failed" }
@@ -282,13 +287,7 @@ export function createJobsGateway(options: {
     const changed = guard.check(needsAccount(job))
     if (changed) return changed
     if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
-    if (parsed.kind === "failure") {
-      const fallback = table[job.kind].find(route => route.kind === "label-default")
-      if (job.kind === "accountLabel" && options.requests && fallback && parsed.failure.reason === "unavailable") {
-        return { ok: true, data: { name: "Unnamed account" }, route: fallback.id }
-      }
-      return parsed.failure
-    }
+    if (parsed.kind === "failure") return parsed.failure
     const result = { ok: true, data: parsed.data, route: parsed.route.id }
     if (isPageJobResultFor(job, result)) return result
     requestSignal("unrecognised", parsed.route, job.kind)

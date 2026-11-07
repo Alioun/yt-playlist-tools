@@ -1,6 +1,7 @@
 import type { I18n } from "../../shared/i18n"
 import { createDisclosure, createFirstRunCopy } from "./copy"
 import { createFeatureCopy } from "./features"
+import { createFeatureExamples } from "./examples"
 
 export function createFirstRunText(i18n: I18n) {
   const disclosure = createDisclosure(i18n)
@@ -8,6 +9,7 @@ export function createFirstRunText(i18n: I18n) {
     number: i18n.number,
     copy: createFirstRunCopy(i18n),
     features: createFeatureCopy(i18n),
+    examples: createFeatureExamples(i18n),
     disclosure: Object.freeze({
       ...disclosure,
       headings: Object.freeze(disclosure.headings),

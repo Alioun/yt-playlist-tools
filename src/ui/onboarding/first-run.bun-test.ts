@@ -154,17 +154,31 @@ describe("step 1, feature choice", () => {
     expect(script.log).toEqual([])
   })
 
-  test("feature cards carry exact names, descriptions and footprint tags, Gather tabs included", () => {
+  test("feature cards carry exact names, descriptions and footprint tags, Gather tabs included", async () => {
     show(scriptedOwner().owner)
-    expect(choice("Gather tabs")).toHaveAccessibleDescription(
-      "Gathers the YouTube videos open in a window into one list or a playlist, and can close their tabs. It can also do it by itself. Doesn't change the page"
-    )
-    expect(choice("Right-click for the video menu")).toHaveAccessibleDescription(
-      "Right-clicking a video opens YouTube's own ⋮ menu. Hold Shift for the browser's menu. Changes right-click on the page"
-    )
-    expect(choice("Keys from any tab")).toHaveAccessibleDescription(/Keys only, doesn't change the page$/)
-    expect(choice("Quick-save on thumbnails")).toHaveAccessibleDescription(/Adds buttons to the page$/)
+    await settle()
+    expect(choice("Gather tabs")).toHaveAccessibleDescription(/Gathers the YouTube videos open in a window.*Doesn't change the page Example: Have several YouTube tabs open\?/)
+    expect(choice("Right-click for the video menu")).toHaveAccessibleDescription(/Right-clicking a video opens YouTube's own ⋮ menu.*Changes right-click on the page Example:/)
+    expect(choice("Keys from any tab")).toHaveAccessibleDescription(/Keys only, doesn't change the page Example:/)
+    expect(choice("Quick-save on thumbnails")).toHaveAccessibleDescription(/Adds buttons to the page Example:/)
     expect(screen.getByRole("heading", { level: 2, name: "Everywhere" })).toBeVisible()
+  })
+
+  test("every feature has a visible example before choosing and examples toggle only their own feature", async () => {
+    const script = scriptedOwner()
+    const text = englishFirstRunText()
+    const examples = text.examples
+    show(script.owner)
+    await settle()
+    for (const feature of text.features.firstRunFeatures) {
+      const card = choice(feature.name)
+      expect(within(card).getByText(examples.byId[feature.id])).toBeVisible()
+      expect(card).toHaveAccessibleDescription(new RegExp(examples.byId[feature.id].slice(0, 12)))
+    }
+    await userEvent.setup().click(screen.getByText(examples.byId["quick-save"]))
+    expect(choice("Quick-save on thumbnails")).toHaveAttribute("aria-checked", "true")
+    expect(choice("Queue button on thumbnails")).toHaveAttribute("aria-checked", "false")
+    expect(script.log).toEqual([])
   })
 
   test("draft ticks change only the draft and the count, never the owner", async () => {

@@ -17,7 +17,7 @@ const variants = {
 
 const sizes = {
   default: "min-h-8 py-1 gap-1.5 rounded-lg px-3 text-sm [&_svg]:size-4",
-  sm: "min-h-7 py-1 gap-1 rounded-[9px] px-2.5 text-[0.8rem] [&_svg]:size-3.5",
+  sm: "min-h-7 py-1 gap-1 rounded-[9px] px-2.5 text-[13px] [&_svg]:size-3.5",
   lg: "min-h-10 py-2 gap-2 rounded-[11px] px-4 text-[15px] [&_svg]:size-4"
 } as const
 

@@ -541,12 +541,13 @@ test("ambiguous duplicate-video batch answers never invent occurrence correlatio
   p.gateway.dispose()
 })
 
-test("unavailable account labels use the explicit local label fallback", async () => {
+test("unavailable account labels stay unavailable instead of persisting a made-up name", async () => {
   for (const site of ["www", "music"] as const) {
     const p = recorded(site)
     p.available.clear()
     const result = await p.gateway.run({ kind: "accountLabel" })
-    check(result.ok && result.data.name === "Unnamed account" && result.route === "page-read.account-label-default" && p.calls.length === 0, "Local label fallback changed")
+    same(result, unavailable, "An unreadable account label became a successful lookup")
+    check(p.calls.length === 0, "An unavailable label transport was called")
     p.gateway.dispose()
   }
 })

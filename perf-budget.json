@@ -50,5 +50,24 @@
     "upgrade": 66.7
   },
   "background": 230,
-  "exceptions": []
+  "exceptions": [
+    {
+      "row": "popovers",
+      "kb": 51,
+      "since": "2026-11-07",
+      "why": "The in-page Save picker now includes its own control utilities and a small shadow-root reset so YouTube's styles and 10px root cannot leave controls unstyled or shrink the text."
+    },
+    {
+      "row": "first-run/js",
+      "kb": 63.5,
+      "since": "2026-11-07",
+      "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk."
+    },
+    {
+      "row": "first-run/upgrade/js",
+      "kb": 67.3,
+      "since": "2026-11-07",
+      "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader."
+    }
+  ]
 }
