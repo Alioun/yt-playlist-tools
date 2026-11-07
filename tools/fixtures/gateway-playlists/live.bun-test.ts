@@ -42,7 +42,7 @@ function callback(options: unknown, kind: "onSuccess" | "onServerError", body: u
   Reflect.apply(method, undefined, [body])
 }
 
-test("www resolver is discovered by shape reports ambiguity and rescans only once", async () => {
+test("www resolver discovers constructor singletons, reports ambiguity and rescans only once", async () => {
   const page = scriptedPage(),
     observations: number[] = []
   const first = {
@@ -63,7 +63,10 @@ test("www resolver is discovered by shape reports ambiguity and rescans only onc
       callback(options, "onSuccess", added())
     }
   }
-  const root = { arbitraryBuildKey: { instance: first }, anotherBuildKey: { instance: second } }
+  class CommandResolver {
+    static instance = first
+  }
+  const root = { arbitraryBuildKey: CommandResolver, anotherBuildKey: { instance: second } }
   installRoot(root)
   const port = createLiveWwwRequests({ window: wwwWindow, document, page: page.port }),
     ctx = context()

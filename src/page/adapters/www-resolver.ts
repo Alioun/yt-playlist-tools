@@ -4,7 +4,8 @@ import { field } from "../read-parsers"
 export type Resolver = { instance: object; method: Function }
 type ResolverCache = { kind: "new" } | { kind: "gone" } | { kind: "ready"; resolver: Resolver; rescanned: boolean; ambiguous: boolean }
 function resolverAt(raw: unknown): Resolver | undefined {
-  const instance = field(raw, "instance"),
+  if (raw === null || (typeof raw !== "object" && typeof raw !== "function")) return undefined
+  const instance: unknown = Reflect.get(raw, "instance"),
     method = field(instance, "resolveCommand")
   return instance !== null && typeof instance === "object" && typeof method === "function" ? { instance, method } : undefined
 }

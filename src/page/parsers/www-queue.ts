@@ -20,6 +20,8 @@ function panelEntry(raw: unknown): QueueEntry | undefined | null {
   if (renderer === undefined) return null
   const videoId = field(renderer, "videoId"),
     setVideoId = field(renderer, "playlistSetVideoId")
+  // YouTube prepends the playing video as a display row outside the temporary playlist.
+  if (isVideoId(videoId) && setVideoId === undefined && field(renderer, "navigationEndpoint") === undefined && field(renderer, "indexText") !== undefined) return null
   return isVideoId(videoId) && isSetVideoId(setVideoId) ? { videoId, setVideoId } : undefined
 }
 export function parseQueuePanel(candidates: unknown): QueuePanel | undefined {

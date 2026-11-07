@@ -70,6 +70,20 @@ test("the title's nested text node is read through the real composed path", asyn
   expect(f.menuCalls()[0]?.context?.target).toBe(f.byId("card-a"))
 })
 
+test("modern thumbnail menus need no aria-haspopup attribute", async () => {
+  const f = await fixture()
+  const card = document.createElement("yt-lockup-view-model")
+  card.innerHTML = `<a class="ytLockupViewModelContentImage" href="/watch?v=${videoA}"><img id="modern-thumbnail"></a>
+    <yt-lockup-metadata-view-model><div class="ytLockupMetadataViewModelMenuButton">
+      <button-view-model><button aria-label="Mehr Aktionen" aria-disabled="false"></button></button-view-model>
+    </div></yt-lockup-metadata-view-model>`
+  document.body.append(card)
+  f.start()
+  expect(f.click(f.byId("modern-thumbnail")).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls()[0]?.context?.target).toBe(card)
+})
+
 const preserved = [
   ["channel name", "channel-link"], ["channel avatar link", "avatar-img"], ["bare avatar", "bare-avatar-img"],
   ["hashtag", "hashtag"], ["ad", "ad-text"], ["playlist card", "playlist-text"],

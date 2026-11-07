@@ -69,6 +69,82 @@ test("the host mirrors YouTube's dark attribute and isolates its own clicks", as
   expect(clicks).toBe(1)
 })
 
+for (const [down, up] of [["mousedown", "mouseup"], ["pointerdown", "pointerup"]] as const) {
+  test(`a page ${down} hides both thumbnail slots until ${up} reaches YouTube`, async () => {
+    const f = fixture()
+    const queue = f.kit.use(f.scope(), "queue")
+    const quickSave = f.kit.use(f.scope(), "quick-save")
+    const anchor = { kind: "thumbnail", link: f.thumbnail, corner: "top-left" } as const
+    queue?.place(anchor)
+    quickSave?.place(anchor)
+    const handle = document.createElement("button")
+    f.card.prepend(handle)
+    handle.dispatchEvent(new MouseEvent(down, { bubbles: true, composed: true, buttons: 1 }))
+    expect(hosts()).toBe(0)
+    const floating = document.createElement("a")
+    document.body.append(floating)
+    queue?.place({ ...anchor, link: floating })
+    quickSave?.place({ ...anchor, link: floating })
+    await settle()
+    expect(hosts()).toBe(0)
+    let released = false
+    f.scope().on(document, up, () => { released = true })
+    floating.dispatchEvent(new MouseEvent(up, { bubbles: true, composed: true, buttons: 0 }))
+    expect(released).toBe(true)
+    expect(hosts()).toBe(1)
+    expect(f.errors).toEqual([])
+  })
+}
+
+test("a press on an overlay button stays isolated and still activates once", () => {
+  const f = fixture()
+  const lease = f.kit.use(f.scope(), "queue")
+  const button = document.createElement("button")
+  lease?.slot.append(button)
+  lease?.place({ kind: "thumbnail", link: f.thumbnail, corner: "top-left" })
+  const events: string[] = []
+  for (const type of ["mousedown", "mouseup", "click"]) f.scope().on<EventTarget, string>(document, type, () => { events.push(type) })
+  let clicks = 0
+  button.addEventListener("click", () => { clicks++ })
+  button.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, composed: true, buttons: 1 }))
+  expect(hosts()).toBe(1)
+  button.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, composed: true, buttons: 0 }))
+  button.click()
+  expect(clicks).toBe(1)
+  expect(events).toEqual([])
+})
+
+test("a mouse reorder stays clear of buttons between pointerup and its compatibility mouseup", () => {
+  const f = fixture()
+  f.kit.use(f.scope(), "queue")?.place({ kind: "thumbnail", link: f.thumbnail, corner: "top-left" })
+  f.thumbnail.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "mouse", buttons: 1 }))
+  f.thumbnail.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, buttons: 1 }))
+  f.thumbnail.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "mouse", buttons: 0 }))
+  expect(hosts()).toBe(0)
+  f.thumbnail.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, buttons: 0 }))
+  expect(hosts()).toBe(1)
+})
+
+for (const end of ["dragend", "drop", "pointercancel", "blur"] as const) {
+  test(`${end} releases suspended overlays without leaving a hidden host`, () => {
+    const f = fixture()
+    const lease = f.kit.use(f.scope(), "quick-save")
+    const anchor = { kind: "thumbnail", link: f.thumbnail, corner: "top-left" } as const
+    lease?.place(anchor)
+    f.thumbnail.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, buttons: 1 }))
+    f.thumbnail.dispatchEvent(new Event("dragstart", { bubbles: true }))
+    lease?.place(anchor)
+    expect(hosts()).toBe(0)
+    const target = end === "blur" ? window : document
+    target.dispatchEvent(new Event(end, { bubbles: true }))
+    expect(hosts()).toBe(1)
+    f.owner.dispose()
+    document.dispatchEvent(new Event(end, { bubbles: true }))
+    expect(hosts()).toBe(0)
+    expect(f.errors).toEqual([])
+  })
+}
+
 test("Quick-save alone follows a delayed wrapped preview and returns when it hides", async () => {
   const f = fixture()
   const quickSave = f.kit.use(f.scope(), "quick-save")
