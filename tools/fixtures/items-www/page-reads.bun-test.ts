@@ -51,6 +51,19 @@ test("synthetic modern lockup admits validated metadata and command identity", a
   expect(await h.gateway.run({ kind: "videoInfo" }, { target: wrapped.button })).toHaveProperty("data.videoId", secondVideo)
 })
 
+test("modern card data signals follow renderer recycling without caching the previous video", async () => {
+  const h = pageFixture()
+  let raw = lockupData()
+  const row = h.target("yt-lockup-view-model", "rawProps", { data: () => raw })
+  expect(h.page.has(readWatches.targetData)).toBe(true)
+  expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toHaveProperty("data.videoId", secondVideo)
+  defineRaw(row.element, "data", Symbol("unused property"))
+  raw = lockupData(firstVideo)
+  expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toHaveProperty("data.videoId", firstVideo)
+  row.element.remove()
+  expect(h.page.read("targetData", row.button)).toBeUndefined()
+})
+
 test("synthetic Shorts data preserves the short kind", async () => {
   const h = pageFixture()
   for (const key of ["data", "shortsLockupViewModel"]) {

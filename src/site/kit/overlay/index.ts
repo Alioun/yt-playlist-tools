@@ -27,6 +27,7 @@ type Live = {
   readonly corners: ReadonlyMap<ThumbnailCorner, HTMLElement>
   readonly slots: ReadonlyMap<OverlaySlot, HTMLElement>
   readonly anchors: Map<OverlaySlot, OverlayAnchor | null>
+  gesture: "idle" | "pointer" | "mouse" | "drag"
   latest: OverlayAnchor | null
   cancelTip: Dispose
 }
@@ -78,7 +79,26 @@ export function createOverlayKit(options: OverlayKitOptions) {
       if (current.latest && records.some(record => !host.contains(record.target))) layout(current)
     })
     scope.add(() => host.remove())
-    const current: Live = { scope, host, box, tip, corners: groups, slots: owned, anchors: new Map(), latest: null, cancelTip: () => {} }
+    const current: Live = { scope, host, box, tip, corners: groups, slots: owned, anchors: new Map(), gesture: "idle", latest: null, cancelTip: () => {} }
+    const suspend = (event: Event, gesture: "pointer" | "mouse" | "drag") => {
+      if (event.composedPath().includes(host)) return
+      if (current.gesture !== "drag") current.gesture = gesture
+      layout(current)
+    }
+    const resume = () => { current.gesture = "idle"; layout(current) }
+    const release = (gesture: "pointer" | "mouse") => { if (current.gesture === gesture) resume() }
+    scope.on(document, "pointerdown", event => suspend(event, "pointer"), true)
+    scope.on(document, "mousedown", event => suspend(event, "mouse"), true)
+    scope.on(document, "dragstart", event => suspend(event, "drag"), true)
+    scope.on(document, "drop", resume, true)
+    scope.on(document, "dragend", resume, true)
+    const window = document.defaultView
+    if (window) {
+      scope.on(window, "pointerup", () => release("pointer"), true)
+      scope.on(window, "mouseup", () => release("mouse"), true)
+      scope.on(window, "pointercancel", resume, true)
+      scope.on(window, "blur", resume)
+    }
     return current
   }
   function stop() {
@@ -92,7 +112,7 @@ export function createOverlayKit(options: OverlayKitOptions) {
   }
   function layout(current: Live) {
     const anchor = current.latest
-    if (!anchor || !anchor.link.isConnected) { hideTip(current); current.host.remove(); return }
+    if (current.gesture !== "idle" || !anchor || !anchor.link.isConnected) { hideTip(current); current.host.remove(); return }
     const preview = coveringPreview(document, anchor.link)
     const parent = preview ?? anchor.link.parentElement
     if (!parent) { current.host.remove(); return }

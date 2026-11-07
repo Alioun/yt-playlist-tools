@@ -60,6 +60,21 @@ test("signed-out first add resolves the card's own queue command and confirms a 
   released(w)
 })
 
+test("a display-only current video does not hide the newly queued entry or its Undo identity", async () => {
+  const w = queueWorld({ signedIn: false })
+  w.port.panel = () => {
+    if (!w.state.listId) return undefined
+    const panel = panelData(w.state.listId, w.state.entries)
+    return [{ ...panel, contents: [{ playlistPanelVideoRenderer: { videoId: videoB, indexText: { simpleText: "1" } } }, ...panel.contents] }]
+  }
+  w.scripts.push(pending(world => { world.add(videoA, listA) }))
+  const result = queueAdd(w)
+  await settle(w, 2_000)
+  expect(await result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
+  expect(kinds(w)).toEqual([])
+  released(w)
+})
+
 test("missing account keys still add through the quiet TLPQ edit with IAE%3D", async () => {
   const w = queueWorld({ signedIn: "missing" })
   w.replace(listA, [{ videoId: videoB, setVideoId: "entry-old" }])
@@ -460,6 +475,9 @@ test("panel and card parsers keep list identity, distinct entries and the card's
       ])
     ])
   ).toBeUndefined()
+  expect(parseQueuePanel([{ playlistId: listA, contents: [{ playlistPanelVideoRenderer: {
+    videoId: videoA, indexText: { simpleText: "1" }, navigationEndpoint: { watchEndpoint: { videoId: videoA, playlistId: listA } }
+  } }] }])).toBeUndefined()
   expect(parseQueueCard(card(videoA))).toEqual({ videoId: videoA, command: cardCommand(videoA) })
   expect(parseQueueCard({ ...card(videoA), videoId: videoB })).toBeUndefined()
 })

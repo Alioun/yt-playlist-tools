@@ -243,7 +243,8 @@ export function createLiveReadPort(options: { site: Site; window: Window; docume
     if (!modern) return field(renderer, "data")
     if (site !== "www" || !renderer.isConnected || renderer.ownerDocument !== doc || renderer.closest("ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer")) return undefined
     const key = renderer.matches("yt-lockup-view-model") ? "lockupViewModel" : "shortsLockupViewModel"
-    const data = field(renderer, "data")
+    const props = field(renderer, "rawProps")
+    const data = callable(props, "data") ? invoke(props, "data") : field(renderer, "data")
     const wrapped = field(data, key)
     const direct = field(renderer, key)
     const other = key === "lockupViewModel" ? "shortsLockupViewModel" : "lockupViewModel"
@@ -273,7 +274,10 @@ export function createLiveReadPort(options: { site: Site; window: Window; docume
     if (id === readWatches.targetData)
       return [...doc.querySelectorAll(targetRenderers)].some(
         renderer =>
-          "data" in renderer || (site === "www" && renderer.matches("yt-lockup-view-model, ytm-shorts-lockup-view-model") && ("lockupViewModel" in renderer || "shortsLockupViewModel" in renderer))
+          "data" in renderer ||
+          (site === "www" &&
+            renderer.matches("yt-lockup-view-model, ytm-shorts-lockup-view-model") &&
+            ("lockupViewModel" in renderer || "shortsLockupViewModel" in renderer || callable(field(renderer, "rawProps"), "data")))
       )
     if (id === readWatches.targetContext) return site === "music" && doc.querySelector(targetRenderers) !== null
     if (id === readWatches.mediaMetadata) return site === "music" && field(win, "navigator", "mediaSession") !== undefined
