@@ -19,8 +19,8 @@ export function createLiveWwwQueue(options: { window: Window; document: Document
       return panels.flatMap(panel => [field(panel, "data"), field(panel, "polymerController", "data"), field(panel, "inst", "data")])
     },
     miniplayer() {
-      const player = doc.querySelector("ytd-miniplayer")
-      return player ? field(player, "active") : undefined
+      const app = doc.querySelector("ytd-app")
+      return app && doc.querySelector("ytd-miniplayer") ? app.hasAttribute("miniplayer-is-active") : undefined
     },
     connected: target => target.isConnected && target.ownerDocument === doc,
     onAction(seen) {
