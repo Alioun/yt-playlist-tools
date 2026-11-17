@@ -498,3 +498,9 @@ test("panel and card parsers keep list identity, distinct entries and the card's
   expect(parseQueueCard(card(videoA))).toEqual({ videoId: videoA, command: cardCommand(videoA) })
   expect(parseQueueCard({ ...card(videoA), videoId: videoB })).toBeUndefined()
 })
+
+test("a search card's hover toggle command is skipped for the menu's Add to queue, which YouTube honours", () => {
+  const toggle = { clickTrackingParams: "toggle", ...cardCommand(videoA) }
+  const searchCard = { ...card(videoA), thumbnailOverlays: [{ thumbnailOverlayToggleButtonRenderer: { isToggled: false, untoggledServiceEndpoint: toggle } }] }
+  expect(parseQueueCard(searchCard)).toEqual({ videoId: videoA, command: cardCommand(videoA) })
+})
