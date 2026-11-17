@@ -364,6 +364,18 @@ test("moving to another card cancels the obsolete rechecks", async () => {
   expect(f.button()).not.toBeNull()
 })
 
+test("a card change mid-press keeps the pressed glyph, so the browser still delivers the click", async () => {
+  const f = await setup()
+  const target = card()
+  f.hover(target.thumbnail, [target.element])
+  await settle()
+  const pressed = f.button()?.firstElementChild
+  expect(pressed).toBeTruthy()
+  target.thumbnail.setAttribute("title", "hover preview")
+  await settle()
+  expect(f.button()?.firstElementChild).toBe(pressed)
+})
+
 test("a native queue control added after all hover rechecks hides our button until removed", async () => {
   const f = await setup()
   const target = card()

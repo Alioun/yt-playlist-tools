@@ -110,9 +110,11 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     if (!allowed?.working) { conceal(); return }
     const state = outcomes.read(value.target.identity.videoId).kind
     const visual = visuals[state]
-    button.dataset.state = state
     button.setAttribute("aria-label", text.label(visual.label))
     button.setAttribute("aria-disabled", String(!visual.sends))
+    // Card mutations re-render mid-press. Replacing the pressed glyph then makes the browser drop the click.
+    if (button.dataset.state === state) return
+    button.dataset.state = state
     button.replaceChildren(glyph(document, visual.glyph))
   }
   function place(value: Shown) {
