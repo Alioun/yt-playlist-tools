@@ -80,6 +80,8 @@ export function parseQueueCard(raw: unknown): QueueCard | undefined {
     if (queueCommandFor(value, video.videoId)) return { videoId: video.videoId, command: owner ?? value }
     const signal = Array.isArray(field(value, "signalServiceEndpoint", "actions"))
     for (const [key, child] of Object.entries(value)) {
+      // YouTube ignores the hover toggle's queue command when it's resolved away from its own button.
+      if (key === "thumbnailOverlayToggleButtonRenderer") continue
       pending.push({ value: child, owner: key === "signalServiceEndpoint" && signal ? value : owner })
     }
   }
