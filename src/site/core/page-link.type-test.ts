@@ -21,7 +21,7 @@ export type SafeRelationships = [
 export async function positives() {
   const playlists: JobResult<JobOf<"playlists">> = await link.run({ job: { kind: "playlists" }, acct })
   const account: JobResult<JobOf<"account">> = await link.run({ job: { kind: "account" } })
-  const menu: JobResult<JobOf<"openCardMenu">> = await link.run({ job: { kind: "openCardMenu", videoId } }, { target: document.body })
+  const menu: JobResult<JobOf<"openCardMenu">> = await link.run({ job: { kind: "openCardMenu", videoId, at: { x: 10, y: 20 } } }, { target: document.body })
   if (account.ok) {
     const safe: AccountData = account.data
     void safe

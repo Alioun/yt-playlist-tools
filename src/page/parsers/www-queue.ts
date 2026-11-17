@@ -115,8 +115,3 @@ export function isQueueToast(detail: unknown): boolean {
   const args = field(detail, "args")
   return Array.isArray(args) && args.some(arg => field(arg, "openPopupAction", "popupType") === "TOAST")
 }
-export function isMenuPopup(detail: unknown): boolean {
-  if (field(detail, "actionName") !== "yt-open-popup-action") return false
-  const args = field(detail, "args")
-  return Array.isArray(args) && args.some(arg => field(arg, "openPopupAction", "popupType") === "DROPDOWN")
-}

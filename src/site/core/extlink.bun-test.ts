@@ -7,7 +7,7 @@ import { build, checked, extlinkHarness, fixtureView, isFixtureView, otherAccoun
 import { deferred, expectedKey, nextBuild, rawIdentity, route, snapshot } from "../../../tools/fixtures/page-link/support"
 import { inspect } from "../../../tests/guards/checker"
 
-const cardMenu: JobOf<"openCardMenu"> = { kind: "openCardMenu", videoId: checked(isVideoId, "abcdefghijk") }
+const cardMenu: JobOf<"openCardMenu"> = { kind: "openCardMenu", videoId: checked(isVideoId, "abcdefghijk"), at: { x: 10, y: 20 } }
 
 test("one page hello waits for trusted PageLink and ignores navigation and visibility changes", async () => {
   const digest = deferred<ArrayBuffer>()

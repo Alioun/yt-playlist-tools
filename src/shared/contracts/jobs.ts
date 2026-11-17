@@ -35,7 +35,8 @@ export type JobInputById = {
   queueAdd: EmptyInput
   queueUndo: { listId: QueueListId; setVideoId: SetVideoId }
   queueAddList: { videoIds: VideoId[] }
-  openCardMenu: { videoId: VideoId }
+  /** `at` is the right-click's viewport point, where the menu opens. */
+  openCardMenu: { videoId: VideoId; at: { x: number; y: number } }
   itemInfo: EmptyInput
   queueInsert: { endpoint: QueueInsertEndpoint; position: "next" | "end" }
   queueRemove: { id: QueueItemId }
@@ -106,6 +107,7 @@ const nonempty: Check = value => typeof value === "string" && value.length > 0
 const boolean: Check = value => typeof value === "boolean"
 const integer: Check = value => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
 const noData: Check = value => value === null
+const finite: Check = value => typeof value === "number" && Number.isFinite(value)
 function shape(value: unknown, required: Fields, optional: Fields = {}): value is JsonObject {
   try {
     if (value === null || typeof value !== "object" || !isJsonValue(value) || Array.isArray(value)) return false
@@ -141,7 +143,7 @@ const inputFields = {
   queueAdd: {},
   queueUndo: { listId: isQueueListId, setVideoId: isSetVideoId },
   queueAddList: { videoIds: v => list(v, isVideoId, 1, 199) },
-  openCardMenu: { videoId: isVideoId },
+  openCardMenu: { videoId: isVideoId, at: v => shape(v, { x: finite, y: finite }) },
   itemInfo: {},
   queueInsert: { endpoint: isQueueInsertEndpoint, position: v => v === "next" || v === "end" },
   queueRemove: { id: isQueueItemId },

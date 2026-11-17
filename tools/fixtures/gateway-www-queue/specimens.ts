@@ -92,7 +92,7 @@ export function added(setVideoId: string, extra: Record<string, unknown> = {}) {
 }
 export const noisyToast = { addToToastAction: { item: { notificationActionRenderer: {} } } }
 export const toastAction = { actionName: "yt-open-popup-action", args: [{ openPopupAction: { popupType: "TOAST" } }] }
-export const menuAction = { actionName: "yt-open-popup-action", args: [{ openPopupAction: { popupType: "DROPDOWN" } }] }
+export const menuPoint = { x: 640, y: 360 }
 
 export type QueueWorld = ReturnType<typeof queueWorld>
 export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unknown } = {}) {
@@ -111,6 +111,8 @@ export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unk
     signals: BreakageSignal[] = []
   const actions = new Set<(detail: unknown) => void>()
   const menuTargets: Element[] = []
+  const menuPoints: { x: number; y: number }[] = []
+  const menus = new Set<() => void>()
   const state: QueueState = {
     listId: undefined,
     entries: [],
@@ -131,6 +133,7 @@ export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unk
     signals,
     state,
     menuTargets,
+    menuPoints,
     add(videoId: string, listId = state.listId ?? listA): string {
       if (state.listId !== listId) {
         state.listId = listId
@@ -150,8 +153,11 @@ export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unk
     emit(detail: unknown) {
       for (const seen of [...actions]) seen(detail)
     },
+    openMenuPopup() {
+      for (const opened of [...menus]) opened()
+    },
     get listeners() {
-      return actions.size
+      return actions.size + menus.size
     },
     get timers() {
       return clock.count
@@ -190,6 +196,15 @@ export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unk
       actions.add(own)
       return () => {
         actions.delete(own)
+      }
+    },
+    onMenu(_target, at, opened) {
+      if (state.faults.has("action")) throw new Error(syntheticIdentity)
+      menuPoints.push(at)
+      const own = () => opened()
+      menus.add(own)
+      return () => {
+        menus.delete(own)
       }
     },
     openMenu(target) {

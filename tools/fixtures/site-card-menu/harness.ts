@@ -65,8 +65,9 @@ export function view(options: { keepLinkMenu?: boolean; signedIn?: boolean; setu
   return result
 }
 
+export const rightClickPoint = { x: 212, y: 148 }
 export function rightClick(init: { shiftKey?: boolean } = {}): MouseEvent {
-  return new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, button: 2, shiftKey: init.shiftKey ?? false })
+  return new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, button: 2, shiftKey: init.shiftKey ?? false, clientX: rightClickPoint.x, clientY: rightClickPoint.y })
 }
 
 export async function cardMenuHarness(

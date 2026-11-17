@@ -30,6 +30,30 @@ export function createLiveWwwQueue(options: { window: Window; document: Document
       doc.addEventListener("yt-action", listener, true)
       return () => doc.removeEventListener("yt-action", listener, true)
     },
+    onMenu(target, at, opened) {
+      // YouTube marks a dropdown opened before it places it, so moving its anchor here draws it once, at the pointer.
+      const listener = (event: Event) => {
+        const dropdown = event.target
+        if (!(dropdown instanceof Element) || dropdown.localName !== "tp-yt-iron-dropdown" || field(event, "detail", "value") !== true) return
+        const anchoredAt = field(dropdown, "positionTarget")
+        if (!(anchoredAt instanceof Node) || !target.contains(anchoredAt)) return
+        stop()
+        const anchor = doc.createElement("div")
+        anchor.style.cssText = `position:fixed;left:${at.x}px;top:${at.y}px;width:0;height:0;pointer-events:none`
+        doc.body.append(anchor)
+        Reflect.set(dropdown, "positionTarget", anchor)
+        const closed = (change: Event) => {
+          if (change.target !== dropdown || field(change, "detail", "value") !== false) return
+          dropdown.removeEventListener("opened-changed", closed)
+          anchor.remove()
+        }
+        dropdown.addEventListener("opened-changed", closed)
+        opened()
+      }
+      const stop = () => doc.removeEventListener("opened-changed", listener, true)
+      doc.addEventListener("opened-changed", listener, true)
+      return stop
+    },
     openMenu(target) {
       for (const selector of cardMenuButtons) {
         const button = target.querySelector(selector)
