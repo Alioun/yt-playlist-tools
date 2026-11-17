@@ -97,6 +97,30 @@ test("navigation response precedes the player response and channel reads never f
   g.dispose()
 })
 
+test("a search page has no player, so videoInfo is unavailable without a breakage signal", async () => {
+  const p = scriptedPage({
+      navigation: { pageType: "search", endpoint: { searchEndpoint: { query: "zoo" } } },
+      location: { pathname: "/results", search: "?search_query=zoo" },
+      watchPlayer: undefined
+    }),
+    signals: BreakageSignal[] = []
+  const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10, signals: value => signals.push(value) })
+  expect(await g.run({ kind: "videoInfo" })).toEqual<unknown>(unavailable)
+  p.values.navigation = undefined
+  expect(await g.run({ kind: "videoInfo" })).toEqual<unknown>(unavailable)
+  expect(signals.filter(signal => signal.watchId === readWatches.watchPlayer)).toEqual([])
+  g.dispose()
+})
+
+test("a watch page whose player is missing still signals it", async () => {
+  const p = scriptedPage({ watchPlayer: undefined }),
+    signals: BreakageSignal[] = []
+  const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10, signals: value => signals.push(value) })
+  await g.run({ kind: "videoInfo" })
+  expect(signals.some(signal => signal.kind === "missing" && signal.watchId === readWatches.watchPlayer && signal.job === "videoInfo")).toBe(true)
+  g.dispose()
+})
+
 test("targeted video and Music item reads forward the actual element without marker writes", async () => {
   const target = document.createElement("article"),
     p = scriptedPage({ targetData: { videoId: syntheticNextVideo, title: { simpleText: "Target" } } })

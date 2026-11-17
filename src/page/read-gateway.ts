@@ -112,6 +112,14 @@ export function createReadGateway(options: { site: Site; page: PageReadPort; sig
       return undefined
     }
   }
+  function readIfPresent(what: PageRead, job: JobId | null): unknown {
+    try {
+      return page.read(what)
+    } catch {
+      signal("threw", readWatches[what], job)
+      return undefined
+    }
+  }
   function parsed<T>(watchId: WatchId, raw: unknown, job: JobId | null, parse: () => T | undefined): T | undefined {
     try {
       const value = parse()
@@ -153,9 +161,13 @@ export function createReadGateway(options: { site: Site; page: PageReadPort; sig
   function current(job: JobId | null) {
     const nav = navigation(job)
     const location = read("location", job)
-    const shorts = nav?.navigation.kind === "shorts" || (typeof field(location, "pathname") === "string" && String(field(location, "pathname")).startsWith("/shorts/"))
+    const pathname = field(location, "pathname")
+    const shorts = nav?.navigation.kind === "shorts" || (typeof pathname === "string" && pathname.startsWith("/shorts/"))
     const source: "watchPlayer" | "shortsPlayer" = shorts ? "shortsPlayer" : "watchPlayer"
-    return { nav, raw: read(source, job), source, player: shorts ? ("shorts" as const) : ("watch" as const) }
+    const videoPage = nav ? nav.navigation.kind !== "other" : pathname === "/watch" || shorts
+    // Off a video page YouTube may not have made a player yet, and that absence isn't breakage.
+    const raw = videoPage ? read(source, job) : readIfPresent(source, job)
+    return { nav, raw, source, player: shorts ? ("shorts" as const) : ("watch" as const) }
   }
   function video() {
     const { nav, raw, source, player } = current("videoInfo")
