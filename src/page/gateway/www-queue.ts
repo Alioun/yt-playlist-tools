@@ -1,7 +1,7 @@
 import type { BreakageKind, JobFailure, JobOf, QueueListId, SetVideoId } from "../../shared/contracts"
 import type { PageJobResult } from "../../shared/contracts/page"
 import type { VideoId } from "../../shared/model/validation"
-import { hasQueueList, isMenuPopup, isQueueToast, parseMiniplayer, parseQueueAnswer, parseQueueCard, parseQueuePanel } from "../parsers/www-queue"
+import { hasQueueList, isQueueToast, parseMiniplayer, parseQueueAnswer, parseQueueCard, parseQueuePanel } from "../parsers/www-queue"
 import type { QueueAnswer, QueuePanel } from "../parsers/www-queue"
 import { parseTargetVideo } from "../read-parsers"
 import type { GatewayClock, JobScope } from "./lanes"
@@ -16,6 +16,8 @@ export interface WwwQueuePort {
   miniplayer(): unknown
   connected(target: Element): boolean
   onAction(seen: (detail: unknown) => void): () => void
+  /** Moves the next menu YouTube opens from the card's own button to the viewport point, and reports that it opened. */
+  onMenu(target: Element, at: { x: number; y: number }, opened: () => void): () => void
   openMenu(target: Element): unknown
 }
 export type QueueRoutes = { add: RequestRoute; undo: RequestRoute; list: RequestRoute; menu: PageUiRoute }
@@ -431,12 +433,11 @@ export function createWwwQueue(options: {
       }
       const close = () => finish(unavailable)
       menus.add(close)
-      const seen = (detail: unknown) => {
-        if (!active || !isMenuPopup(detail)) return
-        finish({ ok: true, data: null, route: route.id })
+      const opened = () => {
+        if (active) finish({ ok: true, data: null, route: route.id })
       }
       try {
-        stopActions = port.onAction(seen)
+        stopActions = port.onMenu(target, job.at, opened)
       } catch {
         notice("threw", route)
         finish(unavailable)

@@ -101,7 +101,8 @@ export const cardMenuFeature: FeatureDefinition<"www", CardMenuServices> = {
         return
       }
       event.preventDefault()
-      void page.run({ job: { kind: "openCardMenu", videoId: decision.target.identity.videoId } }, { target: decision.target.element }).catch(() => undefined)
+      const at = { x: event.clientX, y: event.clientY }
+      void page.run({ job: { kind: "openCardMenu", videoId: decision.target.identity.videoId, at } }, { target: decision.target.element }).catch(() => undefined)
     }, { capture: true })
   }
 }

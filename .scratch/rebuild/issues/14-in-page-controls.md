@@ -302,9 +302,9 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 - **Ticket 11's option is adopted:** "{Shortcut} has no playlist on {Name} yet" gets a **Choose** action that opens this picker in choose mode for that shortcut. It isn't drawn in the prototype.
 
 **The right-click card menu**
-- **What it opens:** right-click on a card's thumbnail, title or empty area opens **YouTube's own ⋮ menu**. The gateway job `openCardMenu` clicks the card's ⋮ (exempt: it is the feature). YouTube anchors the menu at the ⋮ button, flipping above when needed.
+- **What it opens:** right-click on a card's thumbnail, title or empty area opens **YouTube's own ⋮ menu**. The gateway job `openCardMenu` clicks the card's ⋮ (exempt: it is the feature). The menu opens at the right-click point: the job moves YouTube's dropdown anchor there as it opens (YT-CM-02, changed 2026-11-17).
   - Checked live: signed out, the items are Add to queue, Save to playlist, Download and Share (`live-grid-right-click-light`).
-  - *Runner-up:* the menu at the pointer. It lost because it means repositioning YouTube's own dropdown, which is fragile.
+  - *Earlier choice:* the menu at the ⋮ button, picked because repositioning YouTube's dropdown looked fragile. Moving only the dropdown's anchor as it opens proved robust on live YouTube for both card families, and the user preferred the pointer (2026-11-17).
 - **What keeps the browser's menu:**
   - Links to anything other than the card's video (channel name, avatar, hashtags) **always** do, which fixes 1.5.0's friction.
   - Settings' "Links inside cards keep the browser's menu" (off by default) extends this to the thumbnail and title links.

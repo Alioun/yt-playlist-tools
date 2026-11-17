@@ -13,7 +13,7 @@ import {
   entry,
   listA,
   listB,
-  menuAction,
+  menuPoint,
   noisyToast,
   panelData,
   pending,
@@ -41,7 +41,7 @@ function released(world: QueueWorld) {
   expect(world.listeners).toBe(0)
   expect(world.timers).toBe(0)
 }
-const cardMenu = (videoId = videoA): JobOf<"openCardMenu"> => ({ kind: "openCardMenu", videoId })
+const cardMenu = (videoId = videoA): JobOf<"openCardMenu"> => ({ kind: "openCardMenu", videoId, at: menuPoint })
 function queueAdd(world: QueueWorld, element: Element = target()) {
   return world.gateway.run({ kind: "queueAdd" }, { target: element })
 }
@@ -389,9 +389,10 @@ test("openCardMenu clicks the targeted card's own menu outside the lane", async 
   const element = target()
   const menu = w.gateway.run(cardMenu(), { target: element })
   await settle(w, 0)
-  w.emit(menuAction)
+  w.openMenuPopup()
   expect(await menu).toEqual(success("openCardMenu", null))
   expect(w.menuTargets).toEqual([element])
+  expect(w.menuPoints).toEqual([menuPoint])
   await settle(w, 2_000)
   await held
   w.state.menu = "missing"
@@ -420,7 +421,7 @@ test("openCardMenu refuses to click a recycled renderer that now shows another v
   w.page.values.targetData = card(videoA)
   const menu = w.gateway.run(cardMenu(videoA), { target: element })
   await settle(w, 0)
-  w.emit(menuAction)
+  w.openMenuPopup()
   expect(await menu).toEqual(success("openCardMenu", null))
   expect(w.menuTargets).toEqual([element])
   released(w)
