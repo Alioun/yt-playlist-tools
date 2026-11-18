@@ -165,7 +165,7 @@ test("service timeout removes its node and an uncertain create is not retried", 
     const pending = gateway.run({ kind: "create", title: "Created", privacy: "PRIVATE" })
     await drain()
     same(app.children.length, 1, "Service node was never attached")
-    clock.advance(5100)
+    clock.advance(10_100)
     await drain()
     const result = await pending
     check(!result.ok && result.reason === "unconfirmed" && actions === 1 && app.children.length === 0, "Service timeout retried or leaked its node")

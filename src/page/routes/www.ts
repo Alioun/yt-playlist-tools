@@ -4,7 +4,8 @@ import type { RouteTable } from "../gateway/port"
 
 const read = (id: (typeof readRoutes)[keyof typeof readRoutes]) => ({ kind: "read" as const, id })
 const edit = (job: "add" | "remove" | "addBatch" | "removeBatch") => [requestRoute("command", job), requestRoute("service", job), requestRoute("signed", job)]
-const request = (job: "accountLabel" | "membership" | "playlists" | "create") => [requestRoute("service", job), requestRoute("signed", job)]
+// YouTube's service route stopped answering these, and each try spent half the job's time before the signed request ran.
+const request = (job: "accountLabel" | "membership" | "playlists" | "create") => [requestRoute("signed", job), requestRoute("service", job)]
 
 export const wwwRoutes = {
   account: [read(readRoutes.account)],
