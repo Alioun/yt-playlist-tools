@@ -47,6 +47,20 @@ test("www routes preserve command service signed order and exact edit fields", a
   check(p.clock.count === 0, "Deadline leaked")
 })
 
+test("www reads and create try the signed request before YouTube's service route, which no longer answers them", async () => {
+  for (const job of [{ kind: "accountLabel" }, { kind: "playlists" }, { kind: "membership", videoId: video }, { kind: "create", title: "New list", privacy: "PRIVATE" }] as const) {
+    const p = recorded()
+    p.scripts.push(() => ({ kind: "not-sent", cause: "preflight" }), () => ({ kind: "not-sent", cause: "preflight" }))
+    await p.gateway.run(job)
+    same(
+      p.calls.map(call => call.via),
+      ["signed", "service"],
+      `${job.kind} route order changed`
+    )
+    p.gateway.dispose()
+  }
+})
+
 test("both sites share membership save removal and create parsing", async () => {
   for (const site of ["www", "music"] as const) {
     const p = recorded(site)
@@ -61,7 +75,7 @@ test("both sites share membership save removal and create parsing", async () => 
     const created = await p.gateway.run({ kind: "create", title: "  Created list  ", privacy: "UNLISTED", videoId: video })
     check(created.ok && created.data.playlistId === playlist, "Create lost validated ID")
     const createCall = p.calls[3]
-    check(createCall?.via === (site === "www" ? "service" : "music"), "Create used a command or foreign route")
+    check(createCall?.via === (site === "www" ? "signed" : "music"), "Create used a command or foreign route")
     same(createCall.spec.body, { title: "Created list", privacyStatus: "UNLISTED", videoIds: [video] }, "Create was split or changed")
     p.gateway.dispose()
   }

@@ -21,12 +21,12 @@ export function expectedPlaylistRecords(): { site: Site; step: string; answer: u
     {
       site,
       step: "membership",
-      answer: { ok: true, data: [{ id: playlist, title: "Synthetic list", privacy: "PRIVATE", count: 3, contains: false }], route: site === "www" ? "service.membership" : "music.membership" }
+      answer: { ok: true, data: [{ id: playlist, title: "Synthetic list", privacy: "PRIVATE", count: 3, contains: false }], route: site === "www" ? "signed.membership" : "music.membership" }
     },
     { site, step: "write", answer: { ok: true, data: { setVideoId: entry }, route: site === "www" ? "command.add" : "music.save" } },
     { site, step: "remove", answer: { ok: true, data: null, route: site === "www" ? "command.remove" : "music.unsave" } },
-    { site, step: "create", answer: { ok: true, data: { playlistId: playlist }, route: site === "www" ? "service.create" : "music.create" } },
-    { site, step: "label", answer: { ok: true, data: { name: "Fixture account", handle: "@fixture" }, route: site === "www" ? "service.accountLabel" : "music.accountLabel" } },
+    { site, step: "create", answer: { ok: true, data: { playlistId: playlist }, route: site === "www" ? "signed.create" : "music.create" } },
+    { site, step: "label", answer: { ok: true, data: { name: "Fixture account", handle: "@fixture" }, route: site === "www" ? "signed.accountLabel" : "music.accountLabel" } },
     { site, step: "disposed", answer: { pageListeners: 0, channelListeners: 0, deadlines: 0 } }
   ])
 }
