@@ -1,5 +1,5 @@
 import { isPrivacy, isSetVideoId } from "../../shared/contracts"
-import type { BatchAddResult, Job, JobDataById, JobFailure, MembershipRow, PlaylistRow, Privacy } from "../../shared/contracts"
+import type { BatchAddResult, Job, JobDataById, JobFailure, MembershipRow, PlaylistRow, Privacy, Site } from "../../shared/contracts"
 import { isChannelId, isPlaylistId } from "../../shared/model/validation"
 import { field, parseChannel } from "../read-parsers"
 
@@ -53,7 +53,7 @@ function privacy(raw: unknown): Privacy | undefined {
 }
 function metadata(raw: unknown): { privacy?: Privacy; count?: number } {
   const visibility = privacy(field(raw, "privacy")) ?? privacy(field(raw, "privacyStatus")) ?? privacy(field(raw, "privacyIcon"))
-  const size = count(field(raw, "videoCount")) ?? count(field(raw, "count")) ?? count(field(raw, "videoCountText")) ?? count(field(raw, "subtitle"))
+  const size = count(field(raw, "videoCount")) ?? count(field(raw, "count")) ?? count(field(raw, "videoCountText")) ?? count(field(raw, "subtitle")) ?? count(field(raw, "shortBylineText"))
   return { ...(visibility ? { privacy: visibility } : {}), ...(size !== undefined ? { count: size } : {}) }
 }
 function playlistId(raw: unknown) {
@@ -85,17 +85,21 @@ function continuation(all: unknown[]): string | undefined | false {
   }
   return tokens.size > 1 ? false : [...tokens][0]
 }
-export function parseMembership(raw: unknown): PageRows<MembershipRow> | undefined {
+export function parseMembership(raw: unknown, site: Site): PageRows<MembershipRow> | undefined {
   const all = nodes(raw),
     entities = entityIndex(all),
     rows: MembershipRow[] = []
   let recognised = false,
     explicitEmpty = false
   for (const node of all) {
-    for (const key of ["playlistAddToPlaylistRenderer", "playlistAddToPlaylistViewModel"]) {
+    for (const [key, fields] of [
+      ["playlistAddToPlaylistRenderer", ["contents", "items"]],
+      ["playlistAddToPlaylistViewModel", ["contents", "items"]],
+      ["addToPlaylistRenderer", ["playlists"]]
+    ] as const) {
       const container = field(node, key)
       if (container === undefined) continue
-      const items = field(container, "contents") ?? field(container, "items")
+      const items = fields.map(name => field(container, name)).find(value => value !== undefined)
       if (!Array.isArray(items)) return undefined
       recognised = true
       if (items.length === 0) explicitEmpty = true
@@ -106,7 +110,11 @@ export function parseMembership(raw: unknown): PageRows<MembershipRow> | undefin
     const entityKey = field(renderer, "playlistEntityKey") ?? field(renderer, "playlistStateEntityKey") ?? field(renderer, "toggleStateKey")
     const entity = typeof entityKey === "string" ? entities.get(entityKey) : undefined
     if (entityKey !== undefined && !entity) return undefined
-    const id = playlistId(renderer) ?? playlistId(entity) ?? playlistId(field(renderer, "defaultServiceEndpoint", "playlistEditEndpoint"))
+    const id =
+      playlistId(renderer) ??
+      playlistId(entity) ??
+      playlistId(field(renderer, "defaultServiceEndpoint", "playlistEditEndpoint")) ??
+      playlistId(field(renderer, "addToPlaylistServiceEndpoint", "playlistEditEndpoint"))
     const title = text(field(renderer, "title")) ?? text(field(entity, "title"))
     const state =
       field(renderer, "containsSelectedVideos") ??
@@ -125,8 +133,8 @@ export function parseMembership(raw: unknown): PageRows<MembershipRow> | undefin
           : state === "NONE" || state === "PLAYLIST_SELECTION_STATE_UNSELECTED"
             ? false
             : undefined
-    if (!id || title === undefined || contains === undefined || rows.some(row => row.id === id)) return undefined
-    rows.push({ id, title, ...metadata(entity), ...metadata(renderer), contains })
+    if (!id || title === undefined || (contains === undefined && site !== "music") || rows.some(row => row.id === id)) return undefined
+    rows.push({ id, title, ...metadata(entity), ...metadata(renderer), contains: contains ?? null })
   }
   const token = continuation(all)
   if ((!recognised && !token) || token === false || (rows.length === 0 && !explicitEmpty && !token)) return undefined

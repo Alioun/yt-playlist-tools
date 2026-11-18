@@ -10,7 +10,7 @@ import type { RpcContract } from "../rpc/rpc"
 type WindowClaim = { readonly windowId?: number }
 export type HealthState = "working" | "partly-working" | "not-working"
 /** What a partly working feature can't do (UI-SET-09): the copy names the gap. */
-export type HealthGap = "membership" | "actions" | "measure" | "player" | "queue" | "playlist"
+export type HealthGap = "membership" | "playlists" | "actions" | "casting" | "measure" | "player" | "queue" | "playlist"
 export type UiFeatureHealth = { readonly feature: FeatureId; readonly site: Site; readonly state: HealthState; readonly gaps: readonly HealthGap[] }
 /** The popup's tab: a YouTube or YouTube Music tab our site core answered from, or any other tab. */
 export type UiTabFacts = { readonly kind: "site"; readonly site: Site; readonly tabId: number; readonly signedIn: boolean; readonly acct: AccountKey | null } | { readonly kind: "other" }
@@ -180,7 +180,7 @@ const list =
   (value: unknown): value is readonly T[] =>
     Array.isArray(value) && value.length <= max && value.every(check)
 const windowClaim = { windowId: natural }
-const gap = oneOf<HealthGap>("membership", "actions", "measure", "player", "queue", "playlist")
+const gap = oneOf<HealthGap>("membership", "playlists", "actions", "casting", "measure", "player", "queue", "playlist")
 
 export function isUiFeatureHealth(value: unknown): value is UiFeatureHealth {
   return objectShape(value, { feature: isFeatureId, site: isSite, state: oneOf<HealthState>("working", "partly-working", "not-working"), gaps: list(gap, 6) })

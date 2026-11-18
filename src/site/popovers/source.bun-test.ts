@@ -20,6 +20,10 @@ function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save"
     add: async (request: TabAddRequest) => { adds.push(request); return { kind: "report", outcomes: { [other]: { kind: "added" } }, toast: null, feedback: true, undo: { kind: "add", id: "a1" }, titles: {} } },
     remove: async (request: TabRemoveRequest) => { removes.push(request); return { kind: "removed", playlist: other, video, feedback: true, toast: null, undo: { kind: "remove", id: "r1" }, titles: {} } },
     destination: async (change: TabDestinationChange) => { destinations.push(change); return { kind: "confirmed" } },
+    membership: async () => {
+      jobs.push("membership")
+      return [{ id: other, title: "Music Beta", contains: true }, { id: playlist, title: "Music Favourites", contains: null }]
+    },
     playlists: async () => ({ kind: "cached", listing: { rows: [{ id: playlist, title: "Favourites" }, { id: other, title: "Beta" }], at: Date.now() } })
   } as unknown as TabActions
   const view = { ...wireView(site), ...extra } as ReturnType<typeof wireView>
@@ -83,6 +87,17 @@ test("a picker with marks off reads no membership, so no row is checked and noth
   new PickerModel({ source: www.built, site: "www", mode: "save" })
   await settle()
   expect(www.jobs).toEqual(["membership"])
+})
+
+test("the Music picker renders and refreshes Music's rows even if some check marks are unavailable", async () => {
+  const music = source("music")
+  const picker = new PickerModel({ source: music.built, site: "music", mode: "save" })
+  await settle()
+  expect(music.jobs).toEqual(["membership"])
+  expect(picker.membership).toEqual({ kind: "unreadable" })
+  expect(picker.rows.map(row => [row.title, row.check])).toEqual([["Music Beta", "on"], ["Music Favourites", "off"]])
+  expect(await picker.refresh()).toEqual({ kind: "refreshed" })
+  expect(music.jobs).toEqual(["membership", "membership"])
 })
 
 test("by key on YouTube Music the picker opens below the shown Save button, else centred above the player bar", () => {

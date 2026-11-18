@@ -30,7 +30,7 @@ export type TabHealthReport =
   | { readonly kind: "signal"; readonly signal: BreakageSignal; readonly evidence: "job"; readonly online: boolean; readonly answered: boolean }
   | { readonly kind: "signal"; readonly signal: BreakageSignal; readonly evidence: "playback" | "diagnostic" }
   | { readonly kind: "anchor"; readonly anchor: AnchorId; readonly observation: TabAnchorObservation; readonly signal: BreakageSignal }
-  | { readonly kind: "success"; readonly job: JobId }
+  | { readonly kind: "success"; readonly job: JobId; readonly at?: number }
   | { readonly kind: "measured" }
 export type TabHealthMessages = {
   "tab.health": { payload: { readonly acct: AccountKey | null; readonly request: { readonly reports: readonly TabHealthReport[] } }; result: null }
@@ -59,7 +59,7 @@ export function isTabHealthReport(value: unknown): value is TabHealthReport {
           recognised: count
         }) || objectShape(v, { kind: k => k === "player-bar", requiredHere: bool, visible: bool, settledMs: count, present: bool })
     }) ||
-    objectShape(value, { kind: v => v === "success", job: isJobId }) ||
+    objectShape(value, { kind: v => v === "success", job: isJobId }, { at: count }) ||
     objectShape(value, { kind: v => v === "measured" })
   )
 }

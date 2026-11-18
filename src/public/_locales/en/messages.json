@@ -5090,8 +5090,14 @@
   "health_gap_membership": {
     "message": "it can't show where a video is already saved"
   },
+  "health_gap_playlists": {
+    "message": "it can't refresh the playlist list"
+  },
   "health_gap_actions": {
     "message": "some of its buttons can't run"
+  },
+  "health_gap_casting": {
+    "message": "it can't tell whether YouTube Music is casting"
   },
   "health_gap_measure": {
     "message": "it can't follow this video's progress"
@@ -6237,6 +6243,9 @@
   },
   "diag_working": {
     "message": "Working"
+  },
+  "diag_unchecked": {
+    "message": "Not checked"
   },
   "diag_partly": {
     "message": "Partly working"

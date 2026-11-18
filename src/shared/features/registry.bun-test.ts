@@ -110,15 +110,15 @@ describe("production feature registry", () => {
     }
   })
 
-  test("Music actions retain all action dependencies and separate optional Undo jobs", () => {
+  test("Music actions declare queue edits separately from optional casting and Undo reads", () => {
     const actionJobs = {
-      next: ["queueInsert", "queueMove", "castState"],
-      queue: ["queueInsert", "queueMove", "castState"],
+      next: ["queueInsert", "queueMove"],
+      queue: ["queueInsert", "queueMove"],
       save: ["account", "save"],
       like: ["account", "like"],
-      remove: ["queueRemove", "castState"],
+      remove: ["queueRemove"],
       library: ["account", "library"],
-      mix: ["navigate", "castState"],
+      mix: ["navigate"],
       album: ["navigate"],
       artist: ["navigate"]
     }
@@ -127,7 +127,7 @@ describe("production feature registry", () => {
       expect<unknown>(health?.actions).toEqual(actionJobs)
       expect<unknown>(Object.keys(health?.actions ?? {})).toEqual(actionIds)
       expect(health?.required).toEqual(["itemInfo"])
-      expect(health?.optional).toEqual(["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert"])
+      expect(health?.optional).toEqual(["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert", "castState"])
     }
   })
 

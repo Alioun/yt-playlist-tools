@@ -243,6 +243,7 @@ export function createJobsGateway(options: {
       })
       const changed = guard.check(needsAccount(job))
       if (changed) return fail(changed)
+      if (result.kind === "timeout") requestSignal("timeout", route, job.kind)
       if (!scope.active || disposed) return fail({ ok: false, reason: "unconfirmed" })
       if (result.kind === "blocked") return fail(result.failure)
       if (result.kind === "not-sent") {
@@ -250,7 +251,7 @@ export function createJobsGateway(options: {
         continue
       }
       if (result.kind === "lost" || result.kind === "timeout") {
-        requestSignal(result.kind === "timeout" ? "timeout" : "threw", route, job.kind)
+        if (result.kind === "lost") requestSignal("threw", route, job.kind)
         if (isWrite(job)) return fail({ ok: false, reason: "unconfirmed" })
         continue
       }
@@ -260,11 +261,10 @@ export function createJobsGateway(options: {
       const failure = answerFailure(http, body)
       const correlatedBatch = job.kind === "addBatch" && http >= 200 && http < 300 && field(body, "error") === undefined && Array.isArray(field(body, "playlistEditResults"))
       if (failure && !(correlatedBatch && failure.reason === "failed" && failure.status === "STATUS_FAILED")) {
-        requestSignal("rejected", route, job.kind)
+        if (failure.reason !== "signedOut" && (http === 400 || http === 404 || ((http === 401 || http === 403) && reads.account?.signedIn))) requestSignal("rejected", route, job.kind)
         return fail(failure)
       }
-      if (index > 0) requestSignal("fell-back", route, job.kind)
-      return { kind: "answer", answer: result.answer, route }
+      return { kind: "answer", answer: result.answer, route, fallback: index > 0 }
     }
     return fail({ ok: false, reason: "unavailable" })
   }
@@ -279,8 +279,20 @@ export function createJobsGateway(options: {
     const first = requestFor(job, typeof field(location, "pathname") === "string" && String(field(location, "pathname")).startsWith("/shorts/"))
     if (!first) return { ok: false, reason: "failed" }
     let parsed: ParsedJob
+    let fallback: RequestRoute | undefined
     try {
-      parsed = await requestAnswer({ job, first, send: spec => send(job, spec, scope), privacy: lastPrivacy, unrecognised: (route, body) => requestSignal("unrecognised", route, job.kind, body) })
+      parsed = await requestAnswer({
+        site,
+        job,
+        first,
+        async send(spec) {
+          const step = await send(job, spec, scope)
+          if (step.kind === "answer" && step.fallback) fallback = step.route
+          return step
+        },
+        privacy: lastPrivacy,
+        unrecognised: (route, body) => requestSignal("unrecognised", route, job.kind, body)
+      })
     } catch {
       return { ok: false, reason: isWrite(job) ? "unconfirmed" : "unavailable" }
     }
@@ -289,7 +301,10 @@ export function createJobsGateway(options: {
     if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
     if (parsed.kind === "failure") return parsed.failure
     const result = { ok: true, data: parsed.data, route: parsed.route.id }
-    if (isPageJobResultFor(job, result)) return result
+    if (isPageJobResultFor(job, result)) {
+      if (fallback) requestSignal("fell-back", fallback, job.kind)
+      return result
+    }
     requestSignal("unrecognised", parsed.route, job.kind)
     return { ok: false, reason: isWrite(job) ? "unconfirmed" : "unavailable" }
   }

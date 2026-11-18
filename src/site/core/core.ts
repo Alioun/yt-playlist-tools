@@ -1,4 +1,5 @@
 import type { BuildId, DiagnosticVocabulary, JobOf, Site } from "../../shared/contracts"
+import { isMembershipRow } from "../../shared/contracts/jobs"
 import { isTabView, type DueNotice, type TabView } from "../../shared/contracts/tab-view"
 import { noticeText, siteFeedbackText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
@@ -98,7 +99,11 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   // Every job answered here, the background's included, can clear its earlier signals in this tab (HEALTH-12).
   const page: PageLink = Object.create(link_, { run: { value: async (...args: Parameters<PageLink["run"]>) => {
     const answer = await link_.run(...args)
-    if (answer.ok) health.succeeded(args[0].job.kind)
+    const job = args[0].job
+    if (answer.ok) {
+      const partial = job.kind === "membership" && Array.isArray(answer.data) && answer.data.some(row => isMembershipRow(row) && row.contains === null)
+      health.answered(job.kind, !partial)
+    }
     return answer
   } } })
   const link = createExtLink<TabView, Sender>({

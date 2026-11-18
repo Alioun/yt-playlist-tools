@@ -50,7 +50,10 @@ test("www routes preserve command service signed order and exact edit fields", a
 test("www reads and create try the signed request before YouTube's service route, which no longer answers them", async () => {
   for (const job of [{ kind: "accountLabel" }, { kind: "playlists" }, { kind: "membership", videoId: video }, { kind: "create", title: "New list", privacy: "PRIVATE" }] as const) {
     const p = recorded()
-    p.scripts.push(() => ({ kind: "not-sent", cause: "preflight" }), () => ({ kind: "not-sent", cause: "preflight" }))
+    p.scripts.push(
+      () => ({ kind: "not-sent", cause: "preflight" }),
+      () => ({ kind: "not-sent", cause: "preflight" })
+    )
     await p.gateway.run(job)
     same(
       p.calls.map(call => call.via),
@@ -79,6 +82,37 @@ test("both sites share membership save removal and create parsing", async () => 
     same(createCall.spec.body, { title: "Created list", privacyStatus: "UNLISTED", videoIds: [video] }, "Create was split or changed")
     p.gateway.dispose()
   }
+})
+
+test("Music keeps Save-dialog playlists whose renderer omits the selection state", async () => {
+  const music = recorded("music")
+  music.scripts.push(
+    response({
+      ...identity(),
+      contents: [
+        {
+          addToPlaylistRenderer: {
+            playlists: [
+              {
+                playlistAddToOptionRenderer: {
+                  title: { runs: [{ text: "A Music playlist" }] },
+                  shortBylineText: { runs: [{ text: "3 songs" }] },
+                  addToPlaylistServiceEndpoint: { playlistEditEndpoint: { playlistId: playlist } }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    })
+  )
+  same(
+    await music.gateway.run({ kind: "membership", videoId: video }),
+    { ok: true, data: [{ id: playlist, title: "A Music playlist", count: 3, contains: null }], route: "music.membership" },
+    "Unknown selection should keep the playlist available"
+  )
+  same(music.signals, [], "A Music playlist without selection is a recognised response")
+  music.gateway.dispose()
 })
 
 test("uncertain writes never fall back after throws rejections or lost answers", async () => {
@@ -136,6 +170,24 @@ test("read timeout falls back and late identity mismatch stays latched", async (
   await drain()
   const result = await p.gateway.run({ kind: "add", playlistId: playlist, videoId: video })
   check(!result.ok && result.reason === "accountChanged" && p.calls.length === 2, "Late mismatch did not latch")
+  p.gateway.dispose()
+})
+
+test("a playlist request reports the fallback route timing out at the job deadline", async () => {
+  const p = recorded()
+  p.scripts.push(held().script, held().script)
+  const reading = p.gateway.run({ kind: "playlists" })
+  await drain()
+  p.clock.advance(5100)
+  await drain()
+  p.clock.advance(5000)
+  await reading
+  await drain()
+  same(
+    p.signals.flatMap(signal => (isBreakageSignal(signal, p.gateway.vocabulary) && signal.kind === "timeout" ? [signal.route] : [])),
+    ["signed.playlists", "service.playlists"],
+    "The fallback timed out without leaving health evidence"
+  )
   p.gateway.dispose()
 })
 
@@ -331,6 +383,22 @@ test("playlist pagination deduplicates Watch Later and preserves optional metada
   check(result.data[0]?.privacy === "PRIVATE" && result.data[0]?.count === 3 && result.data[0]?.thumb !== undefined, "Optional listing metadata was dropped")
   same(p.calls[1]?.spec.body, { browseId: "FEplaylist_aggregation" }, "Wrong playlist browse request")
   same(p.calls[2]?.spec.body, { continuation: "synthetic-next-page" }, "Wrong continuation request")
+  p.gateway.dispose()
+})
+
+test("a fallback page followed by a broken continuation does not report a successful fallback", async () => {
+  const p = recorded()
+  p.scripts.push(
+    () => ({ kind: "not-sent", cause: "missing" }),
+    response({ ...identity(), gridRenderer: { items: [{ continuationCommand: { token: "synthetic-next-page" } }] } }),
+    response({ ...identity(), contents: [{ unknownRenderer: {} }] })
+  )
+  same(await p.gateway.run({ kind: "playlists" }), unavailable, "The job must fail if its continuation fails")
+  check(
+    p.signals.some(signal => isBreakageSignal(signal, p.gateway.vocabulary) && signal.kind === "unrecognised"),
+    "Missing parser failure signal"
+  )
+  check(!p.signals.some(signal => isBreakageSignal(signal, p.gateway.vocabulary) && signal.kind === "fell-back"), "A failed list claimed fallback success")
   p.gateway.dispose()
 })
 

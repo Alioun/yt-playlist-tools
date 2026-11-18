@@ -64,6 +64,30 @@
       "why": "The Music page bundle includes the shared live-read port, including the modern thumbnail accessor support used on YouTube."
     },
     {
+      "row": "www/core",
+      "kb": 28.5,
+      "since": "2026-11-18",
+      "why": "The shared site core validates picker membership and timestamped health reports."
+    },
+    {
+      "row": "music/core",
+      "kb": 29.01,
+      "since": "2026-11-18",
+      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode."
+    },
+    {
+      "row": "popup/www/js",
+      "kb": 57.62,
+      "since": "2026-11-18",
+      "why": "The popup validates the casting-specific health status in the shared health contract."
+    },
+    {
+      "row": "popup/music/js",
+      "kb": 67.82,
+      "since": "2026-11-18",
+      "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions."
+    },
+    {
       "row": "www/kit",
       "kb": 28.4,
       "since": "2026-11-07",

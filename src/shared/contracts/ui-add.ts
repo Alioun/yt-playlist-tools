@@ -1,7 +1,7 @@
 import { isAccountKey, isPlaylistId, isVideoId, type AccountKey, type PlaylistId, type VideoId } from "../model/validation"
 import { objectShape } from "./object-shape"
 import { isUndoHandle, TITLE_LIMIT, type UndoHandle } from "./tab-actions"
-import type { MembershipRow } from "./jobs"
+import { isMembershipRow, type MembershipRow } from "./jobs"
 import { isSite, type Site } from "./vocabulary"
 import type { RpcContract } from "../rpc/rpc"
 
@@ -52,12 +52,12 @@ function isPopupAddRequest(value: unknown): value is PopupAddRequest {
     objectShape(value, { site: isSite, video: isVideoId, via: oneOf("picker", "choose-quick-save"), opener, playlist: isPlaylistId }, optionalTitle)
   )
 }
-const membershipRow = (row: unknown) =>
-  objectShape(
-    row,
-    { id: isPlaylistId, title: v => typeof v === "string" && v.length <= 1000, contains: v => typeof v === "boolean" },
-    { privacy: oneOf("PRIVATE", "UNLISTED", "PUBLIC"), count: natural }
+function isUiMembershipAnswer(value: unknown): value is UiMembershipAnswer {
+  return (
+    objectShape(value, { kind: oneOf("read"), rows: r => Array.isArray(r) && r.length <= 5000 && r.every(row => isMembershipRow(row) && row.title.length <= 1000) }) ||
+    objectShape(value, { kind: oneOf("unreadable", "no-tab", "account-changed", "unavailable") })
   )
+}
 export const uiAddContract: RpcContract<UiAddMessages> = {
   "ui.add": {
     payload: (value): value is UiAddPayload => objectShape(value, { tabId: natural, acct: isAccountKey, request: isPopupAddRequest }, { windowId: natural }),
@@ -81,9 +81,7 @@ export const uiAddContract: RpcContract<UiAddMessages> = {
   },
   "ui.membership": {
     payload: (value): value is UiMembershipPayload => objectShape(value, { tabId: natural, acct: isAccountKey, site: isSite, video: isVideoId }, { windowId: natural }),
-    result: (value): value is UiMembershipAnswer =>
-      objectShape(value, { kind: oneOf("read"), rows: r => Array.isArray(r) && r.length <= 5000 && r.every(membershipRow) }) ||
-      objectShape(value, { kind: oneOf("unreadable", "no-tab", "account-changed", "unavailable") }),
+    result: isUiMembershipAnswer,
     timeoutMs: 45_000
   },
   "ui.addUndo": {

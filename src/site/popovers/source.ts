@@ -65,6 +65,10 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> &
   const item: ItemPort = {
     async membership() {
       if (acct === null) return { kind: "unreadable" }
+      if (site === "music") {
+        const rows = await actions.membership(request.video)
+        return rows ? { kind: "read", rows } : { kind: "unreadable" }
+      }
       const answer = await page.run<JobOf<"membership">>({ job: { kind: "membership", videoId: request.video }, acct })
       return answer.ok ? { kind: "read", rows: answer.data } : { kind: "unreadable" }
     },

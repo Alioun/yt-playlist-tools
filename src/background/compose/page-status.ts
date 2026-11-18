@@ -37,7 +37,9 @@ const MAX_TABS = 20
 function gaps(status: Pick<FeatureStatus, "jobs" | "actions" | "kinds">): HealthGap[] {
   const result: HealthGap[] = []
   if (status.jobs.includes("membership")) result.push("membership")
+  if (status.jobs.includes("playlists")) result.push("playlists")
   if (status.actions.length) result.push("actions")
+  if (status.jobs.includes("castState")) result.push("casting")
   if (status.kinds.includes("cannot-measure")) result.push("measure")
   return result
 }

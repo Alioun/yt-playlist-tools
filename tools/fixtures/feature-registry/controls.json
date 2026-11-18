@@ -41,9 +41,9 @@
   },
   {
     "id": "dropped-music-action-dependency",
-    "before": "next: [\"queueInsert\", \"queueMove\", \"castState\"]",
-    "after": "next: [\"queueInsert\", \"castState\"]",
-    "test": "Music actions retain all action dependencies and separate optional Undo jobs",
+    "before": "next: [\"queueInsert\", \"queueMove\"]",
+    "after": "next: [\"queueInsert\"]",
+    "test": "Music actions declare queue edits separately from optional casting and Undo reads",
     "path": "src/shared/features/registry.ts",
     "status": "unexecuted-compiling-control-proposal"
   }

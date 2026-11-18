@@ -2,7 +2,7 @@ import type { ExplicitFailure, Outcome, ToastPlan } from "../rules/outcomes"
 import { isAccountKey, isChannelId, isPlaylistId, isShortcutId, isVideoId, type AccountKey, type ChannelId, type PlaylistId, type ShortcutId, type VideoId } from "../model/validation"
 import type { RpcContract } from "../rpc/rpc"
 import { isDestinationExpectation, isSetupDestination, isDestinationAnswer, type DestinationAnswer, type DestinationExpectation, type SetupDestination } from "./first-run"
-import type { PlaylistRow } from "./jobs"
+import { isMembershipRow, type MembershipRow, type PlaylistRow } from "./jobs"
 import { objectShape } from "./object-shape"
 import { isFeatureId, isPrivacy, isSite, type FeatureId, type Privacy, type Site } from "./vocabulary"
 import { isThisVideo, type ThisVideo } from "./this-video"
@@ -91,6 +91,7 @@ export type TabSettingsTarget = { readonly feature: "auto-add" | "shortcuts" | "
 export type TabSkip = { readonly video: VideoId; readonly skip: boolean }
 export type TabFilterChannel = Omit<FilterChannelChange, "acct">
 export type TabMemoryAnswer = { readonly kind: "done" | "refused" }
+export type TabMembershipAnswer = readonly MembershipRow[] | null
 export type TabActionMessages = {
   "tab.add": { payload: Pinned<TabAddRequest>; result: TabAddReport }
   "tab.remove": { payload: Pinned<TabRemoveRequest>; result: TabRemoveReport }
@@ -99,6 +100,7 @@ export type TabActionMessages = {
   /** Loads the picker, or this page's jobs file on its first job (G42), into the asking tab. */
   "tab.need": { payload: { readonly popovers: true } | { readonly jobs: true }; result: { readonly kind: "ok" | "failed" } }
   "tab.playlists": { payload: Pinned<{ readonly refresh: boolean }>; result: TabPlaylists }
+  "tab.membership": { payload: Pinned<VideoId>; result: TabMembershipAnswer }
   "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
   "tab.device": { payload: { readonly change: TabDeviceChange }; result: TabDeviceAnswer }
@@ -224,6 +226,11 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
     timeoutMs: 5_000
   },
   "tab.playlists": { payload: (v): v is TabActionMessages["tab.playlists"]["payload"] => pinned(r => objectShape(r, { refresh: bool }))(v), result: isTabPlaylists, timeoutMs: 45_000 },
+  "tab.membership": {
+    payload: (v): v is TabActionMessages["tab.membership"]["payload"] => pinned(isVideoId)(v),
+    result: (v): v is TabMembershipAnswer => v === null || (Array.isArray(v) && v.length <= 5000 && v.every(isMembershipRow)),
+    timeoutMs: 45_000
+  },
   "tab.create": {
     payload: (v): v is TabActionMessages["tab.create"]["payload"] => pinned(r => objectShape(r, { title, privacy: isPrivacy, video: nullable(isVideoId) }))(v),
     result: isTabCreated,

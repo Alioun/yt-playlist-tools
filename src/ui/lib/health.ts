@@ -21,17 +21,20 @@ export function healthLine(i18n: I18n, row: UiFeatureHealth | undefined): string
   if (!row || row.state === "working") return null
   if (row.state === "not-working") return i18n.message(row.site === "music" ? "health_notWorking_music" : "health_notWorking_www")
   const gap = row.gaps[0]
+  if (gap === "casting") return i18n.message("health_partly", { gap: i18n.message("health_gap_casting") })
   const text =
     gap === "membership"
       ? i18n.message("health_gap_membership")
-      : gap === "actions"
-        ? i18n.message("health_gap_actions")
-        : gap === "measure"
-          ? i18n.message("health_gap_measure")
-          : gap
-            ? i18n.message("health_gap_destination", {
-                destination: i18n.message(gap === "player" ? "gather_destination_player" : gap === "queue" ? "gather_destination_queue" : "gather_into_playlist")
-              })
-            : i18n.message("health_gap_actions")
+      : gap === "playlists"
+        ? i18n.message("health_gap_playlists")
+        : gap === "actions"
+          ? i18n.message("health_gap_actions")
+          : gap === "measure"
+            ? i18n.message("health_gap_measure")
+            : gap
+              ? i18n.message("health_gap_destination", {
+                  destination: i18n.message(gap === "player" ? "gather_destination_player" : gap === "queue" ? "gather_destination_queue" : "gather_into_playlist")
+                })
+              : i18n.message("health_gap_actions")
   return i18n.message("health_partly", { gap: text })
 }

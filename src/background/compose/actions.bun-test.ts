@@ -14,10 +14,10 @@ import type { ToastContent } from "../../site/kit/toaster/types"
 import type { NavData, PlayerData } from "../../shared/contracts/streams"
 import type { ToastPlan } from "../../shared/rules/outcomes"
 import type { Playlists } from "../playlists/playlists"
-import type { Tabs, TabJobOutcome } from "../tabs/ports"
+import type { RoutingNeed, Tabs, TabJobOutcome } from "../tabs/ports"
 import type { KnownTab } from "../tabs/tabs"
 import type { NativeSender } from "../adapters/sender-origin"
-import type { Job, JobInvocation, JobResult, RouteId, SetVideoId } from "../../shared/contracts"
+import type { Job, JobInvocation, JobResult, MembershipRow, RouteId, SetVideoId } from "../../shared/contracts"
 import type { AccountKey, PlaylistId, VideoId } from "../../shared/model"
 import { projectionSeed, projectionWorld, document as doc, a, b, alpha, beta, video } from "../../../tools/fixtures/tab-projection/harness"
 import { build } from "../../../tools/fixtures/page-link/support"
@@ -77,7 +77,15 @@ function youtube() {
 }
 
 type Seed = ReturnType<typeof seed>
-function world(options: { settings?: Record<string, unknown>; tabAccount?: AccountKey | null; pageAccount?: AccountKey | null; prepare?: (initial: Seed) => void } = {}) {
+function world(
+  options: {
+    settings?: Record<string, unknown>
+    tabAccount?: AccountKey | null
+    pageAccount?: AccountKey | null
+    prepare?: (initial: Seed) => void
+    music?: { rows: MembershipRow[] | null; fallback?: MembershipRow[]; incognito?: boolean }
+  } = {}
+) {
   const initial = seed(options.settings)
   options.prepare?.(initial)
   const store = projectionWorld(initial)
@@ -87,15 +95,23 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     ticks: string[] = [],
     opened: unknown[] = [],
     logs: string[] = []
-  const known = { tabId: 9, acct: options.tabAccount === undefined ? a : options.tabAccount, privateTab: false } as unknown as KnownTab
+  const known = { tabId: 9, acct: options.tabAccount === undefined ? a : options.tabAccount, privateTab: options.music?.incognito ?? false } as unknown as KnownTab
+  const fallbackNeeds: RoutingNeed[] = []
+  const membershipHealth: boolean[] = []
   const tabs = {
     async known() {
       return [known]
     },
     async runIn<J extends Job>(tabId: number, invocation: JobInvocation<J>): Promise<TabJobOutcome<J>> {
+      if (options.music && invocation.job.kind === "membership") {
+        const { rows } = options.music
+        return { kind: "result", tabId, result: rows === null ? { ok: false, reason: "unavailable" } : { ok: true, route, data: rows } } as never
+      }
       return { kind: "result", tabId, result: site.answer(invocation) }
     },
-    async serve() {
+    async serve(_invocation: unknown, need: RoutingNeed) {
+      fallbackNeeds.push(need)
+      if (options.music?.fallback) return { kind: "result", tabId: 10, result: { ok: true, route, data: options.music.fallback } }
       return { kind: "no-tab", attempted: [] }
     },
     async accountInView() {
@@ -123,7 +139,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     },
     windows: {
       async get(id: number) {
-        return { id, incognito: false }
+        return { id, incognito: known.privateTab }
       }
     }
   }
@@ -134,6 +150,9 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     owner: store.owner,
     tabs,
     playlists,
+    async musicMembershipHealth(_tab, _acct, { complete }) {
+      membershipHealth.push(complete)
+    },
     writable: () => true,
     closed: listener => {
       closedListeners.add(listener)
@@ -157,7 +176,12 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
       opened.push({ hash, tabId })
     }
   })
-  const sender = { id: "perchling", frameId: 0, url: "https://www.youtube.com/watch?v=aaaaaaaaaaa", tab: { id: 9, windowId: 3, incognito: false } } as NativeSender
+  const sender = {
+    id: "perchling",
+    frameId: 0,
+    url: `https://${options.music ? "music" : "www"}.youtube.com/watch?v=aaaaaaaaaaa`,
+    tab: { id: 9, windowId: 3, incognito: known.privateTab }
+  } as NativeSender
   const transport = {
     send: (message: unknown) =>
       new Promise<unknown>(resolve => {
@@ -204,8 +228,49 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   const closeTab = (tabId: number) => {
     for (const listener of [...closedListeners]) listener(tabId)
   }
-  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab, opened, logs }
+  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab, opened, logs, fallbackNeeds, membershipHealth }
 }
+
+test("the Music picker reads check marks from YouTube for the same account and window kind and keeps Music's rows", async () => {
+  const rows = [
+    { id: beta, title: "B in Music", contains: null },
+    { id: alpha, title: "A in Music", contains: false }
+  ]
+  const w = world({
+    music: {
+      rows,
+      fallback: [
+        { id: alpha, title: "A", contains: true },
+        { id: beta, title: "B", contains: true }
+      ],
+      incognito: true
+    }
+  })
+  expect(await w.page.membership(video)).toEqual([
+    { id: beta, title: "B in Music", contains: true },
+    { id: alpha, title: "A in Music", contains: false }
+  ])
+  expect(w.fallbackNeeds).toEqual([{ site: "www", req: { windowId: 3, activeTabId: 9, incognito: true }, account: { kind: "account", acct: a, signedIn: true } }])
+  expect(w.membershipHealth).toEqual([true])
+})
+
+test("the Music popup keeps playlist rows with unknown checks when YouTube cannot serve the account", async () => {
+  const rows = [{ id: alpha, title: "A in Music", contains: null }]
+  const w = world({ music: { rows } })
+  const req = { windowId: 3, activeTabId: 9, incognito: false }
+  const tab = { tabId: 9, incognito: false, site: "music" } as const
+  expect(await w.actions.membershipFromPopup(tab, b, video, req)).toEqual({ kind: "account-changed" })
+  expect(w.fallbackNeeds).toEqual([])
+  expect(await w.actions.membershipFromPopup(tab, a, video, req)).toEqual({ kind: "read", rows })
+  expect(w.membershipHealth).toEqual([false])
+})
+
+test("the Music picker uses same-account YouTube rows if the Music response is unreadable", async () => {
+  const row = { id: alpha, title: "YouTube playlist", contains: true }
+  const w = world({ music: { rows: null, fallback: [row, { id: "WL" as PlaylistId, title: "Watch Later", contains: false }] } })
+  expect(await w.page.membership(video)).toEqual([row])
+  expect(w.membershipHealth).toEqual([true])
+})
 
 test("a playlist shortcut saves the pointed video to this account's shortcut playlist, with Undo", async () => {
   const { page, site } = world()

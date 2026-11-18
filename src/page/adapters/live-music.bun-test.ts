@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test"
 import { GlobalRegistrator } from "@happy-dom/global-registrator"
 import { createLiveMusicBindings, createLiveMusicPage } from "./live-music"
+import { createLiveMusicReads } from "./live-music-reads"
+import { readRoutes } from "../read-port"
 import { queueEntry } from "../music-gateway.specimens"
 
 if (typeof document === "undefined") GlobalRegistrator.register({ url: "https://music.youtube.com/watch?v=synthetic01" })
@@ -58,6 +60,20 @@ function page() {
     }
   }
 }
+
+test("Firefox Music reports casting off even when the app store returns null", async () => {
+  const { app } = page()
+  Object.assign(app.queue.store, { getState: () => null })
+  const reads = createLiveMusicReads({ window, document, browser: "firefox" })
+  const signals: unknown[] = []
+  reads.gateway.onSignal(signal => signals.push(signal))
+  try {
+    expect(await reads.gateway.run({ kind: "castState" })).toEqual({ ok: true, route: readRoutes.castState, data: { casting: false } })
+    expect(signals).toEqual([])
+  } finally {
+    reads.dispose()
+  }
+})
 
 test("the live port finds each YouTube Music handler and checks the reorder path as ARC-ACC-29 says", () => {
   const p = page(),

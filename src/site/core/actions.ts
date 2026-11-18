@@ -3,7 +3,7 @@ import type { BuildId, Privacy } from "../../shared/contracts/vocabulary"
 import {
   tabActionContract, tabGatherContract, tabProgressContract, TITLE_LIMIT, type GatherToastLine, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated,
   type TabDestinationChange, type TabChannelLabel, type TabDeviceAnswer, type TabDeviceChange, type TabGatherMessages, type TabPlaylists, type TabProgress, type TabProgressMessages,
-  type TabRemoveReport, type TabRemoveRequest, type TabSettingsTarget, type TabUndoReport, type UndoHandle, type TabFilterChannel
+  type TabRemoveReport, type TabRemoveRequest, type TabSettingsTarget, type TabUndoReport, type UndoHandle, type TabFilterChannel, type TabMembershipAnswer
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
@@ -24,6 +24,7 @@ export type TabActions = {
   /** Asks the background to inject this page's jobs file into this tab, for the page half's first job (G42). */
   loadJobs(): Promise<boolean>
   playlists(refresh: boolean): Promise<TabPlaylists>
+  membership(video: VideoId): Promise<TabMembershipAnswer>
   create(playlist: { readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }): Promise<TabCreated>
   destination(change: TabDestinationChange): Promise<DestinationAnswer>
   /** Breakage evidence for the Monitor, batched by the site's health reporter (HEALTH-28). */
@@ -92,6 +93,7 @@ export function createTabActions(options: {
     need: () => need({ popovers: true }),
     loadJobs: () => need({ jobs: true }),
     playlists: refresh => call("tab.playlists", { refresh }, { kind: "failed" } as const),
+    membership: video => call("tab.membership", video, null),
     create: playlist => call("tab.create", playlist, { kind: "failed", reason: "failed" } as const),
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
     channelLabel(channel) { void call("tab.channelLabel", { channel }, null) },

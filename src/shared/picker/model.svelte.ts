@@ -179,7 +179,10 @@ export class PickerModel {
     this.#chosen = new Set(source.chosen)
     this.form.privacy = source.privacy ?? "PRIVATE"
     void this.#open(source)
-    if (source.item && options.marks !== false) void this.#readMembership(source.item)
+    if (source.item && options.marks !== false) {
+      if (this.site === "music") void this.refresh()
+      else void this.#readMembership(source.item)
+    }
   }
 
   get closed(): boolean {
@@ -360,20 +363,31 @@ export class PickerModel {
     const seq = ++this.#seq
     this.#membership = "checking"
     const answer = await item.membership()
-    if (this.#closed) return
+    if (this.#closed) return false
     if (answer.kind === "unreadable") {
+      this.#members = this.#members?.map(row => ({ ...row, contains: null })) ?? null
       this.#membership = "unreadable"
-      return
+      return false
     }
     this.#membersSeq = seq
     this.#members = answer.rows
     if (seq > this.#listingSeq) this.#base = "members"
-    this.#membership = "read"
+    this.#membership = answer.rows.some(row => row.contains === null) ? "unreadable" : "read"
+    return true
   }
 
   async #readFresh(): Promise<RefreshOutcome> {
+    const { source, marks } = this.#options
+    if (this.site === "music" && source.item && marks !== false) {
+      const read = await this.#readMembership(source.item)
+      if (this.#closed) return CLOSED
+      if (read) {
+        this.#refreshing = null
+        return { kind: "refreshed" }
+      }
+    }
     const seq = ++this.#seq
-    const answer = await this.#options.source.freshList()
+    const answer = await source.freshList()
     if (this.#closed) return CLOSED
     this.#refreshing = null
     switch (answer.kind) {
@@ -520,11 +534,11 @@ export class PickerModel {
     }
     const marks: ReadonlyMap<PlaylistId, Mark> = this.mode === "save" ? new Map() : this.#options.source.marks
     if (this.mode === "many") entries.sort((a, b) => Number(marks.has(b.id)) - Number(marks.has(a.id)))
-    const facts = this.#membership === "read" && this.#members ? new Map(this.#members.map(row => [row.id, row.contains])) : null
+    const facts = this.#members ? new Map(this.#members.map(row => [row.id, row.contains])) : null
     return entries.map(entry => this.#view(entry, marks.get(entry.id) ?? null, facts))
   }
 
-  #view(entry: Entry, mark: Mark | null, facts: ReadonlyMap<PlaylistId, boolean> | null): PickerRow {
+  #view(entry: Entry, mark: Mark | null, facts: ReadonlyMap<PlaylistId, MembershipRow["contains"]> | null): PickerRow {
     const state = this.#rowStates.get(entry.id)
     return {
       id: entry.id,
@@ -542,7 +556,7 @@ export class PickerModel {
     }
   }
 
-  #check(id: PlaylistId, state: RowState | undefined, facts: ReadonlyMap<PlaylistId, boolean> | null): PickerRow["check"] {
+  #check(id: PlaylistId, state: RowState | undefined, facts: ReadonlyMap<PlaylistId, MembershipRow["contains"]> | null): PickerRow["check"] {
     if (this.mode !== "save") return this.#chosen.has(id) ? "on" : "off"
     if (state?.check !== undefined) return state.check ? "on" : "off"
     if (this.#membership === "checking") return "loading"

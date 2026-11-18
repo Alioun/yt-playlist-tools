@@ -4,5 +4,5 @@ import { startPage } from "../page/start"
 import { platform } from "../shared/platform"
 
 export default defineUnlistedScript(() => {
-  startPage({ site: "music", createReads: createLiveMusicReads, build: platform.build, window, document })
+  startPage({ site: "music", createReads: options => createLiveMusicReads({ ...options, browser: platform.browser }), build: platform.build, window, document })
 })

@@ -171,6 +171,41 @@ test("Music action detail names unavailable enabled actions and preserves queue 
   }
 })
 
+test("an unreadable Music cast state leaves queue actions available", async () => {
+  const c = context("music"),
+    { h } = seeded(c)
+  try {
+    h.routes(c, "castState", "unrecognised")
+    const enabled = [pageFeature("music-actions"), pageFeature("music-keys")]
+    expect(await statuses(h, c, enabled)).toMatchObject([
+      { feature: "music-actions", state: "partly-working", jobs: ["castState"], actions: [] },
+      { feature: "music-keys", state: "partly-working", jobs: ["castState"], actions: [] }
+    ])
+  } finally {
+    await h.dispose()
+  }
+})
+
+test("Music membership health follows observation time when reports arrive out of order", async () => {
+  const c = context("music"),
+    { h } = seeded(c)
+  const enabled = [pageFeature("music-actions")]
+  const miss = (at: number) => signalValue("unrecognised", { site: "music", feature: null, job: "membership", firstSeen: at, lastSeen: at })
+  try {
+    h.routes(c, "membership", "usable", "missing")
+    await h.monitor.succeeded(c, "membership", 20)
+    await h.monitor.signal(c, miss(10), answered)
+    expect(await state(h, c, enabled)).toBe("working")
+    await h.monitor.signal(c, miss(30), answered)
+    await h.monitor.succeeded(c, "membership", 25)
+    expect(await state(h, c, enabled)).toBe("partly-working")
+    await h.monitor.succeeded(c, "membership", 40)
+    expect(await state(h, c, enabled)).toBe("working")
+  } finally {
+    await h.dispose()
+  }
+})
+
 test("Gather failures name destinations and only a failed player stops Gather", async () => {
   const { h, c } = seeded()
   try {

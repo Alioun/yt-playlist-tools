@@ -32,9 +32,9 @@ export function createSiteHealth(options: {
   now(): number
   online(): boolean
   later(run: () => void, milliseconds: number): () => void
-}): SiteHealth & { succeeded(job: JobId): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; dispose(): void } {
+}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; dispose(): void } {
   let queue: TabHealthReport[] = [], lastSent = -Infinity, cancel: (() => void) | null = null, answeredAt = -Infinity, disposed = false, unmeasured = false
-  const sent = new Set<string>(), batched = new Map<string, number>(), signalled = new Set<JobId>()
+  const sent = new Map<string, JobId | null>(), batched = new Map<string, number>(), signalled = new Set<JobId>()
   function flush() {
     cancel = null
     if (disposed || !queue.length) return
@@ -55,8 +55,10 @@ export function createSiteHealth(options: {
   function admit(signal: BreakageSignal): boolean {
     const key = keyOf(signal), limit = repeats[signal.kind]
     if (limit === undefined) {
+      // The background can clear this job through a YouTube fallback without the tab seeing a success.
+      if (options.site === "music" && signal.job === "membership") return true
       if (sent.has(key)) return false
-      if (sent.size < 200) sent.add(key)
+      if (sent.size < 200) sent.set(key, signal.job)
       return true
     }
     const count = batched.get(key) ?? 0
@@ -80,11 +82,15 @@ export function createSiteHealth(options: {
     push({ kind: "signal", signal, evidence: "job", online: options.online(), answered: options.now() - answeredAt < ANSWERED_MS })
   })
   return {
-    succeeded(job) {
+    answered(job, complete = true) {
       answeredAt = options.now()
+      if (!complete) {
+        signalled.add(job)
+        return
+      }
       if (!signalled.delete(job)) return
-      for (const key of [...sent]) if ((JSON.parse(key) as unknown[])[1] === job) sent.delete(key)
-      push({ kind: "success", job })
+      for (const [key, sentJob] of sent) if (sentJob === job) sent.delete(key)
+      push(options.site === "music" && job === "membership" ? { kind: "success", job, at: answeredAt } : { kind: "success", job })
     },
     itemUnrecognised(feature) {
       const signal = own("item-unrecognised", feature)
