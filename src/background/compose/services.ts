@@ -143,6 +143,32 @@ export function composeServices(deps: {
     playlists,
     registrar,
     writable: deps.consented,
+    async musicMembershipHealth(tab, acct, { route, complete, at }) {
+      const lookup = await browserTabs.port.get(tab.tabId)
+      if (lookup.kind !== "tab" || lookup.tab.site !== "music" || lookup.tab.incognito !== tab.incognito) return
+      const context: TabContext = { tab: { ...lookup.tab, site: "music" }, info: { site: "music", build, signedIn: true, acct } }
+      if (complete) await monitor.succeeded(context, "membership", at)
+      else if (route !== null) {
+        await monitor.signal(
+          context,
+          {
+            site: "music",
+            feature: null,
+            job: "membership",
+            route,
+            kind: "unrecognised",
+            watchId: null,
+            shape: { kind: "null" },
+            clientVersion: null,
+            pageType: "other",
+            count: 1,
+            firstSeen: at,
+            lastSeen: at
+          },
+          { kind: "diagnostic" }
+        )
+      }
+    },
     ticked: tabId => badge.tick(tabId),
     openSettings(hash, tabId) {
       void native.tabs

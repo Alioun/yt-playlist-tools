@@ -22,12 +22,15 @@
   let copied = $state(false)
   let reporting = $state<ReportFeature | null>(null)
   let logFailed = $state(false)
-  const rows = $derived(settings ? firstRunFeatures.filter(row => isOn(settings, row.id)).map(row => {
+  const rows = $derived(settings ? firstRunFeatures.filter(row => isOn(settings, row.id)).flatMap(row => {
     const site: Site = accessSite(row.id)
-    const status = health.find(entry => entry.feature === row.id && entry.site === site)
+    const statuses = health.filter(entry => entry.feature === row.id)
     const held = heldReason(row.id, settings, pageState.agreed, pageState.access ?? { www: true, music: true, browserMenu: true })
-    return { feature: row.id as FeatureId, site, label: held ? i18n.message("diag_held") : status?.state === "not-working" ? i18n.message("diag_notWorking")
-      : status?.state === "partly-working" ? i18n.message("diag_partly") : i18n.message("diag_working"), broken: status !== undefined && status.state !== "working" }
+    if (!statuses.length) return [{ feature: row.id as FeatureId, site, label: i18n.message(held ? "diag_held" : "diag_unchecked"), broken: false }]
+    return statuses.map(status => ({
+      feature: status.feature, site: status.site, broken: !held && status.state !== "working",
+      label: i18n.message(held ? "diag_held" : status.state === "not-working" ? "diag_notWorking" : status.state === "partly-working" ? "diag_partly" : "diag_working")
+    }))
   }) : [])
   let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
@@ -43,7 +46,10 @@
   void untrack(() => diagnostics(false))
   async function checkNow() {
     checking = true; checkFailed = false
-    try { checkFailed = !await diagnostics(true) } finally { checking = false }
+    try {
+      checkFailed = !await diagnostics(true)
+      if (!checkFailed) await pageState.refreshStatus()
+    } finally { checking = false }
   }
   const noTab = $derived(evidence !== null && !evidence.tabs.www && !evidence.tabs.music)
   async function copy() { await navigator.clipboard.writeText(report); copied = true }
@@ -59,7 +65,7 @@
     <h3 class="mb-2 text-[15px] font-semibold">{i18n.message("diag_statusHeading")}</h3>
     {#if rows.length === 0}<p class="text-muted-foreground text-[13.5px]">{i18n.message("shell_noFeatures")}</p>{/if}
     <ul class="flex flex-col gap-1.5 text-[13.5px]">
-      {#each rows as row (row.feature)}
+      {#each rows as row (`${row.feature}:${row.site}`)}
         <li class="flex items-center justify-between gap-3" data-status={row.feature}>
           <span>{featureName(features, row.feature)} <span class="text-muted-foreground">· {i18n.message(row.site === "www" ? "site_www" : "site_music")}</span></span>
           <span class={row.broken ? "text-warning font-medium" : "text-muted-foreground"}>{row.label}

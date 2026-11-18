@@ -187,7 +187,7 @@ export async function membershipCaller(run: <J extends Job>(job: J) => Promise<J
     result.data
     return reason
   }
-  const membership: boolean[] = result.data.map(row => row.contains)
+  const membership: (boolean | null)[] = result.data.map(row => row.contains)
   const selectedRoute: RouteId = result.route
   // @ts-expect-error Membership results have no queue IDs.
   result.data.ids
@@ -217,7 +217,7 @@ export function resultRelationships(raw: unknown, player: StreamData<"player">) 
   }
   const membershipJob = { kind: "membership", videoId: video } satisfies Job
   if (isJobDataFor(membershipJob, raw)) {
-    const contains: boolean[] = raw.map(row => row.contains)
+    const contains: (boolean | null)[] = raw.map(row => row.contains)
     void contains
   }
   if (isJobResultFor(membershipJob, raw) && raw.ok) {

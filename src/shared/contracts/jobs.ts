@@ -52,7 +52,7 @@ export type JobInputById = {
 export type JobById = { [K in JobId]: { kind: K } & JobInputById[K] }
 export type Job = JobById[JobId]
 export type JobOf<K extends JobId> = JobById[K]
-export type MembershipRow = { id: PlaylistId; title: string; privacy?: Privacy; count?: number; contains: boolean }
+export type MembershipRow = { id: PlaylistId; title: string; privacy?: Privacy; count?: number; contains: boolean | null }
 export type PlaylistRow = { id: PlaylistId; title: string; privacy?: Privacy; count?: number; thumb?: string }
 export type BatchAddResult = { videoId: VideoId; setVideoId: SetVideoId | null; failure?: never } | { videoId: VideoId; failure: JobFailure; setVideoId?: never }
 export type AccountData = { signedIn: true; acct: AccountKey } | { signedIn: false; acct: null }
@@ -171,8 +171,8 @@ export function isJob(value: unknown): value is Job {
     return false
   }
 }
-function membershipRow(value: unknown): boolean {
-  return shape(value, { id: isPlaylistId, title: text, contains: boolean }, { privacy: isPrivacy, count: integer })
+export function isMembershipRow(value: unknown): value is MembershipRow {
+  return shape(value, { id: isPlaylistId, title: text, contains: v => v === null || boolean(v) }, { privacy: isPrivacy, count: integer })
 }
 function playlistRow(value: unknown): boolean {
   return shape(value, { id: isPlaylistId, title: text }, { privacy: isPrivacy, count: integer, thumb: nonempty })
@@ -187,7 +187,7 @@ function removed(value: unknown, maximum: number): boolean {
 const dataGuards = {
   account: v => shape(v, { signedIn: x => x === true, acct: isAccountKey }) || shape(v, { signedIn: x => x === false, acct: noData }),
   accountLabel: v => shape(v, { name: text }, { handle: text, avatar: nonempty }),
-  membership: v => list(v, membershipRow),
+  membership: v => list(v, isMembershipRow),
   playlists: v => list(v, playlistRow),
   add: v => shape(v, { setVideoId: addedIdentity }),
   remove: noData,

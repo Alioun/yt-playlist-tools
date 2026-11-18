@@ -27,16 +27,18 @@ test("the production Monitor answers every enabled feature's status for a tab it
 })
 
 const primary = "service.add" as never,
-  fallback = "signed.add" as never
+  fallback = "signed.add" as never,
+  signedPlaylists = "signed.playlists" as never,
+  servicePlaylists = "service.playlists" as never
 function wired() {
   const memory = parseSessionMemory({})
   if (!memory) throw Error("no empty session")
   const read: SessionRead = { kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }
-  const vocabulary = { routes: [primary, fallback], watchIds: ["SYNTHETIC-WATCH"] as never, schemaKeys: [] }
+  const vocabulary = { routes: [primary, fallback, signedPlaylists, servicePlaylists], watchIds: ["SYNTHETIC-WATCH"] as never, schemaKeys: [] }
   const monitor = composeMonitor({
     owner: { readSession: async () => read, changeSession: async () => ({ kind: "unavailable", reason: "stale" }), subscribeView: () => () => {} },
     clock: { now: () => 0, after: () => () => {} },
-    sites: { www: { vocabulary, routes: { add: [primary, fallback] } }, music: { vocabulary, routes: {} } }
+    sites: { www: { vocabulary, routes: { add: [primary, fallback], playlists: [signedPlaylists, servicePlaylists] } }, music: { vocabulary, routes: {} } }
   })
   const context = {
     tab: { tabId: 3, windowId: 1, incognito: false, site: "www", lastAccessed: 0, active: true, discarded: false, frozen: false },
@@ -68,6 +70,15 @@ function wired() {
   return { monitor, context, states, signal }
 }
 const job = { kind: "job", online: true, otherRequestsAnswer: true } as const
+
+test("a failed playlist list degrades its features and a successful refresh restores them", async () => {
+  const { monitor, context, states, signal } = wired()
+  await monitor.signal(context, signal("unrecognised", { job: "playlists", route: signedPlaylists, shape: { kind: "null" } }), job)
+  expect(await states()).toEqual({ "auto-add": "partly-working", "quick-save": "partly-working" })
+  await monitor.succeeded(context, "playlists")
+  expect(await states()).toEqual({ "auto-add": "working", "quick-save": "working" })
+  monitor.dispose()
+})
 
 test("a tab's signals take a job's shipped routes away one by one, and the job's next success brings the features back (HEALTH-07, HEALTH-12)", async () => {
   const { monitor, context, states, signal } = wired()

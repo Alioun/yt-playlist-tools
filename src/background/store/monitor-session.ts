@@ -17,7 +17,8 @@ export type SignalEvidence =
   | { readonly kind: "playback" | "diagnostic" }
 export type MonitorOperation = { readonly instance: MonitorInstance; readonly sequence: number; readonly tabId: number; readonly site: Site } & (
   | { readonly kind: "signal"; readonly signal: BreakageSignal; readonly evidence: SignalEvidence }
-  | { readonly kind: "success" | "interrupted"; readonly job: JobId }
+  | { readonly kind: "success"; readonly job: JobId; readonly at?: number }
+  | { readonly kind: "interrupted"; readonly job: JobId }
   | { readonly kind: "measured" | "reload-passed" }
 )
 export type MonitorRecord = {
@@ -36,11 +37,12 @@ export type MonitorCounter = {
   readonly noEffects: number
   readonly cannotMeasure: number
 }
+type Passed = { readonly tabId: number; readonly site: Site; readonly job: JobId | null; readonly at?: number }
 export type MonitorJournal = {
   readonly signals: readonly MonitorRecord[]
   readonly counters: readonly MonitorCounter[]
   readonly seen: Readonly<Record<string, number>>
-  readonly passed: readonly { readonly tabId: number; readonly site: Site; readonly job: JobId | null }[]
+  readonly passed: readonly Passed[]
 }
 export const emptyMonitorJournal: MonitorJournal = { signals: [], counters: [], seen: {}, passed: [] }
 const natural = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
@@ -65,7 +67,11 @@ export function isMonitorOperation(value: unknown, vocabulary: DiagnosticVocabul
       (value.evidence.kind !== "anchor" || anchors[value.evidence.anchor].site === value.site)
     )
   }
-  return objectShape(value, { ...common, kind: v => v === "success" || v === "interrupted", job: isJobId }) || objectShape(value, { ...common, kind: v => v === "measured" || v === "reload-passed" })
+  return (
+    objectShape(value, { ...common, kind: v => v === "success", job: isJobId }, { at: natural }) ||
+    objectShape(value, { ...common, kind: v => v === "interrupted", job: isJobId }) ||
+    objectShape(value, { ...common, kind: v => v === "measured" || v === "reload-passed" })
+  )
 }
 export function parseMonitorJournal(value: unknown, vocabulary: DiagnosticVocabulary): MonitorJournal | undefined {
   if (value === undefined) return structuredClone(emptyMonitorJournal)
@@ -91,7 +97,7 @@ export function parseMonitorJournal(value: unknown, vocabulary: DiagnosticVocabu
     !objectShape(value, {
       signals: v => Array.isArray(v) && v.length <= MONITOR_SIGNALS && v.every(record),
       counters: v => Array.isArray(v) && v.length <= MONITOR_SIGNALS && v.every(counter),
-      passed: v => Array.isArray(v) && v.length <= MONITOR_SIGNALS && v.every(row => objectShape(row, { tabId: natural, site: isSite, job: v => v === null || isJobId(v) })),
+      passed: v => Array.isArray(v) && v.length <= MONITOR_SIGNALS && v.every(row => objectShape(row, { tabId: natural, site: isSite, job: v => v === null || isJobId(v) }, { at: natural })),
       seen: v =>
         v !== null && typeof v === "object" && !Array.isArray(v) && Object.entries(v).length <= MONITOR_SIGNALS && Object.entries(v).every(([key, count]) => isMonitorInstance(key) && natural(count))
     }) ||
@@ -107,11 +113,12 @@ export function parseMonitorJournal(value: unknown, vocabulary: DiagnosticVocabu
     if (!isMonitorInstance(key) || !natural(count)) return
     seen[key] = count
   }
-  const passed: { tabId: number; site: Site; job: JobId | null }[] = []
+  const passed: Passed[] = []
   if (!Array.isArray(value.passed)) return
   for (const row of value.passed) {
-    if (!objectShape(row, { tabId: natural, site: isSite, job: v => v === null || isJobId(v) }) || !natural(row.tabId) || !isSite(row.site) || (row.job !== null && !isJobId(row.job))) return
-    passed.push({ tabId: row.tabId, site: row.site, job: row.job })
+    if (!objectShape(row, { tabId: natural, site: isSite, job: v => v === null || isJobId(v) }, { at: natural }) || !natural(row.tabId) || !isSite(row.site) || (row.job !== null && !isJobId(row.job)))
+      return
+    passed.push({ tabId: row.tabId, site: row.site, job: row.job, ...(natural(row.at) ? { at: row.at } : {}) })
   }
   return structuredClone({ signals: value.signals, counters: value.counters, seen, passed })
 }
@@ -144,10 +151,23 @@ export function applyMonitorOperation(journal: MonitorJournal, operation: Monito
     counters = [...journal.counters],
     passed = [...journal.passed]
   const inTab = (row: { tabId: number; site: Site }) => row.tabId === operation.tabId && row.site === operation.site
+  const seen = { ...journal.seen, [operation.instance]: operation.sequence }
+  // Music picker results arrive independently of the tab's batched parser evidence.
+  const timedJob = operation.kind === "success" ? operation.job : operation.kind === "signal" ? operation.signal.job : null
+  const observedAt = operation.kind === "success" ? operation.at : operation.kind === "signal" ? operation.signal.lastSeen : undefined
+  if (operation.site === "music" && timedJob === "membership" && observedAt !== undefined) {
+    if (passed.some(row => inTab(row) && row.job === timedJob && row.at !== undefined && row.at > observedAt)) return { ...journal, seen }
+    if (
+      operation.kind === "success" &&
+      signals.some(row => row.active && row.tabId === operation.tabId && row.signal.site === operation.site && row.signal.job === timedJob && row.signal.lastSeen > observedAt)
+    )
+      return { ...journal, seen }
+  }
   if (operation.kind !== "signal") {
     if (operation.kind === "success" || operation.kind === "reload-passed") {
       const job = operation.kind === "success" ? operation.job : null
-      passed = [...passed.filter(row => !inTab(row) || row.job !== job), { tabId: operation.tabId, site: operation.site, job }].slice(-MONITOR_SIGNALS)
+      const at = operation.kind === "success" ? operation.at : undefined
+      passed = [...passed.filter(row => !inTab(row) || row.job !== job), { tabId: operation.tabId, site: operation.site, job, ...(at === undefined ? {} : { at }) }].slice(-MONITOR_SIGNALS)
     }
     signals = signals.map(row =>
       inTab({ tabId: row.tabId, site: row.signal.site }) &&
@@ -209,7 +229,6 @@ export function applyMonitorOperation(journal: MonitorJournal, operation: Monito
         : row
     )
   }
-  const seen = { ...journal.seen, [operation.instance]: operation.sequence }
   const seenEntries = Object.entries(seen)
   return { signals: signals.sort((a, b) => a.signal.firstSeen - b.signal.firstSeen).slice(-MONITOR_SIGNALS), counters: counters.slice(-MONITOR_SIGNALS), seen: Object.fromEntries(seenEntries), passed }
 }

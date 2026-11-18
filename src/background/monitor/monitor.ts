@@ -554,8 +554,8 @@ export function createMonitor(ports: MonitorPorts) {
     flush,
     statusProducer,
     noticeProducer,
-    succeeded(context: TabContext, job: JobId) {
-      return record(context, base => ({ ...base, kind: "success", job }))
+    succeeded(context: TabContext, job: JobId, at?: number) {
+      return record(context, base => ({ ...base, kind: "success", job, ...(at === undefined ? {} : { at }) }))
     },
     interrupted(context: TabContext, job: JobId, _reason: NonBreakage) {
       return record(context, base => ({ ...base, kind: "interrupted", job }))

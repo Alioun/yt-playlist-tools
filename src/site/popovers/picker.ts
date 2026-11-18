@@ -63,11 +63,9 @@ export function createPopovers(options: {
       actions: core.actions, page: core.page, view, request, now: () => Date.now(),
       live: () => { const current = core.link.view; return !core.disposed && current?.signedIn === true && current.acct === account }
     })
-    // No check marks on YouTube Music until ticket 25's M2 check (G35, R191).
-    const marks = view.site === "www"
     const picker = request.mode.kind === "save"
-      ? new PickerModel({ source, site: view.site, mode: "save", marks })
-      : new PickerModel({ source, site: view.site, mode: "choose", marks })
+      ? new PickerModel({ source, site: view.site, mode: "save" })
+      : new PickerModel({ source, site: view.site, mode: "choose" })
     const purpose = request.mode.kind === "save" ? "save" : request.mode.shortcut ? "shortcut" : "quickSave"
     const feedback = feedbackFor(view, request.opener)
     const shortcutId = request.mode.kind === "choose" ? request.mode.shortcut : null

@@ -42,7 +42,7 @@ export function createTabHealthRouter(deps: {
         return
       }
       case "success":
-        await deps.monitor.succeeded(context, report.job)
+        await deps.monitor.succeeded(context, report.job, report.at)
         return
       case "measured":
         await deps.monitor.measured(context)

@@ -492,7 +492,7 @@ export function createAddFlow(ports: Ports): AddFlow {
   }
 
   const holds = (membership: Read, playlist: PlaylistId) => membership.kind === "rows" && membership.rows.some(row => row.id === playlist && row.contains)
-  const lacks = (membership: Read, playlist: PlaylistId) => membership.kind === "rows" && membership.rows.some(row => row.id === playlist && !row.contains)
+  const lacks = (membership: Read, playlist: PlaylistId) => membership.kind === "rows" && membership.rows.some(row => row.id === playlist && row.contains === false)
 
   async function addOne(
     exec: Execution,

@@ -21,7 +21,7 @@ function dependencies(feature: EnabledMonitorFeature, facts: HealthFacts): Healt
   if (!health) return
   if (feature.id !== "gather") return health
   const required: readonly JobId[] = feature.options.to === "queue" ? ["queueAddList"] : feature.options.to === "playlist" ? ["account", "membership", "addBatch"] : []
-  return { ...health, required: [...new Set([...health.required, ...required])] }
+  return { ...health, required: [...new Set([...health.required, ...required])], optional: feature.options.to === "playlist" ? [...health.optional, "playlists"] : health.optional }
 }
 const unique = <T>(rows: readonly T[]): T[] => [...new Set(rows)]
 const routeFailures = new Set<string>(["missing", "threw", "timeout", "rejected", "unrecognised"])
@@ -80,6 +80,8 @@ export function deriveStatus(input: {
         records.filter(row => row.signal.job === job)
       )
       if (failure.some(row => row.signal.kind === "no-effect")) return true
+      // Both playlist-list transports use the same response parser, and a rejection ends the request.
+      if (job === "playlists" && failure.some(row => row.signal.kind === "unrecognised" || row.signal.kind === "rejected")) return true
       if (!routes || routes.routes.some(route => route.state === "usable")) return false
       return routes.routes.every(route => route.state !== "timeout" || failure.some(row => row.signal.kind === "timeout"))
     }
@@ -127,7 +129,7 @@ export function deriveStatus(input: {
         kinds.push("no-effect")
       }
       for (const target of ["queue", "playlist"] as const) {
-        const destinationJobs: readonly JobId[] = target === "queue" ? ["queueAddList"] : ["account", "membership", "addBatch", "removeBatch"]
+        const destinationJobs: readonly JobId[] = target === "queue" ? ["queueAddList"] : ["account", "membership", "addBatch", "removeBatch", "playlists"]
         if (facts.gather[target] !== "usable" || destinationJobs.some(job => jobs.includes(job))) {
           partial = true
           destinations.push(target)

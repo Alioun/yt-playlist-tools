@@ -3,12 +3,12 @@ import { createSiteHealth, HEALTH_SEND_MS } from "./health"
 import type { BreakageSignal } from "../../shared/contracts/diagnostics"
 import type { TabHealthReport } from "../../shared/contracts/tab-health"
 
-function reporter() {
+function reporter(site: BreakageSignal["site"] = "www") {
   let now = 10_000
   const timers: { at: number; run: () => void }[] = [], batches: (readonly TabHealthReport[])[] = []
   let listener: (signal: BreakageSignal) => void = () => {}
   const health = createSiteHealth({
-    site: "www", now: () => now, online: () => true, send: reports => { batches.push(reports) },
+    site, now: () => now, online: () => true, send: reports => { batches.push(reports) },
     later(run, ms) { const timer = { at: now + ms, run }; timers.push(timer); return () => { timers.splice(timers.indexOf(timer), 1) } },
     page: { onSignal(fn) { listener = fn; return () => {} }, state: { kind: "ready", snapshot: { pageType: "watch" } } as never }
   })
@@ -16,7 +16,7 @@ function reporter() {
     now += ms
     for (const timer of [...timers].sort((x, y) => x.at - y.at)) if (timer.at <= now) { timers.splice(timers.indexOf(timer), 1); timer.run() }
   }
-  const signal = (kind: BreakageSignal["kind"], job: BreakageSignal["job"] = "add"): BreakageSignal => ({ site: "www", feature: null, job, route: "service.add" as never,
+  const signal = (kind: BreakageSignal["kind"], job: BreakageSignal["job"] = "add"): BreakageSignal => ({ site, feature: null, job, route: "service.add" as never,
     kind, watchId: null, shape: null, clientVersion: null, pageType: "watch", count: 1, firstSeen: now, lastSeen: now })
   return { health, batches, advance, emit: (value: BreakageSignal) => listener(value), signal }
 }
@@ -42,11 +42,30 @@ test("timeouts keep up to three in a batch, since only three in a row count (HEA
   expect(r.batches[0]?.[0]).toMatchObject({ evidence: "job", online: true, answered: false })
 })
 
+test("Music can report the same membership error again after the background recovers through YouTube", () => {
+  const r = reporter("music")
+  r.emit(r.signal("unrecognised", "membership"))
+  r.advance(0)
+  r.emit(r.signal("unrecognised", "membership"))
+  r.advance(HEALTH_SEND_MS)
+  expect(r.batches.map(kinds)).toEqual([["unrecognised"], ["unrecognised"]])
+})
+
+test("a complete Music membership read clears a previous partial response recorded in the background", () => {
+  const r = reporter("music")
+  r.health.answered("membership", false)
+  r.advance(0)
+  expect(r.batches).toEqual([])
+  r.health.answered("membership")
+  r.advance(0)
+  expect(r.batches).toEqual([[{ kind: "success", job: "membership", at: 10_000 }]])
+})
+
 test("a success goes only for a job with a signal, and after it the job's failure is reported again (HEALTH-12)", () => {
   const r = reporter()
-  r.health.succeeded("membership")
+  r.health.answered("membership")
   r.emit(r.signal("missing")); r.advance(0)
-  r.health.succeeded("add"); r.advance(HEALTH_SEND_MS)
+  r.health.answered("add"); r.advance(HEALTH_SEND_MS)
   expect(kinds(r.batches[1])).toEqual(["success"])
   r.emit(r.signal("missing")); r.advance(HEALTH_SEND_MS)
   expect(kinds(r.batches[2])).toEqual(["missing"])

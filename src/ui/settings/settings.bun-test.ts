@@ -472,6 +472,12 @@ test("Diagnostics runs Check now only when clicked, shows what answered, and put
   settings(
     { ...agreed, "doc:settings": stamped({ quickSave: { on: true, feedback: true, shortsShelves: false } }) },
     {
+      "ui.status": () => ({
+        kind: "status",
+        paused: false,
+        tab: { kind: "other" },
+        health: checks.includes(true) ? [{ feature: "quick-save", site: "www", state: "partly-working", gaps: ["playlists"] }] : []
+      }),
       "ui.diagnostics": ({ check }) => {
         checks.push(check)
         return {
@@ -498,10 +504,13 @@ test("Diagnostics runs Check now only when clicked, shows what answered, and put
   const button = await screen.findByRole("button", { name: "Check now" }, { timeout: 5000 })
   for (let turn = 0; turn < 100 && !checks.length; turn++) await new Promise(resolve => setTimeout(resolve, 10))
   expect(checks).toEqual([false])
+  expect(await screen.findByText("Not checked")).toBeTruthy()
   await userEvent.click(button)
   expect(await screen.findByText("1 of 2 reads answered on YouTube.", {}, { timeout: 5000 })).toBeTruthy()
+  expect(await screen.findByText("Partly working")).toBeTruthy()
   expect(checks).toEqual([false, true])
   const report = document.querySelector("[data-report]")?.textContent ?? ""
+  expect(report).toContain("quick-save on YouTube: partly-working (playlists)")
   expect(report).toContain("YouTube: account ok, playlists failed")
   expect(report).toContain("YouTube missing feature=quick-save job=add route=service.add page=watch client=2.2 ×2")
 }, 20_000)

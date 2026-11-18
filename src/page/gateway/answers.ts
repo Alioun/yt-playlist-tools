@@ -1,14 +1,15 @@
-import type { Job, JobFailure, MembershipRow, PlaylistRow } from "../../shared/contracts"
+import type { Job, JobFailure, MembershipRow, PlaylistRow, Site } from "../../shared/contracts"
 import { isPlaylistId } from "../../shared/model/validation"
 import type { HttpAnswer, RequestRoute, RequestSpec } from "./port"
 import { channelBrowse, channelResolve, channelUrl, continuationFor, isWrite } from "./requests"
 import { parseChannelDetails, parseLabel, parseMembership, parsePlaylists, parseRequestedChannel, parseResolved, parseWrite } from "../parsers/playlists"
 
-export type AnswerStep = { kind: "answer"; answer: HttpAnswer; route: RequestRoute } | { kind: "failure"; failure: JobFailure }
+export type AnswerStep = { kind: "answer"; answer: HttpAnswer; route: RequestRoute; fallback: boolean } | { kind: "failure"; failure: JobFailure }
 export type ParsedJob = { kind: "parsed"; data: unknown; route: RequestRoute } | { kind: "failure"; failure: JobFailure }
 type Send = (spec: RequestSpec) => Promise<AnswerStep>
 
 export async function requestAnswer(options: {
+  site: Site
   job: Job
   first: RequestSpec
   send: Send
@@ -28,7 +29,7 @@ export async function requestAnswer(options: {
       ids = new Set<string>(),
       tokens = new Set<string>()
     for (let page = 0; page < 20; page++) {
-      const parsed = job.kind === "membership" ? parseMembership(step.answer.body) : parsePlaylists(step.answer.body)
+      const parsed = job.kind === "membership" ? parseMembership(step.answer.body, options.site) : parsePlaylists(step.answer.body)
       if (!parsed) return bad()
       for (const row of parsed.rows) {
         if (ids.has(row.id)) {
@@ -37,7 +38,7 @@ export async function requestAnswer(options: {
         }
         ids.add(row.id)
         if (job.kind === "membership") {
-          if (!("contains" in row) || typeof row.contains !== "boolean") return bad()
+          if (!("contains" in row)) return bad()
           memberships.push({ id: row.id, title: row.title, ...(row.privacy ? { privacy: row.privacy } : {}), ...(row.count !== undefined ? { count: row.count } : {}), contains: row.contains })
           if (row.privacy) options.privacy.set(row.id, row.privacy)
         } else {

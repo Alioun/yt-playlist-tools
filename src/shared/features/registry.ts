@@ -28,13 +28,13 @@ export type FeatureDef = RegistrationFeature & {
 }
 
 const musicActionJobs = {
-  next: ["queueInsert", "queueMove", "castState"],
-  queue: ["queueInsert", "queueMove", "castState"],
+  next: ["queueInsert", "queueMove"],
+  queue: ["queueInsert", "queueMove"],
   save: ["account", "save"],
   like: ["account", "like"],
-  remove: ["queueRemove", "castState"],
+  remove: ["queueRemove"],
   library: ["account", "library"],
-  mix: ["navigate", "castState"],
+  mix: ["navigate"],
   album: ["navigate"],
   artist: ["navigate"]
 } as const satisfies Readonly<Record<MusicAction, readonly JobId[]>>
@@ -48,7 +48,7 @@ export const features: readonly FeatureDef[] = [
     health: {
       www: {
         required: ["account", "membership", "add"],
-        optional: ["remove", "channelOf", "accountLabel"],
+        optional: ["remove", "channelOf", "accountLabel", "playlists"],
         anchors: []
       }
     }
@@ -64,7 +64,7 @@ export const features: readonly FeatureDef[] = [
     health: {
       www: {
         required: ["account", "add"],
-        optional: ["membership", "remove", "create", "videoInfo", "accountLabel"],
+        optional: ["membership", "remove", "create", "videoInfo", "accountLabel", "playlists"],
         anchors: [],
         optionalAnchors: ["www-cards"]
       },
@@ -84,7 +84,7 @@ export const features: readonly FeatureDef[] = [
     health: {
       www: {
         required: ["account", "add"],
-        optional: ["membership", "remove", "create", "accountLabel"],
+        optional: ["membership", "remove", "create", "accountLabel", "playlists"],
         anchors: ["www-cards"]
       }
     }
@@ -104,7 +104,7 @@ export const features: readonly FeatureDef[] = [
     health: {
       www: {
         required: [],
-        optional: ["account", "membership", "add", "remove", "create", "channelOf", "videoInfo", "accountLabel"],
+        optional: ["account", "membership", "add", "remove", "create", "channelOf", "videoInfo", "accountLabel", "playlists"],
         anchors: ["www-watch-actions"]
       }
     }
@@ -124,7 +124,7 @@ export const features: readonly FeatureDef[] = [
     health: {
       www: {
         required: ["account", "add"],
-        optional: ["membership", "remove", "create", "videoInfo", "accountLabel"],
+        optional: ["membership", "remove", "create", "videoInfo", "accountLabel", "playlists"],
         anchors: []
       }
     }
@@ -150,7 +150,7 @@ export const features: readonly FeatureDef[] = [
     health: {
       music: {
         required: ["itemInfo"],
-        optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert"],
+        optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert", "castState"],
         anchors: [],
         optionalAnchors: ["music-items", "music-headers", "music-player-bar"],
         actions: musicActionJobs
@@ -165,7 +165,7 @@ export const features: readonly FeatureDef[] = [
     health: {
       music: {
         required: ["itemInfo"],
-        optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert"],
+        optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert", "castState"],
         anchors: [],
         optionalAnchors: ["music-items"],
         actions: musicActionJobs

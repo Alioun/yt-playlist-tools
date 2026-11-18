@@ -7,7 +7,7 @@ import type { Registrar } from "../registrar/ports"
 import { projectDestination } from "../router/first-run-results"
 import type { StartingOwner } from "../store/store-lifecycle"
 import type { Requester, Tabs } from "../tabs/ports"
-import type { BuildId, FeatureId, Origin, Site } from "../../shared/contracts"
+import type { BuildId, FeatureId, Origin, RouteId, Site } from "../../shared/contracts"
 import { toastPlan, type ExplicitOutcome } from "../../shared/rules/outcomes"
 import {
   tabActionContract,
@@ -178,6 +178,7 @@ export function composeActions(deps: {
   >
   readonly tabs: Tabs
   readonly playlists: Playlists
+  readonly musicMembershipHealth?: (tab: ActingTab, acct: AccountKey, outcome: { route: RouteId | null; complete: boolean; at: number }) => Promise<void>
   readonly registrar: Pick<Registrar, "ensure">
   readonly writable: () => boolean
   readonly requester: (origin: Extract<Origin, { kind: "ui" }>) => Promise<Requester | null>
@@ -235,6 +236,34 @@ export function composeActions(deps: {
   }
   function requestOf(context: TabContext): Requester {
     return { windowId: context.windowId, incognito: context.origin.incognito, activeTabId: context.origin.tabId }
+  }
+  async function membership(tab: ActingTab, acct: AccountKey, video: VideoId, req: Requester): Promise<UiMembershipAnswer> {
+    const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+    if (!known) return { kind: "no-tab" }
+    if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
+    const request = { job: { kind: "membership", videoId: video }, acct } as const
+    const account = { kind: "account", acct, signedIn: true } as const
+    const outcome = await tabs.runIn<JobOf<"membership">>(tab.tabId, request, { site: tab.site, req, account })
+    if (outcome.kind !== "result") return { kind: "unreadable" }
+    const native = outcome.result
+    if (!native.ok && (tab.site !== "music" || native.reason !== "unavailable")) return { kind: "unreadable" }
+    let rows = native.ok ? native.data : null
+    if (tab.site === "music") {
+      if (rows === null || rows.some(row => row.contains === null)) {
+        const fallback = await tabs.serve<JobOf<"membership">>(request, { site: "www", req, account }).catch(() => null)
+        if (fallback?.kind === "result" && fallback.result.ok) {
+          if (rows === null) rows = fallback.result.data.filter(row => row.id !== "WL")
+          else {
+            const checks = new Map(fallback.result.data.map(row => [row.id, row.contains]))
+            rows = rows.map(row => ({ ...row, contains: row.contains ?? checks.get(row.id) ?? null }))
+          }
+        }
+      }
+      const [current] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+      if (current !== known) return { kind: "account-changed" }
+      if (rows) await deps.musicMembershipHealth?.(tab, acct, { route: native.ok ? native.route : null, complete: rows.every(row => row.contains !== null), at: Date.now() }).catch(() => {})
+    }
+    return rows ? { kind: "read", rows } : { kind: "unreadable" }
   }
   const pageEnded = (tabId: number) => flow.releaseTab(`tab:${tabId}`)
   const stopClosed = deps.closed?.(pageEnded) ?? (() => {})
@@ -313,11 +342,21 @@ export function composeActions(deps: {
           if (read?.kind !== "cache") return { kind: "failed" }
           return { kind: "cached", listing: read.cache === null || read.cache.listAt === null ? null : { rows: cacheRows(read.cache, context.site), at: read.cache.listAt } }
         }
-        const open = await playlists.list(acct, { site: context.site, req: requestOf(context), originalTab: context.origin.tabId, refresh: true })
+        const open = await playlists.list(acct, {
+          site: context.site,
+          req: requestOf(context),
+          ...(context.site === "www" ? { originalTab: context.origin.tabId } : {}),
+          refresh: true
+        })
         if (open.kind !== "open") return { kind: "failed" }
         const fresh = await (open.refresh ?? Promise.resolve(null))
         if (fresh?.kind === "listed") return { kind: "listed", listing: { rows: fresh.listing.rows, at: fresh.listing.at } }
         return { kind: fresh?.outcome.kind === "no-tab" ? "noTab" : "failed" }
+      },
+      async "tab.membership"({ acct, request: video }, context) {
+        if (acct === null) return null
+        const answer = await membership({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, video, requestOf(context))
+        return answer.kind === "read" ? answer.rows : null
       },
       async "tab.create"({ acct, request }, context): Promise<TabCreated> {
         if (acct === null || !(await pinned(context, acct))) return { kind: "failed", reason: "failed" }
@@ -378,17 +417,7 @@ export function composeActions(deps: {
       const report = await flow.remove(request, { kind: "tab", tabId: tab.tabId, incognito: tab.incognito })
       return report.kind === "removed" ? { kind: "removed", undo: report.undo } : report.kind === "no-tab" ? { kind: "no-tab" } : { kind: "failed" }
     },
-    async membershipFromPopup(tab, acct, video, req) {
-      const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
-      if (!known) return { kind: "no-tab" }
-      if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
-      const outcome = await tabs.runIn<JobOf<"membership">>(
-        tab.tabId,
-        { job: { kind: "membership", videoId: video }, acct },
-        { site: tab.site, req, account: { kind: "account", acct, signedIn: true } }
-      )
-      return outcome.kind === "result" && outcome.result.ok ? { kind: "read", rows: outcome.result.data } : { kind: "unreadable" }
-    },
+    membershipFromPopup: membership,
     async undoFromPopup(tab, acct, handle) {
       const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
       if (!known) return { kind: "no-tab" }

@@ -137,11 +137,11 @@ export function createLiveMusicPage(options: { window: Window; document: Documen
   }
 }
 
-export function createLiveMusicBindings(options: { window: Window; document: Document }): LiveReadBindings {
+export function createLiveMusicBindings(options: { window: Window; document: Document; browser?: "chrome" | "firefox" }): LiveReadBindings {
   const { window: win, document: doc } = options
   const store = () => (win.location.origin === musicOrigin ? field(doc.querySelector("ytmusic-app"), "queue", "store") : undefined)
   return {
-    musicState: { read: () => (callable(store(), "getState") ? call(store(), "getState") : undefined) },
+    musicState: { read: () => (options.browser === "firefox" ? { castStatus: false } : callable(store(), "getState") ? call(store(), "getState") : undefined) },
     queueChanges: {
       onChange(changed) {
         const source = store()
