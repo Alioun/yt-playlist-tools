@@ -36,7 +36,8 @@ function contextAndHeaders(port: WwwRequestBoundary, signed: boolean): { context
   if (!context || !object(context.client)) return undefined
   const clientName = stringValue(port.config("INNERTUBE_CONTEXT_CLIENT_NAME"))
   const clientVersion = stringValue(port.config("INNERTUBE_CONTEXT_CLIENT_VERSION"))
-  const visitor = stringValue(port.config("VISITOR_DATA")),
+  // YouTube stopped setting VISITOR_DATA. The visitor id now lives only in the client context.
+  const visitor = stringValue(port.config("VISITOR_DATA")) ?? stringValue(context.client.visitorData),
     loggedIn = port.config("LOGGED_IN")
   const authUser = stringValue(port.config("SESSION_INDEX"))
   if (!clientName || !clientVersion || !visitor || typeof loggedIn !== "boolean" || (signed && !authUser)) return undefined
