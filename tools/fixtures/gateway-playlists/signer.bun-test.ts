@@ -165,6 +165,18 @@ test("dummy signer supports cookie fallback and absent user-session suffix", asy
   dispatch.cancel()
 })
 
+test("a page without VISITOR_DATA still signs, with the visitor id YouTube now keeps in its client context", async () => {
+  const p = dummy()
+  delete p.page.config.VISITOR_DATA
+  const context = p.page.config.INNERTUBE_CONTEXT as { client: Record<string, unknown> }
+  context.client.visitorData = "context-visitor"
+  const dispatch = await dispatchWwwRequest({ port: p.port, spec: p.spec, signed: true, context: p.context })
+  check(dispatch.kind === "pending", "A page without VISITOR_DATA did not send")
+  await dispatch.answer
+  same(p.sent[0]?.init.headers["X-Goog-Visitor-Id"], "context-visitor", "The client context's visitor id was not sent")
+  dispatch.cancel()
+})
+
 test("plain requests read no cookies or signing session and carry no authorization", async () => {
   const p = dummy()
   delete p.page.config.SESSION_INDEX
