@@ -45,6 +45,7 @@ export function createLiveWwwQueue(options: { window: Window; document: Document
         const closed = (change: Event) => {
           if (change.target !== dropdown || field(change, "detail", "value") !== false) return
           dropdown.removeEventListener("opened-changed", closed)
+          if (field(dropdown, "positionTarget") === anchor) Reflect.set(dropdown, "positionTarget", anchoredAt)
           anchor.remove()
         }
         dropdown.addEventListener("opened-changed", closed)
