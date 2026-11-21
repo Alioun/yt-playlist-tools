@@ -5079,36 +5079,35 @@
   "health_notWorking_music": {
     "message": "Not working right now, because YouTube Music changed something it relies on."
   },
-  "health_partly": {
-    "message": "Partly working, because $GAP$.",
-    "placeholders": {
-      "gap": {
-        "content": "$1"
-      }
-    }
+  "health_partly_membership_www": {
+    "message": "Partly working, because it can't show where a video is already saved."
   },
-  "health_gap_membership": {
-    "message": "it can't show where a video is already saved"
+  "health_partly_membership_music": {
+    "message": "Partly working, because it can't show where a song is already saved."
   },
-  "health_gap_playlists": {
-    "message": "it can't refresh the playlist list"
+  "health_partly_playlists": {
+    "message": "Partly working, because it can't refresh the playlist list."
   },
-  "health_gap_actions": {
-    "message": "some of its buttons can't run"
+  "health_partly_actions": {
+    "message": "Partly working, because some of its buttons can't run."
   },
-  "health_gap_casting": {
-    "message": "it can't tell whether YouTube Music is casting"
+  "health_partly_casting": {
+    "message": "Partly working, because it can't tell when YouTube Music is casting. While you cast, queue changes may not reach the cast device."
   },
-  "health_gap_measure": {
-    "message": "it can't follow this video's progress"
+  "health_partly_measure": {
+    "message": "Partly working, because it can't follow this video's progress."
   },
-  "health_gap_destination": {
-    "message": "it can't gather into $DESTINATION$",
-    "placeholders": {
-      "destination": {
-        "content": "$1"
-      }
-    }
+  "health_partly_player": {
+    "message": "Partly working, because it can't gather into YouTube's player."
+  },
+  "health_partly_queue": {
+    "message": "Partly working, because it can't gather into YouTube's queue."
+  },
+  "health_partly_playlist": {
+    "message": "Partly working, because it can't gather into a playlist."
+  },
+  "health_partly_other": {
+    "message": "Partly working, because part of it can't run right now."
   },
   "pop_recentAdds": {
     "message": "Recent adds"
@@ -6309,17 +6308,47 @@
   "diag_openYouTube": {
     "message": "Open YouTube"
   },
-  "diag_checked": {
-    "message": "$DONE$ of $TOTAL$ reads answered on $SITE$.",
+  "diag_checked_www_one": {
+    "message": "$DONE$ of $TOTAL$ read answered on YouTube.",
     "placeholders": {
-      "site": {
-        "content": "$2"
-      },
       "done": {
         "content": "$1"
       },
       "total": {
-        "content": "$3"
+        "content": "$2"
+      }
+    }
+  },
+  "diag_checked_www_other": {
+    "message": "$DONE$ of $TOTAL$ reads answered on YouTube.",
+    "placeholders": {
+      "done": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "diag_checked_music_one": {
+    "message": "$DONE$ of $TOTAL$ read answered on YouTube Music.",
+    "placeholders": {
+      "done": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "diag_checked_music_other": {
+    "message": "$DONE$ of $TOTAL$ reads answered on YouTube Music.",
+    "placeholders": {
+      "done": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
       }
     }
   },

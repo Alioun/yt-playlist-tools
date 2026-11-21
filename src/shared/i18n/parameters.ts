@@ -864,13 +864,16 @@ export type MessageParameters = {
   "held_allow": readonly []
   "health_notWorking_www": readonly []
   "health_notWorking_music": readonly []
-  "health_partly": readonly ["gap"]
-  "health_gap_membership": readonly []
-  "health_gap_playlists": readonly []
-  "health_gap_actions": readonly []
-  "health_gap_casting": readonly []
-  "health_gap_measure": readonly []
-  "health_gap_destination": readonly ["destination"]
+  "health_partly_membership_www": readonly []
+  "health_partly_membership_music": readonly []
+  "health_partly_playlists": readonly []
+  "health_partly_actions": readonly []
+  "health_partly_casting": readonly []
+  "health_partly_measure": readonly []
+  "health_partly_player": readonly []
+  "health_partly_queue": readonly []
+  "health_partly_playlist": readonly []
+  "health_partly_other": readonly []
   "pop_recentAdds": readonly []
   "pop_openSettings": readonly []
   "pop_readingAccount": readonly []
@@ -1189,7 +1192,10 @@ export type MessageParameters = {
   "diag_checkLine": readonly []
   "diag_checkNoTab": readonly []
   "diag_openYouTube": readonly []
-  "diag_checked": readonly ["done", "site", "total"]
+  "diag_checked_www_one": readonly ["done", "total"]
+  "diag_checked_www_other": readonly ["done", "total"]
+  "diag_checked_music_one": readonly ["done", "total"]
+  "diag_checked_music_other": readonly ["done", "total"]
   "diag_checkFailed": readonly []
   "about_name": readonly []
   "about_formerly": readonly []
@@ -1623,8 +1629,6 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "autoAddList_nothingSaved": ["account"],
   "autoAddList_syncOnly_one": ["account", "count"],
   "autoAddList_syncOnly_other": ["account", "count"],
-  "health_partly": ["gap"],
-  "health_gap_destination": ["destination"],
   "pop_unfold": ["feature"],
   "strip_one_www": ["feature"],
   "strip_one_music": ["feature"],
@@ -1671,7 +1675,10 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "set_accounts_unclaimedLine_other": ["count"],
   "set_importConfirm": ["count", "file"],
   "diag_version": ["version"],
-  "diag_checked": ["done", "site", "total"],
+  "diag_checked_www_one": ["done", "total"],
+  "diag_checked_www_other": ["done", "total"],
+  "diag_checked_music_one": ["done", "total"],
+  "diag_checked_music_other": ["done", "total"],
   "about_credit": ["link"],
   "report_opensWith": ["values"],
   "badge_notWorking_one": ["feature"],

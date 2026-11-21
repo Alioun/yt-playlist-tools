@@ -5,10 +5,10 @@
   import type { createFeatureCopy } from "../../onboarding/features"
   import type { PageState } from "../../lib/page-state.svelte"
   import { heldMessage } from "../../lib/held"
-  import { featureName } from "../../lib/health"
+  import { featureName, healthLine } from "../../lib/health"
   import { browserLabel, knownProblems, type ReportFeature } from "../report"
   import { diagnosticsReport, statusRows, type RowState } from "../diagnostics"
-  import type { UiDiagnostics } from "../../../shared/contracts/ui-pages"
+  import type { UiCheck, UiDiagnostics } from "../../../shared/contracts/ui-pages"
 
   // Settings › Diagnostics (UI-SET-17, HEALTH-22): each feature's status per site, the report with Copy, Known
   // problems, Report a problem, the detailed console log and the version.
@@ -23,6 +23,12 @@
   const stateLabels = { working: "diag_working", "partly-working": "diag_partly", "not-working": "diag_notWorking" } as const
   const label = (state: RowState) => i18n.message(state.kind === "held" ? heldMessage[state.held] : state.kind === "no-tab" ? "diag_noTab" : stateLabels[state.health.state])
   const broken = (state: RowState) => state.kind === "health" && state.health.state !== "working"
+  const checkedKeys = {
+    www: { one: "diag_checked_www_one", other: "diag_checked_www_other" },
+    music: { one: "diag_checked_music_one", other: "diag_checked_music_other" }
+  } as const
+  const checkedLine = (check: UiCheck) =>
+    i18n.message(checkedKeys[check.site][i18n.plural(check.jobs.length)], { done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })
   let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
     browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, rows,
@@ -63,10 +69,14 @@
     {#if rows.length === 0}<p class="text-muted-foreground text-[13.5px]">{i18n.message("shell_noFeatures")}</p>{/if}
     <ul class="flex flex-col gap-1.5 text-[13.5px]">
       {#each rows as row (`${row.feature}:${row.site}`)}
-        <li class="flex items-center justify-between gap-3" data-status={row.feature}>
-          <span>{featureName(features, row.feature)} <span class="text-muted-foreground">· {i18n.message(row.site === "www" ? "site_www" : "site_music")}</span></span>
-          <span class={broken(row.state) ? "text-warning font-medium" : "text-muted-foreground"}>{label(row.state)}
-            {#if broken(row.state)}<Button size="sm" variant="link" onclick={() => { reporting = row.feature }}>{i18n.message("diag_report")}</Button>{/if}</span>
+        {@const why = row.state.kind === "health" ? healthLine(i18n, row.state.health) : null}
+        <li data-status={row.feature} data-site={row.site}>
+          <div class="flex items-center justify-between gap-3">
+            <span>{featureName(features, row.feature)} <span class="text-muted-foreground">· {i18n.message(row.site === "www" ? "site_www" : "site_music")}</span></span>
+            <span class={broken(row.state) ? "text-warning font-medium" : "text-muted-foreground"}>{label(row.state)}
+              {#if broken(row.state)}<Button size="sm" variant="link" onclick={() => { reporting = row.feature }}>{i18n.message("diag_report")}</Button>{/if}</span>
+          </div>
+          {#if why}<p class="text-muted-foreground text-[12.5px]">{why}</p>{/if}
         </li>
       {/each}
     </ul>
@@ -84,8 +94,7 @@
       <!-- Each check's lines are new nodes, so a screen reader hears a repeat check with the same counts too. -->
       <div role="status" class="flex flex-col gap-1.5">
         {#each evidence?.checks ?? [] as check (`${check.site}:${check.at}`)}
-          <p data-check={check.site}>{i18n.message("diag_checked", { site: i18n.message(check.site === "www" ? "site_www" : "site_music"),
-            done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })}</p>
+          <p data-check={check.site}>{checkedLine(check)}</p>
         {/each}
         {#if checkFailed}<p class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>{/if}
       </div>

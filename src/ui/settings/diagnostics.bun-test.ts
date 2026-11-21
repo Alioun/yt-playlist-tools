@@ -56,7 +56,7 @@ function diagnostics(options: { settings: object; health?: () => readonly UiFeat
   render(Settings, { page: page as never, markSrc: "mark.svg" })
   return scripted
 }
-const rows = () => [...document.querySelectorAll("[data-status]")].map(row => row.textContent?.replace(/\s+/g, " ").trim())
+const rows = () => [...document.querySelectorAll("[data-status]")].map(row => row.firstElementChild?.textContent?.replace(/\s+/g, " ").trim())
 
 test("a feature on both sites keeps one row per site, YouTube first, whichever tabs answered (UI-SET-17)", async () => {
   let health: readonly UiFeatureHealth[] = [
@@ -168,7 +168,12 @@ test("a broken Diagnostics row says why in a sentence, and a check of one read s
   diagnostics({
     settings: { anyTabKeys: { on: true, feedback: true } },
     health: () => [{ feature: "any-tab-keys", site: "music", state: "not-working", gaps: [] }],
-    respond: { "ui.diagnostics": ({ check }) => ({ ...noTabs, tabs: { www: false, music: true }, checks: (checked ||= check) ? [{ site: "music", at: 1, jobs: [{ job: "nowPlaying", ok: true }] }] : [] }) }
+    respond: {
+      "ui.diagnostics": ({ check }) => {
+        checked ||= check
+        return { ...noTabs, tabs: { www: false, music: true }, checks: checked ? [{ site: "music", at: 1, jobs: [{ job: "nowPlaying", ok: true }] }] : [] }
+      }
+    }
   })
   const row = await waitFor(() => document.querySelector('[data-status="any-tab-keys"][data-site="music"]') ?? Promise.reject(Error("no row")), { timeout: 5000 })
   expect(within(row as HTMLElement).getByText("Not working right now, because YouTube Music changed something it relies on.")).toBeTruthy()
