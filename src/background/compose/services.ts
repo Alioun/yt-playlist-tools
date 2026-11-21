@@ -111,7 +111,8 @@ export function composeServices(deps: {
   })
   const monitor = composeMonitor({
     owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change), subscribeView: fn => owner.subscribeView(fn) },
-    clock: { now: () => performance.now(), after: timerDeadline },
+    // Session memory keeps the Monitor's times past a worker restart and accepts only whole wall-clock milliseconds.
+    clock: { now: () => Date.now(), after: timerDeadline },
     sites: deps.sites,
     player: () => gather.player()
   })
