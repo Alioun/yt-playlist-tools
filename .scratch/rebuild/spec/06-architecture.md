@@ -1345,6 +1345,7 @@ sequenceDiagram
 | `bg.job { job }` | `JobResult` | Add-flow steps, serving-tab jobs, and the popup's Playing now (`nowPlaying`, ARC-ACC-68) |
 | `bg.ping` | `{ site, build, acct, signedIn }` | 2 s budget |
 | `bg.query { name }` | whatever the feature exposes | The popup's This video (auto-add's `status`) |
+| `bg.health` | — | Check now, after its reads in that tab: send the waiting signals now. Answered once the background has them (HEALTH-23) |
 
 - **ARC-MSG-05. `TabView`** holds:
   - the features on for this site, and their options from shared settings;
@@ -1406,7 +1407,7 @@ sequenceDiagram
   - `tab.hello`, once per page load (ARC-ACC-70);
   - what a user action needs: `tab.add`, `tab.undo`, `tab.change`, `tab.need`, `tab.noticeShown`;
   - auto-add's goals reached (`tab.add`), and progress at [DATA-27](04-features-accounts-data.md#46-watch-progress)'s checkpoints (`tab.progress.load` once per video, `tab.progress.save`);
-  - `tab.signals`, at most every 5 s, only with a new signal, or a success for a job that has a signal in that tab ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage));
+  - `tab.signals`, at most every 5 s, only with a new signal, or a success for a job that has a signal in that tab ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)), and at once when Check now asks with `bg.health`;
   - `tab.videoChanged`, only while its toolbar tick shows (ARC-MOD-38).
 
   A `timeupdate`, a pointer or focus move, a key that matches nothing, a page mutation or an in-app navigation never sends anything by itself. (R105, R110, R111, R112)

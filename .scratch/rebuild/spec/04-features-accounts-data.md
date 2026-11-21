@@ -1066,7 +1066,7 @@ type GatherRecord = {
 - **HEALTH-06** Starting values (3 timeouts, 2 no-effects, 3 can't-measure, 3 s settle, 6 links, one half; [Q-WATCH-29](07-quality.md#757-runtime-breakage-signals)) are tuned after ticket 25 and the first weeks of use.
 - **HEALTH-28** **Checking costs little.**
   - The anchor check (HEALTH-02) runs only in a visible tab. In a hidden tab it waits until the tab is shown, then runs once.
-  - A tab sends signals at most every 5 s, and only new ones, or a success for a job that has a signal in that tab ([ARC-MSG-14](06-architecture.md#684-rules-for-every-channel)).
+  - A tab sends signals at most every 5 s, and only new ones, or a success for a job that has a signal in that tab ([ARC-MSG-14](06-architecture.md#684-rules-for-every-channel)). Check now is the one exception: once its reads in a tab are done, that tab sends what it holds at once (HEALTH-23).
   - The monitor counts them in memory and writes `storage.session` at most every 10 s. It keeps at most 200 distinct signals, dropping the oldest first. (R111)
 
 ### 5.2 Status
@@ -1138,7 +1138,8 @@ type GatherRecord = {
   - **Known problems**, a plain link to the public issues labelled `youtube-change`, and **Report a problem**, which opens HEALTH-27's chooser. There's no support e-mail (R89);
   - **Detailed console log**, off by default, this browser only;
   - the version, with "(beta)" on beta builds ([REL-CI-15](08-release.md#71-firefox)), and a note that updates install by themselves. There's no update button. (R65)
-- **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report. The line beside it reads "Check now reads from an open YouTube tab. It changes nothing." A result reads "{done} of {total} reads answered on {site}.", and a check that can't run reads "Couldn't run the check. Try again." (R197)
+- **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report. The line beside it reads "Check now reads from an open YouTube tab. It changes nothing." A result reads "{done} of {total} reads answered on YouTube." or "…on YouTube Music.", one sentence per site, with "read" when the total is one. A check that can't run reads "Couldn't run the check. Try again." (R197)
+  - **It answers only once its evidence has landed:** after its reads in a tab, it asks that tab to send the signals it holds and waits until the Monitor has them (HEALTH-28). So its result, the statuses and the report all show what those reads found.
   - **With no YouTube tab open,** it's disabled, with "Open YouTube to check" and **Open YouTube** ([UI-SET-17](05-ui.md#sections)).
   - **Before consent** it can't run, because nothing is read from YouTube (FT-30). (R15)
 - **HEALTH-24** **The diagnostics report** is plain text. It contains:
@@ -1148,7 +1149,7 @@ type GatherRecord = {
   - which features are on, and site access per site;
   - settings sync on or off, the sync status, and the `schema` version;
   - whether the tab is signed in;
-  - each feature's status per site;
+  - each feature's status per site, as Diagnostics' rows show it ([UI-SET-17](05-ui.md#sections)), with a partly working status's gap in words, so `playlists` (the playlist list) and `playlist` (Gather tabs' destination) can't be confused;
   - the session's breakage signals, with their shape outlines;
   - the last Check now result.
 - **HEALTH-25** The report never contains account IDs, names or handles; video, playlist or channel IDs or titles; URLs; setting values (keys, filters, setups); cookies; or the country. It leaves the browser only if the user copies it.
@@ -1164,7 +1165,7 @@ type GatherRecord = {
     - **Something went wrong:** "Say what you did, what you expected and what happened instead. Paste the diagnostics report if you can.";
     - **An idea:** "Say what you'd like to do, and where you'd look for it."
   - **Feature:** a choice of every feature, plus "Upgrade from 1.x", "The popup or Settings" and "Something else", preselected when the chooser opens from a feature's status.
-  - **What goes to GitHub** is shown before it's sent, e.g. "GitHub opens with: {Product} 2.0.0 · Firefox 141 · Auto-add · Not working.": the version ("(beta)" on betas), the browser and its major version, the chosen feature's name, and its status in this browser (HEALTH-07's words, with its gap for partly working). Nothing else. It never names a video, playlist, channel or account.
+  - **What goes to GitHub** is shown before it's sent, e.g. "GitHub opens with: {Product} 2.0.0 · Firefox 141 · Auto-add · Not working.": the version ("(beta)" on betas), the browser and its major version, the chosen feature's name, and its status in this browser: what its Diagnostics rows show (HEALTH-07's words, its gap in words for partly working, "No YouTube tab open", or "Can't run yet" with the held reason), naming the site when its two rows differ. Like the report, it's in English for the developer. "Upgrade from 1.x", "The popup or Settings" and "Something else" carry no status, and neither does Settings sync without a status from its tab. Nothing else. It never names a video, playlist, channel or account.
   - **The diagnostics report** never goes into the address. **Copy diagnostics report** copies it, with "Paste it into the form's Diagnostics field if you want to share it."
   - **Open GitHub** opens GitHub's new-issue page in a new tab, with the matching form and those values prefilled. They reach GitHub when its page opens, and the developer only if the user submits the issue.
 
