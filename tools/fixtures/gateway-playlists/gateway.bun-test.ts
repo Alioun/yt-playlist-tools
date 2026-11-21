@@ -133,7 +133,7 @@ test("uncertain writes never fall back after throws rejections or lost answers",
     )
     const result = p.gateway.run({ kind: "add", playlistId: playlist, videoId: video })
     await drain()
-    if (mode === "timeout") p.clock.advance(3400)
+    if (mode === "timeout") p.clock.advance(10_100)
     same(await result, unconfirmed, "Uncertain write was confirmed or retried")
     check(p.calls.length === 1, "Uncertain write was retried")
     p.gateway.dispose()
@@ -157,38 +157,59 @@ test("HTTP and application rejections stop fallback including HTTP 200 failure",
   }
 })
 
-test("read timeout falls back and late identity mismatch stays latched", async () => {
+test("a slow first route keeps the whole budget instead of losing half of it to the fallback", async () => {
   const p = recorded(),
     waiting = held()
-  p.scripts.push(waiting.script, response(membership()))
+  p.scripts.push(waiting.script, response(membership(true)))
   const reading = p.gateway.run({ kind: "membership", videoId: video })
   await drain()
-  p.clock.advance(5100)
+  p.clock.advance(9000)
   await drain()
-  check((await reading).ok && p.calls.length === 2, "Read timeout did not fall back")
+  check(p.calls.length === 1, "A slow read was cut off for the fallback route")
+  waiting.answer.resolve({ http: 200, body: membership() })
+  const result = await reading
+  check(result.ok && result.data[0]?.contains === false && p.calls.length === 1, "A read answered inside its budget was dropped")
+  same(p.signals, [], "A read answered inside its budget left a signal")
+  p.gateway.dispose()
+  check(p.clock.count === 0, "Deadline leaked")
+})
+
+test("a read that outlives its budget is unconfirmed and a late identity mismatch stays latched", async () => {
+  const p = recorded(),
+    waiting = held()
+  p.scripts.push(waiting.script)
+  const reading = p.gateway.run({ kind: "membership", videoId: video })
+  await drain()
+  p.clock.advance(10_100)
+  same(await reading, unconfirmed, "A read with no answer inside its budget did not end unconfirmed")
+  check(p.calls.length === 1, "A route was tried with no budget left")
   waiting.answer.resolve({ http: 403, body: { ...identity("synthetic-other-account"), status: "STATUS_FAILED" } })
   await drain()
   const result = await p.gateway.run({ kind: "add", playlistId: playlist, videoId: video })
-  check(!result.ok && result.reason === "accountChanged" && p.calls.length === 2, "Late mismatch did not latch")
+  check(!result.ok && result.reason === "accountChanged" && p.calls.length === 1, "Late mismatch did not latch")
   p.gateway.dispose()
 })
 
-test("a playlist request reports the fallback route timing out at the job deadline", async () => {
-  const p = recorded()
-  p.scripts.push(held().script, held().script)
-  const reading = p.gateway.run({ kind: "playlists" })
+test("a playlist request reports each route that times out at the job deadline, and only that route", async () => {
+  const slow = recorded()
+  slow.scripts.push(held().script)
+  const first = slow.gateway.run({ kind: "playlists" })
   await drain()
-  p.clock.advance(5100)
+  slow.clock.advance(10_100)
+  await first
   await drain()
-  p.clock.advance(5000)
-  await reading
+  const timeouts = (p: ReturnType<typeof recorded>) => p.signals.flatMap(signal => (isBreakageSignal(signal, p.gateway.vocabulary) && signal.kind === "timeout" ? [signal.route] : []))
+  same(timeouts(slow), ["signed.playlists"], "The slow route timed out without leaving health evidence, or blamed a route that never ran")
+  slow.gateway.dispose()
+  const fallback = recorded()
+  fallback.scripts.push(() => ({ kind: "not-sent", cause: "preflight" }), held().script)
+  const second = fallback.gateway.run({ kind: "playlists" })
   await drain()
-  same(
-    p.signals.flatMap(signal => (isBreakageSignal(signal, p.gateway.vocabulary) && signal.kind === "timeout" ? [signal.route] : [])),
-    ["signed.playlists", "service.playlists"],
-    "The fallback timed out without leaving health evidence"
-  )
-  p.gateway.dispose()
+  fallback.clock.advance(10_100)
+  await second
+  await drain()
+  same(timeouts(fallback), ["service.playlists"], "The fallback timed out without leaving health evidence")
+  fallback.gateway.dispose()
 })
 
 test("playlist lane is FIFO and queued expiry prevents a second dispatch", async () => {
