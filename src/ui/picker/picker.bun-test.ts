@@ -439,12 +439,15 @@ async function musicPanel() {
 
 test("Music rows show while YouTube is asked, and with no YouTube tab the panel says what check marks need", async () => {
   const ledger = await musicPanel()
-  visible(screen.getByText("Checking where this song already is…"))
+  const status = screen.getByText("Checking where this song already is…")
+  visible(status)
   expect(checkOf("Synthetic Alpha")).toBe("loading")
   ledger.answer("checks", { kind: "noYouTubeTab" })
   await settle()
   flushSync()
   visible(screen.getByText("To see where this song already is, open YouTube in another tab."))
+  // The same live region changes its text. A replaced one would not be announced.
+  expect(status).toHaveTextContent("To see where this song already is, open YouTube in another tab.")
   expect(screen.queryByText("Couldn't check where this song already is")).toBeNull()
   expect(screen.queryByText(/Already in/)).toBeNull()
   for (const name of ["Synthetic Alpha", "Synthetic Beta"]) {
