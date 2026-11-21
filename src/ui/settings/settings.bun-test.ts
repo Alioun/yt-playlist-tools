@@ -484,7 +484,7 @@ test("Diagnostics runs Check now only when clicked, shows what answered, and put
           kind: "diagnostics",
           tabs: { www: true, music: false },
           signals: [signal],
-          checks: check
+          checks: checks.includes(true)
             ? [
                 {
                   site: "www",
@@ -503,12 +503,13 @@ test("Diagnostics runs Check now only when clicked, shows what answered, and put
   )
   const button = await screen.findByRole("button", { name: "Check now" }, { timeout: 5000 })
   for (let turn = 0; turn < 100 && !checks.length; turn++) await new Promise(resolve => setTimeout(resolve, 10))
-  expect(checks).toEqual([false])
+  expect(checks.length).toBeGreaterThan(0)
+  expect(checks).not.toContain(true)
   expect(await screen.findByText("No tab open")).toBeTruthy()
   await userEvent.click(button)
   expect(await screen.findByText("1 of 2 reads answered on YouTube.", {}, { timeout: 5000 })).toBeTruthy()
   expect(await screen.findByText("Partly working")).toBeTruthy()
-  expect(checks).toEqual([false, true])
+  expect(checks.filter(Boolean)).toEqual([true])
   const report = document.querySelector("[data-report]")?.textContent ?? ""
   expect(report).toContain("quick-save on YouTube: Partly working (can't refresh the playlist list)")
   expect(report).toContain("YouTube: account ok, playlists failed")

@@ -28,13 +28,19 @@
     browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, rows,
     signedIn: pageState.tab ? pageState.signedIn : null, evidence }) : "")
   // HEALTH-22, HEALTH-23: the session's signals feed the report, and Check now runs only when clicked.
-  let checking = $state(false), checkFailed = $state(false)
+  let checking = $state(false), checkFailed = $state(false), reads = 0
   async function diagnostics(check: boolean) {
+    const read = ++reads
     const answer = await backend.call("ui.diagnostics", { check })
-    if (answer.kind === "answered" && answer.result.kind === "diagnostics") { evidence = answer.result; return true }
-    return false
+    if (answer.kind !== "answered" || answer.result.kind !== "diagnostics") return false
+    if (read === reads) evidence = answer.result
+    return true
   }
-  void untrack(() => diagnostics(false))
+  // The evidence is read again with every status, so which tabs are open and the signals keep up with the rows.
+  $effect(() => {
+    void pageState.status
+    untrack(() => void diagnostics(false))
+  })
   async function checkNow() {
     checking = true; checkFailed = false
     try {
