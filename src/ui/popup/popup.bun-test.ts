@@ -419,6 +419,36 @@ test("with one setup the header's account is a label, not a menu", async () => {
   expect(screen.queryByRole("button", { name: "Show the setup for" })).toBeNull()
 })
 
+test("an account with no setup is named in the header from its tab, with a placeholder while that is read (ACC-17, ACC-08)", async () => {
+  let answer: (value: unknown) => void = () => {}
+  const asked: unknown[] = []
+  popup(agreed, {
+    "ui.accountLabel": payload => {
+      asked.push(payload)
+      return new Promise(resolve => { answer = resolve }) as never
+    }
+  })
+  expect(await screen.findByLabelText("Reading the account in this tab", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.queryByText("Unnamed account")).toBeNull()
+  await waitFor(() => expect(asked).toHaveLength(1))
+  answer({ kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe", avatar: "https://yt3.ggpht.com/a.jpg" } })
+  expect(await screen.findByText("Alex Doe", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.getByText("@alexdoe")).toBeTruthy()
+  expect(screen.queryByText("Unnamed account")).toBeNull()
+})
+
+test("an account whose setup has a label isn't read live", async () => {
+  const asked: unknown[] = []
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }] }) }, {
+    "ui.accountLabel": payload => {
+      asked.push(payload)
+      return { kind: "none" }
+    }
+  })
+  expect(await screen.findByText("Ann", {}, { timeout: 5000 })).toBeTruthy()
+  expect(asked).toEqual([])
+})
+
 const thisVideo = (video: Record<string, unknown> = {}) =>
   ({
     kind: "video",
