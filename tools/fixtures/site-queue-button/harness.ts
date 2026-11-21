@@ -137,6 +137,8 @@ export async function queueFixture(options: { readonly view?: SiteView<"www">; r
     }
   })
   const stack = hitStack()
+  const startedAt = location.href
+  let visits = 0
   host.define(queueButton)
   host.connect(ext)
   await page.link.hello
@@ -197,6 +199,11 @@ export async function queueFixture(options: { readonly view?: SiteView<"www">; r
       document.dispatchEvent(new Event("visibilitychange"))
     },
     navigate() {
+      history.pushState(null, "", `/results?search_query=page-${++visits}`)
+      for (const watcher of page.watchers) if (watcher.stream === "nav") watcher.emit(nav)
+    },
+    /** The nav stream also reports the player's video changing on the same page, as when the miniplayer starts. */
+    playerChanged() {
       for (const watcher of page.watchers) if (watcher.stream === "nav") watcher.emit(nav)
     },
     dispose() {
@@ -210,6 +217,7 @@ export async function queueFixture(options: { readonly view?: SiteView<"www">; r
       hello.dispose()
       page.dispose()
       stack.restore()
+      history.replaceState(null, "", startedAt)
       timers.restore()
       restoreHidden()
       restoreFull()
