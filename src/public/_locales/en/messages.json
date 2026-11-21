@@ -2874,6 +2874,21 @@
   "notice_watch": {
     "message": "The watch-page button isn't working right now because YouTube changed something. This video's status is still in the toolbar popup."
   },
+  "notice_one_auto_add": {
+    "message": "Auto-add isn't working right now because YouTube changed something. It won't add the videos you watch until it works again."
+  },
+  "notice_one_shortcuts": {
+    "message": "Playlist shortcuts aren't working right now because YouTube changed something. Use YouTube's own Save for now."
+  },
+  "notice_one_quick_save": {
+    "message": "Quick-save on thumbnails isn't working right now because YouTube changed something. Use YouTube's own Save for now."
+  },
+  "notice_one_queue_button": {
+    "message": "The Add to queue button isn't working right now because YouTube changed something. Use YouTube's ⋮ menu for now."
+  },
+  "notice_one_card_menu": {
+    "message": "The right-click menu isn't working right now because YouTube changed something. You'll get the browser's menu for now."
+  },
   "notice_music_one": {
     "message": "$FEATURES$ isn't working right now because YouTube Music changed something. Use its ⋮ menu for now.",
     "placeholders": {
