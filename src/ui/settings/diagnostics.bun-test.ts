@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from "bun:test"
-import { cleanup, render, screen, waitFor } from "@testing-library/svelte"
+import { cleanup, render, screen, waitFor, within } from "@testing-library/svelte"
+import userEvent from "@testing-library/user-event"
 import catalogue from "../../public/_locales/en/messages.json"
 import { englishI18n, scriptedMessages } from "../../../tools/fixtures/localization/scripted"
 import { createI18n } from "../../shared/i18n"
@@ -84,4 +85,30 @@ test("a row with no tab of its site open says so and what to do (UI-SET-17)", as
   await waitFor(() => expect(rows()).toEqual(["Quick-save on thumbnails · YouTube No tab open"]), { timeout: 5000 })
   expect(screen.getByText("No YouTube tab is open. Open one and its statuses show here.")).toBeTruthy()
   expect(screen.queryByText("No YouTube Music tab is open. Open one and its statuses show here.")).toBeNull()
+}, 20_000)
+
+test("Report a problem sends the state the feature's row shows, not Working (HEALTH-27)", async () => {
+  diagnostics({ settings: { quickSave: { on: true, feedback: true, shortsShelves: false } } })
+  await waitFor(() => expect(rows()).toEqual(["Quick-save on thumbnails · YouTube No tab open"]), { timeout: 5000 })
+  await userEvent.click(screen.getByRole("button", { name: "Report a problem" }))
+  await userEvent.selectOptions(await screen.findByRole("combobox"), "quick-save")
+  expect(document.querySelector("[data-report-values]")?.textContent).toBe("GitHub opens with 2.0.0 · Firefox · Quick-save on thumbnails · No YouTube tab open.")
+}, 20_000)
+
+test("a partly working status reaches Report a problem and the report in words, not gap names (HEALTH-24, HEALTH-27)", async () => {
+  diagnostics({
+    settings: { musicActions: { on: true, feedback: true }, gather: { on: true } },
+    health: () => [
+      { feature: "gather", site: "www", state: "partly-working", gaps: ["playlist"] },
+      { feature: "music-actions", site: "music", state: "partly-working", gaps: ["casting"] }
+    ]
+  })
+  await waitFor(() => expect(rows()).toEqual(["Gather tabs · YouTube Partly working Report a problem", "Quick actions · YouTube Music Partly working Report a problem"]), { timeout: 5000 })
+  const report = document.querySelector("[data-report]")?.textContent ?? ""
+  expect(report).toContain("gather on YouTube: Partly working (can't gather into a playlist)")
+  expect(report).toContain("music-actions on YouTube Music: Partly working (can't tell when YouTube Music is casting)")
+  await userEvent.click(within(document.querySelector('[data-status="music-actions"]') as HTMLElement).getByRole("button", { name: "Report a problem" }))
+  await waitFor(() =>
+    expect(document.querySelector("[data-report-values]")?.textContent).toBe("GitHub opens with 2.0.0 · Firefox · Quick actions · Partly working (can't tell when YouTube Music is casting).")
+  )
 }, 20_000)
