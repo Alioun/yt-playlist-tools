@@ -96,3 +96,9 @@ Gather tabs ([ticket 31](31-gathertube.md); [R136](../spec/resolutions.md#gather
 M2 hasn't run. PR #89 changed what 2.0 does in the meantime:
 - The YouTube Music picker shows check marks. The YouTube Music specimen PR #89 parses (`addToPlaylistRenderer` with `playlistAddToOptionRenderer` rows) carries no selection state. So each check comes from a youtube.com tab on the same account, in a window of the same kind ([R202](../spec/resolutions.md#youtube-music-check-marks-2026-11-18-r202)).
 - M2 still decides whether YouTube Music's own `get_add_to_playlist` answer carries membership (`containsSelectedVideos`). If it does, the checks no longer need a youtube.com tab. The parser already reads that state on YouTube Music when it's there.
+
+## What PR #89 found about L2 and the signed request (2026-11-18)
+
+PR #89's commits record these two YouTube changes. They aren't ticket 25 runs, so L2 stays open.
+- YouTube's service request no longer answered `account/account_menu` or `browse` (`64b90b2`). The account label, both playlist reads and create now send the signed request first, and keep the service request as the fallback ([ARC-ACC-11](../spec/06-architecture.md#622-routes)).
+- YouTube no longer set `ytcfg` `VISITOR_DATA`, so the signed request never went out (`5f97000`). `X-Goog-Visitor-Id` now falls back to `INNERTUBE_CONTEXT.client.visitorData` ([06 §6.2.4](../spec/06-architecture.md#624-auth-signing-and-the-cookie-rule)).

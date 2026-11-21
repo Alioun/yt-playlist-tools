@@ -146,6 +146,8 @@ A route is how the gateway gets a job done. In order of preference:
 | **Watch progress** (auto-add) | **Page read:** the `<video>` inside `#movie_player` or `#shorts-player` ([ticket 07](07-watched.md)) | The tab | — | L9 |
 | **Right-click card menu** | YouTube's own UI (exempt) | The tab | The browser's own menu | Settled |
 
+*Changed by PR #89 (2026-11-18):* the account label, both playlist reads and create now send the signed request first and keep the service request as the fallback. YouTube's service request no longer answered `account_menu` or `browse`, and each silent try cost half the job's time ([06 ARC-ACC-11](../spec/06-architecture.md#622-routes)).
+
 #### YouTube Music
 
 | Job | Route (primary) | Sending context | Fallback | Decided by |
