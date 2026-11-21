@@ -4,6 +4,7 @@ import { createTabHealthRouter } from "./tab-health"
 import { runtimeTransport } from "../adapters/runtime"
 import { CONTRACT_VERSION } from "../../shared/contracts/protocol"
 import { build, manualClock, settle } from "../../../tools/fixtures/tabs/harness"
+import { context, monitorWorld, pageFeature, syntheticHealthFacts } from "../../../tools/fixtures/monitor/harness"
 
 beforeEach(() => fakeBrowser.reset())
 afterEach(() => mock.restore())
@@ -40,6 +41,7 @@ async function world(registered: string | null = acct) {
     build,
     deadline: manualClock().after,
     monitor: monitor as never,
+    enabled: async () => undefined,
     async context(_sender, claimed) {
       return claimed === registered ? ({ tab: { tabId: raw.id }, info: {} } as never) : null
     }
@@ -123,4 +125,65 @@ test("a batch from a tab the registry holds for another account reaches nothing 
   await w.send({ acct, request: { reports: [{ kind: "success", job: "add" }] } })
   expect(w.calls).toEqual([])
   w.dispose()
+})
+
+async function noticeWorld(features = [pageFeature("queue-button"), pageFeature("card-menu")]) {
+  const window = await fakeBrowser.windows.create({ incognito: false })
+  const created = await fakeBrowser.tabs.create({ windowId: window?.id, url: "https://www.youtube.com/results?search_query=a" })
+  const raw = { ...created, incognito: false, active: true, windowId: window?.id }
+  const h = monitorWorld()
+  const tab = context()
+  h.seedContext(tab, { visible: true, fullscreen: false }, syntheticHealthFacts("www"))
+  const router = createTabHealthRouter({
+    transport: runtimeTransport(fakeBrowser.runtime),
+    senders: fakeBrowser,
+    build,
+    deadline: manualClock().after,
+    monitor: h.monitor,
+    enabled: async () => features,
+    context: async () => tab
+  })
+  const sender = { id: fakeBrowser.runtime.id, frameId: 0, url: raw.url, tab: raw } as never
+  let id = 0
+  async function send(kind: string, request: unknown) {
+    const replies: { kind: string; result?: unknown }[] = []
+    await Promise.all(await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: `n-${++id}`, kind, payload: { acct: tab.info.acct, request } }, sender, value => replies.push(value as never)))
+    for (let turn = 0; turn < 200 && !replies.length; turn++) await settle()
+    return replies[0]?.result
+  }
+  return { h, tab, send, async dispose() { router.dispose(); await h.dispose() } }
+}
+
+test("a broken feature about to act gets one notice in its tab, and once shown it isn't owed again (YT-BRK-02)", async () => {
+  const w = await noticeWorld()
+  try {
+    w.h.routes(w.tab, "queueAdd", "missing")
+    w.h.routes(w.tab, "openCardMenu", "missing")
+    expect(await w.send("tab.wouldAct", { feature: "queue-button" })).toBeNull()
+    await w.h.advance(20)
+    await w.send("tab.wouldAct", { feature: "card-menu" })
+    await w.h.advance(60)
+    const claim = (await w.send("tab.claimNotice", null)) as { token: unknown; features: unknown } | undefined
+    expect(claim?.features).toEqual(["queue-button", "card-menu"])
+    expect(await w.send("tab.claimNotice", null)).toBeNull()
+    await w.send("tab.noticeShown", { token: claim?.token })
+    await w.send("tab.wouldAct", { feature: "queue-button" })
+    await w.h.advance(60)
+    expect(await w.send("tab.claimNotice", null)).toBeNull()
+  } finally {
+    await w.dispose()
+  }
+})
+
+test("a working feature or one the user switched off owes no notice", async () => {
+  const w = await noticeWorld([pageFeature("card-menu")])
+  try {
+    w.h.routes(w.tab, "queueAdd", "missing")
+    await w.send("tab.wouldAct", { feature: "queue-button" })
+    await w.send("tab.wouldAct", { feature: "card-menu" })
+    await w.h.advance(60)
+    expect(await w.send("tab.claimNotice", null)).toBeNull()
+  } finally {
+    await w.dispose()
+  }
 })
