@@ -9,6 +9,7 @@
   import type { PageState } from "../lib/page-state.svelte"
   import { featureName } from "../lib/health"
   import { browserLabel, knownProblems, reportAddress, type ReportFeature, type ReportKind } from "./report"
+  import { reportStatus, statusRows } from "./diagnostics"
 
   // Report a problem (UI-SET-21, HEALTH-27, REL-STORE-37): a kind, a feature, and exactly what the address carries.
   let { pageState, features, feature = "other", report = null, onclose }: {
@@ -19,9 +20,8 @@
     onclose: () => void
   } = $props()
   const { i18n, platform, version: built, beta } = untrack(() => pageState.page)
-  const health = $derived(pageState.status?.kind === "status" ? pageState.status.health : [])
   let chosen = $state<ReportFeature>(untrack(() => feature))
-  const initialBroken = untrack(() => health.some(row => row.feature === feature && row.state !== "working"))
+  const initialBroken = untrack(() => statusRows(pageState).some(row => row.feature === feature && row.state.kind === "health" && row.state.health.state !== "working"))
   let kind = $state<ReportKind>(initialBroken ? "not-working" : "problem")
   let copied = $state(false)
   const uid = $props.id()
@@ -29,11 +29,8 @@
   const version = `${built}${beta ? " (beta)" : ""}`
   const special = { upgrade: "report_upgrade", pages: "report_pages", other: "report_other" } as const
   const name = $derived(chosen in special ? i18n.message(special[chosen as keyof typeof special]) : featureName(features, chosen as FeatureId))
-  const status = $derived.by(() => {
-    const row = health.find(entry => entry.feature === chosen)
-    return row?.state === "not-working" ? "Not working" : row?.state === "partly-working" ? `Partly working${row.gaps[0] ? `: ${row.gaps[0]}` : ""}` : "Working"
-  })
-  const values = $derived([version, browser, name, ...kind === "idea" ? [] : [status]].join(" · "))
+  const status = $derived(kind === "idea" ? null : reportStatus(pageState, chosen))
+  const values = $derived([version, browser, name, ...status === null ? [] : [status]].join(" · "))
   const kinds = [["not-working", "report_broken", "report_brokenLine"], ["problem", "report_wrong", "report_wrongLine"], ["idea", "report_idea", "report_ideaLine"]] as const
   const options: readonly ReportFeature[] = [...firstRunFeatures.map(row => row.id), "sync", "upgrade", "pages", "other"]
   async function copy() {

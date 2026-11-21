@@ -14,20 +14,18 @@
   // problems, Report a problem, the detailed console log and the version.
   let { pageState, features }: { pageState: PageState; features: ReturnType<typeof createFeatureCopy> } = $props()
   const { i18n, backend, platform } = untrack(() => pageState.page)
-  const settings = $derived(pageState.settings)
   const device = $derived(pageState.ready?.device.kind === "current" ? pageState.ready.device.device : null)
-  const health = $derived(pageState.status?.kind === "status" ? pageState.status.health : [])
   let copied = $state(false)
   let reporting = $state<ReportFeature | null>(null)
   let logFailed = $state(false)
-  const rows = $derived(settings ? statusRows({ settings, consented: pageState.agreed, access: pageState.access ?? { www: true, music: true, browserMenu: true }, health }) : [])
+  const rows = $derived(statusRows(pageState))
   const untabbed = $derived((["www", "music"] as const).filter(site => rows.some(row => row.site === site && row.state.kind === "no-tab")))
   const stateLabels = { working: "diag_working", "partly-working": "diag_partly", "not-working": "diag_notWorking" } as const
   const label = (state: RowState) => i18n.message(state.kind === "held" ? heldMessage[state.held] : state.kind === "no-tab" ? "diag_noTab" : stateLabels[state.health.state])
   const broken = (state: RowState) => state.kind === "health" && state.health.state !== "working"
   let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
-    browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, health,
+    browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, rows,
     signedIn: pageState.tab ? pageState.signedIn : null, evidence }) : "")
   // HEALTH-22, HEALTH-23: the session's signals feed the report, and Check now runs only when clicked.
   let checking = $state(false), checkFailed = $state(false)
