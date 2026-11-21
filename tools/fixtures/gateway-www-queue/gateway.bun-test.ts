@@ -217,15 +217,17 @@ test("an add whose outcome is unknown is unconfirmed and is never called a timeo
   released(later)
 })
 
-test("a refused add fails, and counts as breakage only when YouTube calls the request itself wrong", async () => {
-  for (const [http, body, failure, signals] of [
-    [200, { status: "STATUS_FAILED" }, { status: "STATUS_FAILED" }, []],
-    [409, { error: { code: 409 } }, { http: 409 }, []],
-    [500, { error: { code: 500 } }, { http: 500 }, []],
-    [400, { error: { code: 400 } }, { http: 400 }, ["rejected"]],
-    [404, { error: { code: 404 } }, { http: 404 }, ["rejected"]]
+test("a refused add fails, and counts as breakage only as a refused playlist request does", async () => {
+  for (const [signedIn, http, body, failure, signals] of [
+    [true, 200, { status: "STATUS_FAILED" }, { status: "STATUS_FAILED" }, []],
+    [true, 409, { error: { code: 409 } }, { http: 409 }, []],
+    [true, 500, { error: { code: 500 } }, { http: 500 }, []],
+    [true, 400, { error: { code: 400 } }, { http: 400 }, ["rejected"]],
+    [true, 404, { error: { code: 404 } }, { http: 404 }, ["rejected"]],
+    [true, 403, { error: { code: 403 } }, { http: 403 }, ["rejected"]],
+    [false, 403, { error: { code: 403 } }, { http: 403 }, []]
   ] as const) {
-    const w = queueWorld()
+    const w = queueWorld({ signedIn })
     w.replace(listA, [])
     w.scripts.push(pending(() => answer(body, http)))
     const result = queueAdd(w)
