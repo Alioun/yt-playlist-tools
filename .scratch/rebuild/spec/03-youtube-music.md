@@ -332,14 +332,16 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
   - If that cache is older than 5 minutes, the list refreshes by itself on open. ↻ always refreshes it. (R39)
   - Membership is fetched fresh on every open. The check marks show a loading state until it arrives.
   - Rows work before membership is known. An add then reports already in on the row if it was.
-- **YM-PICK-6** **Check marks:** none until ticket 25's M2 check passes. Until then the picker shows no check marks and no "Couldn't check" line (R191). Once M2 passes, every playlist that already holds the song gets one:
-  - Membership comes from YouTube Music's own answer if it carries membership.
-  - Otherwise it comes from a youtube.com serving tab on the same account, in a window of the same kind.
-  - If neither can be read:
-    - the list still works, with no check marks;
+- **YM-PICK-6** **Check marks:** every playlist that already holds the song gets one (R202).
+  - The picker asks YouTube Music for its Save-dialog list. The rows, their titles and their order come from that answer.
+  - That answer can leave out whether a playlist holds the song. Each row it leaves out takes its check from a youtube.com serving tab on the same account, in a window of the same kind. If YouTube Music's answer can't be read at all, that tab's rows stand in, without Watch Later.
+  - So while YouTube Music's answer carries no membership, the check marks need an open youtube.com tab on that account.
+  - If a row's check still can't be read:
+    - that row shows no check mark, and rows with a known check keep theirs;
+    - the list still works;
     - it shows "Couldn't check where this song already is";
     - Quick actions is partly working.
-  - **PROVISIONAL** (ticket 25, M2): whether YouTube Music's answer carries membership.
+  - **PROVISIONAL** (ticket 25, M2): whether YouTube Music's own answer carries membership. M2 hasn't run. The YouTube Music specimen PR #89 parses (`addToPlaylistRenderer` with `playlistAddToOptionRenderer` rows) carries no selection state, so the youtube.com tab supplies the checks for now.
 - **YM-PICK-7** **Ticking a row** saves the song there at once, through YM-SAVE-5's flow.
   - The row shows its own result: busy, then checked, or an inline "Couldn't save".
   - Nothing in the picker raises a toast, with two exceptions: the choose-mode pick (YM-SAVE-3) and an untick (YM-PICK-8). (R84)
@@ -821,7 +823,7 @@ Keys from any tab is one feature for both sites, specified in [02 §2.14](02-you
 | Item | Requirement | Settled by |
 |---|---|---|
 | Save to library's signed-in shape and toast | YM-MORE-9 | Ticket 25, M3 |
-| YouTube Music's answer carries membership; YouTube Music responses carry `datasyncId` | YM-PICK-6, YM-ACC-6 | Ticket 25, M2 |
+| YouTube Music's answer carries membership (until then, a youtube.com tab supplies the checks); YouTube Music responses carry `datasyncId` | YM-PICK-6, YM-ACC-6 | Ticket 25, M2 |
 | Likes are quiet and repaint, including in the Wiz miniplayer | YM-LIKE-7 | Ticket 25, M3 |
 | The installed app is first-class | YM-APP-4 | Ticket 25, M4 |
 | The Wiz miniplayer's Save anchor, signed in | YM-BAR-8 | Ticket 25 |

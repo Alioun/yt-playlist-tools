@@ -738,7 +738,7 @@ The owner settled G19 to G36 on 2026-11-01, while the 2.0 build was planned (`.a
 - **R188. All copy goes through unslop.** G30, G31. Every user-facing string goes through pstack's unslop rules, strings the spec pins word for word included, and the spec carries the new wording where it changes. Typographic quotes around titles and the "…" cut stay, because R45 makes them the product's format ([YT-ADD-18](02-youtube.md); [YM-FB-10](03-youtube-music.md); [UI-TOAST-11](05-ui.md); [08 §3.2](08-release.md#32-copy)). R193 on lists the strings that changed.
 - **R189. The first beta waits until 2.0 is usable.** G33. The owner activates `1.99.1` only once every 2.0 feature is built (plan wave 8) and the full suite and both browser builds pass ([REL-CI-03](08-release.md#6-versioning)).
 - **R190. Ticket 25 runs after the first beta.** G34. The first beta ships with the provisional cookie lines (R48). If ticket 25 changes them, the disclosure is re-pinned under a new consent version (FT-36) ([08 §0](08-release.md#0-provisional-inputs), §19).
-- **R191. No check marks on YouTube Music until M2.** G35. The YouTube Music picker shows no check marks, and no "Couldn't check" line, until ticket 25's M2 check passes ([YM-PICK-6](03-youtube-music.md)).
+- **R191. No check marks on YouTube Music until M2.** G35. The YouTube Music picker shows no check marks, and no "Couldn't check" line, until ticket 25's M2 check passes ([YM-PICK-6](03-youtube-music.md)). *Replaced by R202 on 2026-11-18.*
 - **R192. Collaborative playlists count as not owned until ACC-35's check.** G36. Claiming treats a collaborative playlist the user doesn't own as not owned until ticket 25 settles ACC-35 ([ACC-35](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming)).
 
 R162 to R170 left the recovery section's placement and wording open. R181 now settles both.
@@ -815,4 +815,8 @@ G31 put every user-facing string through unslop, pinned ones included. These rec
   - First run: 62.5 KB, and 66.3 KB with the upgrade note.
   - Lazy jobs files: 20 KB for YouTube and 18 KB for YouTube Music.
   - Background: a 230 KB ceiling (G46), replacing R199's 227.2 KB, for the queued sync follow-ups.
+
+## YouTube Music check marks, 2026-11-18 (R202)
+
+- **R202. YouTube Music's check marks come from a youtube.com tab until M2.** This replaces R191. The user reported that the YouTube Music picker's check marks failed, and PR #89 (`6fbd86c`) ships them. The picker reads YouTube Music's Save-dialog list. Each row whose selection state that answer leaves out takes its check from a youtube.com serving tab on the same account, in a window of the same kind. A row neither answer settles shows no check mark, and the picker shows "Couldn't check where this song already is". M2 hasn't run, so whether YouTube Music's own answer carries membership stays PROVISIONAL ([YM-PICK-6](03-youtube-music.md#10-the-playlist-picker)).
 
