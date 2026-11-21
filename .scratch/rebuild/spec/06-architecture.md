@@ -80,7 +80,7 @@ Two more targets exist only at build time: the live-check build ([§6.4.6](#646-
   - **Exception:** the tab's account (`LOGGED_IN` and `DATASYNC_ID`) is read once, at page load, and kept until the page reloads, just as YouTube's own page keeps it (ticket 11). The account guard compares against that value.
   - A stale client version (HTTP 400) can't happen, because nothing is ever sent outside a live page.
 - **ARC-ACC-07.** No remote config, selectors or endpoint maps are ever fetched. Every route, parser, shape and fallback ships in the package (ADR-0005).
-- **ARC-ACC-08.** 2.0 never clicks or otherwise drives YouTube's visible UI to do work. One exception: the right-click card menu opens YouTube's own ⋮ menu, because that is the feature.
+- **ARC-ACC-08.** 2.0 never clicks or otherwise drives YouTube's visible UI to do work. One exception: the right-click card menu opens YouTube's own ⋮ menu and moves the menu's anchor to the right-click point, because that is the feature ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)).
 - **ARC-ACC-09.** Until **consent** is given, no job runs and no extension script reaches a YouTube page. That includes the on-demand core (ADR-0010). `Tabs.serve` and `Registrar.ensure` refuse before consent.
 
 ### 6.2.2 Routes
@@ -190,7 +190,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 | `queueAdd` | www | target card | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
 | `queueUndo` | www | `{ listId, setVideoId }` | — | app-state | no |
 | `queueAddList` | www | `{ videoIds }`: the rest of a gather into YouTube's queue, after the first video, which the tab the gather opened plays; at most 199 ([YT-GT-14](02-youtube.md#2163-destinations); R123) | `{ confirmed, count }` | app-state | no |
-| `openCardMenu` | www | target card | — | none | no |
+| `openCardMenu` | www | target card, and `{ videoId, at }`: `at` is the right-click's viewport point, where the menu opens ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)) | — | none | no |
 | `itemInfo` | music | target element | the item's menu endpoints (the library toggle with its state, the mix's watch endpoint and the artist and album browse endpoints included, R85), kind, like state, queue item ID, `selected`, header song count | none | no |
 | `queueInsert` | music | `{ endpoint, position: "next" \| "end" }` | `{ ids }`: the new queue item IDs | app-state | no |
 | `queueRemove` | music | `{ id }` | `{ index }` | app-state | no |
@@ -234,7 +234,7 @@ The sending context is either **the tab** (where the action happened) or **a ser
 | `resolveChannel` (typed channels) | **Plain request:** `navigation/resolve_url`, following up to 3 `urlEndpoint` hops and accepting only a `UC…` ID with `WEB_PAGE_TYPE_CHANNEL`. Then a plain `browse {browseId: "UC…"}` for the title and @handle. | With no tab, only `UC…` IDs and `/channel/UC…` URLs are accepted, parsed offline. Other forms show "Open YouTube to look up this channel". | A serving tab of any account, signed in or out | Settled |
 | `videoInfo` | **Page read:** the navigation event and the player | — | The tab | L9 |
 | `player` stream (watch progress) | **Page read:** the `<video>` inside `#movie_player` or `#shorts-player` | On Shorts, progress from the `<video>` alone if `#shorts-player`'s API is missing | The tab | L9 |
-| `openCardMenu` | YouTube's own UI (exempt) | The browser's own menu | The tab | Settled |
+| `openCardMenu` | YouTube's own UI (exempt): click the card's ⋮ button, then move the dropdown's anchor to `at` as YouTube marks it opened. That mark confirms the job. On close, the dropdown gets its ⋮ anchor back ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)). | The browser's own menu | The tab | Settled |
 
 ### 6.2.7 Route table: YouTube Music
 
