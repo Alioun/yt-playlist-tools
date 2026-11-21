@@ -14,13 +14,13 @@ export function createLiveWwwQueue(options: { window: Window; document: Document
       return resolver.command(endpoint, context)
     },
     panel() {
-      const panels = [...doc.querySelectorAll("ytd-playlist-panel-renderer")]
-      if (panels.length === 0) return undefined
-      return panels.flatMap(panel => [field(panel, "data"), field(panel, "polymerController", "data"), field(panel, "inst", "data")])
-    },
-    miniplayer() {
-      const app = doc.querySelector("ytd-app")
-      return app && doc.querySelector("ytd-miniplayer") ? app.hasAttribute("miniplayer-is-active") : undefined
+      const manager = doc.querySelector("yt-playlist-manager")
+      const read = field(manager, "getPlaylistData")
+      return [
+        ...[...doc.querySelectorAll("ytd-playlist-panel-renderer")].flatMap(panel => [field(panel, "data"), field(panel, "polymerController", "data"), field(panel, "inst", "data")]),
+        // Off the watch page no panel holds the queue. YouTube's playlist manager holds it on every page.
+        typeof read === "function" ? Reflect.apply(read, manager, []) : undefined
+      ]
     },
     connected: target => target.isConnected && target.ownerDocument === doc,
     onAction(seen) {

@@ -23,16 +23,6 @@ test("the queue is read from YouTube's playlist manager where no panel holds it,
   expect(parseQueuePanel(queue.panel())).toBeUndefined()
 })
 
-test("the miniplayer reads as active once YouTube marks the app, as it does after a first queue add", () => {
-  const app = document.createElement("ytd-app")
-  app.append(document.createElement("ytd-miniplayer"))
-  document.body.append(app)
-  const queue = createLiveWwwQueue({ window, document, resolver: createWwwResolver(window) })
-  expect(queue.miniplayer()).toBe(false)
-  app.setAttribute("miniplayer-is-active", "")
-  expect(queue.miniplayer()).toBe(true)
-})
-
 function dropdownAt(anchor: Element) {
   const dropdown = document.createElement("tp-yt-iron-dropdown")
   Reflect.set(dropdown, "positionTarget", anchor)

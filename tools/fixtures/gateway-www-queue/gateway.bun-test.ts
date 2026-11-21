@@ -199,19 +199,6 @@ test("stale targets and unrecognised cards send nothing", async () => {
   released(plain)
 })
 
-test("the miniplayer opening never confirms a first add, because YouTube opens it before the request is answered", async () => {
-  const w = queueWorld()
-  w.scripts.push(
-    pending(world => {
-      world.state.miniplayer = true
-    })
-  )
-  const result = queueAdd(w)
-  await settle(w, 2_000)
-  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
-  released(w)
-})
-
 test("an add whose outcome is unknown is unconfirmed and is never called a timeout", async () => {
   const first = queueWorld()
   first.scripts.push(pending(() => undefined))

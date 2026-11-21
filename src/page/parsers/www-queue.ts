@@ -53,9 +53,6 @@ export function hasQueueList(candidates: unknown): boolean {
     })
   )
 }
-export function parseMiniplayer(raw: unknown): boolean | undefined {
-  return typeof raw === "boolean" ? raw : undefined
-}
 function queueCommandFor(value: unknown, videoId: VideoId): boolean {
   const command = field(value, "addToPlaylistCommand")
   if (!record(command) || command.listType !== queueList) return false
