@@ -105,7 +105,7 @@ export function createPopupItem(deps: { readonly actions: Pick<Actions, "removeF
     },
     async membership(req: Requester, payload: UiMembershipPayload): Promise<UiMembershipAnswer> {
       if (!deps.consented()) return { kind: "unavailable" }
-      return deps.actions.membershipFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.site }, payload.acct, payload.video, req)
+      return deps.actions.membershipFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.site }, payload.acct, payload.video, req, payload.youtube)
     }
   }
 }

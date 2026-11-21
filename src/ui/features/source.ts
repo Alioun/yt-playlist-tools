@@ -69,6 +69,14 @@ export function sheetSource(pageState: PageState, target: SheetTarget): PickerSo
       const answer = await backend.call("ui.membership", { ...at, site: target.site, video: target.video })
       return answer.kind === "answered" && answer.result.kind === "read" ? { kind: "read", rows: answer.result.rows } : { kind: "unreadable" }
     },
+    ...(target.site === "music" && {
+      async checks(need) {
+        const answer = await backend.call("ui.membership", { ...at, site: target.site, video: target.video, youtube: { need } })
+        if (answer.kind !== "answered") return { kind: "unreadable" }
+        const { result } = answer
+        return result.kind === "read" ? { kind: "read", rows: result.rows } : { kind: result.kind === "no-youtube-tab" ? "noYouTubeTab" : "unreadable" }
+      }
+    }),
     async add(id) {
       const answer = await backend.call("ui.add", { ...at, request: { ...request, via: "picker", playlist: id } })
       const reply = answer.kind === "answered" ? answer.result : null

@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test"
+import { defaultSettings } from "../../shared/model/defaults"
 import { parseSessionMemory, type SessionRead } from "../store/session-memory"
 import { composeMonitor } from "./monitor"
 import { createMusicMembershipHealth } from "./services"
@@ -22,7 +23,7 @@ function wired() {
   const tab = { tabId: 7, windowId: 1, incognito: false, site: "music", lastAccessed: 0, active: true, discarded: false, frozen: false } as const
   const context = { tab, info: { site: "music", build: "test", signedIn: true, acct } } as never
   const record = createMusicMembershipHealth({ tab: async () => ({ kind: "tab", tab }), monitor, build: "test" as never, route })
-  const enabled = [{ id: "music-actions", options: { on: true, feedback: true } }] as never
+  const enabled = [{ id: "music-actions", options: { ...defaultSettings().musicActions, on: true } }] as never
   async function status() {
     const answer = await monitor.statusProducer.read(context, enabled)
     if (answer.kind !== "statuses") throw Error(answer.kind)

@@ -1,6 +1,6 @@
 import { createAccounts } from "../accounts/accounts"
 import { composeAccountLabel } from "./account-label"
-import { composeActions, type Actions } from "./actions"
+import { composeActions, type Actions, type ActingTab, type MusicChecks } from "./actions"
 import { composeAnyTab } from "./any-tab"
 import { composePlayingNow, createPlayingSave, createPlayingUndo, createPopupItem } from "./playing-now"
 import { composeThisTab } from "./this-tab"
@@ -21,13 +21,14 @@ import { composeGather } from "./gather"
 import { createDiagnostics } from "./diagnostics"
 import { createTabHealthRouter } from "../router/tab-health"
 import type { SiteDiagnostics } from "../monitor/ports"
-import type { TabContext } from "../tabs/ports"
+import type { TabContext, TabLookup } from "../tabs/ports"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
 import { createTabViewProducer, enabledTabFeatures } from "../tab-view/producer"
 import { decodeSettings } from "../../shared/model/decodeSettings"
 import { createViewPublication } from "../tab-view/publication"
 import { createTabs } from "../tabs/tabs"
-import type { BuildId } from "../../shared/contracts"
+import type { BuildId, RouteId } from "../../shared/contracts"
+import type { AccountKey } from "../../shared/model"
 import { siteBundles } from "../../shared/features/registration"
 
 async function readAccess(native: NativeBrowser) {
@@ -55,6 +56,47 @@ function firstRunPorts(native: NativeBrowser, owner: StartingOwner): UiRouterPor
 
 async function activate(lifecycle: StoreLifecycle): Promise<"on" | "held"> {
   return (await lifecycle.activate()).kind === "active" ? "on" : "held"
+}
+
+/**
+ * Records what a YouTube Music picker's check marks say about `membership` in that tab. YouTube Music's own answer
+ * carries none, so they come from an open YouTube tab. With none open the picker says so and nothing is recorded,
+ * because that is an expected limit and not breakage (YM-PICK-6).
+ */
+export function createMusicMembershipHealth(deps: {
+  readonly tab: (tabId: number) => Promise<TabLookup>
+  readonly monitor: Pick<ReturnType<typeof composeMonitor>, "succeeded" | "signal">
+  readonly build: BuildId
+  /** YouTube Music's shipped `membership` route, which a signal has to name. */
+  readonly route: RouteId | undefined
+}) {
+  return async (tab: ActingTab, acct: AccountKey, { checks, at }: { readonly checks: MusicChecks; readonly at: number }): Promise<void> => {
+    if (checks === "noYouTubeTab") return
+    const lookup = await deps.tab(tab.tabId)
+    if (lookup.kind !== "tab" || lookup.tab.site !== "music" || lookup.tab.incognito !== tab.incognito) return
+    const context: TabContext = { tab: { ...lookup.tab, site: "music" }, info: { site: "music", build: deps.build, signedIn: true, acct } }
+    if (checks === "complete") await deps.monitor.succeeded(context, "membership", at)
+    else if (deps.route !== undefined) {
+      await deps.monitor.signal(
+        context,
+        {
+          site: "music",
+          feature: null,
+          job: "membership",
+          route: deps.route,
+          kind: "unrecognised",
+          watchId: null,
+          shape: { kind: "null" },
+          clientVersion: null,
+          pageType: "other",
+          count: 1,
+          firstSeen: at,
+          lastSeen: at
+        },
+        { kind: "diagnostic" }
+      )
+    }
+  }
 }
 
 export type Services = {
@@ -146,32 +188,7 @@ export function composeServices(deps: {
     playlists,
     registrar,
     writable: deps.consented,
-    async musicMembershipHealth(tab, acct, { route, complete, at }) {
-      const lookup = await browserTabs.port.get(tab.tabId)
-      if (lookup.kind !== "tab" || lookup.tab.site !== "music" || lookup.tab.incognito !== tab.incognito) return
-      const context: TabContext = { tab: { ...lookup.tab, site: "music" }, info: { site: "music", build, signedIn: true, acct } }
-      if (complete) await monitor.succeeded(context, "membership", at)
-      else if (route !== null) {
-        await monitor.signal(
-          context,
-          {
-            site: "music",
-            feature: null,
-            job: "membership",
-            route,
-            kind: "unrecognised",
-            watchId: null,
-            shape: { kind: "null" },
-            clientVersion: null,
-            pageType: "other",
-            count: 1,
-            firstSeen: at,
-            lastSeen: at
-          },
-          { kind: "diagnostic" }
-        )
-      }
-    },
+    musicMembershipHealth: createMusicMembershipHealth({ tab: tabId => browserTabs.port.get(tabId), monitor, build, route: deps.sites?.music.routes.membership?.[0] }),
     ticked: tabId => badge.tick(tabId),
     openSettings(hash, tabId) {
       void native.tabs

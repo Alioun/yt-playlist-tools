@@ -20,9 +20,10 @@ function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save"
     add: async (request: TabAddRequest) => { adds.push(request); return { kind: "report", outcomes: { [other]: { kind: "added" } }, toast: null, feedback: true, undo: { kind: "add", id: "a1" }, titles: {} } },
     remove: async (request: TabRemoveRequest) => { removes.push(request); return { kind: "removed", playlist: other, video, feedback: true, toast: null, undo: { kind: "remove", id: "r1" }, titles: {} } },
     destination: async (change: TabDestinationChange) => { destinations.push(change); return { kind: "confirmed" } },
-    membership: async () => {
-      jobs.push("membership")
-      return [{ id: other, title: "Music Beta", contains: true }, { id: playlist, title: "Music Favourites", contains: null }]
+    membership: async (_video: unknown, youtube?: { need: readonly PlaylistId[] | null }) => {
+      jobs.push(youtube ? `youtube ${youtube.need?.join()}` : "membership")
+      if (youtube) return { kind: "noYouTubeTab" }
+      return { kind: "read", rows: [{ id: other, title: "Music Beta", contains: true }, { id: playlist, title: "Music Favourites", contains: null }] }
     },
     playlists: async () => ({ kind: "cached", listing: { rows: [{ id: playlist, title: "Favourites" }, { id: other, title: "Beta" }], at: Date.now() } })
   } as unknown as TabActions
@@ -89,15 +90,21 @@ test("a picker with marks off reads no membership, so no row is checked and noth
   expect(www.jobs).toEqual(["membership"])
 })
 
-test("the Music picker renders and refreshes Music's rows even if some check marks are unavailable", async () => {
+test("the Music picker reads its own rows, asks YouTube for the check marks they lack, and says when no YouTube tab is open", async () => {
   const music = source("music")
   const picker = new PickerModel({ source: music.built, site: "music", mode: "save" })
   await settle()
-  expect(music.jobs).toEqual(["membership"])
-  expect(picker.membership).toEqual({ kind: "partial", count: 1, checked: 1, unchecked: 1, reason: "failed" })
+  expect(music.jobs).toEqual(["membership", `youtube ${playlist}`])
+  expect(picker.membership).toEqual({ kind: "partial", count: 1, checked: 1, unchecked: 1, reason: "noYouTubeTab" })
   expect(picker.rows.map(row => [row.title, row.check])).toEqual([["Music Beta", "on"], ["Music Favourites", "unknown"]])
   expect(await picker.refresh()).toEqual({ kind: "refreshed" })
-  expect(music.jobs).toEqual(["membership", "membership"])
+  await settle()
+  expect(music.jobs).toEqual(["membership", `youtube ${playlist}`, "membership", `youtube ${playlist}`])
+})
+
+test("only YouTube Music's source can ask a YouTube tab for check marks", () => {
+  expect(typeof source("music").built.item.checks).toBe("function")
+  expect(source("www").built.item.checks).toBeUndefined()
 })
 
 test("by key on YouTube Music the picker opens below the shown Save button, else centred above the player bar", () => {
