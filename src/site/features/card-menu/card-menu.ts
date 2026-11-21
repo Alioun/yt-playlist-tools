@@ -18,8 +18,9 @@ export type CardMenuContext = FeatureContext<"www", CardMenuServices>
 export type CardMenuKeep =
   | "handled" | "shift" | "revoked" | "not-working" | "page-not-ready" | "no-card" | "unsupported"
   | "unrecognised" | "detached" | "link" | "channel" | "own-link" | "no-button" | "foreign-button"
+type Point = { readonly x: number; readonly y: number }
 export type CardMenuDecision =
-  | { readonly kind: "open"; readonly target: WwwItemTarget }
+  | { readonly kind: "open"; readonly target: WwwItemTarget; readonly at: Point }
   | { readonly kind: "keep"; readonly reason: CardMenuKeep }
 
 const channelParts = "ytd-channel-name, #channel-name, #channel-info, #avatar, #avatar-link, #avatar-container, " +
@@ -35,16 +36,25 @@ function cardPart(items: Recognition, path: readonly Element[]): WwwPointed {
   return { kind: "no-pointed-item", reason: "ordinary" }
 }
 /** YouTube's hover preview sits above its card from another part of the page, so the card is not in the right-click's own path. */
-function underPreview(services: CardMenuServices, event: MouseEvent, path: readonly Element[]): readonly Element[] {
+function underPreview(services: CardMenuServices, at: Point, path: readonly Element[]): readonly Element[] {
   const preview = (element: Element) => {
     const part = services.items.recognise(element)
     return part.kind === "no-pointed-item" && part.reason === "preview"
   }
   if (!path[0] || !preview(path[0])) return path
   const covered: Element[] = []
-  const top = services.document.elementsFromPoint(event.clientX, event.clientY).find(element => !preview(element))
+  const top = services.document.elementsFromPoint(at.x, at.y).find(element => !preview(element))
   for (let node = top ?? null; node; node = node.parentElement) covered.push(node)
   return covered
+}
+/** A menu opened from the keyboard has no pointer, and the browser reports a point of its own. It counts only on the part that was hit or the card around it. */
+function menuPoint(at: Point, parts: readonly Element[], button: Element): Point {
+  for (const part of parts) {
+    const box = part.getBoundingClientRect()
+    if (at.x >= box.left && at.x < box.right && at.y >= box.top && at.y < box.bottom) return at
+  }
+  const own = button.getBoundingClientRect()
+  return { x: (own.left + own.right) / 2, y: (own.top + own.bottom) / 2 }
 }
 function hiddenWithin(element: Element, card: Element): boolean {
   for (let node: Element | null = element; node && node !== card; node = node.parentElement) {
@@ -71,7 +81,8 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   if (!view || !feature) return keep("revoked")
   if (view.statuses.some(status => status.feature === "card-menu" && status.state === "not-working")) return keep("not-working")
   if (services.page.state.kind !== "ready") return keep("page-not-ready")
-  const path = underPreview(services, event, event.composedPath().filter((node): node is Element => node instanceof Element))
+  const at = { x: event.clientX, y: event.clientY }
+  const path = underPreview(services, at, event.composedPath().filter((node): node is Element => node instanceof Element))
   const pointed = cardPart(services.items, path)
   if (pointed.kind === "unsupported-item") return keep("unsupported")
   if (pointed.kind === "unrecognised-item") return keep("unrecognised")
@@ -88,7 +99,7 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   const button = ownMenuButton(services.items, target)
   if (button === "foreign") return keep("foreign-button")
   if (!button) return keep("no-button")
-  return { kind: "open", target }
+  return { kind: "open", target, at: menuPoint(at, path.slice(0, card + 1), button) }
 }
 
 function dueNotice(view: SiteView<"www"> | null): DueNotice | undefined {
@@ -113,8 +124,7 @@ export const cardMenuFeature: FeatureDefinition<"www", CardMenuServices> = {
         return
       }
       event.preventDefault()
-      const at = { x: event.clientX, y: event.clientY }
-      void page.run({ job: { kind: "openCardMenu", videoId: decision.target.identity.videoId, at } }, { target: decision.target.element }).catch(() => undefined)
+      void page.run({ job: { kind: "openCardMenu", videoId: decision.target.identity.videoId, at: decision.at } }, { target: decision.target.element }).catch(() => undefined)
     }, { capture: true })
   }
 }
