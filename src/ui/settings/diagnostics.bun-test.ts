@@ -24,8 +24,8 @@ const stamped = (data: object) => ({ v: 1, gen: "g", at: 1, by: "device", data }
 const agreed = { schema: 1, device: { id: "device", consent: { v: 1, at: 1_700_000_000_000 }, syncOn: false } }
 const noTabs = { kind: "diagnostics", tabs: { www: false, music: false }, signals: [], checks: [] } as const
 
-function diagnostics(options: { settings: object; health?: () => readonly UiFeatureHealth[]; grants?: { www: boolean; music: boolean }; respond?: ScriptedResponders }) {
-  location.hash = "#diagnostics"
+function diagnostics(options: { settings: object; health?: () => readonly UiFeatureHealth[]; grants?: { www: boolean; music: boolean }; respond?: ScriptedResponders; hash?: string }) {
+  location.hash = options.hash ?? "#diagnostics"
   const scripted = createScriptedBackend({
     build,
     deadline: () => () => {},
@@ -147,4 +147,31 @@ test("Check now's result and its failure are announced politely (HEALTH-23)", as
   await userEvent.click(button)
   const failed = await screen.findByText("Couldn't run the check. Try again.", {}, { timeout: 5000 })
   expect(failed.closest('[role="status"]')).toBe(result.closest('[role="status"]'))
+}, 20_000)
+
+test("a health line is one whole sentence, says song on YouTube Music and says what casting costs (UI-SET-09)", async () => {
+  const music = (gap: "membership" | "casting") => () => [{ feature: "music-actions" as const, site: "music" as const, state: "partly-working" as const, gaps: [gap] }]
+  diagnostics({ settings: { musicActions: { on: true, feedback: true } }, health: music("membership"), hash: "#music" })
+  expect(await screen.findByText("Partly working, because it can't show where a song is already saved.", {}, { timeout: 5000 })).toBeTruthy()
+  cleanup()
+  diagnostics({ settings: { musicActions: { on: true, feedback: true } }, health: music("casting"), hash: "#music" })
+  expect(
+    await screen.findByText("Partly working, because it can't tell when YouTube Music is casting. While you cast, queue changes may not reach the cast device.", {}, { timeout: 5000 })
+  ).toBeTruthy()
+  cleanup()
+  diagnostics({ settings: { gather: { on: true } }, health: () => [{ feature: "gather", site: "www", state: "partly-working", gaps: ["playlist"] }], hash: "#youtube" })
+  expect(await screen.findByText("Partly working, because it can't gather into a playlist.", {}, { timeout: 5000 })).toBeTruthy()
+}, 30_000)
+
+test("a broken Diagnostics row says why in a sentence, and a check of one read says read (UI-SET-17, HEALTH-23)", async () => {
+  let checked = false
+  diagnostics({
+    settings: { anyTabKeys: { on: true, feedback: true } },
+    health: () => [{ feature: "any-tab-keys", site: "music", state: "not-working", gaps: [] }],
+    respond: { "ui.diagnostics": ({ check }) => ({ ...noTabs, tabs: { www: false, music: true }, checks: (checked ||= check) ? [{ site: "music", at: 1, jobs: [{ job: "nowPlaying", ok: true }] }] : [] }) }
+  })
+  const row = await waitFor(() => document.querySelector('[data-status="any-tab-keys"][data-site="music"]') ?? Promise.reject(Error("no row")), { timeout: 5000 })
+  expect(within(row as HTMLElement).getByText("Not working right now, because YouTube Music changed something it relies on.")).toBeTruthy()
+  await userEvent.click(await screen.findByRole("button", { name: "Check now" }))
+  expect(await screen.findByText("1 of 1 read answered on YouTube Music.", {}, { timeout: 5000 })).toBeTruthy()
 }, 20_000)
