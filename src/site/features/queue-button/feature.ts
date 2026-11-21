@@ -200,6 +200,8 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     announce(outcome, title, video, revision, after.feedback)
   }
 
+  const address = () => document.location.pathname + document.location.search
+  let shownAt = address()
   let stopNav: Dispose = nothing
   scope.add(page.onState(state => {
     if (scope.disposed) return
@@ -208,7 +210,12 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
       outcomes.reset(); conceal()
       return
     }
-    if (stopNav === nothing) stopNav = scope.add(page.watch("nav", () => { outcomes.reset(); render() }))
+    if (stopNav === nothing) stopNav = scope.add(page.watch("nav", () => {
+      // The nav stream also reports the player's video changing, as when the miniplayer starts after a first add. Only a new address is a new page.
+      const now = address()
+      if (now !== shownAt) { shownAt = now; outcomes.reset() }
+      render()
+    }))
   }))
   scope.add(() => { stopNav(); conceal() })
   view.subscribe(() => { if (shown) place(shown) })
