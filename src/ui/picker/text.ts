@@ -46,7 +46,9 @@ const labels = {
   createChannel: "picker_createChannel",
   sortPending: "picker_sortPending",
   sortRefused: "picker_sortRefused",
-  noneChosen: "picker_noneChosen"
+  noneChosen: "picker_noneChosen",
+  needsYouTube: "picker_needsYouTubeSong",
+  uncheckedRow: "picker_uncheckedRow"
 } satisfies Record<string, SimpleMessageKey>
 
 export function createPickerText(i18n: I18n) {
@@ -148,6 +150,9 @@ export function createPickerText(i18n: I18n) {
     unreadable: (site: Site) => i18n.message(site === "music" ? "picker_unreadableSong" : "picker_unreadableVideo"),
     known(count: number) {
       return i18n.message(i18n.plural(count) === "one" ? "picker_known_one" : "picker_known_other", { count: i18n.number(count) })
+    },
+    unchecked(count: number) {
+      return i18n.message(i18n.plural(count) === "one" ? "picker_unchecked_one" : "picker_unchecked_other", { count: i18n.number(count) })
     },
     savedList(at: number) {
       return i18n.message("picker_savedList", { time: i18n.date(at, { dateStyle: "medium", timeStyle: "short" }) })

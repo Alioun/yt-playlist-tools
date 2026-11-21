@@ -24,13 +24,19 @@
   let focusedRow: string | null = $state(null)
   let mounted = true
   const heading = $derived(text.heading(purpose, picker.site))
-  const membershipText = $derived.by(() => {
-    if (!picker.list.refreshable) return picker.list.at === null ? text.label("noSavedList") : text.savedList(picker.list.at)
-    switch (picker.membership.kind) {
-      case "checking": return text.checking(picker.site)
-      case "unreadable": return text.unreadable(picker.site)
-      case "known": return heldChecks.size > 0 ? text.label("busy") : text.known(picker.membership.count)
-      case "none": return null
+  const membershipLines = $derived.by((): string[] => {
+    if (!picker.list.refreshable) return [picker.list.at === null ? text.label("noSavedList") : text.savedList(picker.list.at)]
+    const status = picker.membership
+    const known = (count: number) => heldChecks.size > 0 ? text.label("busy") : text.known(count)
+    switch (status.kind) {
+      case "checking": return [text.checking(picker.site)]
+      case "unreadable": return [text.unreadable(picker.site)]
+      case "known": return [known(status.count)]
+      case "partial": return [
+        ...(status.checked > 0 ? [known(status.count)] : []),
+        status.reason === "noYouTubeTab" ? text.label("needsYouTube") : status.checked === 0 ? text.unreadable(picker.site) : text.unchecked(status.unchecked)
+      ]
+      case "none": return []
     }
   })
 
@@ -192,7 +198,7 @@
     </div>
     <p id="{uid}-sort-status" class="status" class:empty={!sortPending && sortOutcome?.kind !== "refused"} aria-live="polite">{sortPending ? text.label("sortPending") : sortOutcome?.kind === "refused" ? text.label("sortRefused") : ""}</p>
     <label class="search"><PickerIcon name="search" /><input bind:this={search} data-picker-search aria-label={text.label("search")} placeholder={text.label("search")} type="search" bind:value={picker.query} /></label>
-    {#if membershipText}<p class="status" aria-live="polite">{membershipText}</p>{/if}
+    {#each membershipLines as line (line)}<p class="status" aria-live="polite">{line}</p>{/each}
     {#if !picker.list.refreshable}<p id="{uid}-no-tab" class="status">{text.label("noTab")}</p>{/if}
     {#if refreshFailed}<p class="error" role="status">{text.label("refreshFailed")}</p>{/if}
   </header>

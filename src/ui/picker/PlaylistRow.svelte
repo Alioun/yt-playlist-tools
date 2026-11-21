@@ -64,7 +64,7 @@
     aria-disabled={row.busy || picker.closed || undefined}
     aria-busy={row.busy || check === "loading" || undefined}
     aria-labelledby="{uid}-title"
-    aria-describedby="{uid}-details {uid}-status"
+    aria-describedby={check === "unknown" ? `${uid}-details ${uid}-status ${uid}-unknown` : `${uid}-details ${uid}-status`}
     class="row-choice"
     data-picker-row={row.id}
     onkeydown={keydown}
@@ -83,9 +83,10 @@
       <span id="{uid}-status" class="row-status" class:empty={status === null} aria-live="polite">{#if saved}<span class="row-saved">{saved}</span>{/if}<span>{status ?? ""}</span></span>
     </span>
     {#if key}<kbd aria-label={text.shortcutLabel(key)}>{key}</kbd>{/if}
-    <span aria-hidden="true" class="check" class:checking={check === "loading"}>
-      {#if row.busy}<Glyph name="loader" class="motion-safe:animate-spin" />{:else if check === "on"}<Glyph name="check" />{/if}
+    <span aria-hidden="true" class="check" class:checking={check === "loading"} title={check === "unknown" ? text.label("uncheckedRow") : undefined}>
+      {#if row.busy}<Glyph name="loader" class="motion-safe:animate-spin" />{:else if check === "on"}<Glyph name="check" />{:else if check === "unknown"}?{/if}
     </span>
+    {#if check === "unknown"}<span class="sr-only" id="{uid}-unknown">{text.label("uncheckedRow")}</span>{/if}
   </Checkbox.Root>
   <span class="row-actions">
     {#if row.status.kind === "unchosen" && !row.busy && !picker.closed}
@@ -132,6 +133,7 @@
   .check :global(svg) { width: 13.6px; height: 13.6px; }
   [data-check="on"] .check { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
   [data-mode="save"][data-check="on"] .check { border-color: var(--success); background: var(--success); color: var(--card); }
+  [data-check="unknown"] .check { border-style: dashed; color: var(--muted-foreground); font-size: 12px; font-weight: 600; line-height: 1; }
   .checking { background: var(--input); animation: checking 1.2s ease-in-out infinite; }
   .row-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: end; gap: 4px; max-width: 96px; }
   .pin { display: grid; place-items: center; width: 32px; height: 32px; color: var(--muted-foreground); border: 0; border-radius: 8px; background: transparent; opacity: 0; cursor: pointer; }

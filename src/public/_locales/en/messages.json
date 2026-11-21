@@ -2470,6 +2470,28 @@
   "picker_unreadableSong": {
     "message": "Couldn't check where this song already is"
   },
+  "picker_needsYouTubeSong": {
+    "message": "To see where this song already is, open YouTube in another tab."
+  },
+  "picker_unchecked_one": {
+    "message": "Couldn't check $count$ playlist",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "picker_unchecked_other": {
+    "message": "Couldn't check $count$ playlists",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "picker_uncheckedRow": {
+    "message": "Couldn't check this playlist"
+  },
   "picker_savedList": {
     "message": "Saved list from $time$",
     "placeholders": {
