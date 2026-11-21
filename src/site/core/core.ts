@@ -137,7 +137,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     const claim = await actions.claimNotice()
     if (!claim || root.disposed) { claiming = false; return }
     const showing = notices.read()?.due.features ?? []
-    request({ kind: "not-working", features: [...new Set([...showing, ...claim.features])] }, () => {
+    request({ kind: "not-working", features: [...new Set([...showing, ...claim.due.features])] }, () => {
       claiming = false
       actions.noticeShown(claim.token)
     })

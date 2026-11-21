@@ -163,8 +163,8 @@ test("a broken feature about to act gets one notice in its tab, and once shown i
     await w.h.advance(20)
     await w.send("tab.wouldAct", { feature: "card-menu" })
     await w.h.advance(60)
-    const claim = (await w.send("tab.claimNotice", null)) as { token: unknown; features: unknown } | undefined
-    expect(claim?.features).toEqual(["queue-button", "card-menu"])
+    const claim = (await w.send("tab.claimNotice", null)) as { token: unknown; due: unknown } | undefined
+    expect(claim?.due).toEqual({ kind: "not-working", features: ["queue-button", "card-menu"] })
     expect(await w.send("tab.claimNotice", null)).toBeNull()
     await w.send("tab.noticeShown", { token: claim?.token })
     await w.send("tab.wouldAct", { feature: "queue-button" })

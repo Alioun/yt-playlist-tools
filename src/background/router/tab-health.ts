@@ -76,13 +76,13 @@ export function createTabHealthRouter(deps: {
         const statuses = await deps.monitor.statusProducer.read(context, enabled)
         if (statuses.kind !== "statuses") return null
         const claim = await deps.monitor.claimNotice(context, statuses)
-        const features = claim.kind === "delivery" ? claim.features.filter(isPageFeatureId) : []
-        return claim.kind === "delivery" && features.length ? { token: claim.token, features } : null
+        const [first, ...rest] = claim.kind === "delivery" ? claim.features.filter(isPageFeatureId) : []
+        return claim.kind === "delivery" && first ? { token: `${claim.token.instance}:${claim.token.sequence}`, due: { kind: "not-working", features: [first, ...rest] } } : null
       },
       async "tab.noticeShown"({ acct, request }, sender) {
         const context = await deps.context(sender, acct)
-        const { instance, sequence } = request.token
-        if (context && isMonitorInstance(instance)) await deps.monitor.acknowledgeNotice(context, { instance, sequence })
+        const [instance, sequence] = request.token.split(":")
+        if (context && isMonitorInstance(instance)) await deps.monitor.acknowledgeNotice(context, { instance, sequence: Number(sequence) })
         return null
       }
     }

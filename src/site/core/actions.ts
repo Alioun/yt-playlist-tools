@@ -7,7 +7,7 @@ import {
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
-import { tabHealthContract, type TabHealthMessages, type TabHealthReport, type TabNoticeClaim, type TabNoticeToken } from "../../shared/contracts/tab-health"
+import { tabHealthContract, type TabHealthMessages, type TabHealthReport, type TabNoticeClaim } from "../../shared/contracts/tab-health"
 import type { PageFeatureId } from "../../shared/contracts/tab-view"
 import type { Transport } from "../../shared/rpc/transport"
 
@@ -35,7 +35,7 @@ export type TabActions = {
   /** Takes the not-working notice this tab's view says is due, or null when another tab has it. */
   claimNotice(): Promise<TabNoticeClaim | null>
   /** The claimed notice is on screen, so no tab shows it again this browser session. */
-  noticeShown(token: TabNoticeToken): void
+  noticeShown(token: string): void
   /** Tells the background a listed channel's title or @handle changed (YT-CF-10). */
   channelLabel(channel: TabChannelLabel): void
   /** Opens Settings at a feature's playlist, for a failure toast's **Settings** (YT-ADD-29). */

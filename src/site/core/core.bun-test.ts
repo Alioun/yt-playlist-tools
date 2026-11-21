@@ -83,7 +83,7 @@ async function startTab(view: TabView, monitor?: { claim(): TabNoticeClaim | nul
   notices.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: {
     "tab.wouldAct": ({ request }) => { monitor?.heard.push(`would-act ${request.feature}`); return null },
     "tab.claimNotice": () => { monitor?.heard.push("claim"); return monitor?.claim() ?? null },
-    "tab.noticeShown": ({ request }) => { monitor?.heard.push(`shown ${request.token.sequence}`); return null }
+    "tab.noticeShown": ({ request }) => { monitor?.heard.push(`shown ${request.token}`); return null }
   } })
   const push = createRpcCaller<TabMessages<TabView>>(background, { build, deadline, contract: tabMessages(isTabView) })
   const core = startSiteCore({
@@ -203,7 +203,7 @@ test("feature files that run before their core define nothing and record nothing
 test("a broken card menu tells the background at a right-click, and the notice it batches shows once in the core's own notice (YT-BRK-02, UI-TOAST-16)", async () => {
   const broken = brokenCardMenu(queueView({ on: false }))
   const heard: string[] = []
-  let owed: TabNoticeClaim | null = { token: { instance: "0000000000000001", sequence: 7 }, features: ["card-menu"] }
+  let owed: TabNoticeClaim | null = { token: "0000000000000001:7", due: { kind: "not-working", features: ["card-menu"] } }
   const tab = await startTab(broken, { heard, claim() { const claim = owed; owed = null; return claim } })
   // happy-dom leaves this undefined; a browser reports null outside fullscreen.
   Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true })
@@ -226,7 +226,7 @@ test("a broken card menu tells the background at a right-click, and the notice i
   for (let turn = 0; turn < 10; turn++) await settle()
   expect(shadowText()).toContain("isn't working right now because YouTube changed something.")
   expect(shadowText()).toContain("Details")
-  expect(heard).toEqual(["would-act card-menu", "claim", "shown 7"])
+  expect(heard).toEqual(["would-act card-menu", "claim", "shown 0000000000000001:7"])
   const details = [...document.querySelector("pp-toast-layer")?.shadowRoot?.querySelectorAll("button") ?? []].find(button => button.textContent === "Details")
   details?.click()
   await settle()
@@ -236,7 +236,7 @@ test("a broken card menu tells the background at a right-click, and the notice i
   await tab.publish(due)
   await settle()
   expect(shadowText()).not.toContain("isn't working")
-  expect(heard.filter(entry => entry.startsWith("shown"))).toEqual(["shown 7"])
+  expect(heard.filter(entry => entry.startsWith("shown"))).toEqual(["shown 0000000000000001:7"])
 })
 
 test("a broken queue button tells the background at the first hover and draws nothing (YT-Q-10)", async () => {
