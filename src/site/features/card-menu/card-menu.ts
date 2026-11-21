@@ -34,6 +34,18 @@ function cardPart(items: Recognition, path: readonly Element[]): WwwPointed {
   }
   return { kind: "no-pointed-item", reason: "ordinary" }
 }
+/** YouTube's hover preview sits above its card from another part of the page, so the card is not in the right-click's own path. */
+function underPreview(services: CardMenuServices, event: MouseEvent, path: readonly Element[]): readonly Element[] {
+  const preview = (element: Element) => {
+    const part = services.items.recognise(element)
+    return part.kind === "no-pointed-item" && part.reason === "preview"
+  }
+  if (!path[0] || !preview(path[0])) return path
+  const covered: Element[] = []
+  const top = services.document.elementsFromPoint(event.clientX, event.clientY).find(element => !preview(element))
+  for (let node = top ?? null; node; node = node.parentElement) covered.push(node)
+  return covered
+}
 function hiddenWithin(element: Element, card: Element): boolean {
   for (let node: Element | null = element; node && node !== card; node = node.parentElement) {
     if (node.hasAttribute("hidden") || node.getAttribute("aria-hidden") === "true") return true
@@ -59,7 +71,7 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   if (!view || !feature) return keep("revoked")
   if (view.statuses.some(status => status.feature === "card-menu" && status.state === "not-working")) return keep("not-working")
   if (services.page.state.kind !== "ready") return keep("page-not-ready")
-  const path = event.composedPath().filter((node): node is Element => node instanceof Element)
+  const path = underPreview(services, event, event.composedPath().filter((node): node is Element => node instanceof Element))
   const pointed = cardPart(services.items, path)
   if (pointed.kind === "unsupported-item") return keep("unsupported")
   if (pointed.kind === "unrecognised-item") return keep("unrecognised")
