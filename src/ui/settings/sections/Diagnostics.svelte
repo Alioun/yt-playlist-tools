@@ -81,11 +81,14 @@
         <Button size="sm" variant="outline" pending={checking} disabled={!pageState.agreed || evidence === null} onclick={checkNow}>{i18n.message("diag_checkNow")}</Button>
         <p class="text-muted-foreground text-[12.5px]">{i18n.message("diag_checkLine")}</p>
       {/if}
-      {#each evidence?.checks ?? [] as check (check.site)}
-        <p data-check={check.site}>{i18n.message("diag_checked", { site: i18n.message(check.site === "www" ? "site_www" : "site_music"),
-          done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })}</p>
-      {/each}
-      {#if checkFailed}<p role="status" class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>{/if}
+      <!-- Each check's lines are new nodes, so a screen reader hears a repeat check with the same counts too. -->
+      <div role="status" class="flex flex-col gap-1.5">
+        {#each evidence?.checks ?? [] as check (`${check.site}:${check.at}`)}
+          <p data-check={check.site}>{i18n.message("diag_checked", { site: i18n.message(check.site === "www" ? "site_www" : "site_music"),
+            done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })}</p>
+        {/each}
+        {#if checkFailed}<p class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>{/if}
+      </div>
     </div>
   </section>
   <section class="bg-card rounded-2xl border p-5">
