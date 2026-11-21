@@ -112,3 +112,19 @@ test("a partly working status reaches Report a problem and the report in words, 
     expect(document.querySelector("[data-report-values]")?.textContent).toBe("GitHub opens with 2.0.0 · Firefox · Quick actions · Partly working (can't tell when YouTube Music is casting).")
   )
 }, 20_000)
+
+test("an open Diagnostics page updates when a YouTube tab opens, without a reload (UI-SET-17)", async () => {
+  let open = false
+  const scripted = diagnostics({
+    settings: { quickSave: { on: true, feedback: true, shortsShelves: false } },
+    health: () => (open ? [{ feature: "quick-save", site: "www", state: "working", gaps: [] }] : []),
+    respond: { "ui.diagnostics": () => ({ ...noTabs, tabs: { www: open, music: false } }) }
+  })
+  await waitFor(() => expect(rows()).toEqual(["Quick-save on thumbnails · YouTube No tab open"]), { timeout: 5000 })
+  expect(await screen.findByText("Open YouTube to check")).toBeTruthy()
+  open = true
+  scripted.replace({ tabs: [[4, { site: "www", signedIn: false, acct: null }]] }, "session")
+  await waitFor(() => expect(rows()).toEqual(["Quick-save on thumbnails · YouTube Working"]), { timeout: 5000 })
+  expect(await screen.findByRole("button", { name: "Check now" })).toBeTruthy()
+  expect(screen.queryByText("No YouTube tab is open. Open one and its statuses show here.")).toBeNull()
+}, 20_000)
