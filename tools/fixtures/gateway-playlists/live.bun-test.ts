@@ -9,7 +9,7 @@ import { requestFor } from "../../../src/page/gateway/requests"
 import type { AttemptContext } from "../../../src/page/gateway/port"
 import { scriptedPage } from "../../../src/page/gateway.specimens"
 import { field } from "../../../src/page/read-parsers"
-import { added, check, Clock, drain, identity, playlist, same, video } from "./specimens"
+import { added, check, Clock, drain, entry, identity, playlist, same, video } from "./specimens"
 
 if (typeof document === "undefined") GlobalRegistrator.register({ url: "https://www.youtube.com" })
 const wwwWindow = new Proxy(window, {
@@ -36,10 +36,10 @@ function context() {
   const port: AttemptContext = { check: () => null, notice: kind => notices.push(kind), observe: body => observed.push(body) }
   return { port, notices, observed }
 }
-function callback(options: unknown, kind: "onSuccess" | "onServerError", body: unknown) {
+function callback(options: unknown, kind: "onSuccess" | "onServerError", ...args: unknown[]) {
   const method = field(options, "commandController", kind)
   check(typeof method === "function", "Command callback was not supplied")
-  Reflect.apply(method, undefined, [body])
+  Reflect.apply(method, undefined, args)
 }
 
 test("www resolver discovers constructor singletons, reports ambiguity and rescans only once", async () => {
@@ -86,6 +86,33 @@ test("www resolver discovers constructor singletons, reports ambiguity and resca
   const gone = await port.send("command", spec(), ctx.port)
   check(gone.kind === "not-sent", "Resolver was rediscovered more than once")
   same(observations, [1, 2], "Resolver used a fixed key or wrong instance")
+  Reflect.deleteProperty(window, "default_kevlar_base")
+})
+
+test("YouTube hands the command back before its answer, and the answer is the one that is read", async () => {
+  const page = scriptedPage(),
+    clock = new Clock()
+  let kind: "onSuccess" | "onServerError" = "onSuccess",
+    body: unknown = added()
+  installRoot({
+    buildKey: {
+      instance: {
+        resolveCommand(command: unknown, options: unknown) {
+          callback(options, kind, command, body)
+        }
+      }
+    }
+  })
+  const requests = createLiveWwwRequests({ window: wwwWindow, document, page: page.port })
+  const gateway = createGateway({ site: wwwGateway, page: page.port, requests, clock })
+  const saved = await gateway.run({ kind: "add", playlistId: playlist, videoId: video })
+  check(saved.ok && saved.data.setVideoId === entry, "The command was read as its own answer")
+  kind = "onServerError"
+  body = { error: { code: 409, message: "Synthetic refusal", status: "ABORTED" }, errorMetadata: { status: 409 } }
+  const refused = await gateway.run({ kind: "add", playlistId: playlist, videoId: video })
+  check(!refused.ok && refused.reason === "failed" && refused.http === 409, "The refusal's HTTP code was not read from the answer")
+  gateway.dispose()
+  check(clock.count === 0, "Command answers leaked deadlines")
   Reflect.deleteProperty(window, "default_kevlar_base")
 })
 
