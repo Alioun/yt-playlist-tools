@@ -110,6 +110,12 @@
       "kb": 67.3,
       "since": "2026-11-07",
       "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader."
+    },
+    {
+      "row": "www/card-menu",
+      "kb": 1.8,
+      "since": "2026-11-21",
+      "why": "The card menu finds the card under YouTube's hover preview, and opens a keyboard-opened menu at the card's own menu button when the browser reports no point on the card."
     }
   ]
 }
