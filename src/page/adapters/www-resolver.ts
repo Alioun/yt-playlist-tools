@@ -2,12 +2,28 @@ import type { AttemptContext, Dispatch, HttpAnswer } from "../gateway/port"
 import { field } from "../read-parsers"
 
 export type Resolver = { instance: object; method: Function }
-type ResolverCache = { kind: "new" } | { kind: "gone" } | { kind: "ready"; resolver: Resolver; rescanned: boolean; ambiguous: boolean }
+type Found = { resolver: Resolver; ambiguous: boolean }
+// A scan reads a few thousand property names, so a resolver that isn't there is looked for at most this often.
+const rescanAfterMs = 250
 function resolverAt(raw: unknown): Resolver | undefined {
   if (raw === null || (typeof raw !== "object" && typeof raw !== "function")) return undefined
   const instance: unknown = Reflect.get(raw, "instance"),
     method = field(instance, "resolveCommand")
   return instance !== null && typeof instance === "object" && typeof method === "function" ? { instance, method } : undefined
+}
+/** YouTube names its module root after the build it ships. Most sessions have `default_kevlar_base` and some have `default_base_module_set`. */
+function resolversIn(win: Window): Resolver[] {
+  const matches: Resolver[] = []
+  for (const name of Object.getOwnPropertyNames(win)) {
+    if (!name.startsWith("default_")) continue
+    const root: unknown = Object.getOwnPropertyDescriptor(win, name)?.value
+    if (root === null || typeof root !== "object") continue
+    for (const key of Object.getOwnPropertyNames(root)) {
+      const found = resolverAt(Object.getOwnPropertyDescriptor(root, key)?.value)
+      if (found) matches.push(found)
+    }
+  }
+  return matches
 }
 function httpCode(raw: unknown, fallback: number): number {
   const code = field(raw, "error", "code") ?? field(raw, "code")
@@ -19,40 +35,25 @@ export interface WwwResolver {
 }
 
 export function createWwwResolver(win: Window): WwwResolver {
-  let cache: ResolverCache = { kind: "new" }
+  let found: Found | undefined
+  let scannedAt = -Infinity
   function discover(notice?: AttemptContext["notice"]): Resolver | undefined {
-    if (cache.kind === "gone") return undefined
-    if (cache.kind === "ready" && field(cache.resolver.instance, "resolveCommand") === cache.resolver.method) {
-      if (cache.ambiguous && notice) {
+    if (found && field(found.resolver.instance, "resolveCommand") === found.resolver.method) {
+      if (found.ambiguous && notice) {
         notice("resolver-ambiguous")
-        cache.ambiguous = false
+        found.ambiguous = false
       }
-      return cache.resolver
+      return found.resolver
     }
-    const rescanned = cache.kind === "ready"
-    if (cache.kind === "ready" && cache.rescanned) {
-      cache = { kind: "gone" }
-      return undefined
-    }
-    const root = field(win, "default_kevlar_base")
-    if (root === null || typeof root !== "object") {
-      cache = { kind: "gone" }
-      return undefined
-    }
-    const matches: Resolver[] = []
-    for (const key of Object.getOwnPropertyNames(root)) {
-      const value: unknown = Object.getOwnPropertyDescriptor(root, key)?.value
-      const found = resolverAt(value)
-      if (found) matches.push(found)
-    }
+    // YouTube makes its modules after the page half starts, and can replace them, so a miss is only remembered briefly.
+    const at = win.performance.now()
+    if (at - scannedAt < rescanAfterMs) return undefined
+    scannedAt = at
+    const matches = resolversIn(win)
     const resolver = matches[0]
-    if (!resolver) {
-      cache = { kind: "gone" }
-      return undefined
-    }
     const ambiguous = matches.length > 1
     if (ambiguous) notice?.("resolver-ambiguous")
-    cache = { kind: "ready", resolver, rescanned, ambiguous: ambiguous && !notice }
+    found = resolver ? { resolver, ambiguous: ambiguous && !notice } : undefined
     return resolver
   }
   function command(endpoint: Record<string, unknown>, context: AttemptContext): Dispatch {
