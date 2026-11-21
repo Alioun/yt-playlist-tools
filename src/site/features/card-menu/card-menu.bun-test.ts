@@ -84,6 +84,41 @@ test("modern thumbnail menus need no aria-haspopup attribute", async () => {
   expect(f.menuCalls()[0]?.context?.target).toBe(card)
 })
 
+function hoverPreview() {
+  const slot = document.createElement("div")
+  slot.id = "video-preview"
+  slot.innerHTML = `<ytd-video-preview><a href="/watch?v=${videoA}"><div id="inline-preview-player"><video id="preview-video"></video></div></a></ytd-video-preview>`
+  document.body.append(slot)
+  const video = slot.querySelector("video"), preview = slot.querySelector("ytd-video-preview")
+  if (!video || !preview) throw Error("Missing preview fixture")
+  return { video, preview }
+}
+
+test("a right-click on YouTube's hover preview opens the menu of the card it covers", async () => {
+  const f = await fixture()
+  f.start()
+  const { video, preview } = hoverPreview()
+  f.under([video, preview, f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
+  expect(f.click(video).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls().map(call => [call.job, call.context?.target])).toEqual([[{ kind: "openCardMenu", videoId: videoA, at: rightClickPoint }, f.byId("card-a")]])
+})
+
+test("the hover preview keeps the browser menu where the card under it would", async () => {
+  const f = await fixture()
+  f.start()
+  const { video, preview } = hoverPreview()
+  f.under([video, preview, document.body])
+  expect(f.click(video).defaultPrevented).toBe(false)
+  f.under([video, preview, f.byId("channel-link"), f.byId("channel-name"), f.byId("card-a"), document.body])
+  expect(f.click(video).defaultPrevented).toBe(false)
+  f.source.publish(view({ keepLinkMenu: true }))
+  f.under([video, preview, f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
+  expect(f.click(video).defaultPrevented).toBe(false)
+  await f.settle()
+  expect(f.menuCalls()).toHaveLength(0)
+})
+
 const preserved = [
   ["channel name", "channel-link"], ["channel avatar link", "avatar-img"], ["bare avatar", "bare-avatar-img"],
   ["hashtag", "hashtag"], ["ad", "ad-text"], ["playlist card", "playlist-text"],

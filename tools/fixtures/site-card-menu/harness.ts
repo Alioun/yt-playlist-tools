@@ -66,8 +66,10 @@ export function view(options: { keepLinkMenu?: boolean; signedIn?: boolean; setu
 }
 
 export const rightClickPoint = { x: 212, y: 148 }
-export function rightClick(init: { shiftKey?: boolean } = {}): MouseEvent {
-  return new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, button: 2, shiftKey: init.shiftKey ?? false, clientX: rightClickPoint.x, clientY: rightClickPoint.y })
+export type RightClick = { shiftKey?: boolean; at?: { x: number; y: number }; button?: number }
+export function rightClick(init: RightClick = {}): MouseEvent {
+  const at = init.at ?? rightClickPoint
+  return new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, button: init.button ?? 2, shiftKey: init.shiftKey ?? false, clientX: at.x, clientY: at.y })
 }
 
 export async function cardMenuHarness(
@@ -147,16 +149,21 @@ export async function cardMenuHarness(
       if (!element) throw Error(`Missing fixture element ${id}`)
       return element
     },
-    click(target: EventTarget, init: { shiftKey?: boolean } = {}) {
+    click(target: EventTarget, init: RightClick = {}) {
       const event = rightClick(init)
       target.dispatchEvent(event)
       return event
+    },
+    /** The elements under the right-click point, topmost first. happy-dom lays nothing out, so the test names them. */
+    under(stack: readonly Element[]) {
+      Object.defineProperty(document, "elementsFromPoint", { configurable: true, value: () => [...stack] })
     },
     settle: flush,
     dispose() {
       host.dispose()
       observer.dispose()
       page.dispose()
+      Reflect.deleteProperty(document, "elementsFromPoint")
       document.body.innerHTML = ""
     }
   }
