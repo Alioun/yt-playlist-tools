@@ -78,7 +78,8 @@ export function createWwwResolver(win: Window): WwwResolver {
       active = false
       resolveAnswer({ http: httpCode(body, failed ? 500 : 200), body })
     }
-    const commandController = { onSuccess: (body: unknown) => finish(body, false), onServerError: (body: unknown) => finish(body, true) }
+    // YouTube passes the command back first and its answer last.
+    const commandController = { onSuccess: (...args: unknown[]) => finish(args.at(-1), false), onServerError: (...args: unknown[]) => finish(args.at(-1), true) }
     try {
       const returned: unknown = Reflect.apply(resolver.method, resolver.instance, [endpoint, { commandController }])
       if (returned !== null && (typeof returned === "object" || typeof returned === "function") && typeof field(returned, "then") === "function") {
