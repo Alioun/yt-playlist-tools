@@ -1,6 +1,6 @@
 import type { ChangeResult, MembershipRow, PlaylistRow, Privacy, SetVideoId, Site } from "../contracts"
 import type { Key, PlaylistId } from "../model"
-import type { CreateFailure, ItemPort, Listing, Mark, PickerSource, Undo } from "./source"
+import type { ChecksAnswer, CreateFailure, ItemPort, Listing, Mark, PickerSource, Undo } from "./source"
 
 export type Mode = "save" | "choose" | "many"
 /** `marks: false` reads no membership, so rows show no check marks and no "Couldn't check" line (YM-PICK-6, R191). */
@@ -135,6 +135,8 @@ export class PickerModel {
   #seq = 0
   #listingSeq = 0
   #membersSeq = 0
+  /** The latest membership read started. Answers to an earlier one are dropped. */
+  #reading = 0
   #sortSeq = 0
   #fetched = false
   #picking = false
@@ -144,7 +146,9 @@ export class PickerModel {
   #listing = $state.raw<Listing | null>(null)
   #members = $state.raw<readonly MembershipRow[] | null>(null)
   #base = $state.raw<"listing" | "members">("listing")
-  #membership = $state.raw<"none" | "checking" | "read" | "unreadable">("none")
+  /** "checking" waits for the item's own rows. "looking" has them and waits for the check marks they left out. */
+  #membership = $state.raw<"none" | "checking" | "looking" | "read" | "unreadable">("none")
+  #gap = $state.raw<"noYouTubeTab" | "failed">("failed")
   #refreshing = $state.raw<Promise<RefreshOutcome> | null>(null)
   #rowStates = $state.raw<ReadonlyMap<PlaylistId, RowState>>(new Map())
   #chosen = $state.raw<ReadonlySet<PlaylistId>>(new Set())
@@ -160,13 +164,19 @@ export class PickerModel {
     return query ? this.#ordered.filter(row => row.title?.toLowerCase().includes(query)) : this.#ordered
   })
   readonly membership: MembershipStatus = $derived.by(() => {
+    if (this.#membership === "looking") return { kind: "checking" }
     if (this.#membership !== "read") return { kind: this.#membership }
-    const members = new Set(this.#members?.filter(row => row.contains).map(row => row.id))
-    for (const [id, state] of this.#rowStates) {
-      if (state.check?.on === true) members.add(id)
-      else if (state.check?.on === false) members.delete(id)
-    }
-    return { kind: "known", count: members.size }
+    const own = new Map<PlaylistId, boolean>()
+    for (const [id, state] of this.#rowStates) if (state.check) own.set(id, state.check.on)
+    const answers: (boolean | null)[] = (this.#members ?? []).map(row => {
+      const answer = own.get(row.id) ?? row.contains
+      own.delete(row.id)
+      return answer
+    })
+    answers.push(...own.values())
+    const count = answers.filter(answer => answer === true).length
+    const unchecked = answers.filter(answer => answer === null).length
+    return unchecked === 0 ? { kind: "known", count } : { kind: "partial", count, checked: answers.length - unchecked, unchecked, reason: this.#gap }
   })
   readonly list: ListStatus = $derived({
     at: this.#listing?.at ?? null,
@@ -376,22 +386,44 @@ export class PickerModel {
     if (listing === null || source.now() - listing.at > FRESH_MS) void this.refresh()
   }
 
-  async #readMembership(item: ItemPort) {
+  /** Resolves once the item's rows are in, or once it is certain none will come. Check marks may still follow. */
+  async #readMembership(item: ItemPort): Promise<boolean> {
     const seq = ++this.#seq
+    this.#reading = seq
     this.#membership = "checking"
     const answer = await item.membership()
-    if (this.#closed) return false
-    if (answer.kind === "unreadable") {
+    if (this.#closed || seq !== this.#reading) return false
+    if (answer.kind === "unreadable") return this.#lookUp(item, seq, null)
+    this.#takeMembers(seq, answer.rows)
+    const need = answer.rows.filter(row => row.contains === null).map(row => row.id)
+    if (need.length === 0) this.#membership = "read"
+    else void this.#lookUp(item, seq, need)
+    return true
+  }
+
+  /** Asks the source for the check marks its own answer left out, or for the whole list when `need` is null. */
+  async #lookUp(item: ItemPort, seq: number, need: readonly PlaylistId[] | null): Promise<boolean> {
+    if (need) this.#membership = "looking"
+    const answer: ChecksAnswer = item.checks ? await item.checks(need) : { kind: "unreadable" }
+    if (this.#closed || seq !== this.#reading) return false
+    this.#gap = answer.kind === "noYouTubeTab" ? "noYouTubeTab" : "failed"
+    if (answer.kind === "read") {
+      const found = new Map(answer.rows.map(row => [row.id, row.contains]))
+      this.#takeMembers(seq, need ? (this.#members ?? []).map(row => ({ ...row, contains: row.contains ?? found.get(row.id) ?? null })) : answer.rows)
+    } else if (!need) {
       this.#members = this.#members?.map(row => ({ ...row, contains: null })) ?? null
       this.#membership = "unreadable"
       return false
     }
-    this.#membersSeq = seq
-    this.#members = answer.rows
-    if (seq > this.#listingSeq) this.#base = "members"
-    this.#replaceOwnAnswers(seq, answer.rows)
-    this.#membership = answer.rows.some(row => row.contains === null) ? "unreadable" : "read"
+    this.#membership = "read"
     return true
+  }
+
+  #takeMembers(seq: number, rows: readonly MembershipRow[]) {
+    this.#membersSeq = seq
+    this.#members = rows
+    if (seq > this.#listingSeq) this.#base = "members"
+    this.#replaceOwnAnswers(seq, rows)
   }
 
   async #readFresh(): Promise<RefreshOutcome> {
@@ -598,7 +630,18 @@ export class PickerModel {
   #check(id: PlaylistId, state: RowState | undefined, facts: ReadonlyMap<PlaylistId, MembershipRow["contains"]> | null): PickerRow["check"] {
     if (this.mode !== "save") return this.#chosen.has(id) ? "on" : "off"
     if (state?.check) return state.check.on ? "on" : "off"
-    if (this.#membership === "checking") return "loading"
-    return facts?.get(id) ? "on" : "off"
+    switch (this.#membership) {
+      case "none":
+        return "off"
+      case "checking":
+        return "loading"
+      case "unreadable":
+        return "unknown"
+    }
+    const fact = facts?.get(id)
+    // A read lists every playlist that can hold the item, so a row it left out does not hold it.
+    if (fact === undefined) return "off"
+    if (fact !== null) return fact ? "on" : "off"
+    return this.#membership === "looking" ? "loading" : "unknown"
   }
 }
