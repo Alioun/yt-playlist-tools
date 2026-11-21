@@ -10,7 +10,7 @@ declare const chooserSource: PickerSource<null>
 
 export type PickerProofs = [
   Check<Equal<PickerModel["mode"], Mode>>,
-  Check<Equal<PickerRow["check"], "on" | "off" | "loading">>,
+  Check<Equal<PickerRow["check"], "on" | "off" | "loading" | "unknown">>,
   Check<Equal<Awaited<ReturnType<PickerModel["tick"]>>, TickOutcome>>,
   Check<Equal<Extract<UntickOutcome, { kind: "removed" }>["undo"], Undo>>,
   Check<Equal<Parameters<PickerSource["choose"]>, [id: PlaylistId, on: boolean]>>

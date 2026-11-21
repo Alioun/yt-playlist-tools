@@ -2,12 +2,13 @@ import type { ChangeResult, Privacy, SetVideoId } from "../../../src/shared/cont
 import { isSetVideoId } from "../../../src/shared/contracts/identifiers"
 import type { Key, PlaylistId } from "../../../src/shared/model"
 import { isPlaylistId } from "../../../src/shared/model/validation"
-import type { AddAnswer, CreateAnswer, ItemPort, ListAnswer, Listing, Mark, MembershipAnswer, PickerSource, RemoveAnswer, Undo } from "../../../src/shared/picker/source"
+import type { AddAnswer, ChecksAnswer, CreateAnswer, ItemPort, ListAnswer, Listing, Mark, MembershipAnswer, PickerSource, RemoveAnswer, Undo } from "../../../src/shared/picker/source"
 
 export type Answers = {
   cachedList: Listing | null
   freshList: ListAnswer
   membership: MembershipAnswer
+  checks: ChecksAnswer
   add: AddAnswer
   remove: RemoveAnswer
   createWithItem: CreateAnswer
@@ -31,6 +32,8 @@ export type Facts = {
   now: number
   /** Consent and the account's authority. Tests flip it to model a lapse while a pick runs. */
   authorized: boolean
+  /** The item port can ask elsewhere for check marks its own answer leaves out, as YouTube Music's sources do. */
+  checks: boolean
 }
 type Call = { readonly port: Port; readonly args: readonly unknown[]; readonly resolve: (value: unknown) => void; settled: boolean }
 
@@ -97,6 +100,7 @@ function facts(overrides: Partial<Facts>): Facts {
     marks: new Map(),
     now: NOW,
     authorized: true,
+    checks: false,
     ...overrides
   }
 }
@@ -130,6 +134,7 @@ export function itemSource(overrides: Partial<Facts> = {}): { source: PickerSour
   const known = facts(overrides)
   const item: ItemPort = {
     membership: ledger.port("membership"),
+    ...(known.checks && { checks: ledger.port("checks") }),
     add: ledger.port("add"),
     remove: ledger.port("remove"),
     create: ledger.port("createWithItem")

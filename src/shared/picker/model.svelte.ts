@@ -27,15 +27,25 @@ export type PickerRow = {
   readonly thumb: string | null
   /** "new": created by this picker and not listed yet. "gone": chosen, but missing from the list. */
   readonly listed: "listed" | "new" | "gone"
-  /** A membership fact in save mode, the choice in choose and many modes. */
-  readonly check: "on" | "off" | "loading"
+  /**
+   * A membership fact in save mode, the choice in choose and many modes. "unknown" is a save-mode row no read
+   * answered for, which is not the same as "off".
+   */
+  readonly check: "on" | "off" | "loading" | "unknown"
   readonly busy: boolean
   readonly status: RowStatus
   readonly key: Key | null
   readonly pinned: boolean
   readonly mark: Mark | null
 }
-export type MembershipStatus = { readonly kind: "none" | "checking" | "unreadable" } | { readonly kind: "known"; readonly count: number }
+export type MembershipStatus =
+  | { readonly kind: "none" | "checking" | "unreadable" }
+  | { readonly kind: "known"; readonly count: number }
+  /**
+   * `unchecked` rows have no answer. `count` of the `checked` rows hold the item. "noYouTubeTab" is an expected limit:
+   * YouTube Music's own answer carries no check marks, and no YouTube tab is open to ask.
+   */
+  | { readonly kind: "partial"; readonly count: number; readonly checked: number; readonly unchecked: number; readonly reason: "noYouTubeTab" | "failed" }
 /** `at` stamps the account's saved list. `known` is true once that list or the item's own rows have been read, even when they are empty. */
 export type ListStatus = { readonly at: number | null; readonly known: boolean; readonly refreshing: boolean; readonly refreshable: boolean }
 export type Creation = "available" | "private" | "noTab" | "signedOut" | "noChannel"

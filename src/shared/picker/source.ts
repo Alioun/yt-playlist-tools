@@ -5,6 +5,8 @@ import type { Key, PlaylistId, Setup } from "../model"
 export type Listing = { readonly rows: readonly PlaylistRow[]; readonly at: number }
 export type ListAnswer = { readonly kind: "listed"; readonly listing: Listing } | { readonly kind: "noTab" | "failed" }
 export type MembershipAnswer = { readonly kind: "read"; readonly rows: readonly MembershipRow[] } | { readonly kind: "unreadable" }
+/** "noYouTubeTab": no YouTube tab is open on this account to ask. That is an expected limit, not a failure. */
+export type ChecksAnswer = { readonly kind: "read"; readonly rows: readonly MembershipRow[] } | { readonly kind: "noYouTubeTab" | "unreadable" }
 /** The owner's Undo for a confirmed change. The caller decides where it is offered. */
 export type Undo = () => Promise<{ readonly kind: "undone" | "failed" }>
 export type AddAnswer = { readonly kind: "added"; readonly entry: SetVideoId; readonly undo: Undo } | { readonly kind: "already-in" | "failed" }
@@ -17,7 +19,14 @@ export type Mark = Setup["marks"][string]
 
 /** The item a picker saves. Present in save mode and in choose mode opened for an item. */
 export interface ItemPort {
+  /** A row's `contains` is null when the answer carries no check mark for it. */
   membership(): Promise<MembershipAnswer>
+  /**
+   * The check marks `membership` left out, read somewhere else. YouTube Music's own answer carries none, so its
+   * sources ask a YouTube tab on the same account. `need` lists the playlists still unchecked. It is null when
+   * `membership` could not be read, and then the answer's rows are the whole list.
+   */
+  checks?(need: readonly PlaylistId[] | null): Promise<ChecksAnswer>
   add(id: PlaylistId): Promise<AddAnswer>
   /** `entry` is the entry this picker's own tick added, else null for whatever the Save dialog removes. */
   remove(id: PlaylistId, entry: SetVideoId | null): Promise<RemoveAnswer>
