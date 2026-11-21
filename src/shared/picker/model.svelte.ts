@@ -3,7 +3,7 @@ import type { Key, PlaylistId } from "../model"
 import type { ChecksAnswer, CreateFailure, ItemPort, Listing, Mark, PickerSource, Undo } from "./source"
 
 export type Mode = "save" | "choose" | "many"
-/** `marks: false` reads no membership, so rows show no check marks and no "Couldn't check" line (YM-PICK-6, R191). */
+/** `marks: false` reads no membership, so rows show no check marks and no line about them. Both sites' pickers leave it on. */
 export type PickerOptions = { readonly marks?: boolean } & (
   | { readonly source: PickerSource<ItemPort>; readonly site: Site; readonly mode: "save" }
   | { readonly source: PickerSource; readonly site: Site; readonly mode: "choose" }

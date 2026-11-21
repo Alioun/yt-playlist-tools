@@ -331,15 +331,23 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
   - Rows paint at once from the cached playlist list.
   - If that cache is older than 5 minutes, the list refreshes by itself on open. ↻ always refreshes it. (R39)
   - Membership is fetched fresh on every open. The check marks show a loading state until it arrives.
+  - With no cached list, the rows paint as soon as YouTube Music's own answer lists them. They never wait for the check marks, which fill in when the youtube.com tab answers (YM-PICK-6).
+  - ↻ reads YouTube Music's list and the check marks again. A check mark this picker set earlier gives way to what that read finds. A row whose own save or removal is still under way keeps its state.
+  - An account with no playlists reads "No playlists to show." "Playlist data is unavailable. Refresh playlists to try again." shows only when no list could be read.
   - Rows work before membership is known. An add then reports already in on the row if it was.
 - **YM-PICK-6** **Check marks:** every playlist that already holds the song gets one (R202).
   - The picker asks YouTube Music for its Save-dialog list. The rows, their titles and their order come from that answer.
-  - That answer can leave out whether a playlist holds the song. Each row it leaves out takes its check from a youtube.com serving tab on the same account, in a window of the same kind. If YouTube Music's answer can't be read at all, that tab's rows stand in, without Watch Later.
+  - That answer can leave out whether a playlist holds the song. Each row it leaves out takes its check from a youtube.com serving tab on the same account, in a window of the same kind. If YouTube Music's own read fails or times out, that tab's rows stand in, without Watch Later.
   - So while YouTube Music's answer carries no membership, the check marks need an open youtube.com tab on that account.
-  - If a row's check still can't be read:
-    - that row shows no check mark, and rows with a known check keep theirs;
-    - the list still works;
-    - it shows "Couldn't check where this song already is";
+  - A row no read answered for is never drawn as "not in this playlist". Its box is dashed and holds a "?", and its description reads "Couldn't check this playlist". Ticking it still saves, and already in is still reported on the row.
+  - **No youtube.com tab is open** on that account, in a window of that kind:
+    - the list still works, and every row YouTube Music's answer left out shows the unread box;
+    - it shows "To see where this song already is, open YouTube in another tab.";
+    - this is an expected limit, not breakage. Nothing is recorded, and Quick actions stays working.
+  - **A youtube.com tab was asked,** and some rows still have no answer:
+    - only those rows show the unread box. The rest keep their check marks;
+    - it shows "Already in {N} playlists" for the rows that were read, and "Couldn't check {N} playlists" for the rest;
+    - if no row was read, it shows "Couldn't check where this song already is" alone;
     - Quick actions is partly working.
   - **PROVISIONAL** (ticket 25, M2): whether YouTube Music's own answer carries membership. M2 hasn't run. The YouTube Music specimen PR #89 parses (`addToPlaylistRenderer` with `playlistAddToOptionRenderer` rows) carries no selection state, so the youtube.com tab supplies the checks for now.
 - **YM-PICK-7** **Ticking a row** saves the song there at once, through YM-SAVE-5's flow.
