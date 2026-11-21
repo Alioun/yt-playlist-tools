@@ -21,6 +21,9 @@ function world(options: { consented?: boolean; tabs?: { tabId: number; acct: str
         return { kind: "result", tabId, result: invocation.job.kind === "playlists" ? { ok: false, reason: "failed" } : { ok: true, data: {}, route: "r" } } as never
       }
     },
+    async deliver(tabId) {
+      runs.push([tabId, "deliver"])
+    },
     tab: async tabId => {
       const tab = tabs.find(row => row.tabId === tabId)
       return tab ? { kind: "tab", tab: { tabId, windowId: 1, incognito: tab.privateTab, site: tab.site, lastAccessed: tabId, active: true, discarded: false, frozen: false } } : { kind: "gone" }
@@ -82,9 +85,10 @@ test("Check now runs each read once in the newest normal tab, and the session's 
   expect(runs).toEqual([
     [4, "account"],
     [4, "accountLabel"],
-    [4, "playlists"]
+    [4, "playlists"],
+    [4, "deliver"]
   ])
-  expect((await diagnostics.read(false)).kind === "diagnostics" && runs.length).toBe(3)
+  expect((await diagnostics.read(false)).kind === "diagnostics" && runs.length).toBe(4)
 })
 
 test("Check now can't run before consent or with no YouTube tab open, and reading evidence never runs a job", async () => {

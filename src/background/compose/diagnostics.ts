@@ -21,11 +21,14 @@ const reads: Readonly<Record<Site, readonly { readonly job: JobId; readonly acco
 /**
  * Diagnostics' session evidence (HEALTH-22 to HEALTH-24): the breakage signals the Monitor holds for every open tab's
  * account, and Check now, which runs each site's read jobs once in its most recent normal tab and writes nothing.
- * The jobs' own signals reach the Monitor through the tab as usual. A check is kept until the worker stops.
+ * The jobs' own signals reach the Monitor through the tab, which Check now has deliver them before it answers.
+ * A check is kept until the worker stops.
  */
 export function createDiagnostics(deps: {
   readonly tabs: Pick<Tabs, "known" | "runIn">
   tab(tabId: number): Promise<TabLookup>
+  /** Asks a tab to send its waiting health reports, settling once the Monitor has them. */
+  deliver(tabId: number): Promise<unknown>
   readonly monitor: Pick<Monitor, "diagnostics">
   readonly build: BuildId
   consented(): boolean
@@ -92,7 +95,9 @@ export function createDiagnostics(deps: {
         if (!serving.www && !serving.music) return { kind: "refused", reason: "no-tab" }
         for (const site of ["www", "music"] as const) {
           const tab = serving[site]
-          if (tab) checks.set(site, await check(site, tab))
+          if (!tab) continue
+          checks.set(site, await check(site, tab))
+          await deps.deliver(tab.context.tab.tabId).catch(() => {})
         }
       }
       const journals = await Promise.all(rows.map(row => deps.monitor.diagnostics(row.context).catch(() => undefined)))

@@ -24,23 +24,31 @@ export type SiteHealth = {
 /**
  * The tab's half of the Monitor's transport (HEALTH-28): signals wait in a batch sent at most every 5 s, a signal
  * already sent this page goes again only once its job has succeeded since, and a success goes only for a job with a signal.
+ * Check now has the batch delivered at once (HEALTH-23).
  */
 export function createSiteHealth(options: {
   readonly site: Site
   readonly page: Pick<PageLink, "onSignal" | "state">
-  send(reports: readonly TabHealthReport[]): void
+  /** Settles once the background has the reports. */
+  send(reports: readonly TabHealthReport[]): Promise<unknown>
   now(): number
   online(): boolean
   later(run: () => void, milliseconds: number): () => void
-}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; dispose(): void } {
+}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; deliver(): Promise<void>; dispose(): void } {
   let queue: TabHealthReport[] = [], lastSent = -Infinity, cancel: (() => void) | null = null, answeredAt = -Infinity, disposed = false, unmeasured = false
+  let delivered: Promise<unknown> = Promise.resolve()
   const sent = new Map<string, JobId | null>(), batched = new Map<string, number>(), signalled = new Set<JobId>()
+  function send() {
+    const reports = queue.splice(0, HEALTH_REPORTS)
+    batched.clear(); lastSent = options.now()
+    let sending: Promise<unknown>
+    try { sending = options.send(reports).catch(() => {}) } catch { sending = Promise.resolve() }
+    delivered = Promise.all([delivered, sending])
+  }
   function flush() {
     cancel = null
     if (disposed || !queue.length) return
-    const reports = queue.splice(0, HEALTH_REPORTS)
-    batched.clear(); lastSent = options.now()
-    try { options.send(reports) } catch {}
+    send()
     if (queue.length) schedule()
   }
   function schedule() {
@@ -115,6 +123,11 @@ export function createSiteHealth(options: {
       if (!admit(signal)) return
       push({ kind: "anchor", anchor: observation.anchor, signal, observation: { relevant: observation.relevant, visible: observation.visible,
         settledMs: observation.delayMs, distinctMainLinks: observation.distinctMainLinks, recognised: observation.recognised } })
+    },
+    async deliver() {
+      cancel?.(); cancel = null
+      while (!disposed && queue.length) send()
+      await delivered
     },
     dispose() {
       if (disposed) return

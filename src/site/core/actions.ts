@@ -27,8 +27,8 @@ export type TabActions = {
   membership(video: VideoId): Promise<TabMembershipAnswer>
   create(playlist: { readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }): Promise<TabCreated>
   destination(change: TabDestinationChange): Promise<DestinationAnswer>
-  /** Breakage evidence for the Monitor, batched by the site's health reporter (HEALTH-28). */
-  health(reports: readonly TabHealthReport[]): void
+  /** Breakage evidence for the Monitor, batched by the site's health reporter (HEALTH-28). Settles once the background has it. */
+  health(reports: readonly TabHealthReport[]): Promise<unknown>
   /** Tells the background a listed channel's title or @handle changed (YT-CF-10). */
   channelLabel(channel: TabChannelLabel): void
   /** Opens Settings at a feature's playlist, for a failure toast's **Settings** (YT-ADD-29). */
@@ -97,7 +97,7 @@ export function createTabActions(options: {
     create: playlist => call("tab.create", playlist, { kind: "failed", reason: "failed" } as const),
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
     channelLabel(channel) { void call("tab.channelLabel", { channel }, null) },
-    health(reports) { void call("tab.health", { reports }, null) },
+    health: reports => call("tab.health", { reports }, null),
     settings(target) { void rpc.call("tab.settings", target) },
     skip: async (video, skip) => (await call("tab.skip", { video, skip }, null))?.kind === "done",
     pause: async paused => (await call("tab.pause", { paused }, null))?.kind === "done",

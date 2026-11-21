@@ -250,7 +250,23 @@ export function composeServices(deps: {
       return { tab: { ...lookup.tab, site: sender.site }, info: acct === null ? { site: sender.site, build, signedIn: false, acct: null } : { site: sender.site, build, signedIn: true, acct } }
     }
   })
-  const diagnostics = createDiagnostics({ tabs, tab: tabId => browserTabs.port.get(tabId), monitor, build, consented: deps.consented, now: () => Date.now() })
+  async function ask<K extends keyof TabAskMessages>(tabId: number, kind: K, payload: TabAskMessages[K]["payload"]) {
+    const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
+    try {
+      return await caller.call(kind, payload)
+    } finally {
+      caller.dispose()
+    }
+  }
+  const diagnostics = createDiagnostics({
+    tabs,
+    tab: tabId => browserTabs.port.get(tabId),
+    deliver: tabId => ask(tabId, "bg.health", {}),
+    monitor,
+    build,
+    consented: deps.consented,
+    now: () => Date.now()
+  })
   const autoAddRoutes = createAutoAddTabRouter({
     transport: runtimeTransport(deps.runtime),
     senders: { ...native, runtime },
@@ -280,14 +296,7 @@ export function composeServices(deps: {
       registrar,
       flow: actions.flow,
       consented: deps.consented,
-      async ask(tabId, kind, payload) {
-        const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
-        try {
-          return await caller.call(kind, payload)
-        } finally {
-          caller.dispose()
-        }
-      }
+      ask
     }),
     gather: gather.routes,
     woke: () => gather.woke("ui"),

@@ -165,7 +165,8 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       "bg.gatherToast"(payload) { asks?.gatherToast(payload); return null },
       async "bg.picker"(payload) { return { kind: asks ? await asks.picker(payload) : "failed" } },
       async "bg.music"(payload) { return asks?.music ? asks.music(payload) : { kind: "failed", text: null } },
-      "bg.query": query
+      "bg.query": query,
+      async "bg.health"() { await health.deliver(); return null }
     }
   })
   let disposed = false

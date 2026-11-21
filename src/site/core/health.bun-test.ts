@@ -3,12 +3,12 @@ import { createSiteHealth, HEALTH_SEND_MS } from "./health"
 import type { BreakageSignal } from "../../shared/contracts/diagnostics"
 import type { TabHealthReport } from "../../shared/contracts/tab-health"
 
-function reporter(site: BreakageSignal["site"] = "www") {
+function reporter(site: BreakageSignal["site"] = "www", acknowledged: () => Promise<unknown> = async () => {}) {
   let now = 10_000
   const timers: { at: number; run: () => void }[] = [], batches: (readonly TabHealthReport[])[] = []
   let listener: (signal: BreakageSignal) => void = () => {}
   const health = createSiteHealth({
-    site, now: () => now, online: () => true, send: reports => { batches.push(reports) },
+    site, now: () => now, online: () => true, send: reports => { batches.push(reports); return acknowledged() },
     later(run, ms) { const timer = { at: now + ms, run }; timers.push(timer); return () => { timers.splice(timers.indexOf(timer), 1) } },
     page: { onSignal(fn) { listener = fn; return () => {} }, state: { kind: "ready", snapshot: { pageType: "watch" } } as never }
   })
@@ -32,6 +32,24 @@ test("signals go out in one batch, then at most every 5 s, and a repeated one go
   expect(r.batches).toHaveLength(1)
   r.advance(1)
   expect(kinds(r.batches[1])).toEqual(["rejected"])
+})
+
+test("Check now's delivery sends what's waiting at once and settles only when the background has it (HEALTH-23)", async () => {
+  const waiting: (() => void)[] = []
+  const r = reporter("www", () => new Promise<void>(resolve => { waiting.push(resolve) }))
+  r.emit(r.signal("missing"))
+  r.advance(0)
+  r.emit(r.signal("unrecognised"))
+  let settled = false
+  const delivery = r.health.deliver().then(() => { settled = true })
+  expect(kinds(r.batches[1])).toEqual(["unrecognised"])
+  await Promise.resolve()
+  expect(settled).toBe(false)
+  for (const acknowledge of waiting) acknowledge()
+  await delivery
+  expect(settled).toBe(true)
+  r.advance(HEALTH_SEND_MS)
+  expect(r.batches).toHaveLength(2)
 })
 
 test("timeouts keep up to three in a batch, since only three in a row count (HEALTH-01)", () => {
