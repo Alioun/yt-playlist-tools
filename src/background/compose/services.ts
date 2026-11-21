@@ -22,7 +22,8 @@ import { createTabHealthRouter } from "../router/tab-health"
 import type { SiteDiagnostics } from "../monitor/ports"
 import type { TabContext } from "../tabs/ports"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
-import { createTabViewProducer } from "../tab-view/producer"
+import { createTabViewProducer, enabledTabFeatures } from "../tab-view/producer"
+import { decodeSettings } from "../../shared/model/decodeSettings"
 import { createViewPublication } from "../tab-view/publication"
 import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
@@ -238,6 +239,10 @@ export function composeServices(deps: {
     build,
     deadline: timerDeadline,
     monitor,
+    async enabled(context) {
+      const read = await owner.read("settings")
+      return read.kind === "value" ? enabledTabFeatures(decodeSettings(read.settings), context.tab.site) : undefined
+    },
     async context(sender, acct) {
       const [known] = await tabs.known({ kind: "tab", tabId: sender.origin.tabId })
       if (!known || known.acct !== acct || known.privateTab !== sender.origin.incognito) return null

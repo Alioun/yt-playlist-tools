@@ -3,6 +3,7 @@ import { objectShape } from "./object-shape"
 import { isJobId, type JobId } from "./vocabulary"
 import { isAccountKey, type AccountKey } from "../model/validation"
 import type { AnchorId } from "../features/registry"
+import { isPageFeatureId, type PageFeatureId } from "./tab-view"
 import type { RpcContract } from "../rpc/rpc"
 
 /** An anchor check once the page settled (HEALTH-02): how many distinct video links the main content has, and how many were recognised. */
@@ -32,8 +33,18 @@ export type TabHealthReport =
   | { readonly kind: "anchor"; readonly anchor: AnchorId; readonly observation: TabAnchorObservation; readonly signal: BreakageSignal }
   | { readonly kind: "success"; readonly job: JobId; readonly at?: number }
   | { readonly kind: "measured" }
+/** The Monitor's hold on a not-working notice this tab shows. The tab hands it back once the notice is on screen (YT-BRK-02). */
+export type TabNoticeToken = { readonly instance: string; readonly sequence: number }
+export type TabNoticeClaim = { readonly token: TabNoticeToken; readonly features: readonly PageFeatureId[] }
+type Pinned<T> = { readonly acct: AccountKey | null; readonly request: T }
 export type TabHealthMessages = {
-  "tab.health": { payload: { readonly acct: AccountKey | null; readonly request: { readonly reports: readonly TabHealthReport[] } }; result: boolean }
+  "tab.health": { payload: Pinned<{ readonly reports: readonly TabHealthReport[] }>; result: boolean }
+  /** A feature that isn't working was about to act here: draw its buttons, place its button or take a right-click (YT-BRK-02). */
+  "tab.wouldAct": { payload: Pinned<{ readonly feature: PageFeatureId }>; result: null }
+  /** Takes the notice this tab's view says is due, or null when another tab took it or none is due. */
+  "tab.claimNotice": { payload: Pinned<null>; result: TabNoticeClaim | null }
+  /** The claimed notice is on screen, so it isn't shown again this browser session. */
+  "tab.noticeShown": { payload: Pinned<{ readonly token: TabNoticeToken }>; result: null }
 }
 export const HEALTH_REPORTS = 40
 
@@ -63,14 +74,35 @@ export function isTabHealthReport(value: unknown): value is TabHealthReport {
     objectShape(value, { kind: v => v === "measured" })
   )
 }
+const acct = (value: unknown) => value === null || isAccountKey(value)
+const isToken = (value: unknown) => objectShape(value, { instance: v => typeof v === "string" && v.length <= 32, sequence: v => count(v) && (v as number) > 0 })
+const features = (value: unknown) => Array.isArray(value) && value.length > 0 && value.length <= 20 && value.every(isPageFeatureId) && new Set(value).size === value.length
+export function isTabNoticeClaim(value: unknown): value is TabNoticeClaim {
+  return objectShape(value, { token: isToken, features })
+}
 export const tabHealthContract: RpcContract<TabHealthMessages> = {
   "tab.health": {
     payload: (v): v is TabHealthMessages["tab.health"]["payload"] =>
       objectShape(v, {
-        acct: a => a === null || isAccountKey(a),
+        acct,
         request: r => objectShape(r, { reports: list => Array.isArray(list) && list.length > 0 && list.length <= HEALTH_REPORTS && list.every(isTabHealthReport) })
       }),
     result: (v): v is boolean => bool(v),
+    timeoutMs: 5_000
+  },
+  "tab.wouldAct": {
+    payload: (v): v is TabHealthMessages["tab.wouldAct"]["payload"] => objectShape(v, { acct, request: r => objectShape(r, { feature: isPageFeatureId }) }),
+    result: (v): v is null => v === null,
+    timeoutMs: 5_000
+  },
+  "tab.claimNotice": {
+    payload: (v): v is TabHealthMessages["tab.claimNotice"]["payload"] => objectShape(v, { acct, request: r => r === null }),
+    result: (v): v is TabNoticeClaim | null => v === null || isTabNoticeClaim(v),
+    timeoutMs: 5_000
+  },
+  "tab.noticeShown": {
+    payload: (v): v is TabHealthMessages["tab.noticeShown"]["payload"] => objectShape(v, { acct, request: r => objectShape(r, { token: isToken }) }),
+    result: (v): v is null => v === null,
     timeoutMs: 5_000
   }
 }

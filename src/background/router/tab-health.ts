@@ -1,7 +1,9 @@
 import { authenticateTab, type TabContext as SenderContext } from "../adapters/runtime"
 import type { NativeSender, SenderOriginPorts } from "../adapters/sender-origin"
 import type { Monitor } from "../monitor/monitor"
+import { isMonitorInstance } from "../store/monitor-session"
 import { anchors } from "../../shared/features/registry"
+import { isPageFeatureId, type TabFeature } from "../../shared/contracts/tab-view"
 import type { TabContext } from "../tabs/ports"
 import type { BuildId } from "../../shared/contracts"
 import { tabHealthContract, type TabHealthMessages, type TabHealthReport } from "../../shared/contracts/tab-health"
@@ -12,6 +14,7 @@ import type { Transport } from "../../shared/rpc/transport"
 /**
  * The Monitor's transport from a tab (HEALTH-01, HEALTH-28): each report goes to the Monitor as that tab, which checks
  * every signal against the diagnostics vocabulary. A tab whose registry account differs from the report's is ignored.
+ * It also carries the not-working notice: a feature about to act, the tab's claim on the due notice, and its showing (YT-BRK-02).
  */
 export function createTabHealthRouter(deps: {
   readonly transport: Transport<NativeSender>
@@ -20,7 +23,9 @@ export function createTabHealthRouter(deps: {
   readonly deadline: Deadline
   /** The tab's Monitor context while the registry holds it for `acct` in the sender's window kind. */
   context(sender: SenderContext, acct: AccountKey | null): Promise<TabContext | null>
-  readonly monitor: Pick<Monitor, "signal" | "observeAnchor" | "succeeded" | "measured">
+  /** The page features switched on for the tab's site, which the Monitor reads statuses for. */
+  enabled(context: TabContext): Promise<readonly TabFeature[] | undefined>
+  readonly monitor: Pick<Monitor, "signal" | "observeAnchor" | "succeeded" | "measured" | "wouldAct" | "statusProducer" | "claimNotice" | "acknowledgeNotice">
 }): { dispose(): void } {
   const rpc = createRpc<TabHealthMessages, NativeSender>(deps.transport, { build: deps.build, deadline: deps.deadline, contract: tabHealthContract })
   async function apply(context: TabContext, report: TabHealthReport) {
@@ -57,6 +62,28 @@ export function createTabHealthRouter(deps: {
           if (result?.kind !== "accepted") delivered = false
         }
         return delivered
+      },
+      async "tab.wouldAct"({ acct, request }, sender) {
+        const context = await deps.context(sender, acct)
+        const enabled = context && (await deps.enabled(context))
+        if (context && enabled) await deps.monitor.wouldAct(context, enabled, request.feature)
+        return null
+      },
+      async "tab.claimNotice"({ acct }, sender) {
+        const context = await deps.context(sender, acct)
+        const enabled = context && (await deps.enabled(context))
+        if (!context || !enabled) return null
+        const statuses = await deps.monitor.statusProducer.read(context, enabled)
+        if (statuses.kind !== "statuses") return null
+        const claim = await deps.monitor.claimNotice(context, statuses)
+        const features = claim.kind === "delivery" ? claim.features.filter(isPageFeatureId) : []
+        return claim.kind === "delivery" && features.length ? { token: claim.token, features } : null
+      },
+      async "tab.noticeShown"({ acct, request }, sender) {
+        const context = await deps.context(sender, acct)
+        const { instance, sequence } = request.token
+        if (context && isMonitorInstance(instance)) await deps.monitor.acknowledgeNotice(context, { instance, sequence })
+        return null
       }
     }
   })
