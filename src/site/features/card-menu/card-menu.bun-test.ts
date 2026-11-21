@@ -4,7 +4,7 @@ import type { DueNotice } from "../../../shared/contracts/tab-view"
 import { createNoticeOwner, type NoticePresentation } from "../../core/notice"
 import { Scope } from "../../core/scope"
 import { deferred } from "../../../../tools/fixtures/page-link/support"
-import { cardMenuHarness, rightClickPoint, videoA, videoB, view } from "../../../../tools/fixtures/site-card-menu/harness"
+import { cardBox, cardMenuHarness, layOut, menuButtonBox, rightClickPoint, videoA, videoB, view } from "../../../../tools/fixtures/site-card-menu/harness"
 import { reachableModules } from "../../../../tools/fixtures/site-card-menu/source-graph"
 
 const cleanup: (() => void)[] = []
@@ -82,6 +82,29 @@ test("modern thumbnail menus need no aria-haspopup attribute", async () => {
   expect(f.click(f.byId("modern-thumbnail")).defaultPrevented).toBe(true)
   await f.settle()
   expect(f.menuCalls()[0]?.context?.target).toBe(card)
+})
+
+test("a right-click on a part that sticks out of the card's box still opens at the pointer", async () => {
+  const f = await fixture()
+  f.start()
+  const at = { x: cardBox.x + cardBox.width + 8, y: cardBox.y - 6 }
+  layOut("#empty", { x: at.x - 10, y: at.y - 10, width: 20, height: 20 })
+  expect(f.click(f.byId("empty"), { at }).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls().map(call => call.job)).toEqual([{ kind: "openCardMenu", videoId: videoA, at }])
+})
+
+test("a menu opened from the keyboard opens at the card's own menu button unless the browser reports a point on the card", async () => {
+  const f = await fixture()
+  f.start()
+  expect(f.click(f.byId("video-title"), { button: 0, at: { x: 0, y: 0 } }).defaultPrevented).toBe(true)
+  expect(f.click(f.byId("video-title"), { button: -1, at: { x: 400, y: 250 } }).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls().map(call => call.job)).toEqual([
+    { kind: "openCardMenu", videoId: videoA, at: { x: menuButtonBox.x + menuButtonBox.width / 2, y: menuButtonBox.y + menuButtonBox.height / 2 } },
+    { kind: "openCardMenu", videoId: videoA, at: { x: 400, y: 250 } }
+  ])
+  expect(f.menuCalls().every(call => call.context?.target === f.byId("card-a"))).toBe(true)
 })
 
 function hoverPreview() {

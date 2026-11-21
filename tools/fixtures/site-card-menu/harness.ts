@@ -66,6 +66,14 @@ export function view(options: { keepLinkMenu?: boolean; signedIn?: boolean; setu
 }
 
 export const rightClickPoint = { x: 212, y: 148 }
+/** happy-dom lays nothing out, so the harness gives every card and menu button the box a browser would. The right-click point is on the card. */
+export const cardBox = { x: 100, y: 100, width: 600, height: 300 }
+export const menuButtonBox = { x: 660, y: 110, width: 40, height: 40 }
+export function layOut(selector: string, box: typeof cardBox) {
+  for (const element of document.querySelectorAll(selector)) {
+    Object.defineProperty(element, "getBoundingClientRect", { configurable: true, value: () => new DOMRect(box.x, box.y, box.width, box.height) })
+  }
+}
 export type RightClick = { shiftKey?: boolean; at?: { x: number; y: number }; button?: number }
 export function rightClick(init: RightClick = {}): MouseEvent {
   const at = init.at ?? rightClickPoint
@@ -82,6 +90,8 @@ export async function cardMenuHarness(
   } = {}
 ) {
   document.body.innerHTML = markup
+  layOut("[id^='card-']", cardBox)
+  layOut("ytd-menu-renderer button", menuButtonBox)
   const gate = options.gate
   const page = harness({
     ...(options.signedIn === false ? { pageSnapshot: () => snapshot(null) } : {}),
