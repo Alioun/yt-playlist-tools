@@ -2,11 +2,45 @@ import type { UiCheck, UiFeatureHealth, UiSignal } from "../../shared/contracts/
 import type { Site } from "../../shared/contracts/vocabulary"
 import type { FeatureId } from "../../shared/contracts/vocabulary"
 import type { PageView } from "../../shared/model/page-view"
-import { firstRunFeatures } from "../onboarding/features"
-import { isOn, type SiteAccess } from "../lib/held"
+import type { Settings } from "../../shared/model/types"
+import type { Snapshot } from "../../shared/model/settings-view"
+import { firstRunFeatures, type PageFeatureId } from "../onboarding/features"
+import { heldOn, isOn, musicFeatures, type Held, type SiteAccess } from "../lib/held"
 
 type View = Extract<PageView, { kind: "view" }>
 const siteName = (site: Site) => (site === "www" ? "YouTube" : "YouTube Music")
+
+/** One site's status for a feature that's on: held there, no tab of that site open, or what its tabs report. */
+export type RowState = { readonly kind: "held"; readonly held: Held } | { readonly kind: "no-tab" } | { readonly kind: "health"; readonly health: UiFeatureHealth }
+export type StatusRow = { readonly feature: PageFeatureId; readonly site: Site; readonly state: RowState }
+
+/** The sites a feature that's on runs on, YouTube first. */
+function sitesOf(settings: Snapshot<Settings>, feature: PageFeatureId): readonly Site[] {
+  if (musicFeatures.includes(feature)) return ["music"]
+  const music = settings.musicSection && (feature === "any-tab-keys" || (feature === "shortcuts" && settings.shortcuts.music))
+  return music ? ["www", "music"] : ["www"]
+}
+/**
+ * Diagnostics' status list (UI-SET-17): one row per site of each feature that's on, in feature order. The rows
+ * depend on the settings alone, so a tab opening or closing changes a row's state, never which rows show.
+ */
+export function statusRows(input: {
+  readonly settings: Snapshot<Settings>
+  readonly consented: boolean
+  readonly access: SiteAccess
+  readonly health: readonly UiFeatureHealth[]
+}): StatusRow[] {
+  const { settings, consented, access } = input
+  return firstRunFeatures
+    .filter(row => isOn(settings, row.id))
+    .flatMap(({ id }) =>
+      sitesOf(settings, id).map((site): StatusRow => {
+        const held = heldOn(site, id, settings, consented, access)
+        const health = input.health.find(entry => entry.feature === id && entry.site === site)
+        return { feature: id, site, state: held ? { kind: "held", held } : health ? { kind: "health", health } : { kind: "no-tab" } }
+      })
+    )
+}
 /**
  * The diagnostics report (HEALTH-24, HEALTH-25), plain text in English for the developer. It names features,
  * statuses and versions only: never an account, video, playlist, channel, address or setting value.

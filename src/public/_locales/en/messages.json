@@ -6244,8 +6244,14 @@
   "diag_working": {
     "message": "Working"
   },
-  "diag_unchecked": {
-    "message": "Not checked"
+  "diag_noTab": {
+    "message": "No tab open"
+  },
+  "diag_noTabLine_www": {
+    "message": "No YouTube tab is open. Open one and its statuses show here."
+  },
+  "diag_noTabLine_music": {
+    "message": "No YouTube Music tab is open. Open one and its statuses show here."
   },
   "diag_partly": {
     "message": "Partly working"
@@ -6255,9 +6261,6 @@
   },
   "diag_off": {
     "message": "Off"
-  },
-  "diag_held": {
-    "message": "Can't run yet"
   },
   "diag_reportHeading": {
     "message": "Diagnostics report"

@@ -504,7 +504,7 @@ test("Diagnostics runs Check now only when clicked, shows what answered, and put
   const button = await screen.findByRole("button", { name: "Check now" }, { timeout: 5000 })
   for (let turn = 0; turn < 100 && !checks.length; turn++) await new Promise(resolve => setTimeout(resolve, 10))
   expect(checks).toEqual([false])
-  expect(await screen.findByText("Not checked")).toBeTruthy()
+  expect(await screen.findByText("No tab open")).toBeTruthy()
   await userEvent.click(button)
   expect(await screen.findByText("1 of 2 reads answered on YouTube.", {}, { timeout: 5000 })).toBeTruthy()
   expect(await screen.findByText("Partly working")).toBeTruthy()

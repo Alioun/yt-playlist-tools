@@ -2,14 +2,12 @@
   import { untrack } from "svelte"
   import Button from "../../components/Button.svelte"
   import Switch from "../../components/Switch.svelte"
-  import type { FeatureId, Site } from "../../../shared/contracts/vocabulary"
   import type { createFeatureCopy } from "../../onboarding/features"
-  import { firstRunFeatures } from "../../onboarding/features"
   import type { PageState } from "../../lib/page-state.svelte"
-  import { accessSite, heldReason, isOn } from "../../lib/held"
+  import { heldMessage } from "../../lib/held"
   import { featureName } from "../../lib/health"
   import { browserLabel, knownProblems, type ReportFeature } from "../report"
-  import { diagnosticsReport } from "../diagnostics"
+  import { diagnosticsReport, statusRows, type RowState } from "../diagnostics"
   import type { UiDiagnostics } from "../../../shared/contracts/ui-pages"
 
   // Settings › Diagnostics (UI-SET-17, HEALTH-22): each feature's status per site, the report with Copy, Known
@@ -22,16 +20,11 @@
   let copied = $state(false)
   let reporting = $state<ReportFeature | null>(null)
   let logFailed = $state(false)
-  const rows = $derived(settings ? firstRunFeatures.filter(row => isOn(settings, row.id)).flatMap(row => {
-    const site: Site = accessSite(row.id)
-    const statuses = health.filter(entry => entry.feature === row.id)
-    const held = heldReason(row.id, settings, pageState.agreed, pageState.access ?? { www: true, music: true, browserMenu: true })
-    if (!statuses.length) return [{ feature: row.id as FeatureId, site, label: i18n.message(held ? "diag_held" : "diag_unchecked"), broken: false }]
-    return statuses.map(status => ({
-      feature: status.feature, site: status.site, broken: !held && status.state !== "working",
-      label: i18n.message(held ? "diag_held" : status.state === "not-working" ? "diag_notWorking" : status.state === "partly-working" ? "diag_partly" : "diag_working")
-    }))
-  }) : [])
+  const rows = $derived(settings ? statusRows({ settings, consented: pageState.agreed, access: pageState.access ?? { www: true, music: true, browserMenu: true }, health }) : [])
+  const untabbed = $derived((["www", "music"] as const).filter(site => rows.some(row => row.site === site && row.state.kind === "no-tab")))
+  const stateLabels = { working: "diag_working", "partly-working": "diag_partly", "not-working": "diag_notWorking" } as const
+  const label = (state: RowState) => i18n.message(state.kind === "held" ? heldMessage[state.held] : state.kind === "no-tab" ? "diag_noTab" : stateLabels[state.health.state])
+  const broken = (state: RowState) => state.kind === "health" && state.health.state !== "working"
   let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
     browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, health,
@@ -68,11 +61,14 @@
       {#each rows as row (`${row.feature}:${row.site}`)}
         <li class="flex items-center justify-between gap-3" data-status={row.feature}>
           <span>{featureName(features, row.feature)} <span class="text-muted-foreground">· {i18n.message(row.site === "www" ? "site_www" : "site_music")}</span></span>
-          <span class={row.broken ? "text-warning font-medium" : "text-muted-foreground"}>{row.label}
-            {#if row.broken}<Button size="sm" variant="link" onclick={() => { reporting = row.feature }}>{i18n.message("diag_report")}</Button>{/if}</span>
+          <span class={broken(row.state) ? "text-warning font-medium" : "text-muted-foreground"}>{label(row.state)}
+            {#if broken(row.state)}<Button size="sm" variant="link" onclick={() => { reporting = row.feature }}>{i18n.message("diag_report")}</Button>{/if}</span>
         </li>
       {/each}
     </ul>
+    {#each untabbed as site (site)}
+      <p class="text-muted-foreground mt-2 text-[12.5px]">{i18n.message(site === "www" ? "diag_noTabLine_www" : "diag_noTabLine_music")}</p>
+    {/each}
     <div class="mt-3 flex flex-col items-start gap-1.5 border-t pt-3 text-[13.5px]">
       {#if noTab}
         <p class="text-muted-foreground">{i18n.message("diag_checkNoTab")}</p>

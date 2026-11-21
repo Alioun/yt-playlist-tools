@@ -15,9 +15,12 @@ export function accessSite(feature: PageFeatureId): Site {
   return musicFeatures.includes(feature) ? "music" : "www"
 }
 export function heldReason(feature: PageFeatureId, settings: Snapshot<Settings>, consented: boolean, access: SiteAccess): Held | null {
-  if (!isOn(settings, feature)) return null
+  return isOn(settings, feature) ? heldOn(accessSite(feature), feature, settings, consented, access) : null
+}
+/** Why one site's half of a feature can't run yet. A feature on both sites is held per site (UI-SET-17). */
+export function heldOn(site: Site, feature: PageFeatureId, settings: Snapshot<Settings>, consented: boolean, access: SiteAccess): Held | null {
   if (!consented) return "consent"
-  if (musicFeatures.includes(feature)) return !settings.musicSection ? "music-off" : access.music ? null : "site-access"
+  if (site === "music") return !settings.musicSection ? "music-off" : access.music ? null : "site-access"
   if (!access.www) return "site-access"
   return feature === "browser-menu" && !access.browserMenu ? "browser-menu" : null
 }
