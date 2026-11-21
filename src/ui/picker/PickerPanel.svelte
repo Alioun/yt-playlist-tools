@@ -198,7 +198,7 @@
     </div>
     <p id="{uid}-sort-status" class="status" class:empty={!sortPending && sortOutcome?.kind !== "refused"} aria-live="polite">{sortPending ? text.label("sortPending") : sortOutcome?.kind === "refused" ? text.label("sortRefused") : ""}</p>
     <label class="search"><PickerIcon name="search" /><input bind:this={search} data-picker-search aria-label={text.label("search")} placeholder={text.label("search")} type="search" bind:value={picker.query} /></label>
-    {#each membershipLines as line (line)}<p class="status" aria-live="polite">{line}</p>{/each}
+    {#each membershipLines as line}<p class="status" aria-live="polite">{line}</p>{/each}
     {#if !picker.list.refreshable}<p id="{uid}-no-tab" class="status">{text.label("noTab")}</p>{/if}
     {#if refreshFailed}<p class="error" role="status">{text.label("refreshFailed")}</p>{/if}
   </header>
