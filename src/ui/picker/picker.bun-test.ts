@@ -424,6 +424,27 @@ test("unreadable membership and unknown list facts stay explicit", async () => {
   expect(screen.queryByText(/\d+ songs?/)).toBeNull()
 })
 
+test("a Music account with no playlists gets the empty-list line, and a list that could not be read gets the unavailable one", async () => {
+  const empty = itemSource()
+  const first = panel({ source: empty.source, site: "music", mode: "save" })
+  empty.ledger.answer("cachedList", null)
+  empty.ledger.answer("membership", { kind: "read", rows: [] })
+  await settle()
+  flushSync()
+  visible(screen.getByText("No playlists to show."))
+  expect(screen.queryByText("Playlist data is unavailable. Refresh playlists to try again.")).toBeNull()
+  first.unmount()
+  const unread = itemSource()
+  panel({ source: unread.source, site: "music", mode: "save" })
+  unread.ledger.answer("cachedList", null)
+  unread.ledger.answer("membership", { kind: "unreadable" })
+  await settle()
+  unread.ledger.answer("freshList", { kind: "failed" })
+  await settle()
+  flushSync()
+  visible(screen.getByText("Playlist data is unavailable. Refresh playlists to try again."))
+})
+
 test("a missing title is not replaced with a playlist identifier", async () => {
   const gone = playlist("PLgone")
   const { source, ledger } = chooserSource({ chosen: [gone] })

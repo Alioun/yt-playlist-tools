@@ -585,6 +585,19 @@ describe("refresh and freshness", () => {
   })
 })
 
+describe("YouTube Music list", () => {
+  test("an account with no playlists has a list, and it is empty", async () => {
+    const { picker, ledger } = open("save", "music")
+    ledger.answer("cachedList", null)
+    expect(picker.list).toMatchObject({ at: null, known: false })
+    ledger.answer("membership", { kind: "read", rows: [] })
+    await settle()
+    expect(picker.rows).toEqual([])
+    expect(picker.list).toMatchObject({ at: null, known: true, refreshing: false })
+    expect(ledger.calls("freshList")).toEqual([])
+  })
+})
+
 describe("YouTube Music check marks", () => {
   const added: AddAnswer = { kind: "added", entry: entry("sv-road"), undo: undoing() }
 
