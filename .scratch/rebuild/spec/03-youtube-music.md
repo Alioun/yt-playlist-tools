@@ -616,13 +616,14 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - the picker's check marks (YM-PICK-6);
   - the player-bar Save's anchor, when YouTube Music should be drawing it;
   - some of a feature's actions unavailable (YM-FAIL-4; R50);
-  - Save and Like with the account keys unreadable (YM-ACC-7; R50).
+  - Save and Like with the account keys unreadable (YM-ACC-7; R50);
+  - the cast state, when it can't be read in Chrome. Queue edits then stay available (YM-CAST-2), and the health line's gap reads "it can't tell whether YouTube Music is casting".
 - **YM-FAIL-11** A tab's status clears by itself when the job next succeeds, or on reload when the check passes.
 - **YM-FAIL-12** **A quiet route turned noisy:** if YouTube Music shows its own toast after one of our queue edits, inserts, moves and Undo's re-inserts included, a `quiet-route-noisy` breakage signal is recorded and the feature that made the edit (Quick actions or Quick-action shortcuts) is *partly working* in that tab. The edit stands, and our own toast for it is suppressed, so only one shows ([Q-WATCH-28](07-quality.md#757-runtime-breakage-signals), [ARC-ACC-22](06-architecture.md#627-route-table-youtube-music)). The signal identifiers are chapter 07's ([Q-WATCH-24](07-quality.md#757-runtime-breakage-signals)). (R40, R51)
 
 ## 15. Casting
 
-- **YM-CAST-1** Casting exists only in Chrome. On Firefox, the casting state never applies.
+- **YM-CAST-1** Casting exists only in Chrome. On Firefox, the casting state never applies. There the cast-state read answers "not casting" without reading YouTube Music's store, so it never counts against a feature's health.
 - **YM-CAST-2** **While casting, every queue edit is unavailable,** with one message (R5):
   - inserts by Play next and Add to queue, including inserting a copy of the playing song;
   - moves of a queued song;

@@ -1123,7 +1123,7 @@ type GatherRecord = {
 | The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 | Popup strip | {Feature} isn't working in this tab because YouTube changed something. / {N} features aren't working in this tab. / {Feature} is partly working in this tab. |
 | Settings, not working | Not working right now: YouTube changed something it relies on. |
-| Settings, partly working | Partly working: {gap}. For example "it can't show where a video is already saved", "it can't confirm queue adds", "it can't follow some videos' progress". On YouTube Music, {gap} names the unavailable actions (R50). |
+| Settings, partly working | Partly working: {gap}. For example "it can't show where a video is already saved", "it can't confirm queue adds", "it can't follow some videos' progress", and on YouTube Music in Chrome "it can't tell whether YouTube Music is casting". On YouTube Music, {gap} names the unavailable actions (R50). |
 
   The copy matches [YT-BRK-06](02-youtube.md#213-when-youtube-changes-something), 03's [§14](03-youtube-music.md#14-failures-and-breakage) and [UI-TOAST-15](05-ui.md#the-not-working-notice), which own it on their sites. (R4, R50, R68, R75)
 
