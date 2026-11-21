@@ -36,7 +36,8 @@ export type PickerRow = {
   readonly mark: Mark | null
 }
 export type MembershipStatus = { readonly kind: "none" | "checking" | "unreadable" } | { readonly kind: "known"; readonly count: number }
-export type ListStatus = { readonly at: number | null; readonly refreshing: boolean; readonly refreshable: boolean }
+/** `at` stamps the account's saved list. `known` is true once that list or the item's own rows have been read, even when they are empty. */
+export type ListStatus = { readonly at: number | null; readonly known: boolean; readonly refreshing: boolean; readonly refreshable: boolean }
 export type Creation = "available" | "private" | "noTab" | "signedOut" | "noChannel"
 export type CreateState = { readonly kind: "idle" | "pending" } | { readonly kind: "failed"; readonly reason: CreateFailure }
 export type TitleCheck = { readonly problem: TitleProblem | null; readonly duplicate: boolean }
@@ -159,6 +160,7 @@ export class PickerModel {
   })
   readonly list: ListStatus = $derived({
     at: this.#listing?.at ?? null,
+    known: this.#listing !== null || this.#members !== null,
     refreshing: this.#refreshing !== null,
     refreshable: this.#tab
   })

@@ -13,7 +13,7 @@ const picker = new PickerModel({ source, site: "www", mode: "save" })
 picker.rows                    // search-filtered, in the site's order or A-Z
 picker.query = "mix"
 picker.membership              // none | checking | known (count) | unreadable
-picker.list                    // { at, refreshing, refreshable }
+picker.list                    // { at, known, refreshing, refreshable }
 picker.pins                    // available | private | none
 picker.creation                // available | private | noTab | signedOut | noChannel
 picker.form, picker.titleCheck, picker.creating

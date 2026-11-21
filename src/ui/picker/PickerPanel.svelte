@@ -198,7 +198,7 @@
   </header>
   <div class="rows">
     {#if picker.rows.length === 0}
-      <p class="empty" role="status">{picker.query.trim() ? text.label("emptySearch") : picker.list.refreshing ? text.label("loadingList") : picker.list.at === null ? text.label("listUnavailable") : text.label("emptyList")}</p>
+      <p class="empty" role="status">{picker.query.trim() ? text.label("emptySearch") : picker.list.refreshing ? text.label("loadingList") : picker.list.known ? text.label("emptyList") : text.label("listUnavailable")}</p>
     {/if}
     <ul aria-label={text.label("listLabel")}>
       {#each picker.rows as row (row.id)}
