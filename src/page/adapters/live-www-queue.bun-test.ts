@@ -1,8 +1,27 @@
 import { afterEach, expect, test } from "bun:test"
+import { parseQueuePanel } from "../parsers/www-queue"
 import { createLiveWwwQueue } from "./live-www-queue"
 import { createWwwResolver } from "./www-resolver"
 
 afterEach(() => document.body.replaceChildren())
+
+test("the queue is read from YouTube's playlist manager where no panel holds it, as on a search page", () => {
+  const queued = { playlistId: "TLPQsynthetic", contents: [{ playlistPanelVideoRenderer: { videoId: "queueVideoA", playlistSetVideoId: "entry-1" } }] }
+  const manager = document.createElement("yt-playlist-manager")
+  let held: unknown
+  Reflect.set(manager, "getPlaylistData", () => held)
+  document.body.append(manager)
+  const queue = createLiveWwwQueue({ window, document, resolver: createWwwResolver(window) })
+  expect(parseQueuePanel(queue.panel())).toBeUndefined()
+  held = queued
+  expect(parseQueuePanel(queue.panel())).toEqual<unknown>({ listId: "TLPQsynthetic", entries: [{ videoId: "queueVideoA", setVideoId: "entry-1" }] })
+  const panel = document.createElement("ytd-playlist-panel-renderer")
+  Reflect.set(panel, "data", {})
+  document.body.append(panel)
+  expect(parseQueuePanel(queue.panel())).toEqual<unknown>({ listId: "TLPQsynthetic", entries: [{ videoId: "queueVideoA", setVideoId: "entry-1" }] })
+  manager.remove()
+  expect(parseQueuePanel(queue.panel())).toBeUndefined()
+})
 
 test("the miniplayer reads as active once YouTube marks the app, as it does after a first queue add", () => {
   const app = document.createElement("ytd-app")

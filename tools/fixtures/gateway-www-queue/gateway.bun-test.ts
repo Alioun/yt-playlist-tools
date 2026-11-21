@@ -199,36 +199,55 @@ test("stale targets and unrecognised cards send nothing", async () => {
   released(plain)
 })
 
-test("the miniplayer fallback confirms only a first add whose miniplayer turns active", async () => {
-  const first = queueWorld()
-  first.state.readable = false
-  first.scripts.push(
+test("the miniplayer opening never confirms a first add, because YouTube opens it before the request is answered", async () => {
+  const w = queueWorld()
+  w.scripts.push(
     pending(world => {
       world.state.miniplayer = true
     })
   )
-  expect(await queueAdd(first)).toEqual(success("queueAdd", { confirmed: true, quiet: true }))
+  const result = queueAdd(w)
+  await settle(w, 2_000)
+  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  released(w)
+})
+
+test("an add whose outcome is unknown is unconfirmed and is never called a timeout", async () => {
+  const first = queueWorld()
+  first.scripts.push(pending(() => undefined))
+  const created = queueAdd(first)
+  await settle(first, 2_000)
+  expect(await created).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  expect(kinds(first)).toEqual([])
   released(first)
-  const already = queueWorld()
-  already.state.readable = false
-  already.state.miniplayer = true
-  already.scripts.push(pending(() => undefined))
-  const open = queueAdd(already)
-  await settle(already, 2_000)
-  expect(await open).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
-  released(already)
   const later = queueWorld()
   later.replace(listA, [])
-  later.scripts.push(
-    pending(world => {
-      world.state.readable = false
-      world.state.miniplayer = true
-    })
-  )
-  const result = queueAdd(later)
+  later.scripts.push(pending(() => undefined))
+  const edited = queueAdd(later)
   await settle(later, 2_000)
-  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  expect(await edited).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  expect(kinds(later)).toEqual([])
   released(later)
+})
+
+test("a refused add fails, and counts as breakage only when YouTube calls the request itself wrong", async () => {
+  for (const [http, body, failure, signals] of [
+    [200, { status: "STATUS_FAILED" }, { status: "STATUS_FAILED" }, []],
+    [409, { error: { code: 409 } }, { http: 409 }, []],
+    [500, { error: { code: 500 } }, { http: 500 }, []],
+    [400, { error: { code: 400 } }, { http: 400 }, ["rejected"]],
+    [404, { error: { code: 404 } }, { http: 404 }, ["rejected"]]
+  ] as const) {
+    const w = queueWorld()
+    w.replace(listA, [])
+    w.scripts.push(pending(() => answer(body, http)))
+    const result = queueAdd(w)
+    await settle(w, 2_000)
+    expect(await result).toEqual({ ok: false, reason: "failed", ...failure })
+    expect(kinds(w)).toEqual([...signals])
+    expect(w.calls.length).toBe(1)
+    released(w)
+  }
 })
 
 test("a missing resolver is unavailable and a thrown hook is never resent", async () => {
