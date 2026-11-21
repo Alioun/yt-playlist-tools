@@ -279,7 +279,7 @@ export function createReadGateway(options: { site: Site; page: PageReadPort; sig
       const changed = (detail: unknown) => {
         if (!active || disposed) return
         if (event === "navigation") confirmedMiniplayerVideo = undefined
-        if (event === "playerIdentity" && field(detail, "id") === "movie_player") confirmedMiniplayerVideo = field(read("watchPlayer"), "videoData", "video_id")
+        if (event === "playerIdentity" && field(detail, "id") === "movie_player") confirmedMiniplayerVideo = field(readIfPresent("watchPlayer", null), "videoData", "video_id")
         publish(stream)
       }
       releases.push(page.on(event, changed))
