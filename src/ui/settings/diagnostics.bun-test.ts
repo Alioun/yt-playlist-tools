@@ -128,3 +128,23 @@ test("an open Diagnostics page updates when a YouTube tab opens, without a reloa
   expect(await screen.findByRole("button", { name: "Check now" })).toBeTruthy()
   expect(screen.queryByText("No YouTube tab is open. Open one and its statuses show here.")).toBeNull()
 }, 20_000)
+
+test("Check now's result and its failure are announced politely (HEALTH-23)", async () => {
+  let runs = 0
+  diagnostics({
+    settings: { quickSave: { on: true, feedback: true, shortsShelves: false } },
+    respond: {
+      "ui.diagnostics": ({ check }) => {
+        if (check && ++runs === 2) return { kind: "refused", reason: "no-tab" }
+        return { ...noTabs, tabs: { www: true, music: false }, checks: runs ? [{ site: "www", at: runs, jobs: [{ job: "account", ok: true }, { job: "playlists", ok: false }] }] : [] }
+      }
+    }
+  })
+  const button = await screen.findByRole("button", { name: "Check now" }, { timeout: 5000 })
+  await userEvent.click(button)
+  const result = await screen.findByText("1 of 2 reads answered on YouTube.", {}, { timeout: 5000 })
+  expect(result.closest('[role="status"]')).not.toBeNull()
+  await userEvent.click(button)
+  const failed = await screen.findByText("Couldn't run the check. Try again.", {}, { timeout: 5000 })
+  expect(failed.closest('[role="status"]')).toBe(result.closest('[role="status"]'))
+}, 20_000)
