@@ -298,8 +298,9 @@ export function composeActions(deps: {
         flow.release(handle)
         return null
       },
-      "tab.settings"({ feature, playlist }, context) {
-        deps.openSettings?.(playlist ? `feature-${feature}&playlist=${playlist}` : `feature-${feature}`, context.origin.tabId)
+      "tab.settings"(target, context) {
+        const hash = "section" in target ? target.section : target.playlist ? `feature-${target.feature}&playlist=${target.playlist}` : `feature-${target.feature}`
+        deps.openSettings?.(hash, context.origin.tabId)
         return null
       },
       async "tab.skip"({ acct, request }, context) {

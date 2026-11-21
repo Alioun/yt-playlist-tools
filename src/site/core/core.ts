@@ -125,7 +125,8 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
 
   function request(due: DueNotice, presented: () => void) {
     notices.update({ due, generation: {}, text: noticeText({ due, site, unavailableActionNames: [] }, i18n),
-      detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented })
+      detailsLabel: labels.details, dismissLabel: labels.dismiss, dismiss: ignore, presented,
+      details: () => { actions.settings({ section: "diagnostics" }); notices.update(null) } })
   }
   const wanted = new Set<PageFeatureId>()
   let claiming = false
