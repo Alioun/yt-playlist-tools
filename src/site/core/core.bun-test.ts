@@ -70,8 +70,9 @@ async function startTab(view: TabView, monitor?: { claim(): TabNoticeClaim | nul
   // The background's tab.need: Registrar.ensure injects the jobs file unless the probe finds it, then confirms with the probe.
   let needs = 0, injections = 0
   const here = () => !document.dispatchEvent(new CustomEvent(pageJobsPresenceEvent, { detail: build, cancelable: true }))
-  const actions = createRpc<Pick<TabActionMessages, "tab.need">, Sender>(background, { build, deadline, contract: { "tab.need": tabActionContract["tab.need"] } })
-  actions.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: { "tab.need": request => {
+  const actions = createRpc<Pick<TabActionMessages, "tab.need" | "tab.settings">, Sender>(background, { build, deadline,
+    contract: { "tab.need": tabActionContract["tab.need"], "tab.settings": tabActionContract["tab.settings"] } })
+  actions.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: { "tab.settings": target => { monitor?.heard.push(`settings ${JSON.stringify(target)}`); return null }, "tab.need": request => {
     needs++
     if (!("jobs" in request)) return { kind: "failed" }
     if (!here()) { injections++; offerJobs(document, { site: "www", build, create: createLiveWwwJobs }) }
@@ -226,10 +227,15 @@ test("a broken card menu tells the background at a right-click, and the notice i
   expect(shadowText()).toContain("isn't working right now because YouTube changed something.")
   expect(shadowText()).toContain("Details")
   expect(heard).toEqual(["would-act card-menu", "claim", "shown 7"])
+  const details = [...document.querySelector("pp-toast-layer")?.shadowRoot?.querySelectorAll("button") ?? []].find(button => button.textContent === "Details")
+  details?.click()
+  await settle()
+  expect(heard.at(-1)).toBe(`settings {"section":"diagnostics"}`)
+  expect(shadowText()).not.toContain("isn't working")
 
   await tab.publish(due)
   await settle()
-  expect(document.querySelectorAll("pp-toast-layer")).toHaveLength(1)
+  expect(shadowText()).not.toContain("isn't working")
   expect(heard.filter(entry => entry.startsWith("shown"))).toEqual(["shown 7"])
 })
 
