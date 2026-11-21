@@ -134,6 +134,7 @@ test("renewed agreement with later key progress cannot continue the old reset", 
 test("single catalogue carries ui.clearAll and ui.change without a parallel feature route", () => {
   expect(Object.keys(uiContract).sort()).toEqual([
     "ui.accountInView",
+    "ui.accountLabel",
     "ui.add",
     "ui.addUndo",
     "ui.change",

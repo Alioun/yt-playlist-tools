@@ -7,6 +7,7 @@ import { pageContract } from "./ui-pages"
 test("one composed UI catalogue preserves first-run entries by identity", () => {
   expect(Object.keys(uiContract).sort()).toEqual([
     "ui.accountInView",
+    "ui.accountLabel",
     "ui.add",
     "ui.addUndo",
     "ui.change",

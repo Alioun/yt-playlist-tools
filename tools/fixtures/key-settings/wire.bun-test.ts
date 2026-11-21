@@ -11,6 +11,7 @@ test("one catalogue authenticates private shared key/options/feature edits and r
     await w.owner.ready()
     expect(Object.keys(uiContract).sort()).toEqual([
       "ui.accountInView",
+      "ui.accountLabel",
       "ui.add",
       "ui.addUndo",
       "ui.change",

@@ -1,4 +1,5 @@
 import { createAccounts } from "../accounts/accounts"
+import { composeAccountLabel } from "./account-label"
 import { composeActions, type Actions } from "./actions"
 import { composeAnyTab } from "./any-tab"
 import { composePlayingNow, createPlayingSave, createPlayingUndo, createPopupItem } from "./playing-now"
@@ -291,6 +292,7 @@ export function composeServices(deps: {
     firstRun: firstRunPorts(native, owner),
     transport: runtimeTransport(deps.runtime),
     rpc: { build, deadline: timerDeadline },
+    accountLabel: composeAccountLabel({ tabs, tab: tabId => browserTabs.port.get(tabId), accounts, build, now: () => Date.now() }),
     playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented }),
     add: createPlayingSave({ actions, i18n: siteI18n, consented: deps.consented }),
     addUndo: createPlayingUndo({ actions, i18n: siteI18n, consented: deps.consented }),

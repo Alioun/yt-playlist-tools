@@ -101,7 +101,7 @@
     <Mark src={markSrc} size={30} />
     <span class="text-[17px] font-semibold">{i18n.message("extShortName")}</span>
     <span class="text-muted-foreground text-[15px]">{i18n.message("set_title")}</span>
-    {#if pageState.agreed && pageState.acct}
+    {#if pageState.agreed && pageState.acct && !pageState.labelReading}
       <span class="text-muted-foreground w-full truncate text-[13.5px] sm:ml-auto sm:w-auto">{i18n.message("set_shownFor", { account: pageState.accountName() })}</span>
     {/if}
   </header>
