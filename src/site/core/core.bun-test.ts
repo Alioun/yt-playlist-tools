@@ -2,6 +2,7 @@ import { afterEach, expect, test } from "bun:test"
 import { isTabView, type TabView } from "../../shared/contracts/tab-view"
 import { tabHelloMessages, tabMessages, type TabHelloMessages, type TabMessages } from "../../shared/contracts/tabs"
 import { tabActionContract, tabAskContract, type TabActionMessages, type TabAskMessages } from "../../shared/contracts/tab-actions"
+import { tabHealthContract, type TabHealthMessages, type TabNoticeClaim } from "../../shared/contracts/tab-health"
 import { createMemoryNetwork } from "../../shared/rpc/memory"
 import { createDirectPageChannel, pageJobsPresenceEvent } from "../../shared/rpc/page-channel"
 import { createRpc, createRpcCaller } from "../../shared/rpc/rpc"
@@ -44,7 +45,18 @@ function withCardMenu(view: TabView): TabView {
   return value
 }
 
-async function startTab(view: TabView) {
+function brokenCardMenu(view: TabView): TabView {
+  const value = { ...withCardMenu(view), notices: [] as unknown[] }
+  value.statuses = value.statuses.map(status => status.feature === "card-menu" ? { ...status, state: "not-working", jobs: ["openCardMenu"], kinds: ["missing"] } : status) as never
+  if (!isTabView(value)) throw new Error("Invalid broken card-menu view")
+  return value
+}
+type NoticeMessages = Pick<TabHealthMessages, "tab.wouldAct" | "tab.claimNotice" | "tab.noticeShown">
+function shadowText(): string {
+  return [...document.querySelectorAll("*")].map(element => element.shadowRoot?.textContent ?? "").join(" ")
+}
+
+async function startTab(view: TabView, monitor?: { claim(): TabNoticeClaim | null; heard: string[] }) {
   Object.assign(window, { ytcfg: { get: (key: string) => ({ LOGGED_IN: true, DATASYNC_ID: rawIdentity } as Record<string, unknown>)[key] } })
   const channel = createDirectPageChannel()
   const page = startPage({ site: "www", build, window, document, channel, createReads: createLiveWwwReads })
@@ -65,6 +77,13 @@ async function startTab(view: TabView) {
     if (!here()) { injections++; offerJobs(document, { site: "www", build, create: createLiveWwwJobs }) }
     return { kind: here() ? "ok" : "failed" }
   } } })
+  const notices = createRpc<NoticeMessages, Sender>(background, { build, deadline, contract: {
+    "tab.wouldAct": tabHealthContract["tab.wouldAct"], "tab.claimNotice": tabHealthContract["tab.claimNotice"], "tab.noticeShown": tabHealthContract["tab.noticeShown"] } })
+  notices.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: {
+    "tab.wouldAct": ({ request }) => { monitor?.heard.push(`would-act ${request.feature}`); return null },
+    "tab.claimNotice": () => { monitor?.heard.push("claim"); return monitor?.claim() ?? null },
+    "tab.noticeShown": ({ request }) => { monitor?.heard.push(`shown ${request.token.sequence}`); return null }
+  } })
   const push = createRpcCaller<TabMessages<TabView>>(background, { build, deadline, contract: tabMessages(isTabView) })
   const core = startSiteCore({
     site: "www", build, document, channel, i18n: englishI18n(), vocabulary: vocabularyFor(wwwRoutes), deadline,
@@ -73,7 +92,7 @@ async function startTab(view: TabView) {
   })
   pageGlobal().core = core
   const stack = hitStack()
-  cleanups.push(() => page.dispose(), () => core.dispose(), () => hello.dispose(), () => actions.dispose(), () => push.dispose(), () => stack.restore())
+  cleanups.push(() => page.dispose(), () => core.dispose(), () => hello.dispose(), () => actions.dispose(), () => notices.dispose(), () => push.dispose(), () => stack.restore())
   await core.page.hello
   await settle()
   const asks = createRpcCaller<TabAskMessages>(background, { build, deadline, contract: tabAskContract })
@@ -178,4 +197,52 @@ test("a feature file whose feature isn't built records itself and draws nothing"
 test("feature files that run before their core define nothing and record nothing", () => {
   queueButtonEntry.main()
   expect(pageGlobal().loaded.size).toBe(0)
+})
+
+test("a broken card menu tells the background at a right-click, and the notice it batches shows once in the core's own notice (YT-BRK-02, UI-TOAST-16)", async () => {
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const heard: string[] = []
+  let owed: TabNoticeClaim | null = { token: { instance: "0000000000000001", sequence: 7 }, features: ["card-menu"] }
+  const tab = await startTab(broken, { heard, claim() { const claim = owed; owed = null; return claim } })
+  // happy-dom leaves this undefined; a browser reports null outside fullscreen.
+  Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true })
+  cleanups.push(() => Reflect.deleteProperty(document, "fullscreenElement"))
+  cardMenuEntry.main()
+  await settle()
+  const first = card()
+  first.element.insertAdjacentHTML("beforeend", `<ytd-menu-renderer><yt-icon-button id="button"><button aria-haspopup="true"></button></yt-icon-button></ytd-menu-renderer>`)
+  const rightClick = new MouseEvent("contextmenu", { bubbles: true, composed: true, cancelable: true })
+  first.heading.dispatchEvent(rightClick)
+  first.heading.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, composed: true, cancelable: true }))
+  await settle()
+  expect(rightClick.defaultPrevented).toBe(false)
+  expect(heard).toEqual(["would-act card-menu"])
+  expect(shadowText()).not.toContain("isn't working")
+
+  const due = { ...broken, notices: [{ kind: "not-working", features: ["card-menu"] }] }
+  if (!isTabView(due)) throw new Error("Invalid due view")
+  await tab.publish(due)
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(shadowText()).toContain("isn't working right now because YouTube changed something.")
+  expect(shadowText()).toContain("Details")
+  expect(heard).toEqual(["would-act card-menu", "claim", "shown 7"])
+
+  await tab.publish(due)
+  await settle()
+  expect(document.querySelectorAll("pp-toast-layer")).toHaveLength(1)
+  expect(heard.filter(entry => entry.startsWith("shown"))).toEqual(["shown 7"])
+})
+
+test("a broken queue button tells the background at the first hover and draws nothing (YT-Q-10)", async () => {
+  const heard: string[] = []
+  const tab = await startTab({ ...queueView({ state: "not-working" }), notices: [] }, { heard, claim: () => null })
+  startKit("www", {}, {}, { overlay: createOverlayKit })
+  queueButtonEntry.main()
+  await settle()
+  const first = card()
+  tab.stack.set([first.thumbnail, first.element])
+  first.thumbnail.dispatchEvent(new PointerEvent("pointerover", { clientX: 12, clientY: 18, bubbles: true, composed: true }))
+  await settle()
+  expect(tab.button()).toBeNull()
+  expect(heard).toEqual(["would-act queue-button"])
 })
