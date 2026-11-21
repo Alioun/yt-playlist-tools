@@ -81,7 +81,12 @@ type Entry = {
   readonly thumb?: string | undefined
   readonly listed: PickerRow["listed"]
 }
-type RowState = { readonly busy: boolean; readonly status: RowStatus; readonly check?: boolean | undefined }
+type RowState = {
+  readonly busy: boolean
+  readonly status: RowStatus
+  /** The row's own answer. `seq` orders it against membership reads: a read that started later replaces it. */
+  readonly check?: { readonly on: boolean; readonly seq: number } | undefined
+}
 
 const WATCH_LATER = "WL"
 const FRESH_MS = 5 * 60 * 1000
@@ -147,8 +152,8 @@ export class PickerModel {
     if (this.#membership !== "read") return { kind: this.#membership }
     const members = new Set(this.#members?.filter(row => row.contains).map(row => row.id))
     for (const [id, state] of this.#rowStates) {
-      if (state.check === true) members.add(id)
-      else if (state.check === false) members.delete(id)
+      if (state.check?.on === true) members.add(id)
+      else if (state.check?.on === false) members.delete(id)
     }
     return { kind: "known", count: members.size }
   })
@@ -372,6 +377,7 @@ export class PickerModel {
     this.#membersSeq = seq
     this.#members = answer.rows
     if (seq > this.#listingSeq) this.#base = "members"
+    this.#replaceOwnAnswers(seq, answer.rows)
     this.#membership = answer.rows.some(row => row.contains === null) ? "unreadable" : "read"
     return true
   }
@@ -496,10 +502,31 @@ export class PickerModel {
     return this.#ordered.find(row => row.id === id)
   }
 
-  #mark(id: PlaylistId, change: Partial<RowState>) {
+  #mark(id: PlaylistId, change: { readonly busy?: boolean; readonly status?: RowStatus; readonly check?: boolean }) {
     const states = new Map(this.#rowStates)
-    states.set(id, { busy: false, status: IDLE, ...states.get(id), ...change })
+    const before = states.get(id)
+    const on = change.check ?? before?.check?.on
+    states.set(id, {
+      busy: change.busy ?? before?.busy ?? false,
+      status: change.status ?? before?.status ?? IDLE,
+      ...(on !== undefined && { check: { on, seq: ++this.#seq } })
+    })
     this.#rowStates = states
+  }
+
+  /** A read that started after a row's own answer knows better than that answer. A busy row keeps its answer. */
+  #replaceOwnAnswers(seq: number, rows: readonly MembershipRow[]) {
+    const states = new Map(this.#rowStates)
+    let replaced = false
+    for (const row of rows) {
+      const state = states.get(row.id)
+      if (row.contains === null || !state?.check || state.busy || state.check.seq > seq) continue
+      const { kind } = state.status
+      if (kind === "added" || kind === "already-in" || kind === "removed") states.delete(row.id)
+      else states.set(row.id, { busy: false, status: state.status })
+      replaced = true
+    }
+    if (replaced) this.#rowStates = states
   }
 
   #order(): readonly PickerRow[] {
@@ -558,7 +585,7 @@ export class PickerModel {
 
   #check(id: PlaylistId, state: RowState | undefined, facts: ReadonlyMap<PlaylistId, MembershipRow["contains"]> | null): PickerRow["check"] {
     if (this.mode !== "save") return this.#chosen.has(id) ? "on" : "off"
-    if (state?.check !== undefined) return state.check ? "on" : "off"
+    if (state?.check) return state.check.on ? "on" : "off"
     if (this.#membership === "checking") return "loading"
     return facts?.get(id) ? "on" : "off"
   }
