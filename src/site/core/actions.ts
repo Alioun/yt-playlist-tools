@@ -7,7 +7,8 @@ import {
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
-import { tabHealthContract, type TabHealthMessages, type TabHealthReport } from "../../shared/contracts/tab-health"
+import { tabHealthContract, type TabHealthMessages, type TabHealthReport, type TabNoticeClaim, type TabNoticeToken } from "../../shared/contracts/tab-health"
+import type { PageFeatureId } from "../../shared/contracts/tab-view"
 import type { Transport } from "../../shared/rpc/transport"
 
 /** No answer came back, so the background may or may not have acted. A write is never retried (ARC-MSG-08). */
@@ -29,6 +30,12 @@ export type TabActions = {
   destination(change: TabDestinationChange): Promise<DestinationAnswer>
   /** Breakage evidence for the Monitor, batched by the site's health reporter (HEALTH-28). Settles once the background has it. */
   health(reports: readonly TabHealthReport[]): Promise<boolean>
+  /** A feature that isn't working was about to act here, so the Monitor may owe its notice (YT-BRK-02). */
+  wouldAct(feature: PageFeatureId): void
+  /** Takes the not-working notice this tab's view says is due, or null when another tab has it. */
+  claimNotice(): Promise<TabNoticeClaim | null>
+  /** The claimed notice is on screen, so no tab shows it again this browser session. */
+  noticeShown(token: TabNoticeToken): void
   /** Tells the background a listed channel's title or @handle changed (YT-CF-10). */
   channelLabel(channel: TabChannelLabel): void
   /** Opens Settings at a feature's playlist, for a failure toast's **Settings** (YT-ADD-29). */
@@ -98,6 +105,9 @@ export function createTabActions(options: {
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
     channelLabel(channel) { void call("tab.channelLabel", { channel }, null) },
     health: reports => call("tab.health", { reports }, false),
+    wouldAct(feature) { void call("tab.wouldAct", { feature }, null) },
+    claimNotice: () => call("tab.claimNotice", null, null),
+    noticeShown(token) { void call("tab.noticeShown", { token }, null) },
     settings(target) { void rpc.call("tab.settings", target) },
     skip: async (video, skip) => (await call("tab.skip", { video, skip }, null))?.kind === "done",
     pause: async paused => (await call("tab.pause", { paused }, null))?.kind === "done",

@@ -93,7 +93,7 @@ export async function cardMenuHarness(
     signedIn?: boolean
     gate?: Promise<unknown>
     run?: (job: Job, context?: { target?: Element }) => Promise<unknown>
-    notice?: CardMenuServices["notice"]
+    notices?: CardMenuServices["notices"]
   } = {}
 ) {
   document.body.innerHTML = markup
@@ -110,7 +110,7 @@ export async function cardMenuHarness(
   const source = syntheticViewSource(options.initial === undefined ? view() : options.initial)
   const scopes: Scope[] = []
   const errors: unknown[] = []
-  const requests: DueNotice[] = []
+  const requests: string[] = []
   const host = createFeatureHost<"www", CardMenuServices>({
     site: "www",
     createScope() {
@@ -127,9 +127,9 @@ export async function cardMenuHarness(
       document,
       items: { recognise: recogniseWwwItem, linkedVideo },
       page: page.link,
-      notice: options.notice ?? {
-        request: due => {
-          requests.push(due)
+      notices: options.notices ?? {
+        wouldAct: feature => {
+          requests.push(feature)
         }
       }
     }),

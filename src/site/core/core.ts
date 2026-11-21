@@ -1,6 +1,6 @@
 import type { BuildId, DiagnosticVocabulary, JobOf, Site } from "../../shared/contracts"
 import { isMembershipRow } from "../../shared/contracts/jobs"
-import { isTabView, type DueNotice, type TabView } from "../../shared/contracts/tab-view"
+import { isTabView, type DueNotice, type PageFeatureId, type TabView } from "../../shared/contracts/tab-view"
 import { noticeText, siteFeedbackText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
 import type { PageChannel } from "../../shared/rpc/page-channel"
@@ -35,7 +35,7 @@ export type CoreServices<S extends Site> = {
   readonly i18n: I18n
   /** User actions through the background: adds, removals, Undo, the playlist list and the popovers (06 §6.8.2). */
   readonly actions: TabActions
-  readonly notice: { request(due: DueNotice): void }
+  /** A feature that isn't working calls this when it would act; the Monitor decides whether this tab shows its notice (YT-BRK-02). */
   readonly notices: { wouldAct(feature: SiteFeatureId<S>): void }
   /** Breakage a feature sees itself, for the Monitor (HEALTH-01). */
   readonly health: SiteHealth
@@ -123,9 +123,23 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     return mount.mount(component, props, where)
   } }
 
-  function request(due: DueNotice) {
+  function request(due: DueNotice, presented: () => void) {
     notices.update({ due, generation: {}, text: noticeText({ due, site, unavailableActionNames: [] }, i18n),
-      detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented: ignore })
+      detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented })
+  }
+  const wanted = new Set<PageFeatureId>()
+  let claiming = false
+  // The view lists a due notice once the Monitor batched it; only a tab whose feature would act claims it.
+  async function deliver() {
+    if (claiming || !link.view?.notices.some(notice => notice.features.some(id => wanted.has(id)))) return
+    claiming = true
+    const claim = await actions.claimNotice()
+    if (!claim || root.disposed) { claiming = false; return }
+    const showing = notices.read()?.due.features ?? []
+    request({ kind: "not-working", features: [...new Set([...showing, ...claim.features])] }, () => {
+      claiming = false
+      actions.noticeShown(claim.token)
+    })
   }
   const thisVideo = createThisVideoChannel()
   // The popup's This video names the channel, for its Allow and Deny, so the channel is read only when asked (YT-CF-15).
@@ -138,10 +152,9 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   }
   const services: CoreServices<S> = {
     document, page, items, keys, i18n, actions, health, thisVideo,
-    notice: { request },
     notices: { wouldAct(feature) {
-      const due = link.view?.notices.find(notice => notice.features.some(id => id === feature))
-      if (due) request(due)
+      if (!wanted.has(feature)) { wanted.add(feature); actions.wouldAct(feature) }
+      void deliver()
     } }
   }
   const host = createFeatureHost<S, CoreServices<S>>({
@@ -178,6 +191,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     }
   }
   root.add(link.onView(view => { if (view === null && link.state.kind === "disposed") dispose() }))
+  root.add(link.onView(() => void deliver()))
   return {
     ...services, site, build, root, pointer, link,
     get disposed() { return disposed },

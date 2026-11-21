@@ -1,7 +1,4 @@
 import { afterEach, expect, spyOn, test } from "bun:test"
-import { readFile } from "node:fs/promises"
-import type { DueNotice } from "../../../shared/contracts/tab-view"
-import { createNoticeOwner, type NoticePresentation } from "../../core/notice"
 import { Scope } from "../../core/scope"
 import { deferred } from "../../../../tools/fixtures/page-link/support"
 import { cardBox, cardMenuHarness, layOut, menuButtonBox, rightClickPoint, videoA, videoB, view } from "../../../../tools/fixtures/site-card-menu/harness"
@@ -350,37 +347,17 @@ test("off, on and host disposal each own a fresh scope", async () => {
   expect(f.click(f.byId("empty")).defaultPrevented).toBe(false)
 })
 
-test("a not-working card menu keeps the browser menu and requests the core notice once", async () => {
+test("a not-working card menu keeps the browser menu and tells the core at each right-click", async () => {
   const f = await fixture({ initial: view({ broken: true }) })
   f.start()
   expect(f.click(f.byId("empty")).defaultPrevented).toBe(false)
   expect(f.click(f.byId("thumb-img")).defaultPrevented).toBe(false)
   await f.settle()
-  expect(f.requests).toEqual([{ kind: "not-working", features: ["card-menu"] }])
+  expect(f.requests).toEqual(["card-menu", "card-menu"])
   expect(f.menuCalls()).toHaveLength(0)
   f.source.publish(view())
-  f.source.publish(view({ broken: true }))
-  f.click(f.byId("empty"))
+  f.click(f.byId("thumb-img"))
   expect(f.requests).toHaveLength(2)
-})
-
-test("the notice request reaches the actual NoticeOwner with existing localized copy", async () => {
-  const messages: Record<string, { message: string }> = JSON.parse(await readFile("src/public/_locales/en/messages.json", "utf8"))
-  const text = messages.notice_www_one?.message.replace("$FEATURES$", messages.notice_feature_card_menu?.message ?? "") ?? ""
-  const owned = new Scope({ document, onError: () => {} })
-  cleanup.push(() => owned.dispose())
-  const shown: NoticePresentation[] = []
-  const owner = createNoticeOwner({ scope: owned, onError: () => {}, initial: { present: notice => { shown.push(notice); return () => {} } } })
-  const callbacks: string[] = []
-  const request = (due: DueNotice) => owner.update({ due, generation: {}, text, detailsLabel: messages.toast_details?.message ?? "",
-    dismissLabel: messages.toast_dismiss?.message ?? "", details: () => { callbacks.push("details") },
-    dismiss: () => { callbacks.push("dismiss") }, presented: () => { callbacks.push("presented") } })
-  const f = await fixture({ initial: view({ broken: true }), notice: { request } })
-  f.start()
-  f.click(f.byId("empty"))
-  expect(shown.map(notice => notice.text)).toEqual(["Right-click for the video menu isn't working right now because YouTube changed something. Use YouTube's own buttons for now."])
-  shown[0]?.presented()
-  expect(callbacks).toEqual(["presented"])
 })
 
 test("importing the feature reaches no UI kit, toaster, Svelte runtime, picker, notice presenter or copy of the core's Items", async () => {
