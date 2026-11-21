@@ -199,6 +199,20 @@ test("stale targets and unrecognised cards send nothing", async () => {
   released(plain)
 })
 
+test("an add still confirms when its entry takes three seconds to show in the queue's data", async () => {
+  const w = queueWorld()
+  w.replace(listA, [])
+  w.scripts.push(pending(() => answer(added("entry-1"))))
+  const result = queueAdd(w)
+  await settle(w, 2_900)
+  expect(w.add(videoA)).toBe("entry-1")
+  await settle(w, 200)
+  expect(await result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
+  expect(kinds(w)).toEqual([])
+  expect(w.calls.length).toBe(1)
+  released(w)
+})
+
 test("an add whose outcome is unknown is unconfirmed and is never called a timeout", async () => {
   const first = queueWorld()
   first.scripts.push(pending(() => undefined))
