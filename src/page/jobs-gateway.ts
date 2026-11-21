@@ -237,7 +237,6 @@ export function createJobsGateway(options: {
         spec,
         scope,
         clock,
-        budget: scope.remaining() / Math.max(1, candidates.length - index),
         context: { check, notice: kind => requestSignal(kind, route, job.kind), observe: body => guard.observe(body) },
         observe: body => guard.observe(body)
       })
