@@ -41,6 +41,8 @@ export function createWwwQueue(options: {
   routes: QueueRoutes
   card(target: Element): unknown
   check(): JobFailure | null
+  /** Whether a refusal counts as breakage. The rule is the gateway's, so queue edits and playlist requests share it. */
+  rejects(failure: JobFailure): boolean
   notice(kind: BreakageKind, route: RequestRoute | PageUiRoute, raw?: unknown): void
 }) {
   const { port, clock, routes, notice } = options
@@ -208,9 +210,8 @@ export function createWwwQueue(options: {
     }
     return undefined
   }
-  /** A refusal is breakage only when YouTube calls the request itself wrong. A failed status, a conflict or a server error isn't. */
   function refused(failure: JobFailure, route: RequestRoute): void {
-    if (failure.reason === "failed" && (failure.http === 400 || failure.http === 404)) notice("rejected", route)
+    if (options.rejects(failure)) notice("rejected", route)
   }
   function notSent(sent: Dispatched, route: RequestRoute): JobFailure | undefined {
     if (sent.kind === "blocked") return sent.failure

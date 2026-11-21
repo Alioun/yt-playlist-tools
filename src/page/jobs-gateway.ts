@@ -89,6 +89,11 @@ export function createJobsGateway(options: {
       lastSeen: at
     })
   }
+  /** A refusal is breakage when YouTube calls our own request wrong, or turns a signed-in page away. A failed status, a conflict or a server error isn't. */
+  function rejects(failure: JobFailure): boolean {
+    const { http } = failure
+    return failure.reason === "failed" && (http === 400 || http === 404 || ((http === 401 || http === 403) && reads.account?.signedIn === true))
+  }
   function item(target: Element | undefined): ItemInfo | undefined {
     if (!target) return undefined
     const raw = reads.read("targetData", "itemInfo", target)
@@ -138,6 +143,7 @@ export function createJobsGateway(options: {
           routes: routesForQueue,
           card: target => page.read("targetData", target),
           check: () => guard.check(false),
+          rejects,
           notice(kind, route, raw) {
             requestSignal(kind, route, queueJobs.find(id => table[id].some(entry => entry.id === route.id)) ?? "queueAdd", raw)
           }
@@ -260,7 +266,7 @@ export function createJobsGateway(options: {
       const failure = answerFailure(http, body)
       const correlatedBatch = job.kind === "addBatch" && http >= 200 && http < 300 && field(body, "error") === undefined && Array.isArray(field(body, "playlistEditResults"))
       if (failure && !(correlatedBatch && failure.reason === "failed" && failure.status === "STATUS_FAILED")) {
-        if (failure.reason !== "signedOut" && (http === 400 || http === 404 || ((http === 401 || http === 403) && reads.account?.signedIn))) requestSignal("rejected", route, job.kind)
+        if (rejects(failure)) requestSignal("rejected", route, job.kind)
         return fail(failure)
       }
       return { kind: "answer", answer: result.answer, route, fallback: index > 0 }
