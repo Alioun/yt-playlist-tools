@@ -1073,7 +1073,7 @@ type GatherRecord = {
 - **HEALTH-07** Status is per feature: each feature has one status per site and per tab, **working**, **partly working** or **not working**, derived from what the feature declares it needs (required jobs, optional jobs, page anchors). (R50)
   - **Not working:** a required job has no route left, or a required anchor is missing.
   - **Partly working:** only an optional job is out, or, on YouTube Music, some of the feature's actions are unavailable while others still work. The status detail names what's out, those actions included. An unavailable action's buttons hide in that tab ([YM-FAIL-4](03-youtube-music.md#14-failures-and-breakage); ticket 26), but its key stays caught, and each press answers "{Action} isn't working right now. The popup shows why." ([YM-KEY-12](03-youtube-music.md#12-keys-quick-action-shortcuts)), so a key never does nothing silently (ticket 18; R68).
-  - Partly-working examples: the picker's check marks, queue confirmation, YouTube's or YouTube Music's own toast showing after a quiet queue edit (`quiet-route-noisy`, R40), account labels, playlist thumbnails, the player-bar Save anchor, auto-add failing to measure some videos, shortcuts that can't recognise pointed-at cards but still work on the current video, and Quick actions with Play next unavailable.
+  - Partly-working examples: the picker's check marks, queue confirmation, YouTube's or YouTube Music's own toast showing after a quiet queue edit (`quiet-route-noisy`, R40), account labels, playlist thumbnails, refreshing the playlist list (the `playlists` job), the player-bar Save anchor, auto-add failing to measure some videos, shortcuts that can't recognise pointed-at cards but still work on the current video, and Quick actions with Play next unavailable.
   - Card recognition is required for quick-save, the queue button and the card menu, and optional for playlist shortcuts. (R40, R50, R68)
 - **HEALTH-08** **The whole site:** if the site core can't start (`ytcfg`, `ytd-app` or `ytmusic-app` is missing), every feature on that site is not working.
 - **HEALTH-09** **Account keys missing** (`DATASYNC_ID` or `LOGGED_IN`): auto-add, playlist shortcuts, quick-save, and YouTube Music's Save and Like stop. Add to queue, the card menu and YouTube Music's queue actions carry on.
@@ -1123,7 +1123,7 @@ type GatherRecord = {
 | The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 | Popup strip | {Feature} isn't working in this tab because YouTube changed something. / {N} features aren't working in this tab. / {Feature} is partly working in this tab. |
 | Settings, not working | Not working right now: YouTube changed something it relies on. |
-| Settings, partly working | Partly working: {gap}. For example "it can't show where a video is already saved", "it can't confirm queue adds", "it can't follow some videos' progress", and on YouTube Music in Chrome "it can't tell whether YouTube Music is casting". On YouTube Music, {gap} names the unavailable actions (R50). |
+| Settings, partly working | Partly working: {gap}. For example "it can't show where a video is already saved", "it can't refresh the playlist list", "it can't confirm queue adds", "it can't follow some videos' progress", and on YouTube Music in Chrome "it can't tell whether YouTube Music is casting". On YouTube Music, {gap} names the unavailable actions (R50). |
 
   The copy matches [YT-BRK-06](02-youtube.md#213-when-youtube-changes-something), 03's [§14](03-youtube-music.md#14-failures-and-breakage) and [UI-TOAST-15](05-ui.md#the-not-working-notice), which own it on their sites. (R4, R50, R68, R75)
 
@@ -1131,7 +1131,7 @@ type GatherRecord = {
 
 - **HEALTH-21** **Nothing is ever sent:** no error reporting, analytics or crash upload, opt-in or not. Fixes reach users only as releases; there's no remote config or kill switch ([ADR-0005](../../../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md)). The one thing the user can send is a problem report they start, see and submit themselves (HEALTH-27; R89).
 - **HEALTH-22** **Settings › Diagnostics** loads only when shown. It holds:
-  - each feature's status per site;
+  - each feature's status per site, one row for each site whose open tabs report it: "Working", "Partly working" or "Not working". A feature no open tab reports reads "Not checked", and one that can't run yet reads "Can't run yet". A successful **Check now** refreshes the rows;
   - **Check now**;
   - the diagnostics report, shown in full, with **Copy**;
   - **Known problems**, a plain link to the public issues labelled `youtube-change`, and **Report a problem**, which opens HEALTH-27's chooser. There's no support e-mail (R89);

@@ -987,7 +987,7 @@ interface Monitor {
 ```
 
 - **What it hides:**
-  - `deriveStatus(registry health, signals) → statuses`, which is pure. Status is per feature, per site and tab ([HEALTH-07](04-features-accounts-data.md#52-status)). A YouTube Music feature with some actions unavailable in a tab is *partly working*, and its status detail names those actions, from the registry's `actions` (ARC-REG-01). That detail is what an unavailable action's key points to: its buttons hide in that tab, but the key stays caught and answers "{Action} isn't working right now. The popup shows why." (ARC-ACC-21) (R50, R68);
+  - `deriveStatus(registry health, signals) → statuses`, which is pure. Status is per feature, per site and tab ([HEALTH-07](04-features-accounts-data.md#52-status)). A `playlists` answer the parser doesn't recognise, or a rejection, takes that job out at once, because both of its routes share one parser and a rejection ends the request. A YouTube Music feature with some actions unavailable in a tab is *partly working*, and its status detail names those actions, from the registry's `actions` (ARC-REG-01). That detail is what an unavailable action's key points to: its buttons hide in that tab, but the key stays caught and answers "{Action} isn't working right now. The popup shows why." (ARC-ACC-21) (R50, R68);
   - the thresholds;
   - notice-once memory;
   - signals from private tabs, kept in memory only.
@@ -1191,7 +1191,7 @@ type FeatureDef = {
 - **ARC-REG-11. Gather tabs' registry entry** (R120, R133, R136):
   - `id: "gather"`, `setting: "gather"`, `footprint: "none"` ("Doesn't change the page").
   - `pages.www` is ARC-MAN-24's entry, with no `file`. `check:budget` gives it no row, like ARC-REG-10's features, and the `registry` guard expects none in `perf-budget.json`.
-  - `health.www = { required: [], optional: ["queueAddList", "membership", "addBatch", "removeBatch"], anchors: [] }`. YouTube's player needs no job; the Gather module's own check reports its `no-effect` (ARC-ACC-74). The Monitor turns these into a status per destination ([HEALTH-29](04-features-accounts-data.md#52-status)).
+  - `health.www = { required: [], optional: ["queueAddList", "membership", "addBatch", "removeBatch"], anchors: [] }`. YouTube's player needs no job; the Gather module's own check reports its `no-effect` (ARC-ACC-74). While Gather tabs targets a playlist, the Monitor adds `playlists` to the optional jobs, and a lost `playlists` job counts against the playlist destination. The Monitor turns these into a status per destination ([HEALTH-29](04-features-accounts-data.md#52-status)).
 - **The plug-in contract:**
   - **ARC-REG-04.** A feature's entrypoint is one line: `export default defineUnlistedScript(() => definePageFeature(quickSave))`.
   - **ARC-REG-05.** `start(ctx)` runs when the tab view says the feature is on. Everything the feature adds goes through `ctx.scope`.
