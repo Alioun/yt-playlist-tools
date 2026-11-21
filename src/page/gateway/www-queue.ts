@@ -30,6 +30,9 @@ type Dispatched =
 export const confirmWindow = 2_000
 export const menuWindow = 1_000
 const confirmChecks = [0, 150, 400, 800, 1_300, 2_000]
+// An add is two requests in a row before its entry shows. Live that takes about 1.1 s, and took 2.9 s on a slow page.
+const addWindow = 5_000
+const addChecks = [...confirmChecks, 3_000, 4_000, 5_000]
 const listChecks = [0, 250, 750, 1_500, 3_000, 5_000, 7_500]
 const removalAnswer = 1_500
 const laneMargin = 100
@@ -272,7 +275,7 @@ export function createWwwQueue(options: {
       let failure: JobFailure | undefined
       let undo: { listId: QueueListId; setVideoId: SetVideoId } | undefined
       let confirmed = false
-      await observe(scope, confirmChecks, confirmWindow, () => {
+      await observe(scope, addChecks, addWindow, () => {
         const outcome = sent.outcome()
         failure = rejected(outcome)
         if (failure) return true
