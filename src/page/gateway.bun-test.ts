@@ -244,6 +244,24 @@ test("a player identity event before the player can be read records no breakage 
   g.dispose()
 })
 
+test("a page whose first navigation event came before the page half listened records no breakage signal", async () => {
+  const p = scriptedPage({ navigation: undefined, location: { pathname: "/results", search: "?search_query=zoo" } }),
+    signals: BreakageSignal[] = [],
+    values: unknown[] = []
+  const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10, signals: value => signals.push(value) })
+  const stop = g.watch("nav", value => values.push(value))
+  p.emit("playerIdentity", { id: "movie_player" })
+  expect(await g.run({ kind: "videoInfo" })).toEqual<unknown>(unavailable)
+  expect(values).toEqual([])
+  expect(signals).toEqual([])
+  p.values.navigation = { unknownShape: true }
+  p.emit("navigation")
+  expect(signals.length).toBeGreaterThan(0)
+  expect(signals.every(signal => signal.kind === "unrecognised" && signal.watchId === readWatches.navigation)).toBe(true)
+  stop()
+  g.dispose()
+})
+
 test("ordinary and Shorts ads emit only the ad variant without content reads", () => {
   for (const ad of ["class", "presenting", "event", "shorts-navigation"] as const) {
     const shorts = ad === "shorts-navigation"
