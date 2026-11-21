@@ -585,6 +585,47 @@ describe("refresh and freshness", () => {
   })
 })
 
+describe("YouTube Music check marks", () => {
+  const added: AddAnswer = { kind: "added", entry: entry("sv-road"), undo: undoing() }
+
+  test("a refresh that reads after a tick replaces that tick's check mark", async () => {
+    const { picker, ledger } = await openedSave("music")
+    const ticked = picker.tick(ROAD)
+    ledger.answer("add", added)
+    await ticked
+    expect(checked(picker)).toEqual([ROAD, MIX])
+    const refreshed = picker.refresh()
+    ledger.answer("membership", { kind: "read", rows: MEMBERS })
+    expect(await refreshed).toEqual({ kind: "refreshed" })
+    expect(row(picker, ROAD)).toMatchObject({ check: "off", status: { kind: "idle" } })
+    expect(picker.membership).toEqual({ kind: "known", count: 1 })
+  })
+
+  test("a refresh that started before a tick answered keeps that tick's check mark", async () => {
+    const { picker, ledger } = await openedSave("music")
+    const refreshed = picker.refresh()
+    const ticked = picker.tick(ROAD)
+    ledger.answer("add", added)
+    await ticked
+    ledger.answer("membership", { kind: "read", rows: MEMBERS })
+    await refreshed
+    expect(checked(picker)).toEqual([ROAD, MIX])
+    expect(picker.membership).toEqual({ kind: "known", count: 2 })
+  })
+
+  test("a refresh keeps the check mark of a row whose removal is still under way", async () => {
+    const { picker, ledger } = await openedSave("music")
+    const unticked = picker.untick(MIX)
+    const refreshed = picker.refresh()
+    ledger.answer("membership", { kind: "read", rows: MEMBERS })
+    await refreshed
+    expect(row(picker, MIX)).toMatchObject({ busy: true, check: "off" })
+    ledger.answer("remove", { kind: "removed", undo: undoing() })
+    await unticked
+    expect(row(picker, MIX)).toMatchObject({ busy: false, check: "off", status: { kind: "removed" } })
+  })
+})
+
 describe("creating", () => {
   test("titles are trimmed, required, at most 150 characters and free of < and >", () => {
     expect(titleProblem("")).toBe("required")
