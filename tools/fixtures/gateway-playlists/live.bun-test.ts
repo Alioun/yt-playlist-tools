@@ -1,4 +1,4 @@
-import { test } from "bun:test"
+import { afterEach, test } from "bun:test"
 import { GlobalRegistrator } from "@happy-dom/global-registrator"
 import { createLiveWwwRequests } from "../../../src/page/adapters/live-www"
 import { createLiveMusicRequests } from "../../../src/page/adapters/live-music"
@@ -17,14 +17,25 @@ const wwwWindow = new Proxy(window, {
     return key === "location" ? { origin: "https://www.youtube.com" } : Reflect.get(target, key)
   }
 })
+function wwwWindowAt(now: () => number) {
+  return new Proxy(window, {
+    get(target, key) {
+      return key === "location" ? { origin: "https://www.youtube.com" } : key === "performance" ? { now } : Reflect.get(target, key)
+    }
+  })
+}
 const musicWindow = new Proxy(window, {
   get(target, key) {
     return key === "location" ? { origin: "https://music.youtube.com" } : Reflect.get(target, key)
   }
 })
-function installRoot(root: unknown) {
-  Object.defineProperty(window, "default_kevlar_base", { configurable: true, value: root })
+const roots = ["default_kevlar_base", "default_base_module_set", "_F_toggles_default_base_module_set", "default_unrelated"]
+function installRoot(root: unknown, name = "default_kevlar_base") {
+  Object.defineProperty(window, name, { configurable: true, value: root })
 }
+afterEach(() => {
+  for (const name of roots) Reflect.deleteProperty(window, name)
+})
 function spec() {
   const value = requestFor({ kind: "add", playlistId: playlist, videoId: video }, false)
   check(value, "Missing live dummy spec")
@@ -42,9 +53,10 @@ function callback(options: unknown, kind: "onSuccess" | "onServerError", ...args
   Reflect.apply(method, undefined, args)
 }
 
-test("www resolver discovers constructor singletons, reports ambiguity and rescans only once", async () => {
+test("www resolver discovers constructor singletons, reports ambiguity and finds a replacement when its own has gone", async () => {
   const page = scriptedPage(),
     observations: number[] = []
+  let at = 0
   const first = {
     resolveCommand(_cmd: unknown, options: unknown) {
       observations.push(1)
@@ -68,7 +80,7 @@ test("www resolver discovers constructor singletons, reports ambiguity and resca
   }
   const root = { arbitraryBuildKey: CommandResolver, anotherBuildKey: { instance: second } }
   installRoot(root)
-  const port = createLiveWwwRequests({ window: wwwWindow, document, page: page.port }),
+  const port = createLiveWwwRequests({ window: wwwWindowAt(() => at), document, page: page.port }),
     ctx = context()
   check(port.has("command"), "Resolver probe did not find shape")
   const one = await port.send("command", spec(), ctx.port)
@@ -77,16 +89,79 @@ test("www resolver discovers constructor singletons, reports ambiguity and resca
   one.cancel()
   check(ctx.notices.includes("resolver-ambiguous"), "Ambiguous resolver was not reported after probe")
   Reflect.deleteProperty(first, "resolveCommand")
+  at = 1_000
   const two = await port.send("command", spec(), ctx.port)
   check(two.kind === "pending", "Vanished resolver was not rediscovered")
   await two.answer
   two.cancel()
   Reflect.deleteProperty(second, "resolveCommand")
   Reflect.set(root, "thirdBuildKey", { instance: third })
-  const gone = await port.send("command", spec(), ctx.port)
-  check(gone.kind === "not-sent", "Resolver was rediscovered more than once")
-  same(observations, [1, 2], "Resolver used a fixed key or wrong instance")
-  Reflect.deleteProperty(window, "default_kevlar_base")
+  at = 2_000
+  const three = await port.send("command", spec(), ctx.port)
+  check(three.kind === "pending", "A second replacement was never found")
+  await three.answer
+  three.cancel()
+  same(observations, [1, 2, 3], "Resolver used a fixed key or wrong instance")
+})
+
+test("a missing resolver is looked for again later, but not on every call", async () => {
+  const page = scriptedPage()
+  const seen = { at: 0, scans: 0, sent: 0 }
+  const scans = () => seen.scans
+  const instance = {
+    resolveCommand(_cmd: unknown, options: unknown) {
+      seen.sent++
+      callback(options, "onSuccess", added())
+    }
+  }
+  const root = new Proxy<Record<string, unknown>>(
+    {},
+    {
+      ownKeys(target) {
+        seen.scans++
+        return Reflect.ownKeys(target)
+      }
+    }
+  )
+  const port = createLiveWwwRequests({ window: wwwWindowAt(() => seen.at), document, page: page.port }),
+    ctx = context()
+  check(!port.has("command"), "A resolver was found before YouTube made its module root")
+  installRoot(root)
+  check(!port.has("command") && scans() === 0, "A miss was not remembered for a moment")
+  seen.at = 300
+  check(!port.has("command") && scans() === 1, "The module root was not scanned once YouTube made it")
+  root.buildKey = { instance }
+  for (let call = 0; call < 50; call++) check(!port.has("command"), "A resolver was found without looking")
+  same(scans(), 1, "A missing resolver was scanned for on every call")
+  seen.at = 600
+  const found = await port.send("command", spec(), ctx.port)
+  check(found.kind === "pending" && seen.sent === 1 && scans() === 2, "A resolver that arrived late was never found")
+  await found.answer
+  found.cancel()
+  for (let call = 0; call < 50; call++) check(port.has("command"), "A found resolver was lost")
+  same(scans(), 2, "A found resolver was scanned for again")
+})
+
+test("the resolver is found under whichever module root YouTube shipped", async () => {
+  const page = scriptedPage(),
+    ctx = context()
+  let sent = 0
+  const instance = {
+    resolveCommand(_cmd: unknown, options: unknown) {
+      sent++
+      callback(options, "onSuccess", added())
+    }
+  }
+  installRoot({ buildKey: { instance } }, "default_base_module_set")
+  installRoot({ buildKey: { instance: { resolveCommand() {} } } }, "_F_toggles_default_base_module_set")
+  installRoot("not a module root", "default_unrelated")
+  const port = createLiveWwwRequests({ window: wwwWindow, document, page: page.port })
+  check(port.has("command"), "The resolver was only looked for under one root name")
+  const one = await port.send("command", spec(), ctx.port)
+  check(one.kind === "pending" && sent === 1, "The command did not reach the resolver under the other root")
+  await one.answer
+  one.cancel()
+  same(ctx.notices, [], "A lookalike outside the module roots was counted as a second resolver")
 })
 
 test("YouTube hands the command back before its answer, and the answer is the one that is read", async () => {
