@@ -344,6 +344,7 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
     - the list still works, and every row YouTube Music's answer left out shows the unread box;
     - it shows "To see where this song already is, open YouTube in another tab.";
     - this is an expected limit, not breakage. Nothing is recorded, and Quick actions stays working.
+  - **A youtube.com tab on that account was asked and didn't answer:** that is a failed check, not the missing-tab limit. It shows "Couldn't check where this song already is", every row YouTube Music's answer left out shows the unread box, and Quick actions is partly working. A tab that answered as another account counts as no tab for this one.
   - **A youtube.com tab was asked,** and some rows still have no answer:
     - only those rows show the unread box. The rest keep their check marks;
     - it shows "Already in {N} playlists" for the rows that were read, and "Couldn't check {N} playlists" for the rest;

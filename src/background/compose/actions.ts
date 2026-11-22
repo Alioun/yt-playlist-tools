@@ -274,8 +274,13 @@ export function composeActions(deps: {
     const [current] = await tabs.known({ kind: "tab", tabId: tab.tabId })
     if (current !== known) return { kind: "account-changed" }
     if (outcome?.kind === "no-tab") {
-      await health("noYouTubeTab")
-      return { kind: "no-youtube-tab" }
+      // A tab the registry holds for this account was tried and didn't serve: a failed read, not the limit of having no
+      // YouTube tab. A tried tab that answered as another account isn't held for this one.
+      const held = await tabs.known({ kind: "account", acct, scope: tab.incognito ? "private" : "normal" })
+      if (!held.some(row => outcome.attempted.includes(row.tabId))) {
+        await health("noYouTubeTab")
+        return { kind: "no-youtube-tab" }
+      }
     }
     const rows = outcome?.kind === "result" && outcome.result.ok ? outcome.result.data.filter(row => row.id !== "WL") : null
     const listed = new Set(rows?.map(row => row.id))
