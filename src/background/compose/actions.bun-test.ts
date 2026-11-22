@@ -18,7 +18,7 @@ import type { ToastContent } from "../../site/kit/toaster/types"
 import type { NavData, PlayerData } from "../../shared/contracts/streams"
 import type { ToastPlan } from "../../shared/rules/outcomes"
 import type { Playlists } from "../playlists/playlists"
-import type { RoutingNeed, Tabs, TabJobOutcome } from "../tabs/ports"
+import type { RoutingNeed, Tabs, TabJobOutcome, ViewTarget } from "../tabs/ports"
 import type { KnownTab } from "../tabs/tabs"
 import type { NativeSender } from "../adapters/sender-origin"
 import type { Job, JobInvocation, JobResult, MembershipRow, RouteId, SetVideoId } from "../../shared/contracts"
@@ -88,7 +88,8 @@ function world(
     pageAccount?: AccountKey | null
     prepare?: (initial: Seed) => void
     /** `rows`: YouTube Music's own answer, or how its read failed. `fallback`: the YouTube tab's answer, absent when no YouTube tab is open. */
-    music?: { rows: MembershipRow[] | "unavailable" | "unconfirmed" | "timeout"; fallback?: MembershipRow[] | "failed"; incognito?: boolean }
+    /** `youtube`: the account of a YouTube tab the registry holds, which the lookup tries and gets no answer from. */
+    music?: { rows: MembershipRow[] | "unavailable" | "unconfirmed" | "timeout"; fallback?: MembershipRow[] | "failed"; incognito?: boolean; youtube?: AccountKey }
     /** Where the Music picker's health records go, beside the list the world keeps. */
     health?: ReturnType<typeof createMusicMembershipHealth>
   } = {}
@@ -106,8 +107,10 @@ function world(
   const fallbackNeeds: RoutingNeed[] = []
   const membershipHealth: string[] = []
   const tabs = {
-    async known() {
-      return [known]
+    async known(target: ViewTarget) {
+      const youtube = options.music?.youtube
+      const held = youtube ? [known, { tabId: 10, acct: youtube, privateTab: known.privateTab } as unknown as KnownTab] : [known]
+      return target.kind === "account" ? held.filter(row => row.acct === target.acct) : [known]
     },
     async runIn<J extends Job>(tabId: number, invocation: JobInvocation<J>): Promise<TabJobOutcome<J>> {
       if (options.music && invocation.job.kind === "membership") {
@@ -120,6 +123,7 @@ function world(
     async serve(_invocation: unknown, need: RoutingNeed) {
       fallbackNeeds.push(need)
       const fallback = options.music?.fallback
+      if (options.music?.youtube) return { kind: "no-tab", attempted: [10] }
       if (fallback === "failed") return { kind: "result", tabId: 10, result: { ok: false, reason: "unavailable" } }
       if (fallback) return { kind: "result", tabId: 10, result: { ok: true, route, data: fallback } }
       return { kind: "no-tab", attempted: [] }
@@ -264,6 +268,18 @@ test("a Music answer that carries every check mark is complete by itself", async
 
 test("with no YouTube tab open the Music picker hears that, and the health record names the limit", async () => {
   const w = world({ music: { rows: musicRows } })
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "noYouTubeTab" })
+  expect(w.membershipHealth).toEqual(["noYouTubeTab"])
+})
+
+test("a YouTube tab of the account that was asked and didn't answer is a failed lookup, not a missing tab (YM-PICK-6)", async () => {
+  const w = world({ music: { rows: musicRows, youtube: a } })
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "unreadable" })
+  expect(w.membershipHealth).toEqual(["incomplete"])
+})
+
+test("a YouTube tab that was tried and belongs to another account still counts as no YouTube tab", async () => {
+  const w = world({ music: { rows: musicRows, youtube: b } })
   expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "noYouTubeTab" })
   expect(w.membershipHealth).toEqual(["noYouTubeTab"])
 })
