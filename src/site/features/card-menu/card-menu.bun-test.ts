@@ -118,10 +118,10 @@ test("a menu opened from the keyboard opens at the card's own menu button unless
   expect(f.menuCalls().every(call => call.context?.target === f.byId("card-a"))).toBe(true)
 })
 
-function hoverPreview() {
+function hoverPreview(shown = videoA) {
   const slot = document.createElement("div")
   slot.id = "video-preview"
-  slot.innerHTML = `<ytd-video-preview><a href="/watch?v=${videoA}"><div id="inline-preview-player"><video id="preview-video"></video></div></a></ytd-video-preview>`
+  slot.innerHTML = `<ytd-video-preview><a href="/watch?v=${shown}"><div id="inline-preview-player"><video id="preview-video"></video></div></a></ytd-video-preview>`
   document.body.append(slot)
   const video = slot.querySelector("video"), preview = slot.querySelector("ytd-video-preview")
   if (!video || !preview) throw Error("Missing preview fixture")
@@ -160,6 +160,34 @@ test("the hover preview keeps the browser menu where the card under it would", a
   f.under([video, preview, f.byId("channel-link"), f.byId("channel-name"), f.byId("card-a"), document.body])
   expect(f.click(video).defaultPrevented).toBe(false)
   f.source.publish(view({ keepLinkMenu: true }))
+  f.under([video, preview, f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
+  expect(f.click(video).defaultPrevented).toBe(false)
+  await f.settle()
+  expect(f.menuCalls()).toHaveLength(0)
+})
+
+test("a link to another page inside the hover preview keeps the browser menu", async () => {
+  const f = await fixture()
+  f.start()
+  const { video, preview } = hoverPreview()
+  // The playing preview on search shows an "Includes paid promotion" link to Google's help pages.
+  const promotion = preview.appendChild(document.createElement("a"))
+  promotion.href = "https://support.google.com/youtube?p=ppp"
+  const label = promotion.appendChild(document.createElement("span"))
+  f.under([label, promotion, preview, f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
+  expect(f.click(label).defaultPrevented).toBe(false)
+  await f.settle()
+  expect(f.menuCalls()).toHaveLength(0)
+  f.under([video, preview, f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
+  expect(f.click(video).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls()).toHaveLength(1)
+})
+
+test("a hover preview whose own link names another video than the card under it keeps the browser menu", async () => {
+  const f = await fixture()
+  f.start()
+  const { video, preview } = hoverPreview(videoB)
   f.under([video, preview, f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
   expect(f.click(video).defaultPrevented).toBe(false)
   await f.settle()
