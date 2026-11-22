@@ -137,7 +137,9 @@ export class PageState {
       this.live = null
       return
     }
-    this.live = "reading"
+    // A status change reads the account again. The name already shown for it stays until the new answer arrives.
+    const shown = this.live !== null && this.live !== "reading" && this.live.kind === "label" && this.live.acct === account.acct
+    if (!shown) this.live = "reading"
     const answer = await this.page.backend.call("ui.accountLabel", {})
     if (this.account === account) this.live = answer.kind === "answered" ? answer.result : null
   }
