@@ -122,7 +122,7 @@ test("Check now answers once its reads' signals have reached the Monitor, so the
           tabId: 4,
           site: "www"
         } as MonitorOperation)
-      return null
+      return true
     },
     now: () => 100,
     online: () => true,

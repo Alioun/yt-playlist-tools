@@ -143,10 +143,12 @@ test("Check now's result and its failure are announced politely (HEALTH-23)", as
   const button = await screen.findByRole("button", { name: "Check now" }, { timeout: 5000 })
   await userEvent.click(button)
   const result = await screen.findByText("1 of 2 reads answered on YouTube.", {}, { timeout: 5000 })
-  expect(result.closest('[role="status"]')).not.toBeNull()
+  const liveRegion = result.closest('[role="status"]')
+  expect(liveRegion).not.toBeNull()
   await userEvent.click(button)
   const failed = await screen.findByText("Couldn't run the check. Try again.", {}, { timeout: 5000 })
-  expect(failed.closest('[role="status"]')).toBe(result.closest('[role="status"]'))
+  expect(failed.closest('[role="status"]')).toBe(liveRegion)
+  expect(screen.queryByText("1 of 2 reads answered on YouTube.")).toBeNull()
 }, 20_000)
 
 test("a health line is one whole sentence, says song on YouTube Music and says what casting costs (UI-SET-09)", async () => {

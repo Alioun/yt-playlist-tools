@@ -30,20 +30,20 @@ export function createSiteHealth(options: {
   readonly site: Site
   readonly page: Pick<PageLink, "onSignal" | "state">
   /** Settles once the background has the reports. */
-  send(reports: readonly TabHealthReport[]): Promise<unknown>
+  send(reports: readonly TabHealthReport[]): Promise<boolean>
   now(): number
   online(): boolean
   later(run: () => void, milliseconds: number): () => void
-}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; deliver(): Promise<void>; dispose(): void } {
+}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; deliver(): Promise<boolean>; dispose(): void } {
   let queue: TabHealthReport[] = [], lastSent = -Infinity, cancel: (() => void) | null = null, answeredAt = -Infinity, disposed = false, unmeasured = false
-  let delivered: Promise<unknown> = Promise.resolve()
+  const sending = new Set<Promise<boolean>>()
   const sent = new Map<string, JobId | null>(), batched = new Map<string, number>(), signalled = new Set<JobId>()
   function send() {
     const reports = queue.splice(0, HEALTH_REPORTS)
     batched.clear(); lastSent = options.now()
-    let sending: Promise<unknown>
-    try { sending = options.send(reports).catch(() => {}) } catch { sending = Promise.resolve() }
-    delivered = Promise.all([delivered, sending])
+    const pending = options.send(reports).catch(() => false)
+    sending.add(pending)
+    void pending.then(() => sending.delete(pending))
   }
   function flush() {
     cancel = null
@@ -127,7 +127,8 @@ export function createSiteHealth(options: {
     async deliver() {
       cancel?.(); cancel = null
       while (!disposed && queue.length) send()
-      await delivered
+      const results = await Promise.all(sending)
+      return !disposed && results.every(Boolean)
     },
     dispose() {
       if (disposed) return

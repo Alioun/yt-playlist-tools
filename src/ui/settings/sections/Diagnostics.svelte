@@ -30,28 +30,35 @@
   const checkedLine = (check: UiCheck) =>
     i18n.message(checkedKeys[check.site][i18n.plural(check.jobs.length)], { done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })
   let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
+  let checked = $state.raw<readonly UiCheck[] | null>(null)
+  const checks = $derived(checked ?? evidence?.checks ?? [])
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
     browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, rows,
-    signedIn: pageState.tab ? pageState.signedIn : null, evidence }) : "")
+    signedIn: pageState.tab ? pageState.signedIn : null, evidence: evidence && { checks, signals: evidence.signals } }) : "")
   // HEALTH-22, HEALTH-23: the session's signals feed the report, and Check now runs only when clicked.
   let checking = $state(false), checkFailed = $state(false), reads = 0
-  async function diagnostics(check: boolean) {
+  async function refreshEvidence() {
     const read = ++reads
-    const answer = await backend.call("ui.diagnostics", { check })
-    if (answer.kind !== "answered" || answer.result.kind !== "diagnostics") return false
-    if (read === reads) evidence = answer.result
-    return true
+    const answer = await backend.call("ui.diagnostics", { check: false })
+    if (read === reads && answer.kind === "answered" && answer.result.kind === "diagnostics") evidence = answer.result
   }
   // The evidence is read again with every status, so which tabs are open and the signals keep up with the rows.
   $effect(() => {
     void pageState.status
-    untrack(() => void diagnostics(false))
+    untrack(() => void refreshEvidence())
   })
   async function checkNow() {
     checking = true; checkFailed = false
     try {
-      checkFailed = !await diagnostics(true)
-      if (!checkFailed) await pageState.refreshStatus()
+      const answer = await backend.call("ui.diagnostics", { check: true })
+      if (answer.kind !== "answered" || answer.result.kind !== "diagnostics") {
+        checkFailed = true
+        return
+      }
+      ++reads
+      evidence = answer.result
+      checked = answer.result.checks
+      await pageState.refreshStatus()
     } finally { checking = false }
   }
   const noTab = $derived(evidence !== null && !evidence.tabs.www && !evidence.tabs.music)
@@ -93,10 +100,13 @@
       {/if}
       <!-- Each check's lines are new nodes, so a screen reader hears a repeat check with the same counts too. -->
       <div role="status" class="flex flex-col gap-1.5">
-        {#each evidence?.checks ?? [] as check (`${check.site}:${check.at}`)}
-          <p data-check={check.site}>{checkedLine(check)}</p>
-        {/each}
-        {#if checkFailed}<p class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>{/if}
+        {#if checkFailed}
+          <p class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>
+        {:else}
+          {#each checks as check (`${check.site}:${check.at}`)}
+            <p data-check={check.site}>{checkedLine(check)}</p>
+          {/each}
+        {/if}
       </div>
     </div>
   </section>

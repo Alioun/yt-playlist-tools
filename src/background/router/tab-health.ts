@@ -23,15 +23,14 @@ export function createTabHealthRouter(deps: {
   readonly monitor: Pick<Monitor, "signal" | "observeAnchor" | "succeeded" | "measured">
 }): { dispose(): void } {
   const rpc = createRpc<TabHealthMessages, NativeSender>(deps.transport, { build: deps.build, deadline: deps.deadline, contract: tabHealthContract })
-  async function apply(context: TabContext, report: TabHealthReport): Promise<void> {
+  async function apply(context: TabContext, report: TabHealthReport) {
     switch (report.kind) {
       case "signal":
-        await deps.monitor.signal(context, report.signal, report.evidence === "job" ? { kind: "job", online: report.online, otherRequestsAnswer: report.answered } : { kind: report.evidence })
-        return
+        return deps.monitor.signal(context, report.signal, report.evidence === "job" ? { kind: "job", online: report.online, otherRequestsAnswer: report.answered } : { kind: report.evidence })
       case "anchor": {
         if (!Object.hasOwn(anchors, report.anchor)) return
         const seen = report.observation
-        await deps.monitor.observeAnchor(context, {
+        return deps.monitor.observeAnchor(context, {
           anchor: report.anchor,
           signal: report.signal,
           observation:
@@ -39,13 +38,11 @@ export function createTabHealthRouter(deps: {
               ? { kind: "player-bar", requiredHere: seen.requiredHere, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, present: seen.present }
               : { kind: "content", relevant: seen.relevant, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, distinctMainLinks: seen.distinctMainLinks, recognised: seen.recognised }
         })
-        return
       }
       case "success":
-        await deps.monitor.succeeded(context, report.job, report.at)
-        return
+        return deps.monitor.succeeded(context, report.job, report.at)
       case "measured":
-        await deps.monitor.measured(context)
+        return deps.monitor.measured(context)
     }
   }
   const unbind = rpc.handle({
@@ -53,13 +50,13 @@ export function createTabHealthRouter(deps: {
     handlers: {
       async "tab.health"({ acct, request }, sender) {
         const context = await deps.context(sender, acct)
-        if (!context) return null
+        if (!context) return false
+        let delivered = true
         for (const report of request.reports) {
-          try {
-            await apply(context, report)
-          } catch {}
+          const result = await apply(context, report).catch(() => undefined)
+          if (result?.kind !== "accepted") delivered = false
         }
-        return null
+        return delivered
       }
     }
   })

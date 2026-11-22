@@ -261,7 +261,10 @@ export function composeServices(deps: {
   const diagnostics = createDiagnostics({
     tabs,
     tab: tabId => browserTabs.port.get(tabId),
-    deliver: tabId => ask(tabId, "bg.health", {}),
+    async deliver(tabId) {
+      const answer = await ask(tabId, "bg.health", {})
+      return answer.kind === "answered" && answer.result
+    },
     monitor,
     build,
     consented: deps.consented,

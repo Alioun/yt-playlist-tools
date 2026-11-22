@@ -28,13 +28,13 @@ export function createDiagnostics(deps: {
   readonly tabs: Pick<Tabs, "known" | "runIn">
   tab(tabId: number): Promise<TabLookup>
   /** Asks a tab to send its waiting health reports, settling once the Monitor has them. */
-  deliver(tabId: number): Promise<unknown>
+  deliver(tabId: number): Promise<boolean>
   readonly monitor: Pick<Monitor, "diagnostics">
   readonly build: BuildId
   consented(): boolean
   now(): number
 }) {
-  const checks = new Map<Site, UiCheck>()
+  let checks: readonly UiCheck[] = []
   // Normal tabs only: a private tab's evidence stays in that window, and Check now never reads YouTube there.
   async function open(): Promise<{ readonly context: TabContext; readonly acct: AccountKey | null }[]> {
     const rows: { readonly context: TabContext; readonly acct: AccountKey | null }[] = []
@@ -50,7 +50,8 @@ export function createDiagnostics(deps: {
     }
     return rows.sort((x, y) => y.context.tab.lastAccessed - x.context.tab.lastAccessed)
   }
-  async function check(site: Site, serving: { readonly context: TabContext; readonly acct: AccountKey | null }): Promise<UiCheck> {
+  async function check(serving: { readonly context: TabContext; readonly acct: AccountKey | null }): Promise<UiCheck> {
+    const { site } = serving.context.tab
     const req: Requester = { windowId: serving.context.tab.windowId, incognito: false, activeTabId: serving.context.tab.tabId }
     const jobs = []
     for (const read of reads[site]) {
@@ -90,18 +91,23 @@ export function createDiagnostics(deps: {
     async read(run: boolean): Promise<UiDiagnostics> {
       const rows = await open()
       const serving = { www: rows.find(row => row.context.tab.site === "www"), music: rows.find(row => row.context.tab.site === "music") }
+      let result = checks
       if (run) {
         if (!deps.consented()) return { kind: "refused", reason: "consent" }
-        if (!serving.www && !serving.music) return { kind: "refused", reason: "no-tab" }
-        for (const site of ["www", "music"] as const) {
-          const tab = serving[site]
-          if (!tab) continue
-          checks.set(site, await check(site, tab))
-          await deps.deliver(tab.context.tab.tabId).catch(() => {})
-        }
+        const targets = [serving.www, serving.music].filter(tab => tab !== undefined)
+        if (!targets.length) return { kind: "refused", reason: "no-tab" }
+        const checked = await Promise.all(targets.map(async tab => {
+          const answer = await check(tab)
+          const delivered = await deps.deliver(tab.context.tab.tabId).catch(() => false)
+          return delivered ? answer : null
+        }))
+        const confirmed = checked.filter(answer => answer !== null)
+        if (confirmed.length !== targets.length) return { kind: "unavailable", reason: "collaborator" }
+        result = confirmed
       }
       const journals = await Promise.all(rows.map(row => deps.monitor.diagnostics(row.context).catch(() => undefined)))
-      return { kind: "diagnostics", checks: [...checks.values()], signals: signals(journals), tabs: { www: serving.www !== undefined, music: serving.music !== undefined } }
+      if (run) checks = result
+      return { kind: "diagnostics", checks: result, signals: signals(journals), tabs: { www: serving.www !== undefined, music: serving.music !== undefined } }
     }
   }
 }

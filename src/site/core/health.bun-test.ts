@@ -3,7 +3,7 @@ import { createSiteHealth, HEALTH_SEND_MS } from "./health"
 import type { BreakageSignal } from "../../shared/contracts/diagnostics"
 import type { TabHealthReport } from "../../shared/contracts/tab-health"
 
-function reporter(site: BreakageSignal["site"] = "www", acknowledged: () => Promise<unknown> = async () => {}) {
+function reporter(site: BreakageSignal["site"] = "www", acknowledged: () => Promise<boolean> = async () => true) {
   let now = 10_000
   const timers: { at: number; run: () => void }[] = [], batches: (readonly TabHealthReport[])[] = []
   let listener: (signal: BreakageSignal) => void = () => {}
@@ -36,7 +36,7 @@ test("signals go out in one batch, then at most every 5 s, and a repeated one go
 
 test("Check now's delivery sends what's waiting at once and settles only when the background has it (HEALTH-23)", async () => {
   const waiting: (() => void)[] = []
-  const r = reporter("www", () => new Promise<void>(resolve => { waiting.push(resolve) }))
+  const r = reporter("www", () => new Promise<boolean>(resolve => { waiting.push(() => resolve(true)) }))
   r.emit(r.signal("missing"))
   r.advance(0)
   r.emit(r.signal("unrecognised"))

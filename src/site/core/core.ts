@@ -166,7 +166,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       async "bg.picker"(payload) { return { kind: asks ? await asks.picker(payload) : "failed" } },
       async "bg.music"(payload) { return asks?.music ? asks.music(payload) : { kind: "failed", text: null } },
       "bg.query": query,
-      async "bg.health"() { await health.deliver(); return null }
+      "bg.health": health.deliver
     }
   })
   let disposed = false
