@@ -490,6 +490,7 @@ test("a Music account with no playlists gets the empty-list line, and a list tha
   flushSync()
   visible(screen.getByText("No playlists to show."))
   expect(screen.queryByText("Playlist data is unavailable. Refresh playlists to try again.")).toBeNull()
+  expect(screen.queryByText(/Already in/)).toBeNull()
   first.unmount()
   const unread = itemSource()
   panel({ source: unread.source, site: "music", mode: "save" })
