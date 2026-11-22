@@ -1123,7 +1123,7 @@ type GatherRecord = {
 | Account keys missing | Saving isn't working right now because YouTube changed how it shows which account you're using. {Product} saves nothing, so nothing lands in the wrong account. |
 | The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 | Popup strip | {Feature} isn't working in this tab because YouTube changed something. / {N} features aren't working in this tab. / {Feature} is partly working in this tab. |
-| Settings, not working | Not working right now: YouTube changed something it relies on. |
+| Settings, not working | See the site-specific health lines in [UI-SET-09](05-ui.md#sections). |
 | Settings, partly working | Partly working: {gap}. For example "it can't show where a video is already saved", "it can't refresh the playlist list", "it can't confirm queue adds", "it can't follow some videos' progress", and on YouTube Music in Chrome "it can't tell whether YouTube Music is casting". On YouTube Music, {gap} names the unavailable actions (R50). |
 
   The copy matches [YT-BRK-06](02-youtube.md#213-when-youtube-changes-something), 03's [§14](03-youtube-music.md#14-failures-and-breakage) and [UI-TOAST-15](05-ui.md#the-not-working-notice), which own it on their sites. (R4, R50, R68, R75)
@@ -1132,14 +1132,14 @@ type GatherRecord = {
 
 - **HEALTH-21** **Nothing is ever sent:** no error reporting, analytics or crash upload, opt-in or not. Fixes reach users only as releases; there's no remote config or kill switch ([ADR-0005](../../../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md)). The one thing the user can send is a problem report they start, see and submit themselves (HEALTH-27; R89).
 - **HEALTH-22** **Settings › Diagnostics** loads only when shown. It holds:
-  - each feature's status per site, one row for each site whose open tabs report it: "Working", "Partly working" or "Not working". A feature no open tab reports reads "Not checked", and one that can't run yet reads "Can't run yet". A successful **Check now** refreshes the rows;
+  - one row per site for each feature that's on, in the order defined in [UI-SET-17](05-ui.md#sections). When a feature can run and has no open tab on that site, its row reads **No tab open**;
   - **Check now**;
   - the diagnostics report, shown in full, with **Copy**;
   - **Known problems**, a plain link to the public issues labelled `youtube-change`, and **Report a problem**, which opens HEALTH-27's chooser. There's no support e-mail (R89);
   - **Detailed console log**, off by default, this browser only;
   - the version, with "(beta)" on beta builds ([REL-CI-15](08-release.md#71-firefox)), and a note that updates install by themselves. There's no update button. (R65)
 - **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report. The line beside it reads "Check now reads from an open YouTube tab. It changes nothing." A result reads "{done} of {total} reads answered on YouTube." or "…on YouTube Music.", one sentence per site, with "read" when the total is one. A check that can't run reads "Couldn't run the check. Try again." (R197)
-  - **It answers only once its evidence has landed:** after its reads in a tab, it asks that tab to send the signals it holds and waits until the Monitor has them (HEALTH-28). So its result, the statuses and the report all show what those reads found.
+  - After its reads, **Check now** asks each serving tab to deliver its pending health reports (HEALTH-28). It publishes results for the sites it just read once the Monitor confirms delivery. If delivery fails, the check shows the failure and the report keeps the previous confirmed result.
   - **With no YouTube tab open,** it's disabled, with "Open YouTube to check" and **Open YouTube** ([UI-SET-17](05-ui.md#sections)).
   - **Before consent** it can't run, because nothing is read from YouTube (FT-30). (R15)
 - **HEALTH-24** **The diagnostics report** is plain text. It contains:
@@ -1149,7 +1149,7 @@ type GatherRecord = {
   - which features are on, and site access per site;
   - settings sync on or off, the sync status, and the `schema` version;
   - whether the tab is signed in;
-  - each feature's status per site, as Diagnostics' rows show it ([UI-SET-17](05-ui.md#sections)), with a partly working status's gap in words, so `playlists` (the playlist list) and `playlist` (Gather tabs' destination) can't be confused;
+  - each feature's status per site, as Diagnostics' rows show it ([UI-SET-17](05-ui.md#sections)), with a description of each gap for a partly working feature, such as trouble refreshing playlists, gathering tabs into a playlist, or changing the queue on a cast device;
   - the session's breakage signals, with their shape outlines;
   - the last Check now result.
 - **HEALTH-25** The report never contains account IDs, names or handles; video, playlist or channel IDs or titles; URLs; setting values (keys, filters, setups); cookies; or the country. It leaves the browser only if the user copies it.

@@ -47,7 +47,7 @@ const heldWords = { consent: "waiting for consent", "site-access": "needs site a
 const gapWords = {
   playlists: "can't refresh the playlist list",
   actions: "some of its buttons can't run",
-  casting: "can't tell when YouTube Music is casting",
+  casting: "queue changes may only affect this tab while casting",
   measure: "can't follow a video's progress",
   player: "can't gather into YouTube's player",
   queue: "can't gather into YouTube's queue",
