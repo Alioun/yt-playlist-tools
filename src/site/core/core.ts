@@ -131,8 +131,10 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   const wanted = new Set<PageFeatureId>(), shown = new Set<PageFeatureId>()
   let claiming = false
   // The view lists a due notice once the Monitor batched it; only a tab whose feature would act claims it, once a page.
+  // A hidden or fullscreen tab couldn't show it, so it leaves the notice for a visible tab until it is shown itself.
   async function deliver() {
-    if (claiming || !link.view?.notices.some(notice => notice.features.some(id => wanted.has(id) && !shown.has(id)))) return
+    if (claiming || document.hidden || document.fullscreenElement) return
+    if (!link.view?.notices.some(notice => notice.features.some(id => wanted.has(id) && !shown.has(id)))) return
     claiming = true
     const claim = await actions.claimNotice()
     if (!claim || root.disposed) { claiming = false; return }
@@ -194,6 +196,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   }
   root.add(link.onView(view => { if (view === null && link.state.kind === "disposed") dispose() }))
   root.add(link.onView(() => void deliver()))
+  for (const shown of ["visibilitychange", "fullscreenchange"] as const) root.on(document, shown, () => void deliver())
   return {
     ...services, site, build, root, pointer, link,
     get disposed() { return disposed },
