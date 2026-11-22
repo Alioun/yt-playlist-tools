@@ -77,13 +77,13 @@
     },
     {
       "row": "popup/www/js",
-      "kb": 58.02,
+      "kb": 58.09,
       "since": "2026-11-21",
       "why": "The popup validates the casting-specific health status in the shared health contract, reads the status again when a tab opens or a breakage signal lands, and reads the name of an account with no setup from its tab."
     },
     {
       "row": "popup/music/js",
-      "kb": 68.23,
+      "kb": 68.29,
       "since": "2026-11-21",
       "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, reads the status again when a tab opens or a breakage signal lands, and shows the live account name."
     },
@@ -101,19 +101,19 @@
     },
     {
       "row": "first-run/js",
-      "kb": 63.73,
+      "kb": 63.75,
       "since": "2026-11-07",
       "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk. The shared UI contract includes the live account name."
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 67.52,
+      "kb": 67.54,
       "since": "2026-11-07",
       "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader, and the shared UI contract."
     },
     {
       "row": "www/card-menu",
-      "kb": 1.82,
+      "kb": 1.77,
       "since": "2026-11-22",
       "why": "The card menu finds the card under YouTube's hover preview and leaves the preview's own links to the browser. It opens a keyboard-opened menu at the card's own menu button when the browser reports no point on the card."
     }
