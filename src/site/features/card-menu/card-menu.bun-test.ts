@@ -127,6 +127,19 @@ test("a right-click on YouTube's hover preview opens the menu of the card it cov
   expect(f.menuCalls().map(call => [call.job, call.context?.target])).toEqual([[{ kind: "openCardMenu", videoId: videoA, at: rightClickPoint }, f.byId("card-a")]])
 })
 
+test("a right-click on a button Perchling draws over the hover preview opens the menu of the card it covers", async () => {
+  const f = await fixture()
+  f.start()
+  const { video, preview } = hoverPreview()
+  const overlay = document.createElement("pp-overlay")
+  preview.append(overlay)
+  const button = overlay.attachShadow({ mode: "open" }).appendChild(document.createElement("button"))
+  f.under([overlay, video, preview, f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
+  expect(f.click(button).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls().map(call => [call.job, call.context?.target])).toEqual([[{ kind: "openCardMenu", videoId: videoA, at: rightClickPoint }, f.byId("card-a")]])
+})
+
 test("the hover preview keeps the browser menu where the card under it would", async () => {
   const f = await fixture()
   f.start()
