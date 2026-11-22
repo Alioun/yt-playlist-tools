@@ -253,6 +253,21 @@ test("a refused add fails, and counts as breakage only as a refused playlist req
   }
 })
 
+test("a card whose data can't be read is breakage for an add and for the card menu", async () => {
+  const w = queueWorld()
+  w.page.values.targetData = undefined
+  expect(await queueAdd(w)).toEqual({ ok: false, reason: "unavailable" })
+  expect(w.signals.map(signal => [signal.job, signal.kind])).toEqual([["queueAdd", "unrecognised"]])
+  expect(await w.gateway.run(cardMenu(), { target: target() })).toEqual({ ok: false, reason: "unavailable" })
+  expect(w.signals.map(signal => [signal.job, signal.kind])).toEqual([
+    ["queueAdd", "unrecognised"],
+    ["openCardMenu", "unrecognised"]
+  ])
+  expect(w.calls).toHaveLength(0)
+  expect(w.menuTargets).toEqual([])
+  released(w)
+})
+
 test("a missing resolver is unavailable and a thrown hook is never resent", async () => {
   const missing = queueWorld()
   missing.state.resolver = false
