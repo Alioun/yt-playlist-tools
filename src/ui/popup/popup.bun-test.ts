@@ -450,6 +450,25 @@ test("an account with no setup is named in the header from its tab, with a place
   expect(screen.queryByText("Unnamed account")).toBeNull()
 })
 
+test("the header keeps a name read from the tab while a status change reads the account again (ACC-17, UI-SET-17)", async () => {
+  const live = { kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe" } } as const
+  let asked = 0
+  let answer: (value: unknown) => void = () => {}
+  const { scripted } = popup(agreed, {
+    "ui.accountLabel": () => {
+      asked++
+      return asked === 1 ? (live as never) : (new Promise(resolve => { answer = resolve }) as never)
+    }
+  })
+  expect(await screen.findByText("Alex Doe", {}, { timeout: 5000 })).toBeTruthy()
+  scripted.replace({ breakage: {} }, "session")
+  await waitFor(() => expect(asked).toBe(2))
+  expect(screen.getByText("Alex Doe")).toBeTruthy()
+  expect(screen.queryByLabelText("Reading the account in this tab")).toBeNull()
+  answer({ kind: "label", acct, label: { name: "Alex D. Doe", handle: "@alexdoe" } })
+  expect(await screen.findByText("Alex D. Doe", {}, { timeout: 5000 })).toBeTruthy()
+})
+
 test("an account whose setup has a label isn't read live", async () => {
   const asked: unknown[] = []
   popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }] }) }, {
