@@ -1043,7 +1043,7 @@ type GatherRecord = {
 | What happened | What the job does | Signal |
 |---|---|---|
 | A hook is missing, or throws before sending | Tries the next shipped route | `missing` or `threw` |
-| No answer within the budget | Reads try the next route; a write that may have been sent is reported failed or unconfirmed, never retried | `timeout`; it makes a job not working only after 3 in a row on that job while the tab is online and other requests are answered |
+| No answer in the time the job has left | The job ends unconfirmed. A route attempt may use all the time the job has left, so no later route runs. A write that may have been sent is never retried | `timeout`; it makes a job not working only after 3 in a row on that job while the tab is online and other requests are answered. A YouTube queue add whose outcome is unknown records none and shows *Sent, not confirmed* ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)) |
 | HTTP 400 or 404 to our request, or 401/403 while the page is signed in | Fails | `rejected` |
 | An answer with no recognised shape or status | Fails | `unrecognised`, with the answer's shape outline |
 | A recognised answer whose effect never shows (the YouTube Music queue doesn't grow; a moved item isn't where it should be) | Fails | `no-effect`, after 2 in a row |

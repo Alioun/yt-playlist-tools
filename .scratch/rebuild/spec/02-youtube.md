@@ -1180,7 +1180,7 @@ Clicking a card that shows saved reports *already in*. States belong to the item
 - the add is kept, and our own toast is suppressed, so only YouTube's shows;
 - once YouTube's own toast is detected after a quiet queue edit, an add or its Undo, a `quiet-route-noisy` breakage signal is recorded and the feature is marked partly working ([07](07-quality.md) Q-WATCH-24, Q-WATCH-28; R40, R51).
 
-**YT-Q-06: success is confirmed.** Success is shown only once YouTube confirms the video is in the queue: it appears in the queue's own data within 2 s, or, for a first add, the miniplayer turns active. Without either signal, the result is *Sent, not confirmed*, never success. PROVISIONAL (ticket 25: L8).
+**YT-Q-06: success is confirmed.** Success is shown only once the queue's own data holds the video, within 5 s of the add. Nothing else confirms an add. YouTube opens the miniplayer before it answers a first add, and also when that add fails, so the miniplayer turning active proves nothing. Without the entry in the queue's data, the result is *Sent, not confirmed*, never success. PROVISIONAL (ticket 25: L8).
 
 **YT-Q-07: states.** Each state has an icon and an accessible label, never colour alone.
 

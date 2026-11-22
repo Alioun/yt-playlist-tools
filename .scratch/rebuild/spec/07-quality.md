@@ -498,7 +498,7 @@ The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-stat
 | What happened | What the job does | Signal |
 |---|---|---|
 | A hook is missing, or throws before sending | Route unavailable: the next shipped route is tried | `missing` or `threw`, with the watch-list ID |
-| No answer within the budget | Reads: next route. A write that may have been sent: failed, or unconfirmed. | `timeout`. Makes the job **not working** only after 3 in a row *(starting value)* on that job, while the tab is online and other requests are answered |
+| No answer in the time the job has left | Unconfirmed. A route attempt may use all the time the job has left, so no later route runs ([ARC-ACC-39, ARC-ACC-40](06-architecture.md#629-runtime-rules)). A write that may have been sent is never retried. | `timeout`. Makes the job **not working** only after 3 in a row *(starting value)* on that job, while the tab is online and other requests are answered. A YouTube queue add whose outcome is unknown records none ([ARC-ACC-35](06-architecture.md#6284-youtubes-queue-quiet-add-confirmation-and-undo)) |
 | HTTP 400 or 404 to our own request, or 401 or 403 while the page is signed in | Job failed | `rejected` |
 | An answer with no recognised shape or `status` | Job failed | `unrecognised`, with the answer's shape outline |
 | A recognised answer whose effect never shows (YouTube Music's queue doesn't grow; a moved item isn't where it should be) | Failed | `no-effect`, after 2 in a row *(starting value)* |
