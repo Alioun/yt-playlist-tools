@@ -94,7 +94,7 @@ Gather tabs ([ticket 31](31-gathertube.md); [R136](../spec/resolutions.md#gather
 ## What PR #89 changed while M2 waits (2026-11-18)
 
 M2 hasn't run. PR #89 changed what 2.0 does in the meantime:
-- The YouTube Music picker shows check marks. The YouTube Music specimen PR #89 parses (`addToPlaylistRenderer` with `playlistAddToOptionRenderer` rows) carries no selection state. So each check comes from a youtube.com tab on the same account, in a window of the same kind ([R202](../spec/resolutions.md#youtube-music-check-marks-2026-11-18-r202)).
+- The YouTube Music picker shows check marks. The YouTube Music specimen PR #89 parses (`addToPlaylistRenderer` with `playlistAddToOptionRenderer` rows) carries no selection state. So each check comes from a youtube.com tab on the same account, in a window of the same kind ([R202](../spec/resolutions.md#youtube-music-check-marks-2026-11-22-r202)).
 - M2 still decides whether YouTube Music's own `get_add_to_playlist` answer carries membership (`containsSelectedVideos`). If it does, the checks no longer need a youtube.com tab. The parser already reads that state on YouTube Music when it's there.
 
 ## What PR #89 found about L2 and the signed request (2026-11-18)
