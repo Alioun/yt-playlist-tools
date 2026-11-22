@@ -187,7 +187,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 | `channelOf` | www | `{ videoId }` | `{ channelId \| null, title?, handle? }` | none, or playlist when it falls back to a request | no |
 | `resolveChannel` | www | `{ input }` (a typed handle, URL or ID) | `{ channelId, title, handle? }` | playlist | no |
 | `videoInfo` | www | target, or the current video | `{ videoId, title, length, kind: "video" \| "short" }` | none | no |
-| `queueAdd` | www | target card | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
+| `queueAdd` | www | target card, and `{ videoId }`: the clicked video, the only one the add may queue (ARC-ACC-38) | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
 | `queueUndo` | www | `{ listId, setVideoId }` | — | app-state | no |
 | `queueAddList` | www | `{ videoIds }`: the rest of a gather into YouTube's queue, after the first video, which the tab the gather opened plays; at most 199 ([YT-GT-14](02-youtube.md#2163-destinations); R123) | `{ confirmed, count }` | app-state | no |
 | `openCardMenu` | www | target card, and `{ videoId, at }`: `at` is the right-click's viewport point, where the menu opens ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)) | — | none | no |
@@ -349,7 +349,7 @@ YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session
 
   The result comes from the refreshed panel, never from the callbacks.
 - **ARC-ACC-37.** The gateway never removes a queue entry by video ID, which removes every copy. It never uses the panel's own remove item or `playlistRemoveVideosAction`; both make YouTube show "Removed from Queue".
-- **ARC-ACC-38.** YouTube queue edits run in the app-state lane, so our own edits never overlap.
+- **ARC-ACC-38.** YouTube queue edits run in the app-state lane, so our own edits never overlap. An add may wait there behind an earlier edit, and YouTube can give its card's element another video meanwhile. So `queueAdd` names the clicked video, and the gateway reads the card once, when the job arrives and before it waits. It then adds that video, whatever the element holds later. A card that already holds another video is refused as unavailable: nothing is sent, and no signal is recorded. A card whose data can't be read or recognised is unavailable too, and records `unrecognised` ([07](07-quality.md#757-runtime-breakage-signals) Q-WATCH-24).
 
 ### 6.2.9 Runtime rules
 
