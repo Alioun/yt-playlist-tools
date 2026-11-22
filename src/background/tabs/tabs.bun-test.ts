@@ -665,3 +665,23 @@ test("a known handle belongs to one Tabs lifetime and cancellation stops late na
     await h.dispose()
   }
 })
+
+test("a browser tab closing removes only that tab from the registry", async () => {
+  const h = tabsFixture()
+  try {
+    h.seedTab(nativeTab(1), signedIn(a))
+    h.seedTab(nativeTab(2), signedIn(b))
+    h.seedTab(nativeTab(9, { incognito: true, windowId: 2 }), signedIn(a))
+    await h.engine.seen(1, hello(), fixtureView)
+    await h.engine.seen(2, hello(signedIn(b)), fixtureView)
+    await h.engine.seen(9, hello(), fixtureView)
+    const writes = h.sessionWrites()
+    await h.engine.closed(9)
+    expect(h.sessionWrites()).toEqual(writes)
+    await h.engine.closed(1)
+    expect(h.stored().tabs).toEqual({ "2": expect.objectContaining({ acct: b }) })
+    expect((await h.engine.known({ kind: "all" })).map(tab => tab.tabId)).toEqual([2])
+  } finally {
+    await h.dispose()
+  }
+})
