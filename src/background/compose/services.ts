@@ -312,6 +312,9 @@ export function composeServices(deps: {
         tab: tabId => browserTabs.port.get(tabId),
         build,
         monitor: (context, enabled) => monitor.statuses(context, enabled),
+        left: tabId => {
+          void tabs.left(tabId).catch(() => {})
+        },
         syncOn: async () => {
           const { device } = await native.storage.local.get("device")
           return device !== null && typeof device === "object" && (device as { syncOn?: unknown }).syncOn === true

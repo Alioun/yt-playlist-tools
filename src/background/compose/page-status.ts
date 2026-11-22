@@ -35,8 +35,8 @@ const rank = { working: 0, "partly-working": 1, "not-working": 2 } as const
 // The Monitor reads the session once per tab, so each site's read stops at its most recently seen tabs.
 const MAX_TABS = 20
 /**
- * A registered tab is open on its site only while the browser still shows that site in it. The registry keeps a
- * tab's row after it goes to another site, until the tab closes or a job is routed to it (ARC-ACC-70).
+ * A registered tab is open on its site only while the browser still shows that site in it. Nothing tells the
+ * background when a tab goes to another site, so its row stays until a status read finds it (ARC-ACC-70).
  */
 function openTab(lookup: TabLookup, record: TabRecord, incognito: boolean | null): (NativeTab & { readonly site: Site }) | null {
   if (lookup.kind !== "tab" || lookup.tab.site !== record.site || (incognito !== null && lookup.tab.incognito !== incognito)) return null
@@ -95,13 +95,17 @@ export function createPageStatus(deps: {
   readonly build: BuildId
   readonly monitor?: MonitorStatuses
   readonly syncOn?: () => Promise<boolean>
+  /** Hears each registered tab that closed or went to another site. Dropping its row tells every open page (UI-SET-17). */
+  readonly left?: (tabId: number) => void
 }): PageStatusSource {
   return async ui => {
     const [session, settingsRead] = await Promise.all([deps.owner.readSession(), deps.owner.read("settings")])
     if (session.kind !== "memory") return
     const registry = session.memory.tabs
     const open = async (tabId: number, record: TabRecord) => {
-      const tab = openTab(await deps.tab(tabId), record, ui.requester.incognito)
+      const lookup = await deps.tab(tabId)
+      if (lookup.kind === "gone" || (lookup.kind === "tab" && lookup.tab.site !== record.site)) deps.left?.(tabId)
+      const tab = openTab(lookup, record, ui.requester.incognito)
       return tab ? [{ tab, record }] : []
     }
     const activeRecord = ui.requester.activeTabId === null ? undefined : registry.get(ui.requester.activeTabId)

@@ -454,7 +454,7 @@ flowchart TD
 
 - **ARC-ACC-70. The tab registry and pings stay small** ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)):
   - a site core sends `tab.hello` once per page load, never per in-app navigation;
-  - the registry holds at most 200 tabs. A `tab.hello` replaces the tab's entry, and an entry goes when a send or ping finds its tab gone, or when it's the oldest beyond 200. No tab event is needed for this;
+  - the registry holds at most 200 tabs. A `tab.hello` replaces the tab's entry, and an entry goes when a send or ping finds its tab gone, when a status read finds that the browser no longer shows the entry's site in its tab ([UI-SET-17](05-ui.md#sections)), or when it's the oldest beyond 200. No tab event is needed for this;
   - a job pings at most 3 candidates (ARC-ACC-55), then answers `NoTab`;
   - a job injects the site core into at most one tab. (R110)
 

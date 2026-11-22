@@ -6,20 +6,30 @@
   import { createFeatureCopy } from "../onboarding/features"
   import type { ExtensionPage } from "../shell/start"
   import { PageState } from "../lib/page-state.svelte"
+  import { watchSiteTabs, type SiteTabsPort } from "../lib/site-tabs"
   import { banners, RESET_SEEN_KEY, type Banner } from "../lib/notices"
   import { needsAccess } from "../lib/held"
   import { relativeTime } from "../lib/time"
   import type { AccountKey } from "../../shared/model/validation"
   import { parseRoute, sections, type Route, type Section } from "./route"
 
-  let { page, markSrc }: { page: ExtensionPage; markSrc: string } = $props()
+  let { page, markSrc, siteTabs }: { page: ExtensionPage; markSrc: string; siteTabs?: SiteTabsPort } = $props()
   const pageState = new PageState(untrack(() => page))
   const { i18n } = untrack(() => page)
   const features = createFeatureCopy(i18n)
   let route = $state<Route>(parseRoute(location.hash))
   const onhash = () => { route = parseRoute(location.hash) }
   addEventListener("hashchange", onhash)
-  onDestroy(() => { removeEventListener("hashchange", onhash); pageState.dispose() })
+  // UI-SET-17: a tab that leaves its site tells nobody, so the open page watches for it and reads its status again.
+  const browserTabs = untrack(() => siteTabs)
+  const stopSiteTabs = browserTabs
+    ? watchSiteTabs(browserTabs, () => {
+        if (!pageState.agreed) return
+        void pageState.refreshAccount()
+        void pageState.refreshStatus()
+      })
+    : undefined
+  onDestroy(() => { removeEventListener("hashchange", onhash); stopSiteTabs?.(); pageState.dispose() })
 
   const view = $derived(pageState.ready)
   const settings = $derived(pageState.settings)
