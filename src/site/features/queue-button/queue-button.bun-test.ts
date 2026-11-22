@@ -369,6 +369,30 @@ for (const deadline of [150, 900] as const) {
   })
 }
 
+test("a native queue control that appears during an add keeps Perchling's feedback visible", async () => {
+  const f = await setup()
+  const target = card()
+  const answer = f.deferred<unknown>()
+  f.respond(() => answer.promise)
+  f.hover(target.thumbnail, [target.element])
+  await click(f)
+
+  const native = document.createElement("button")
+  native.setAttribute("aria-label", "Add to queue")
+  target.thumbnail.append(native)
+  await settle()
+  expect(label(f)).toBe("Adding…")
+
+  answer.resolve({ ok: true, data: { confirmed: true, quiet: true }, route: f.route })
+  await settle()
+  expect(label(f)).toBe("Added to queue")
+  f.hover(document.body)
+  f.hover(target.thumbnail, [target.element])
+  expect(label(f)).toBe("Added to queue")
+  expect(f.button()?.getAttribute("aria-disabled")).toBe("true")
+  expect(native.isConnected).toBe(true)
+})
+
 test("moving to another card cancels the obsolete rechecks", async () => {
   const f = await setup()
   const first = card()
