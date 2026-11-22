@@ -450,18 +450,29 @@ test("an account with no setup is named in the header from its tab, with a place
   expect(screen.queryByText("Unnamed account")).toBeNull()
 })
 
-test("the header keeps a name read from the tab while a status change reads the account again (ACC-17, UI-SET-17)", async () => {
-  const live = { kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe" } } as const
-  let asked = 0
+test("the header keeps a name read from the tab across status changes, and asks again only of another tab (ACC-17, UI-SET-17)", async () => {
+  let asked = 0,
+    statuses = 0,
+    tabId = 4
   let answer: (value: unknown) => void = () => {}
   const { scripted } = popup(agreed, {
+    "ui.accountInView": () => ({ kind: "account", source: "active", tabId, signedIn: true, acct: acct as never }),
+    "ui.status": () => { statuses++; return status() },
     "ui.accountLabel": () => {
       asked++
-      return asked === 1 ? (live as never) : (new Promise(resolve => { answer = resolve }) as never)
+      return asked === 1 ? ({ kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe" } } as never) : (new Promise(resolve => { answer = resolve }) as never)
     }
   })
   expect(await screen.findByText("Alex Doe", {}, { timeout: 5000 })).toBeTruthy()
+  const before = statuses
   scripted.replace({ breakage: {} }, "session")
+  await waitFor(() => expect(statuses).toBeGreaterThan(before))
+  await new Promise(resolve => setTimeout(resolve, 50))
+  expect(asked).toBe(1)
+  expect(screen.getByText("Alex Doe")).toBeTruthy()
+  // Another tab now serves the same account.
+  tabId = 5
+  scripted.replace({ breakage: { x: 1 } }, "session")
   await waitFor(() => expect(asked).toBe(2))
   expect(screen.getByText("Alex Doe")).toBeTruthy()
   expect(screen.queryByLabelText("Reading the account in this tab")).toBeNull()

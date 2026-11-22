@@ -326,6 +326,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **ACC-16** Requests for the account in view go through an open tab of that account, in a window of the same kind; the order tabs are tried in is [ARC-ACC-54](06-architecture.md#6211-serving-tab-routing). Containers don't matter, because the account decides. If no tab answers, the popup shows cached data and "{Account} isn't open in any tab. Open YouTube and switch to this account to refresh its playlists."
 - **ACC-17** The account header always names the account, with its avatar, name and @handle.
   - While the account is being read, it shows a placeholder, never the signed-out state.
+  - An account with no setup is named from the tab that serves it. That tab is asked once. A status change keeps what the header shows, a name or "Unnamed account", and the name is asked for again only when the account or its tab changes.
   - Before consent it shows nothing (FT-30).
 - **ACC-18** **Account labels:**
   - they come from YouTube's account menu;

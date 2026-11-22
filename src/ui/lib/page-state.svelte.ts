@@ -29,6 +29,8 @@ export class PageState {
   readonly page: ExtensionPage
   readonly #stops: (() => void)[] = []
   #accountRead = false
+  /** The account and serving tab the live label was asked of. */
+  #liveFrom: { readonly acct: AccountKey; readonly tabId: number } | null = null
   #accountReads = 0
   #statusReads = 0
 
@@ -135,13 +137,17 @@ export class PageState {
     const account = this.account
     if (account?.kind !== "account" || account.source === "last-account" || !account.signedIn || this.ready?.setups.find(entry => entry.acct === account.acct)?.setup.label) {
       this.live = null
+      this.#liveFrom = null
       return
     }
-    // A status change reads the account again. The name already shown for it stays until the new answer arrives.
-    const shown = this.live !== null && this.live !== "reading" && this.live.kind === "label" && this.live.acct === account.acct
-    if (!shown) this.live = "reading"
+    // One ask per account and serving tab. A status change reads the account again, and while both stay the same
+    // the header keeps what it shows, a name or none. Another tab for the same account is asked behind that.
+    const asked = this.#liveFrom
+    if (asked?.acct === account.acct && asked.tabId === account.tabId) return
+    const from = (this.#liveFrom = { acct: account.acct, tabId: account.tabId })
+    if (asked?.acct !== account.acct) this.live = "reading"
     const answer = await this.page.backend.call("ui.accountLabel", {})
-    if (this.account === account) this.live = answer.kind === "answered" ? answer.result : null
+    if (this.#liveFrom === from) this.live = answer.kind === "answered" ? answer.result : null
   }
   async refreshStatus() {
     const read = ++this.#statusReads
