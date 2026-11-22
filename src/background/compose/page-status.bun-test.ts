@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { createPageStatus } from "./page-status"
+import { createDiagnostics } from "./diagnostics"
 import { defaultSettings } from "../../shared/model/defaults"
 import type { EnabledMonitorFeature, MonitorStatus } from "../monitor/ports"
 import type { UiRequester } from "../adapters/ui-requester"
@@ -45,4 +46,49 @@ test("the popup's health list carries the background features: the browser's men
     { feature: "gather", site: "www", state: "partly-working", gaps: ["queue"] },
     { feature: "sync", site: "www", state: "working", gaps: [] }
   ])
+})
+
+// Settings is the active tab, so the status covers the open tabs of each site.
+const settingsPage = { ...ui, requester: { windowId: 3, incognito: false, activeTabId: 99 } } as unknown as UiRequester
+const native = (tabId: number, site: "www" | "music" | null) => ({ kind: "tab", tab: { tabId, windowId: 3, incognito: false, site, lastAccessed: tabId, active: false, discarded: false, frozen: false } }) as never
+const working = async (_context: unknown, enabled: readonly EnabledMonitorFeature[]) => ({ kind: "statuses" as const, statuses: enabled.map(feature => status(feature.id, "working")) })
+
+test("an open YouTube Music tab reports its health however many YouTube tabs are registered (UI-SET-17)", async () => {
+  const settings = defaultSettings()
+  settings.musicActions.on = true
+  settings.queueButton.on = true
+  const tabs = new Map(Array.from({ length: 30 }, (_, index) => [index + 1, { site: index === 29 ? "music" : "www", signedIn: true, acct }]))
+  const answer = await createPageStatus({
+    owner: { readSession: async () => ({ kind: "memory", memory: { tabs } }) as never, read: async () => ({ kind: "value", settings }) as never },
+    statuses: { read: async () => ({ kind: "unavailable" }) as never },
+    tab: async tabId => native(tabId, tabs.get(tabId)!.site as "www" | "music"),
+    build: "build" as never,
+    monitor: working
+  })(settingsPage)
+  expect(answer?.health).toContainEqual({ feature: "music-actions", site: "music", state: "working", gaps: [] })
+  expect(answer?.health).toContainEqual({ feature: "queue-button", site: "www", state: "working", gaps: [] })
+})
+
+test("a registered tab that left YouTube is no open tab, for the statuses and for Check now (HEALTH-22, HEALTH-23)", async () => {
+  const settings = defaultSettings()
+  settings.cardMenu.on = true
+  // Tab 7 said hello on youtube.com and then went to another site, so the browser reports it with no site.
+  const answer = await createPageStatus({
+    owner: { readSession: async () => ({ kind: "memory", memory: { tabs: new Map([[7, { site: "www", signedIn: true, acct }]]) } }) as never, read: async () => ({ kind: "value", settings }) as never },
+    statuses: { read: async () => ({ kind: "unavailable" }) as never },
+    tab: async tabId => native(tabId, null),
+    build: "build" as never,
+    monitor: working
+  })(settingsPage)
+  const evidence = await createDiagnostics({
+    tabs: { known: async () => [{ tabId: 7, acct, privateTab: false }] as never, runIn: async () => ({ kind: "no-tab", attempted: [] }) as never },
+    tab: async tabId => native(tabId, null),
+    deliver: async () => true,
+    monitor: { diagnostics: async () => undefined as never },
+    build: "build" as never,
+    consented: () => true,
+    now: () => 1
+  }).read(false)
+  expect(answer?.health).toEqual([])
+  expect(evidence).toMatchObject({ kind: "diagnostics", tabs: { www: false, music: false } })
 })
