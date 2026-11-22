@@ -169,9 +169,13 @@
         {:else if pageState.acct}
           {#snippet who()}
             {@const label = pageState.label()}
-            {#if label?.avatar}<img src={label.avatar} alt="" class="size-5 rounded-full" />{:else}<Glyph name="user" class="text-muted-foreground size-4" />{/if}
-            <span class="truncate font-medium">{pageState.accountName()}</span>
-            {#if label?.handle}<span class="text-muted-foreground truncate">{label.handle}</span>{/if}
+            {@const name = pageState.accountName()}
+            {#if label?.avatar}<img src={label.avatar} alt="" class="size-5 shrink-0 rounded-full" />{:else}<Glyph name="user" class="text-muted-foreground size-4 shrink-0" />{/if}
+            <!-- The name never shrinks, so the @handle gives up its room first. The name is cut only when it alone is too long. -->
+            <span class="flex min-w-0 gap-1.5" title={label?.handle ? `${name} ${label.handle}` : name}>
+              <span class="max-w-full shrink-0 truncate font-medium">{name}</span>
+              {#if label?.handle}<span class="text-muted-foreground min-w-0 truncate">{label.handle}</span>{/if}
+            </span>
           {/snippet}
           {#if menuable}
             <button bind:this={menuButton} type="button" aria-haspopup="menu" aria-expanded={menuOpen} aria-label={i18n.message("pop_showSetupFor")}
