@@ -65,25 +65,25 @@
     },
     {
       "row": "www/core",
-      "kb": 28.61,
+      "kb": 28.65,
       "since": "2026-11-21",
       "why": "The shared site core validates picker membership and timestamped health reports, and delivers its health batch at once when Check now asks."
     },
     {
       "row": "music/core",
-      "kb": 29.13,
+      "kb": 29.17,
       "since": "2026-11-21",
       "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks."
     },
     {
       "row": "popup/www/js",
-      "kb": 57.72,
+      "kb": 57.76,
       "since": "2026-11-21",
       "why": "The popup validates the casting-specific health status in the shared health contract, and reads the status again when a tab opens or a breakage signal lands."
     },
     {
       "row": "popup/music/js",
-      "kb": 67.92,
+      "kb": 67.96,
       "since": "2026-11-21",
       "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, and reads the status again when a tab opens or a breakage signal lands."
     },
