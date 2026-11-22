@@ -1086,7 +1086,7 @@ type GatherRecord = {
 - **HEALTH-12** **Clearing:** a tab's status clears when the job next succeeds, or on reload when the probe passes. There's no manual reset.
 - **HEALTH-29** **Gather tabs' status follows its destinations** ([YT-GT-36](02-youtube.md#2166-feedback-keys-and-copy)):
   - **not working** while YouTube's player isn't: its new tab keeps showing no list (`no-effect`);
-  - **partly working** while YouTube's queue or the playlist route isn't, because YouTube's player still works. The health line names the destination, e.g. "Partly working: it can't gather into YouTube's queue right now.";
+  - **partly working** while YouTube's queue or the playlist route isn't, because YouTube's player still works. The health line names the destination, e.g. "Partly working, because it can't gather into YouTube's queue.";
   - a gather into a destination that isn't working answers in its own result, and nothing closes. (R136)
 
 ### 5.3 Where it shows
@@ -1124,7 +1124,7 @@ type GatherRecord = {
 | The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 | Popup strip | {Feature} isn't working in this tab because YouTube changed something. / {N} features aren't working in this tab. / {Feature} is partly working in this tab. |
 | Settings, not working | See the site-specific health lines in [UI-SET-09](05-ui.md#sections). |
-| Settings, partly working | Partly working: {gap}. For example "it can't show where a video is already saved", "it can't refresh the playlist list", "it can't confirm queue adds", "it can't follow some videos' progress", and on YouTube Music in Chrome "it can't tell whether YouTube Music is casting". On YouTube Music, {gap} names the unavailable actions (R50). |
+| Settings, partly working | One whole sentence for each gap, listed in [UI-SET-09](05-ui.md#feature-cards). For example "Partly working, because it can't show where a video is already saved.", "Partly working, because it can't refresh the playlist list.", and on YouTube Music in Chrome "Partly working, because it can't tell when YouTube Music is casting. While you cast, queue changes may not reach the cast device." A YouTube Music feature with some actions unavailable reads "Partly working, because some of its buttons can't run." (R50). |
 
   The copy matches [YT-BRK-06](02-youtube.md#213-when-youtube-changes-something), 03's [§14](03-youtube-music.md#14-failures-and-breakage) and [UI-TOAST-15](05-ui.md#the-not-working-notice), which own it on their sites. (R4, R50, R68, R75)
 
