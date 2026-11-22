@@ -106,3 +106,28 @@ test("the popup over a tab that left YouTube covers the site's open tabs, as ove
   })(ui)
   expect(answer).toEqual({ tab: { kind: "other" }, health: [{ feature: "card-menu", site: "www", state: "not-working", gaps: [] }] })
 })
+
+test("a status read reports each registered tab the browser no longer shows on its site, so the registry drops it (UI-SET-17)", async () => {
+  const settings = defaultSettings()
+  settings.cardMenu.on = true
+  // Tab 5 is still on youtube.com, tab 6 closed, tab 7 went to another site and tab 8 went from YouTube to YouTube Music.
+  const tabs = new Map([5, 6, 7, 8].map(tabId => [tabId, { site: "www", signedIn: true, acct }]))
+  const left: number[] = []
+  const read = (requester: UiRequester) =>
+    createPageStatus({
+      owner: { readSession: async () => ({ kind: "memory", memory: { tabs } }) as never, read: async () => ({ kind: "value", settings }) as never },
+      statuses: { read: async () => ({ kind: "unavailable" }) as never },
+      tab: async tabId => (tabId === 6 ? ({ kind: "gone" } as never) : native(tabId, tabId === 5 ? "www" : tabId === 8 ? "music" : null)),
+      build: "build" as never,
+      monitor: working,
+      left: tabId => left.push(tabId)
+    })(requester)
+  expect((await read(settingsPage))?.health).toEqual([{ feature: "card-menu", site: "www", state: "working", gaps: [] }])
+  const numerically = (a: number, b: number) => a - b
+  expect(left.sort(numerically)).toEqual([6, 7, 8])
+  // A private window's page doesn't count normal tabs, and they haven't left their site.
+  left.length = 0
+  const privatePage = Object.assign({}, settingsPage, { requester: { windowId: 9, incognito: true, activeTabId: 99 } })
+  expect((await read(privatePage))?.health).toEqual([])
+  expect(left.sort(numerically)).toEqual([6, 7, 8])
+})

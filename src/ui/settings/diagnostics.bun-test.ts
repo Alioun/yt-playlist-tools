@@ -24,7 +24,15 @@ const stamped = (data: object) => ({ v: 1, gen: "g", at: 1, by: "device", data }
 const agreed = { schema: 1, device: { id: "device", consent: { v: 1, at: 1_700_000_000_000 }, syncOn: false } }
 const noTabs = { kind: "diagnostics", tabs: { www: false, music: false }, signals: [], checks: [] } as const
 
-function diagnostics(options: { settings: object; health?: () => readonly UiFeatureHealth[]; grants?: { www: boolean; music: boolean }; respond?: ScriptedResponders; hash?: string; open?: (url: string) => void }) {
+function diagnostics(options: {
+  settings: object
+  health?: () => readonly UiFeatureHealth[]
+  grants?: { www: boolean; music: boolean }
+  respond?: ScriptedResponders
+  hash?: string
+  open?: (url: string) => void
+  tabs?: readonly { id: number; url?: string }[]
+}) {
   location.hash = options.hash ?? "#diagnostics"
   const scripted = createScriptedBackend({
     build,
@@ -39,6 +47,9 @@ function diagnostics(options: { settings: object; health?: () => readonly UiFeat
       ...options.respond
     }
   })
+  // The browser's tabs as an extension page sees them: an address only on a site the extension can read.
+  const updated = new Set<(tabId: number, change: unknown, tab: { id?: number; url?: string }) => void>()
+  const siteTabs = { query: async () => options.tabs ?? [], onUpdated: { addListener: (fn: never) => void updated.add(fn), removeListener: (fn: never) => void updated.delete(fn) } }
   const page = {
     backend: scripted.backend,
     i18n: englishI18n(),
@@ -53,8 +64,14 @@ function diagnostics(options: { settings: object; health?: () => readonly UiFeat
     commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null },
     canonical: async () => createI18n(scriptedMessages(), catalogue)
   }
-  render(Settings, { page: page as never, markSrc: "mark.svg" })
-  return scripted
+  render(Settings, { page: page as never, markSrc: "mark.svg", siteTabs })
+  return {
+    ...scripted,
+    /** A tab loaded a page. Without `url` it is on a site the extension can't read. */
+    updateTab(id: number, url?: string) {
+      for (const listener of [...updated]) listener(id, {}, url === undefined ? { id } : { id, url })
+    }
+  }
 }
 const rows = () => [...document.querySelectorAll("[data-status]")].map(row => row.firstElementChild?.textContent?.replace(/\s+/g, " ").trim())
 
@@ -209,3 +226,20 @@ test("a status refresh cannot discard the result of the check in progress", asyn
   pending.resolve(result)
   expect(await screen.findByText("1 of 1 read answered on YouTube.")).toBeTruthy()
 })
+
+test("an open Diagnostics page updates when its YouTube tab goes to another site, without a reload (UI-SET-17)", async () => {
+  let open = true
+  const scripted = diagnostics({
+    settings: { quickSave: { on: true, feedback: true, shortsShelves: false } },
+    health: () => (open ? [{ feature: "quick-save", site: "www", state: "working", gaps: [] }] : []),
+    respond: { "ui.diagnostics": () => ({ ...noTabs, tabs: { www: open, music: false } }) },
+    tabs: [{ id: 4, url: "https://www.youtube.com/watch?v=a" }]
+  })
+  await waitFor(() => expect(rows()).toEqual(["Quick-save on thumbnails · YouTube Working"]), { timeout: 5000 })
+  expect(await screen.findByRole("button", { name: "Check now" })).toBeTruthy()
+  // The tab loads a page on a site the extension can't read, so the browser no longer names its address.
+  open = false
+  scripted.updateTab(4)
+  await waitFor(() => expect(rows()).toEqual(["Quick-save on thumbnails · YouTube No tab open"]), { timeout: 5000 })
+  expect(await screen.findByText("Open YouTube to check")).toBeTruthy()
+}, 20_000)
