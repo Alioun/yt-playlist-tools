@@ -129,7 +129,7 @@ test("overlapping requests receive out-of-order correlated results once", async 
   let count = 0
   const h = setup({ run: () => ++count === 1 ? first.promise : second.promise })
   await h.link.hello
-  const one = h.link.run(openMenu()), two = h.link.run({ job: { kind: "queueAdd" } })
+  const one = h.link.run(openMenu()), two = h.link.run(invocation({ job: { kind: "queueAdd", videoId: "abcdefghijk" } }))
   expect(h.messages("run")).toHaveLength(2)
   expect(object(h.messages("run")[0]).id).not.toBe(object(h.messages("run")[1]).id)
   second.resolve({ ok: true, data: { confirmed: false, quiet: true }, route })

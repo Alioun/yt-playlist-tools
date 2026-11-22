@@ -43,7 +43,7 @@ function released(world: QueueWorld) {
 }
 const cardMenu = (videoId = videoA): JobOf<"openCardMenu"> => ({ kind: "openCardMenu", videoId, at: menuPoint })
 function queueAdd(world: QueueWorld, element: Element = target()) {
-  return world.gateway.run({ kind: "queueAdd" }, { target: element })
+  return world.gateway.run({ kind: "queueAdd", videoId: videoA }, { target: element })
 }
 
 test("signed-out first add resolves the card's own queue command and confirms a new panel entry", async () => {

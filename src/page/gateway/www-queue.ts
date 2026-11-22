@@ -2,7 +2,7 @@ import type { BreakageKind, JobFailure, JobOf, QueueListId, SetVideoId } from ".
 import type { PageJobResult } from "../../shared/contracts/page"
 import type { VideoId } from "../../shared/model/validation"
 import { hasQueueList, isQueueToast, parseQueueAnswer, parseQueueCard, parseQueuePanel } from "../parsers/www-queue"
-import type { QueueAnswer, QueuePanel } from "../parsers/www-queue"
+import type { QueueAnswer, QueueCard, QueuePanel } from "../parsers/www-queue"
 import { parseTargetVideo } from "../read-parsers"
 import type { GatewayClock, JobScope } from "./lanes"
 import type { AttemptContext, Dispatch, HttpAnswer, PageUiRoute, RequestRoute } from "./port"
@@ -247,7 +247,11 @@ export function createWwwQueue(options: {
     })
   }
 
-  async function add(target: Element | undefined, scope: JobScope): Promise<PageJobResult<JobOf<"queueAdd">>> {
+  /**
+   * Reads the card when the job arrives and answers with the add to run once the lane is free. YouTube can give the
+   * renderer another video while the job waits, so the card is never read again.
+   */
+  function add(job: JobOf<"queueAdd">, target: Element | undefined): JobFailure | ((scope: JobScope) => Promise<PageJobResult<JobOf<"queueAdd">>>) {
     const route = routes.add
     if (!target || !connected(target)) return unavailable
     let raw: unknown
@@ -262,6 +266,12 @@ export function createWwwQueue(options: {
       if (raw !== undefined) notice("unrecognised", route, raw)
       return unavailable
     }
+    // YouTube gave the renderer another video since the click.
+    if (card.videoId !== job.videoId) return unavailable
+    return scope => addCard(card, scope)
+  }
+  async function addCard(card: QueueCard, scope: JobScope): Promise<PageJobResult<JobOf<"queueAdd">>> {
+    const route = routes.add
     const before = panel(route)
     const known = new Set(before?.entries.map(entry => entry.setVideoId))
     let noisy = false

@@ -10,7 +10,7 @@
   {
    "file": "src/site/features/queue-button/queue-button.type-test.ts",
    "line": 12,
-   "text": "const add: JobInvocation<JobOf<\"queueAdd\">> = { job: { kind: \"queueAdd\" } }"
+   "text": "const add: JobInvocation<JobOf<\"queueAdd\">> = { job: { kind: \"queueAdd\", videoId } }"
   },
   {
    "file": "src/site/features/queue-button/queue-button.type-test.ts",

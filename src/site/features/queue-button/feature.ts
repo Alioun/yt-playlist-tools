@@ -176,7 +176,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     const title = titleOf(target)
     outcomes.write(video, busy)
     render()
-    const answer = await page.run<JobOf<"queueAdd">>({ job: { kind: "queueAdd" } }, { target: target.element })
+    const answer = await page.run<JobOf<"queueAdd">>({ job: { kind: "queueAdd", videoId: video } }, { target: target.element })
     if (scope.disposed) return
     const after = authority(view.read())
     if (!after) return

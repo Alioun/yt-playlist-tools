@@ -156,8 +156,10 @@ export function createJobsGateway(options: {
     switch (job.kind) {
       case "openCardMenu":
         return queue.menu(job, target)
-      case "queueAdd":
-        return lanes.run("app-state", scope => queue.add(target, scope), budget)
+      case "queueAdd": {
+        const add = queue.add(job, target)
+        return typeof add === "function" ? lanes.run("app-state", add, budget) : add
+      }
       case "queueUndo":
         return lanes.run("app-state", scope => queue.undo(job, scope), budget)
       case "queueAddList":

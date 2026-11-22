@@ -32,7 +32,8 @@ export type JobInputById = {
   channelOf: { videoId: VideoId }
   resolveChannel: { input: string }
   videoInfo: EmptyInput
-  queueAdd: EmptyInput
+  /** The video that was clicked. The page adds no other, whatever the card holds by then. */
+  queueAdd: { videoId: VideoId }
   queueUndo: { listId: QueueListId; setVideoId: SetVideoId }
   queueAddList: { videoIds: VideoId[] }
   /** `at` is the right-click's viewport point, where the menu opens. */
@@ -140,7 +141,7 @@ const inputFields = {
   channelOf: { videoId: isVideoId },
   resolveChannel: { input: text },
   videoInfo: {},
-  queueAdd: {},
+  queueAdd: { videoId: isVideoId },
   queueUndo: { listId: isQueueListId, setVideoId: isSetVideoId },
   queueAddList: { videoIds: v => list(v, isVideoId, 1, 199) },
   openCardMenu: { videoId: isVideoId, at: v => shape(v, { x: finite, y: finite }) },
