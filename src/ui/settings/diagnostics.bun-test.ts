@@ -24,7 +24,7 @@ const stamped = (data: object) => ({ v: 1, gen: "g", at: 1, by: "device", data }
 const agreed = { schema: 1, device: { id: "device", consent: { v: 1, at: 1_700_000_000_000 }, syncOn: false } }
 const noTabs = { kind: "diagnostics", tabs: { www: false, music: false }, signals: [], checks: [] } as const
 
-function diagnostics(options: { settings: object; health?: () => readonly UiFeatureHealth[]; grants?: { www: boolean; music: boolean }; respond?: ScriptedResponders; hash?: string }) {
+function diagnostics(options: { settings: object; health?: () => readonly UiFeatureHealth[]; grants?: { www: boolean; music: boolean }; respond?: ScriptedResponders; hash?: string; open?: (url: string) => void }) {
   location.hash = options.hash ?? "#diagnostics"
   const scripted = createScriptedBackend({
     build,
@@ -46,7 +46,7 @@ function diagnostics(options: { settings: object; health?: () => readonly UiFeat
     private: false,
     version: "2.0.0",
     beta: false,
-    open: () => {},
+    open: options.open ?? (() => {}),
     openSettings: () => {},
     openFirstRun: () => {},
     applyTheme: () => {},
@@ -96,7 +96,9 @@ test("Report a problem sends the state the feature's row shows, not Working (HEA
 }, 20_000)
 
 test("a partly working status reaches Report a problem and the report in words, not gap names (HEALTH-24, HEALTH-27)", async () => {
+  let address = ""
   diagnostics({
+    open: url => { address = url },
     settings: { musicActions: { on: true, feedback: true }, gather: { on: true } },
     health: () => [
       { feature: "gather", site: "www", state: "partly-working", gaps: ["playlist"] },
@@ -106,11 +108,13 @@ test("a partly working status reaches Report a problem and the report in words, 
   await waitFor(() => expect(rows()).toEqual(["Gather tabs · YouTube Partly working Report a problem", "Quick actions · YouTube Music Partly working Report a problem"]), { timeout: 5000 })
   const report = document.querySelector("[data-report]")?.textContent ?? ""
   expect(report).toContain("gather on YouTube: Partly working (can't gather into a playlist)")
-  expect(report).toContain("music-actions on YouTube Music: Partly working (can't tell when YouTube Music is casting)")
+  expect(report).toContain("music-actions on YouTube Music: Partly working (queue changes may only affect this tab while casting)")
   await userEvent.click(within(document.querySelector('[data-status="music-actions"]') as HTMLElement).getByRole("button", { name: "Report a problem" }))
   await waitFor(() =>
-    expect(document.querySelector("[data-report-values]")?.textContent).toBe("GitHub opens with 2.0.0 · Firefox · Quick actions · Partly working (can't tell when YouTube Music is casting).")
+    expect(document.querySelector("[data-report-values]")?.textContent).toBe("GitHub opens with 2.0.0 · Firefox · Quick actions · Partly working (queue changes may only affect this tab while casting).")
   )
+  await userEvent.click(screen.getByRole("button", { name: "Open GitHub" }))
+  expect(new URL(address).searchParams.get("status")).toBe("Partly working (queue changes may only affect this tab while casting)")
 }, 20_000)
 
 test("an open Diagnostics page updates when a YouTube tab opens, without a reload (UI-SET-17)", async () => {
