@@ -265,6 +265,35 @@ test("a notice this page showed isn't claimed or shown again when the background
   expect(heard).toEqual(["would-act card-menu", "claim", "shown 0000000000000001:1"])
 })
 
+test("a hidden or fullscreen tab leaves the due notice for a visible one, and takes it once it is shown (YT-BRK-02)", async () => {
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const heard: string[] = []
+  const tab = await startTab(broken, { heard, claim: () => ({ token: "0000000000000001:7", due: { kind: "not-working", features: ["card-menu"] } }) })
+  const seen = { hidden: true, fullscreen: null as Element | null }
+  Object.defineProperty(document, "hidden", { get: () => seen.hidden, configurable: true })
+  Object.defineProperty(document, "visibilityState", { get: () => (seen.hidden ? "hidden" : "visible"), configurable: true })
+  Object.defineProperty(document, "fullscreenElement", { get: () => seen.fullscreen, configurable: true })
+  cleanups.push(() => { for (const name of ["hidden", "visibilityState", "fullscreenElement"]) Reflect.deleteProperty(document, name) })
+  tab.core.notices.wouldAct("card-menu")
+  const due = { ...broken, notices: [{ kind: "not-working", features: ["card-menu"] }] }
+  if (!isTabView(due)) throw new Error("Invalid due view")
+  await tab.publish(due)
+  await settle()
+  expect(heard).toEqual(["would-act card-menu"])
+
+  seen.hidden = false
+  seen.fullscreen = document.body
+  document.dispatchEvent(new Event("visibilitychange"))
+  await settle()
+  expect(heard).toEqual(["would-act card-menu"])
+
+  seen.fullscreen = null
+  document.dispatchEvent(new Event("fullscreenchange"))
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(heard).toEqual(["would-act card-menu", "claim", "shown 0000000000000001:7"])
+  expect(shadowText()).toContain("isn't working")
+})
+
 test("a broken queue button tells the background at the first hover and draws nothing (YT-Q-10)", async () => {
   const heard: string[] = []
   const tab = await startTab({ ...queueView({ state: "not-working" }), notices: [] }, { heard, claim: () => null })
