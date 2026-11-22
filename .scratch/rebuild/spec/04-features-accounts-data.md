@@ -1093,7 +1093,7 @@ type GatherRecord = {
 ### 5.3 Where it shows
 
 - **HEALTH-13** **In-page notice** ([YT-BRK-02](02-youtube.md#213-when-youtube-changes-something), [UI-TOAST-15](05-ui.md#the-not-working-notice)):
-  - once per browser session per feature and site, at the moment the feature would act (when its buttons would be drawn, when the watch-page button would be placed, when auto-add would arm, at a right-click, or when a key is pressed);
+  - once per browser session per feature and site, at the moment the feature would act (when its buttons would be drawn, when the watch-page button would be placed, when auto-add would arm, at a right-click, or when a key is pressed). A tab that takes the notice holds it for 60 s, and what other tabs report in that time neither frees it nor undoes the tab's report that it showed. A page never shows a feature's notice twice;
   - in the first visible tab where the problem is found; features found within 60 ms share one notice, which names each by its full name from FT-01 (R75);
   - it uses the site's toast with the failure styling, and stays until dismissed. With only the card menu on, it's the site core's tiny kit-free notice instead, with the same copy and actions, so the card menu alone still loads no kit ([UI-TOAST-16](05-ui.md#the-not-working-notice); R28);
   - like any unprompted toast, it waits while the tab is hidden or fullscreen;

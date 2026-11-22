@@ -128,17 +128,18 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       detailsLabel: labels.details, dismissLabel: labels.dismiss, dismiss: ignore, presented,
       details: () => { actions.settings({ section: "diagnostics" }); notices.update(null) } })
   }
-  const wanted = new Set<PageFeatureId>()
+  const wanted = new Set<PageFeatureId>(), shown = new Set<PageFeatureId>()
   let claiming = false
-  // The view lists a due notice once the Monitor batched it; only a tab whose feature would act claims it.
+  // The view lists a due notice once the Monitor batched it; only a tab whose feature would act claims it, once a page.
   async function deliver() {
-    if (claiming || !link.view?.notices.some(notice => notice.features.some(id => wanted.has(id)))) return
+    if (claiming || !link.view?.notices.some(notice => notice.features.some(id => wanted.has(id) && !shown.has(id)))) return
     claiming = true
     const claim = await actions.claimNotice()
     if (!claim || root.disposed) { claiming = false; return }
     const showing = notices.read()?.due.features ?? []
     request({ kind: "not-working", features: [...new Set([...showing, ...claim.due.features])] }, () => {
       claiming = false
+      for (const id of claim.due.features) shown.add(id)
       actions.noticeShown(claim.token)
     })
   }

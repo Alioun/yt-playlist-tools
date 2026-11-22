@@ -10,7 +10,7 @@ import { sessionAccountCurrent, type SessionEdit, type SessionRead, type Session
 import { applyMonitorOperation, emptyMonitorJournal, isMonitorInstance, readMonitorBucket, type MonitorJournal, type MonitorOperation, type SignalEvidence } from "../store/monitor-session"
 import { anchorMissing, deriveStatus, pageStatuses } from "./derive"
 import type { AnchorObservation, ContextRead, EnabledMonitorFeature, MonitorPorts, MonitorViewChange } from "./ports"
-import { MONITOR_BATCH_MS, MONITOR_SIGNALS, MONITOR_WRITE_MS } from "./thresholds"
+import { MONITOR_BATCH_MS, MONITOR_DELIVERY_LEASE_MS, MONITOR_SIGNALS, MONITOR_WRITE_MS } from "./thresholds"
 
 type MemoryRead = Extract<SessionRead, { kind: "memory" }>
 type ContextLease = Extract<ContextRead, { kind: "context" }>
@@ -27,7 +27,7 @@ type PendingNotice = {
   readonly dueAt: number
 }
 export type NoticeToken = { readonly instance: MonitorPorts["instance"]; readonly sequence: number }
-type Delivery = { readonly token: NoticeToken; readonly capture: Capture; readonly keys: readonly string[] }
+type Delivery = { readonly token: NoticeToken; readonly capture: Capture; readonly keys: readonly string[]; readonly until: number }
 export type MonitorWrite = SessionWrite | { readonly kind: "idle" | "disposed" } | { readonly kind: "deferred"; readonly at: number }
 export type NonBreakage = "signed-out" | "account-changed" | "rate-limited" | "server-error" | "offline" | "status-failed"
 type RecordResult = { readonly kind: "accepted"; readonly scope: "normal" | "private" } | { readonly kind: "unavailable" | "invalid" } | { readonly kind: "write"; readonly result: SessionWrite }
@@ -160,6 +160,13 @@ export function createMonitor(ports: MonitorPorts) {
     !!knownRevision &&
     sessionAccountCurrent(captured.read.revision, knownRevision, captured.lease.facts.acct) &&
     (captured.noticeExpiry === null || ports.clock.now() < captured.noticeExpiry)
+  // A delivery holds its notice for the lease, or until it is acknowledged or released. A report from another tab doesn't end it.
+  const held = (delivery: Delivery) =>
+    !disposed &&
+    delivery.capture.lease.current() &&
+    ports.clock.now() < delivery.until &&
+    !!knownRevision &&
+    sessionAccountCurrent(delivery.capture.read.revision, knownRevision, delivery.capture.lease.facts.acct)
   function journal(captured: Capture): MonitorJournal | undefined {
     const facts = captured.lease.facts,
       acct = facts.acct
@@ -303,7 +310,7 @@ export function createMonitor(ports: MonitorPorts) {
     if (!captured.lease.visible || captured.lease.fullscreen) return []
     return [...notices.values()].filter(notice => {
       const claim = facts.private ? undefined : captured.read.memory.monitorClaims.get(notice.key)
-      if (claim && claim.until > ports.clock.now() && ![...deliveries.values()].some(delivery => current(delivery.capture) && `${delivery.token.instance}:${delivery.token.sequence}` === claim.token))
+      if (claim && claim.until > ports.clock.now() && ![...deliveries.values()].some(delivery => held(delivery) && `${delivery.token.instance}:${delivery.token.sequence}` === claim.token))
         return false
       return (
         notice.site === facts.site &&
@@ -322,7 +329,7 @@ export function createMonitor(ports: MonitorPorts) {
     const allowed = rows.filter(
       row =>
         ![...deliveries.values()].some(
-          delivery => delivery.keys.includes(pendingKey(row.private, row.key)) && delivery.capture.lease.facts.tabId !== captured.lease.facts.tabId && current(delivery.capture)
+          delivery => delivery.keys.includes(pendingKey(row.private, row.key)) && delivery.capture.lease.facts.tabId !== captured.lease.facts.tabId && held(delivery)
         )
     )
     const features = allowed.map(row => row.feature).filter(isPageFeatureId)
@@ -371,7 +378,7 @@ export function createMonitor(ports: MonitorPorts) {
     if (!statusRead.current()) return unavailable
     const captured = await capture(context)
     if (!captured || !current(captured) || !statusRead.current() || !sameTabViewFacts(captured.lease.facts, statusRead.facts)) return unavailable
-    let rows = due(captured, statusRead.statuses).filter(row => ![...deliveries.values()].some(delivery => delivery.keys.includes(pendingKey(row.private, row.key)) && current(delivery.capture)))
+    let rows = due(captured, statusRead.statuses).filter(row => ![...deliveries.values()].some(delivery => delivery.keys.includes(pendingKey(row.private, row.key)) && held(delivery)))
     if (!rows.length) return { kind: "none" } as const
     const token: NoticeToken = { instance: ports.instance, sequence: ++deliverySequence }
     let confirmed = captured
@@ -408,59 +415,48 @@ export function createMonitor(ports: MonitorPorts) {
     }
     if (!rows.length) return { kind: "none" } as const
     changed()
-    const committedCapture = { ...confirmed, generation }
-    deliveries.set(token.sequence, { token, capture: committedCapture, keys: rows.map(row => pendingKey(row.private, row.key)) })
-    return { kind: "delivery", token: structuredClone(token), features: rows.map(row => row.feature), current: () => current(committedCapture) } as const
+    const delivery: Delivery = { token, capture: confirmed, keys: rows.map(row => pendingKey(row.private, row.key)), until: confirmed.noticeExpiry ?? ports.clock.now() + MONITOR_DELIVERY_LEASE_MS }
+    deliveries.set(token.sequence, delivery)
+    return { kind: "delivery", token: structuredClone(token), features: rows.map(row => row.feature), current: () => held(delivery) } as const
   }
+  // What a tab showed stays shown, whatever was reported or ran out since its claim (YT-BRK-02).
   async function acknowledgeNotice(context: TabContext, token: NoticeToken): Promise<RecordResult> {
     const delivery = token.instance === ports.instance ? deliveries.get(token.sequence) : undefined
-    if (!delivery || !current(delivery.capture)) return unavailable
-    const captured = await capture(context)
-    if (!captured || !current(captured) || !sameTabViewFacts(captured.lease.facts, delivery.capture.lease.facts)) return unavailable
-    for (const id of delivery.keys) {
-      const notice = notices.get(id)
-      if (!notice || !sessionAccountCurrent(notice.revision, captured.read.revision, notice.acct)) return unavailable
-    }
-    for (const id of delivery.keys) {
-      const notice = notices.get(id)
-      if (!notice) continue
-      if (notice.private) shownPrivate.add(notice.key)
-      else shownNormal.add(notice.key)
-      notices.delete(id)
-    }
+    if (disposed || !delivery || !sameTabViewFacts(tabViewFacts(context), delivery.capture.lease.facts)) return unavailable
+    const facts = delivery.capture.lease.facts
+    const keys = delivery.keys.map(id => id.slice(id.indexOf(":") + 1))
+    deliveries.delete(token.sequence)
+    for (const key of keys) (facts.private ? shownPrivate : shownNormal).add(key)
+    for (const id of delivery.keys) notices.delete(id)
     let acknowledgement: SessionWrite | undefined
-    if (!captured.lease.facts.private) {
-      const [first, ...rest] = delivery.keys.map(id => id.slice("normal:".length))
-      if (first === undefined) return unavailable
+    const [first, ...rest] = keys
+    if (!facts.private && first !== undefined) {
+      let read: SessionRead | undefined
+      try {
+        read = await ports.owner.readSession()
+      } catch {}
+      if (disposed) return unavailable
+      if (read?.kind === "memory") absorbRevision(read)
+      const revision = read?.kind === "memory" ? read.revision : delivery.capture.read.revision
       try {
         acknowledgement = await ports.owner.changeSession({
-          revision: captured.read.revision,
+          revision,
           now: ports.clock.now(),
-          edits: [
-            {
-              kind: "monitor-notice",
-              scope: "normal",
-              acct: captured.lease.facts.acct,
-              action: "acknowledge",
-              token: `${token.instance}:${token.sequence}`,
-              keys: [first, ...rest]
-            }
-          ]
+          edits: [{ kind: "monitor-notice", scope: "normal", acct: facts.acct, action: "acknowledge", token: `${token.instance}:${token.sequence}`, keys: [first, ...rest] }]
         })
       } catch {
         acknowledgement = { kind: "unconfirmed", cause: { kind: "readback" } }
       }
       if (acknowledgement.kind === "committed") {
         const once = acknowledgement.memory.shown.global
-        if ([first, ...rest].some(key => !once.has(key))) acknowledgement = { kind: "unavailable", reason: "stale" }
+        if (keys.some(key => !once.has(key))) acknowledgement = { kind: "unavailable", reason: "stale" }
       }
-      if (acknowledgement.kind !== "committed") for (const key of [first, ...rest]) acknowledged.push({ acct: captured.lease.facts.acct, revision: structuredClone(captured.read.revision), key })
+      if (acknowledgement.kind !== "committed") for (const key of keys) acknowledged.push({ acct: facts.acct, revision: structuredClone(revision), key })
     }
-    deliveries.delete(token.sequence)
     changed()
     armFlush()
     if (acknowledgement && acknowledgement.kind !== "committed") return { kind: "write", result: acknowledgement }
-    return { kind: "accepted", scope: captured.lease.facts.private ? "private" : "normal" }
+    return { kind: "accepted", scope: facts.private ? "private" : "normal" }
   }
   async function flushOnce(): Promise<MonitorWrite> {
     if (disposed) return { kind: "disposed" }
