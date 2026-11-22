@@ -263,7 +263,8 @@ export function createWwwQueue(options: {
     }
     const card = parseQueueCard(raw)
     if (!card) {
-      if (raw !== undefined) notice("unrecognised", route, raw)
+      // The button only draws on a card the site recognised, so data that can't be read there is breakage too.
+      notice("unrecognised", route, raw)
       return unavailable
     }
     // YouTube gave the renderer another video since the click.
@@ -422,7 +423,7 @@ export function createWwwQueue(options: {
       return Promise.resolve(unavailable)
     }
     const shown = parseTargetVideo(raw)
-    if (!shown && raw !== undefined) notice("unrecognised", route, raw)
+    if (!shown) notice("unrecognised", route, raw)
     if (shown?.videoId !== job.videoId) return Promise.resolve(unavailable)
     return new Promise(resolve => {
       let active = true
