@@ -174,6 +174,8 @@ export class PickerModel {
       return answer
     })
     answers.push(...own.values())
+    // With no playlists there is nothing to say about where the item already is.
+    if (!answers.length) return { kind: "none" }
     const count = answers.filter(answer => answer === true).length
     const unchecked = answers.filter(answer => answer === null).length
     return unchecked === 0 ? { kind: "known", count } : { kind: "partial", count, checked: answers.length - unchecked, unchecked, reason: this.#gap }

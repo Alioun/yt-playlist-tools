@@ -333,7 +333,7 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
   - Membership is fetched fresh on every open. The check marks show a loading state until it arrives.
   - With no cached list, the rows paint as soon as YouTube Music's own answer lists them. They never wait for the check marks, which fill in when the youtube.com tab answers (YM-PICK-6).
   - ↻ reads YouTube Music's list and the check marks again. A check mark this picker set earlier gives way to what that read finds. A row whose own save or removal is still under way keeps its state.
-  - An account with no playlists reads "No playlists to show." "Playlist data is unavailable. Refresh playlists to try again." shows only when no list could be read.
+  - An account with no playlists reads "No playlists to show." and shows no "Already in" line. "Playlist data is unavailable. Refresh playlists to try again." shows only when no list could be read.
   - Rows work before membership is known. An add then reports already in on the row if it was.
 - **YM-PICK-6** **Check marks:** every playlist that already holds the song gets one (R202).
   - The picker asks YouTube Music for its Save-dialog list. The rows, their titles and their order come from that answer.
