@@ -7,7 +7,7 @@ import type { WwwItems, WwwItemTarget, WwwPointed } from "../../core/items-www"
 import type { PageLink } from "../../core/page-link"
 import type { Dispose, Scope } from "../../core/scope"
 import type { Feedback } from "../../kit/feedback"
-import type { OverlayAnchor, OverlayKit } from "../../kit/overlay"
+import type { OverlayKit } from "../../kit/overlay"
 import type { ToastContent, ToastHandle } from "../../kit/toaster/types"
 import type { ThumbnailCorner } from "../../../shared/model/validation"
 import { glyph } from "./glyphs"
@@ -91,11 +91,6 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     lease.hideTooltip()
     lease.place(null)
   }
-  function anchorOf(current: Shown): OverlayAnchor | null {
-    const allowed = authority(view.read())
-    if (!allowed || hasNativeQueue(current.target.element)) return null
-    return { kind: "thumbnail", link: current.link, corner: allowed.corner }
-  }
   function current(): Shown | null {
     const value = shown
     if (!value) return null
@@ -103,13 +98,16 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     if (!fresh || !sameItem(fresh, value.target) || !value.link.isConnected) { conceal(); return null }
     return value
   }
-  function render() {
+  function render(expected = shown) {
+    if (shown !== expected) return
     const value = current()
     if (!value) return
     const allowed = authority(view.read())
     if (!allowed?.working) { conceal(); return }
     const state = outcomes.read(value.target.identity.videoId).kind
     const visual = visuals[state]
+    const coveredByNative = visual.sends && hasNativeQueue(value.target.element)
+    lease.place(coveredByNative ? null : { kind: "thumbnail", link: value.link, corner: allowed.corner })
     button.setAttribute("aria-label", text.label(visual.label))
     button.setAttribute("aria-disabled", String(!visual.sends))
     // Card mutations re-render mid-press. Replacing the pressed glyph then makes the browser drop the click.
@@ -117,21 +115,15 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     button.dataset.state = state
     button.replaceChildren(glyph(document, visual.glyph))
   }
-  function place(value: Shown) {
-    if (shown !== value || !current()) return
-    const anchor = anchorOf(value)
-    lease.place(anchor)
-    render()
-  }
   function show(target: WwwItemTarget) {
     conceal()
     const link = thumbnailOf(target)
     if (!link) return
     const value: Shown = { target, link, checks: [] }
     shown = value
-    value.checks.push(scope.observe(target.element, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "title", "add-to-queue", "added-to-queue", "data-tooltip-target-id"] }, () => place(value)))
-    for (const ms of recheckAfterMs) value.checks.push(scope.timeout(() => place(value), ms))
-    place(value)
+    value.checks.push(scope.observe(target.element, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label", "title", "add-to-queue", "added-to-queue", "data-tooltip-target-id"] }, () => render(value)))
+    for (const ms of recheckAfterMs) value.checks.push(scope.timeout(() => render(value), ms))
+    render(value)
   }
   function refresh() {
     if (scope.disposed) return
@@ -144,7 +136,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
       if (!noticed) { noticed = true; notices.wouldAct("queue-button") }
       return
     }
-    if (shown && sameItem(shown.target, target) && current()) { place(shown); return }
+    if (shown && sameItem(shown.target, target) && current()) { render(shown); return }
     show(target)
   }
   function announce(outcome: QueueOutcome, title: string | undefined, video: WwwItemTarget["identity"]["videoId"], revision: number, feedback: boolean) {
@@ -218,7 +210,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
     }))
   }))
   scope.add(() => { stopNav(); conceal() })
-  view.subscribe(() => { if (shown) place(shown) })
+  view.subscribe(() => render())
   lease.tooltip(button, () => {
     const value = shown
     return text.label(visuals[value ? outcomes.read(value.target.identity.videoId).kind : "idle"].label)
