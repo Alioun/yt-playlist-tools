@@ -621,7 +621,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - A player-bar anchor that's missing in one of the cases YM-BAR-3 lists isn't breakage ([Q-WATCH-25](07-quality.md#757-runtime-breakage-signals)). Missing when YouTube Music should be drawing it, it makes Quick actions partly working (YM-FAIL-10).
 - **YM-FAIL-9** **The whole site:** if YouTube Music's app can't be found (`ytmusic-app`), every YouTube Music feature is not working in that tab.
 - **YM-FAIL-10** **Partly working** covers lost optional parts and unavailable actions:
-  - the picker's check marks (YM-PICK-6);
+  - the picker's check marks, when a youtube.com tab was asked and some rows still have no answer. With no youtube.com tab open nothing counts as lost (YM-PICK-6);
   - the player-bar Save's anchor, when YouTube Music should be drawing it;
   - some of a feature's actions unavailable (YM-FAIL-4; R50);
   - Save and Like with the account keys unreadable (YM-ACC-7; R50);
