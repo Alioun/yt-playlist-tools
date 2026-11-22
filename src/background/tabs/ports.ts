@@ -110,6 +110,7 @@ export type ViewTarget =
   | { readonly kind: "tab"; readonly tabId: number }
 export type PublicationResult = { readonly kind: "sent" | "skipped" }
 export type Tabs = {
+  closed(tabId: number): Promise<void>
   known(target: ViewTarget, signal?: AbortSignal): Promise<readonly KnownTab[]>
   publish<View extends TabViewScope>(tab: KnownTab, producer: TabViewProducer<View>, signal: AbortSignal, beforeSend: () => boolean): Promise<PublicationResult>
   subscribeLifetime(revoked: () => void): () => void

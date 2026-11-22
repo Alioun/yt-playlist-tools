@@ -331,6 +331,8 @@ export function composeServices(deps: {
   const changed = (_changes: unknown, area: string) => {
     if (area === "local" || area === "session") repaint()
   }
+  const closeTab = (tabId: number) => { void tabs.closed(tabId).catch(() => {}) }
+  native.tabs.onRemoved.addListener(closeTab)
   native.storage.onChanged.addListener(changed)
   native.permissions.onAdded.addListener(repaint)
   native.permissions.onRemoved.addListener(repaint)
@@ -343,6 +345,7 @@ export function composeServices(deps: {
     gather,
     dispose() {
       for (const stop of [
+        () => native.tabs.onRemoved.removeListener(closeTab),
         () => native.storage.onChanged.removeListener(changed),
         () => native.permissions.onAdded.removeListener(repaint),
         () => native.permissions.onRemoved.removeListener(repaint),
