@@ -1099,7 +1099,7 @@ type GatherRecord = {
   - its action, **Details**, opens Settings at Diagnostics. (R28, R75)
 - **HEALTH-14** **Explicit actions:** every click or key press on something not working gets that action's failure toast.
 - **HEALTH-15** **Toolbar badge:** while any feature is not working in a tab, that tab shows an amber "!", titled "{Feature} isn't working in this tab". Consent or upgrade pending and missing site access take priority over it, and it takes priority over Missing or Full (FT-57, FT-58). Partly working sets no badge, so neither does a YouTube Music action that's unavailable on its own (R50). (R12)
-- **HEALTH-16** **Popup:** while a feature is not working or partly working, a strip under the header with **Details** ([UI-POP-09](05-ui.md#breakage-strip)). Over a YouTube or YouTube Music tab it covers that tab; over any other tab, every open tab of the site.
+- **HEALTH-16** **Popup:** while a feature is not working or partly working, a strip under the header with **Details** ([UI-POP-09](05-ui.md#breakage-strip)). Over a YouTube or YouTube Music tab it covers that tab; over any other tab, every open tab of the site, which a tab that has gone to another site no longer is.
 - **HEALTH-17** **Settings:** a status line under each affected feature's switch, always ([UI-SET-07](05-ui.md#feature-cards), which calls it the health line), and the Diagnostics section.
 - **HEALTH-18** Show feedback hides none of this. A user who doesn't want the notice switches the feature off.
 - **HEALTH-19** No banner across YouTube's page, no notice for a fallback that worked, and no "works again" toast: the status line simply clears.

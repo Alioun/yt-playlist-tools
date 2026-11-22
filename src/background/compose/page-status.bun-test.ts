@@ -30,7 +30,7 @@ test("the popup's health list carries the background features: the browser's men
         throw Error("page statuses alone")
       }
     },
-    tab: async () => ({ kind: "tab", tab: { id: 4, windowId: 3, incognito: false, url: "https://www.youtube.com/" } }) as never,
+    tab: async () => ({ kind: "tab", tab: { tabId: 4, windowId: 3, incognito: false, site: "www", lastAccessed: 4, active: true, discarded: false, frozen: false } }) as never,
     build: "build" as never,
     syncOn: async () => true,
     monitor: async (_context, enabled: readonly EnabledMonitorFeature[]) => {
@@ -91,4 +91,18 @@ test("a registered tab that left YouTube is no open tab, for the statuses and fo
   }).read(false)
   expect(answer?.health).toEqual([])
   expect(evidence).toMatchObject({ kind: "diagnostics", tabs: { www: false, music: false } })
+})
+
+test("the popup over a tab that left YouTube covers the site's open tabs, as over any other tab (UI-POP-09)", async () => {
+  const settings = defaultSettings()
+  settings.cardMenu.on = true
+  const tabs = new Map([4, 5].map(tabId => [tabId, { site: "www", signedIn: true, acct }]))
+  const answer = await createPageStatus({
+    owner: { readSession: async () => ({ kind: "memory", memory: { tabs } }) as never, read: async () => ({ kind: "value", settings }) as never },
+    statuses: { read: async () => ({ kind: "unavailable" }) as never },
+    tab: async tabId => native(tabId, tabId === 4 ? null : "www"),
+    build: "build" as never,
+    monitor: async (context, enabled) => ({ kind: "statuses", statuses: enabled.map(feature => status(feature.id, context.tab.tabId === 5 ? "not-working" : "working")) })
+  })(ui)
+  expect(answer).toEqual({ tab: { kind: "other" }, health: [{ feature: "card-menu", site: "www", state: "not-working", gaps: [] }] })
 })
