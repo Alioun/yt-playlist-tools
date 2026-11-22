@@ -330,6 +330,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **ACC-18** **Account labels:**
   - they come from YouTube's account menu;
   - they're stored only for accounts with a setup, inside the setup, so they sync;
+  - an account with no setup is named live. The popup, settings and the first-run page ask the background, which reads the label from that account's tab (ACC-17). Nothing about such an account is stored (ACC-08, [DATA-19](#45-caches-and-expiry)), so the background holds the answer only in its worker's memory, for 24 h at most. The answer is gone when the worker stops, and the next page that needs it reads the tab again. A private window's answer is never held;
   - they're checked when the account is seen in a normal window, at most once per 24 h per browser, and written only when they change;
   - names are cut to 100 characters, and the fallback is "Unnamed account".
 
