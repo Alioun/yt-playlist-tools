@@ -1,9 +1,11 @@
 import { mount } from "svelte"
 import { createIsolatedElement } from "@webext-core/isolated-element"
 import FirstRun from "../../../src/ui/onboarding/FirstRun.svelte"
+import Popup from "../../../src/ui/popup/Popup.svelte"
 import { pagePicker } from "../../../src/ui/picker/page"
 import { englishFirstRunText, englishI18n } from "../localization/scripted"
 import { makePicker } from "../picker-ui/scenarios"
+import { popupPage } from "./popup"
 import { syntheticOwner } from "../ui-foundation/synthetic-owner"
 
 const params = new URLSearchParams(location.search)
@@ -36,6 +38,10 @@ if (params.get("view") === "picker") {
       picker.close()
     }
   })
+} else if (params.get("view") === "popup") {
+  await import("../../../src/ui/popup/popup.css")
+  const handle = params.get("handle")
+  mount(Popup, { target, props: { page: popupPage({ name: params.get("name") ?? "", ...(handle ? { handle } : {}) }, params.get("setups") === "2"), markSrc: "" } })
 } else {
   await import("../../../src/ui/onboarding/onboarding.css")
   mount(FirstRun, { target, props: { owner: syntheticOwner("fresh", "firefox"), text: englishFirstRunText(), markSrc: "" } })

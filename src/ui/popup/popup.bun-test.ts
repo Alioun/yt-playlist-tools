@@ -419,6 +419,19 @@ test("with one setup the header's account is a label, not a menu", async () => {
   expect(screen.queryByRole("button", { name: "Show the setup for" })).toBeNull()
 })
 
+test("the header's account gives its name and @handle in full as a tooltip, since the header can cut them (UI-POP-06, UI-RULE-43)", async () => {
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Alex Doe", handle: "@alexdoe" } }) })
+  const name = await screen.findByText("Alex Doe", {}, { timeout: 5000 })
+  expect(screen.getByTitle("Alex Doe @alexdoe").contains(name)).toBe(true)
+  expect(screen.getByTitle("Alex Doe @alexdoe").contains(screen.getByText("@alexdoe"))).toBe(true)
+})
+
+test("an account with no @handle has its name alone as the header's tooltip", async () => {
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) })
+  const name = await screen.findByText("Ann", {}, { timeout: 5000 })
+  expect(screen.getByTitle("Ann").contains(name)).toBe(true)
+})
+
 test("an account with no setup is named in the header from its tab, with a placeholder while that is read (ACC-17, ACC-08)", async () => {
   let answer: (value: unknown) => void = () => {}
   const asked: unknown[] = []
