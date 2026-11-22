@@ -113,9 +113,9 @@
     },
     {
       "row": "www/card-menu",
-      "kb": 1.8,
-      "since": "2026-11-21",
-      "why": "The card menu finds the card under YouTube's hover preview, and opens a keyboard-opened menu at the card's own menu button when the browser reports no point on the card."
+      "kb": 1.82,
+      "since": "2026-11-22",
+      "why": "The card menu finds the card under YouTube's hover preview and leaves the preview's own links to the browser. It opens a keyboard-opened menu at the card's own menu button when the browser reports no point on the card."
     }
   ]
 }
