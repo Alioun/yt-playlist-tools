@@ -65,25 +65,25 @@
     },
     {
       "row": "www/core",
-      "kb": 29.04,
+      "kb": 29.08,
       "since": "2026-11-21",
-      "why": "The shared site core validates picker membership and timestamped health reports, delivers its health batch at once when Check now asks, reports a lost batch again, and asks the background for a broken feature's not-working notice."
+      "why": "The shared site core validates picker membership and timestamped health reports, delivers its health batch at once when Check now asks, reports a lost batch again, and asks the background for a broken feature's not-working notice while the tab is visible."
     },
     {
       "row": "music/core",
-      "kb": 29.52,
+      "kb": 29.59,
       "since": "2026-11-21",
-      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks, reports a lost batch again, and asks the background for a broken feature's not-working notice."
+      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks, reports a lost batch again, and asks the background for a broken feature's not-working notice while the tab is visible."
     },
     {
       "row": "popup/www/js",
-      "kb": 58.09,
+      "kb": 58.13,
       "since": "2026-11-21",
       "why": "The popup validates the casting-specific health status in the shared health contract, reads the status again when a tab opens or a breakage signal lands, and reads the name of an account with no setup from its tab."
     },
     {
       "row": "popup/music/js",
-      "kb": 68.29,
+      "kb": 68.33,
       "since": "2026-11-21",
       "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, reads the status again when a tab opens or a breakage signal lands, and shows the live account name."
     },
@@ -101,13 +101,13 @@
     },
     {
       "row": "first-run/js",
-      "kb": 63.75,
+      "kb": 63.79,
       "since": "2026-11-07",
       "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk. The shared UI contract includes the live account name."
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 67.54,
+      "kb": 67.58,
       "since": "2026-11-07",
       "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader, and the shared UI contract."
     },
