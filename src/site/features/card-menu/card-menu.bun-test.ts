@@ -94,6 +94,17 @@ test("a right-click on a part that sticks out of the card's box still opens at t
   expect(f.menuCalls().map(call => call.job)).toEqual([{ kind: "openCardMenu", videoId: videoA, at }])
 })
 
+test("a right-click on the top pixel row of a card whose box starts a fraction of a pixel lower still opens at the pointer", async () => {
+  const f = await fixture()
+  f.start()
+  layOut("#card-a", { ...cardBox, y: cardBox.y + 0.27 })
+  const at = { x: cardBox.x + 40, y: cardBox.y }
+  f.under([f.byId("thumb-img"), f.byId("thumbnail"), f.byId("card-a"), document.body])
+  expect(f.click(f.byId("thumb-img"), { at }).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls().map(call => call.job)).toEqual([{ kind: "openCardMenu", videoId: videoA, at }])
+})
+
 test("a menu opened from the keyboard opens at the card's own menu button unless the browser reports a point on the card", async () => {
   const f = await fixture()
   f.start()
