@@ -95,12 +95,12 @@ const featureKeys = {
 
 // YT-BRK-06: a feature alone gets its own two sentences, so no sentence is put together from pieces (UI-RULE-43).
 const singleNotices = {
-  "auto-add": "notice_one_auto_add",
+  "auto-add": "breakage_autoAdd",
   "shortcuts": "notice_one_shortcuts",
   "quick-save": "notice_one_quick_save",
-  "queue-button": "notice_one_queue_button",
+  "queue-button": "breakage_queueButton",
   "watch-button": "notice_watch",
-  "card-menu": "notice_one_card_menu"
+  "card-menu": "breakage_cardMenu"
 } satisfies Partial<Record<PageFeatureId, SimpleMessageKey>>
 
 export function siteFeedbackText(i18n: I18n) {
