@@ -41,7 +41,8 @@ function underPreview(services: CardMenuServices, at: Point, path: readonly Elem
     const part = services.items.recognise(element)
     return part.kind === "no-pointed-item" && part.reason === "preview"
   }
-  if (!path[0] || !preview(path[0])) return path
+  // A button Perchling draws over the preview is in its own shadow tree, so only its host reads as a preview.
+  if (!path.some(preview)) return path
   const covered: Element[] = []
   const top = services.document.elementsFromPoint(at.x, at.y).find(element => !preview(element))
   for (let node = top ?? null; node; node = node.parentElement) covered.push(node)
