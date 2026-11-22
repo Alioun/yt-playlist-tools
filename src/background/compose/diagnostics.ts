@@ -97,6 +97,8 @@ export function createDiagnostics(deps: {
         const targets = [serving.www, serving.music].filter(tab => tab !== undefined)
         if (!targets.length) return { kind: "refused", reason: "no-tab" }
         const checked = await Promise.all(targets.map(async tab => {
+          // Settles the tab's earlier reports, so only a batch lost during this check fails it.
+          await deps.deliver(tab.context.tab.tabId).catch(() => false)
           const answer = await check(tab)
           const delivered = await deps.deliver(tab.context.tab.tabId).catch(() => false)
           return delivered ? answer : null

@@ -1066,7 +1066,7 @@ type GatherRecord = {
 - **HEALTH-06** Starting values (3 timeouts, 2 no-effects, 3 can't-measure, 3 s settle, 6 links, one half; [Q-WATCH-29](07-quality.md#757-runtime-breakage-signals)) are tuned after ticket 25 and the first weeks of use.
 - **HEALTH-28** **Checking costs little.**
   - The anchor check (HEALTH-02) runs only in a visible tab. In a hidden tab it waits until the tab is shown, then runs once.
-  - A tab sends signals at most every 5 s, and only new ones, or a success for a job that has a signal in that tab ([ARC-MSG-14](06-architecture.md#684-rules-for-every-channel)). Check now is the one exception: once its reads in a tab are done, that tab sends what it holds at once (HEALTH-23).
+  - A tab sends signals at most every 5 s, and only new ones, or a success for a job that has a signal in that tab ([ARC-MSG-14](06-architecture.md#684-rules-for-every-channel)). A batch the background didn't take counts as not sent, so each of its reports goes again the next time the tab sees the same thing. Check now is the one exception to the 5 s: before its reads in a tab and once they are done, that tab sends what it holds at once (HEALTH-23).
   - The monitor counts them in memory and writes `storage.session` at most every 10 s. It keeps at most 200 distinct signals, dropping the oldest first. (R111)
 
 ### 5.2 Status
@@ -1139,7 +1139,7 @@ type GatherRecord = {
   - **Detailed console log**, off by default, this browser only;
   - the version, with "(beta)" on beta builds ([REL-CI-15](08-release.md#71-firefox)), and a note that updates install by themselves. There's no update button. (R65)
 - **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report. The line beside it reads "Check now reads from an open YouTube tab. It changes nothing." A result reads "{done} of {total} reads answered on YouTube." or "…on YouTube Music.", one sentence per site, with "read" when the total is one. A check that can't run reads "Couldn't run the check. Try again." (R197)
-  - After its reads, **Check now** asks each serving tab to deliver its pending health reports (HEALTH-28). It publishes results for the sites it just read once the Monitor confirms delivery. If delivery fails, the check shows the failure and the report keeps the previous confirmed result.
+  - Before its reads and after them, **Check now** asks each serving tab to deliver its pending health reports (HEALTH-28). The first ask settles reports from before the check. It publishes results for the sites it just read once the Monitor confirms delivery. If delivery fails, or the Monitor didn't take a batch the tab sent while the reads ran, the check shows the failure and the report keeps the previous confirmed result.
   - **With no YouTube tab open,** it's disabled, with "Open YouTube to check" and **Open YouTube** ([UI-SET-17](05-ui.md#sections)).
   - **Before consent** it can't run, because nothing is read from YouTube (FT-30). (R15)
 - **HEALTH-24** **The diagnostics report** is plain text. It contains:

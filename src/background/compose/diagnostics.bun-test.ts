@@ -85,12 +85,13 @@ test("Check now runs each read once in the newest normal tab, and the session's 
     signals: [{ site: "www", feature: null, job: "add", route: "service.add", kind: "fell-back", pageType: "watch", clientVersion: null, shape: null, count: 1, firstSeen: 3, lastSeen: 3 }]
   })
   expect(runs).toEqual([
+    [4, "deliver"],
     [4, "account"],
     [4, "accountLabel"],
     [4, "playlists"],
     [4, "deliver"]
   ])
-  expect((await diagnostics.read(false)).kind === "diagnostics" && runs.length).toBe(4)
+  expect((await diagnostics.read(false)).kind === "diagnostics" && runs.length).toBe(5)
 })
 
 test("Check now can't run before consent or with no YouTube tab open, and reading evidence never runs a job", async () => {
@@ -170,7 +171,8 @@ test("Check now reports only the sites it read in that check", async () => {
 test("Check now publishes a result only after the tab confirms delivery", async () => {
   const delivery = Promise.withResolvers<boolean>()
   const started = Promise.withResolvers<void>()
-  const { diagnostics } = world({ deliver: () => { started.resolve(); return delivery.promise } })
+  let asks = 0
+  const { diagnostics } = world({ deliver: async () => { if (++asks === 1) return true; started.resolve(); return delivery.promise } })
   const result = diagnostics.read(true)
   await started.promise
   expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [] })
