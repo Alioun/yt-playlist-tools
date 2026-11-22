@@ -315,7 +315,6 @@ test("an older YouTube lookup that fails after a newer one answered leaves the n
   // Opening the picker asks YouTube, and Refresh asks again before the first lookup answers.
   const opened = w.page.membership(video, { need: [beta, alpha] })
   await asked(1)
-  now = 1500
   const refreshed = w.page.membership(video, { need: [beta, alpha] })
   await asked(2)
   now = 2000

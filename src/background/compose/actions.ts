@@ -242,6 +242,9 @@ export function composeActions(deps: {
   function requestOf(context: TabContext): Requester {
     return { windowId: context.windowId, incognito: context.origin.incognito, activeTabId: context.origin.tabId }
   }
+  // Each tab's latest membership read whose health was recorded, by the order the reads were asked in.
+  const membershipRecorded = new Map<number, number>()
+  let membershipReads = 0
   /**
    * The tab's own list, or with `youtube` the second part of a YouTube Music read (YM-PICK-6). The two are separate
    * requests so the picker can show the tab's rows before the YouTube tab answers.
@@ -252,7 +255,13 @@ export function composeActions(deps: {
     if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
     const request = { job: { kind: "membership", videoId: video }, acct } as const
     const account = { kind: "account", acct, signedIn: true } as const
-    const health = (checks: MusicChecks) => deps.musicMembershipHealth?.(tab, acct, { checks, at: Date.now() }).catch(() => {})
+    // A read that ends after a later one's result was recorded says nothing about the tab's check marks now.
+    const asked = ++membershipReads
+    async function health(checks: MusicChecks) {
+      if ((membershipRecorded.get(tab.tabId) ?? 0) > asked) return
+      membershipRecorded.set(tab.tabId, asked)
+      await deps.musicMembershipHealth?.(tab, acct, { checks, at: Date.now() }).catch(() => {})
+    }
     if (!youtube) {
       const outcome = await tabs.runIn<JobOf<"membership">>(tab.tabId, request, { site: tab.site, req, account })
       if (outcome.kind !== "result" || !outcome.result.ok) return { kind: "unreadable" }
@@ -453,7 +462,10 @@ export function composeActions(deps: {
       return read?.kind === "projection" && read.projection.settings.kind === "value" ? decodeSettings(read.projection.settings.settings) : null
     },
     // A closed tab is not heard (ARC-MOD-39). Its handles stay unused until the worker stops, since the browser gives no later tab its id.
-    pageStarted: tabId => flow.releaseTab(`tab:${tabId}`),
+    pageStarted(tabId) {
+      membershipRecorded.delete(tabId)
+      flow.releaseTab(`tab:${tabId}`)
+    },
     dispose() {
       unbind()
       rpc.dispose()
