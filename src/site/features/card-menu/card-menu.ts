@@ -48,12 +48,12 @@ function underPreview(services: CardMenuServices, at: Point, path: readonly Elem
   for (let node = top ?? null; node; node = node.parentElement) covered.push(node)
   return covered
 }
-/** A menu opened from the keyboard has no pointer, and the browser reports a point of its own. It counts only on the part that was hit or the card around it. */
-function menuPoint(at: Point, parts: readonly Element[], button: Element): Point {
-  for (const part of parts) {
-    const box = part.getBoundingClientRect()
-    if (at.x >= box.left && at.x < box.right && at.y >= box.top && at.y < box.bottom) return at
-  }
+/**
+ * A menu opened from the keyboard has no pointer, and the browser reports a point of its own. It counts only when the browser's hit test finds a part of the card there.
+ * Element boxes cannot answer that. On YouTube a pointer hits a card on pixels that lie outside the box of the card and of every part in it.
+ */
+function menuPoint(services: CardMenuServices, at: Point, card: Element, button: Element): Point {
+  if (services.document.elementsFromPoint(at.x, at.y).some(element => card.contains(element))) return at
   const own = button.getBoundingClientRect()
   return { x: (own.left + own.right) / 2, y: (own.top + own.bottom) / 2 }
 }
@@ -100,7 +100,7 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   const button = ownMenuButton(services.items, target)
   if (button === "foreign") return keep("foreign-button")
   if (!button) return keep("no-button")
-  return { kind: "open", target, at: menuPoint(at, path.slice(0, card + 1), button) }
+  return { kind: "open", target, at: menuPoint(services, at, target.element, button) }
 }
 
 function dueNotice(view: SiteView<"www"> | null): DueNotice | undefined {

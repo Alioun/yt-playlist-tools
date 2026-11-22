@@ -74,6 +74,13 @@ export function layOut(selector: string, box: typeof cardBox) {
     Object.defineProperty(element, "getBoundingClientRect", { configurable: true, value: () => new DOMRect(box.x, box.y, box.width, box.height) })
   }
 }
+/** happy-dom has no hit test. The harness answers one from the boxes it laid out, innermost first. */
+function laidOutAt(x: number, y: number): Element[] {
+  return [...document.querySelectorAll("*")].reverse().filter(element => {
+    const box = element.getBoundingClientRect()
+    return x >= box.left && x < box.right && y >= box.top && y < box.bottom
+  })
+}
 export type RightClick = { shiftKey?: boolean; at?: { x: number; y: number }; button?: number }
 export function rightClick(init: RightClick = {}): MouseEvent {
   const at = init.at ?? rightClickPoint
@@ -92,6 +99,7 @@ export async function cardMenuHarness(
   document.body.innerHTML = markup
   layOut("[id^='card-']", cardBox)
   layOut("ytd-menu-renderer button", menuButtonBox)
+  Object.defineProperty(document, "elementsFromPoint", { configurable: true, value: laidOutAt })
   const gate = options.gate
   const page = harness({
     ...(options.signedIn === false ? { pageSnapshot: () => snapshot(null) } : {}),
@@ -164,7 +172,7 @@ export async function cardMenuHarness(
       target.dispatchEvent(event)
       return event
     },
-    /** The elements under the right-click point, topmost first. happy-dom lays nothing out, so the test names them. */
+    /** The elements under the right-click point, topmost first. A test names them where the laid-out boxes cannot say, such as under a hover preview. */
     under(stack: readonly Element[]) {
       Object.defineProperty(document, "elementsFromPoint", { configurable: true, value: () => [...stack] })
     },
