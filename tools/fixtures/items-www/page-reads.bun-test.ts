@@ -64,6 +64,36 @@ test("modern card data signals follow renderer recycling without caching the pre
   expect(h.page.read("targetData", row.button)).toBeUndefined()
 })
 
+test("a channel card's shelf lockups read their own video from the card's data", async () => {
+  const h = pageFixture()
+  const videos = [firstVideo, secondVideo]
+  const shelved = videos.map((videoId, index) => {
+    const data = lockupData(videoId)
+    return { lockupViewModel: { ...data, rendererContext: { ...data.rendererContext, loggingContext: { loggingDirectives: { trackingParams: `shelf-item-${index}` } } } } }
+  })
+  const channelCard = h.doc.createElement("yt-official-card-view-model"),
+    shelf = h.doc.createElement("horizontal-shelf-view-model")
+  defineRaw(channelCard, "rawProps", { data: () => ({ contents: [{ horizontalShelfViewModel: { items: shelved } }] }) })
+  channelCard.append(shelf)
+  h.doc.body.append(channelCard)
+  // YouTube draws these lockups from the card. They hold no props, and their data property reads as an unset symbol.
+  const rows = videos.map((_, index) => {
+    const row = h.target("yt-lockup-view-model", "rawProps", {})
+    defineRaw(row.element, "data", Symbol("ui"))
+    defineRaw(row.element, "veContainer", { trackingParams: `shelf-item-${index}` })
+    shelf.append(row.element)
+    return row
+  })
+  for (const [index, row] of rows.entries()) {
+    expect(h.page.read("targetData", row.button)).toBe(shelved[index]?.lockupViewModel)
+    expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toHaveProperty("data.videoId", videos[index])
+  }
+  const unlisted = h.target("yt-lockup-view-model", "rawProps", {})
+  defineRaw(unlisted.element, "veContainer", { trackingParams: "shelf-item-9" })
+  shelf.append(unlisted.element)
+  expect(h.page.read("targetData", unlisted.button)).toBeUndefined()
+})
+
 test("synthetic Shorts data preserves the short kind", async () => {
   const h = pageFixture()
   for (const key of ["data", "shortsLockupViewModel"]) {
