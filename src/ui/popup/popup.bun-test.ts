@@ -469,6 +469,27 @@ test("the header keeps a name read from the tab while a status change reads the 
   expect(await screen.findByText("Alex D. Doe", {}, { timeout: 5000 })).toBeTruthy()
 })
 
+test("a tab that couldn't name the account is asked once, and a status change keeps the header as it is (ACC-17)", async () => {
+  let asked = 0,
+    statuses = 0
+  const { scripted } = popup(agreed, {
+    "ui.status": () => { statuses++; return status() },
+    "ui.accountLabel": () => {
+      asked++
+      return asked === 1 ? { kind: "none" } : (new Promise(() => {}) as never)
+    }
+  })
+  expect(await screen.findByText("Unnamed account", {}, { timeout: 5000 })).toBeTruthy()
+  const before = statuses
+  // A breakage signal or a tab opening somewhere writes storage.session.
+  scripted.replace({ breakage: {} }, "session")
+  await waitFor(() => expect(statuses).toBeGreaterThan(before))
+  await new Promise(resolve => setTimeout(resolve, 50))
+  expect(screen.getByText("Unnamed account")).toBeTruthy()
+  expect(screen.queryByLabelText("Reading the account in this tab")).toBeNull()
+  expect(asked).toBe(1)
+})
+
 test("an account whose setup has a label isn't read live", async () => {
   const asked: unknown[] = []
   popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }] }) }, {
