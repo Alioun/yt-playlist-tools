@@ -4,6 +4,7 @@ import { createSiteHealth } from "../../site/core/health"
 import { applyMonitorOperation, emptyMonitorJournal, type MonitorJournal, type MonitorOperation } from "../store/monitor-session"
 import { deriveStatus } from "../monitor/derive"
 import type { BreakageSignal } from "../../shared/contracts/diagnostics"
+import type { TabHealthReport } from "../../shared/contracts/tab-health"
 import { instance, pageFeature, signalValue, syntheticHealthFacts } from "../../../tools/fixtures/monitor/harness"
 
 const acct = "AAAAAAAAAAAAAAAA"
@@ -176,4 +177,72 @@ test("Check now publishes a result only after the tab confirms delivery", async 
   delivery.resolve(false)
   expect(await result).toMatchObject({ kind: "unavailable" })
   expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [] })
+})
+
+// Check now in tab 4 through the tab's own health reporter. The account read fails and raises its signal, as the page does.
+function checkedTab(taken: (reports: readonly TabHealthReport[]) => boolean) {
+  let journal: MonitorJournal = structuredClone(emptyMonitorJournal),
+    sequence = 0,
+    raise: (signal: BreakageSignal) => void = () => {},
+    timer: (() => void) | undefined
+  const health = createSiteHealth({
+    site: "www",
+    page: { onSignal(listener) { raise = listener; return () => {} }, state: { kind: "ready", snapshot: { pageType: "watch" } } as never },
+    async send(reports) {
+      if (!taken(reports)) return false
+      for (const report of reports)
+        journal = applyMonitorOperation(journal, {
+          ...(report.kind === "signal" ? { kind: "signal", signal: report.signal, evidence: { kind: "job", online: true, otherRequestsAnswer: true } } : report),
+          instance: instance(), sequence: ++sequence, tabId: 4, site: "www"
+        } as MonitorOperation)
+      return true
+    },
+    now: () => 100,
+    online: () => true,
+    later(run) { timer = run; return () => { timer = undefined } }
+  })
+  // The 5 s batch goes out and settles, as it does while the check's later reads run.
+  async function batch() {
+    timer?.()
+    await new Promise<void>(resolve => setTimeout(resolve))
+  }
+  const fail = () => raise(signalValue("unrecognised", { feature: null, job: "account", firstSeen: 100, lastSeen: 100 }))
+  const diagnostics = createDiagnostics({
+    tabs: {
+      known: async () => [{ tabId: 4, acct, privateTab: false }] as never,
+      async runIn(_tabId, invocation) {
+        if (invocation.job.kind !== "account") return { kind: "result", tabId: 4, result: { ok: true, data: {}, route: "r" } } as never
+        fail()
+        await batch()
+        return { kind: "result", tabId: 4, result: { ok: false, reason: "unavailable" } } as never
+      }
+    },
+    tab: async () => ({ kind: "tab", tab: { tabId: 4, windowId: 1, incognito: false, site: "www", lastAccessed: 4, active: true, discarded: false, frozen: false } }) as never,
+    monitor: { diagnostics: async () => journal as never },
+    deliver: async () => health.deliver(),
+    build: "test" as never,
+    consented: () => true,
+    now: () => 100
+  })
+  return { diagnostics, fail, batch }
+}
+
+test("Check now can't confirm a check whose health batch failed during its reads, and trying again delivers the evidence (HEALTH-23)", async () => {
+  let sends = 0
+  const { diagnostics } = checkedTab(() => ++sends > 1)
+  expect(await diagnostics.read(true)).toEqual({ kind: "unavailable", reason: "collaborator" })
+  expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [], signals: [] })
+  expect(await diagnostics.read(true)).toMatchObject({
+    kind: "diagnostics",
+    checks: [{ site: "www", jobs: [{ job: "account", ok: false }, { job: "accountLabel", ok: true }, { job: "playlists", ok: true }] }],
+    signals: [{ job: "account", kind: "unrecognised" }]
+  })
+})
+
+test("a health batch that failed before the check doesn't fail Check now (HEALTH-23)", async () => {
+  let sends = 0
+  const { diagnostics, fail, batch } = checkedTab(() => ++sends > 1)
+  fail()
+  await batch()
+  expect(await diagnostics.read(true)).toMatchObject({ kind: "diagnostics", checks: [{ site: "www" }], signals: [{ job: "account", kind: "unrecognised" }] })
 })
