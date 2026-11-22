@@ -53,7 +53,7 @@ test("Check now's delivery sends what's waiting at once and settles only when th
 })
 
 test("a batch the background didn't take fails the next delivery ask, and its reports go again when they recur (HEALTH-23, HEALTH-28)", async () => {
-  const answers = [false, true, false]
+  const answers = [false, true, false, true, true, false]
   const r = reporter("www", async () => answers.shift() ?? true)
   const settle = () => new Promise<void>(resolve => setTimeout(resolve))
   r.emit(r.signal("missing")); r.advance(0)
@@ -68,6 +68,14 @@ test("a batch the background didn't take fails the next delivery ask, and its re
   await settle()
   r.health.answered("add"); r.advance(HEALTH_SEND_MS)
   expect(kinds(r.batches[3])).toEqual(["success"])
+  await settle()
+  r.health.cantMeasure(); r.advance(HEALTH_SEND_MS)
+  await settle()
+  r.health.measured(); r.advance(HEALTH_SEND_MS)
+  expect(kinds(r.batches[5])).toEqual(["measured"])
+  await settle()
+  r.health.measured(); r.advance(HEALTH_SEND_MS)
+  expect(kinds(r.batches[6])).toEqual(["measured"])
 })
 
 test("timeouts keep up to three in a batch, since only three in a row count (HEALTH-01)", () => {
