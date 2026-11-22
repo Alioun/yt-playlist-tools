@@ -175,6 +175,27 @@ test("a broken feature about to act gets one notice in its tab, and once shown i
   }
 })
 
+test("a notice the tab showed isn't owed again when another tab reported while it was on its way (YT-BRK-02)", async () => {
+  const w = await noticeWorld()
+  const other = { ...w.tab, tab: { ...w.tab.tab, tabId: w.tab.tab.tabId + 1 } }
+  w.h.seedContext(other, { visible: true, fullscreen: false }, syntheticHealthFacts("www"))
+  try {
+    w.h.routes(w.tab, "openCardMenu", "missing")
+    await w.send("tab.wouldAct", { feature: "card-menu" })
+    await w.h.advance(60)
+    const claim = (await w.send("tab.claimNotice", null)) as { token: string } | null
+    expect(claim).toMatchObject({ due: { kind: "not-working", features: ["card-menu"] } })
+    // The notice waits behind a toast for a few seconds, and tabs report jobs all the time.
+    await w.h.monitor.succeeded(other, "account")
+    await w.send("tab.noticeShown", { token: claim?.token })
+    expect(await w.send("tab.claimNotice", null)).toBeNull()
+    await w.h.advance(60_000)
+    expect(await w.send("tab.claimNotice", null)).toBeNull()
+  } finally {
+    await w.dispose()
+  }
+})
+
 test("a working feature or one the user switched off owes no notice", async () => {
   const w = await noticeWorld([pageFeature("card-menu")])
   try {

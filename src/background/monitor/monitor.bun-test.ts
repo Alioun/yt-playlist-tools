@@ -487,6 +487,60 @@ test("notices batch at sixty milliseconds, defer visibility and require actual a
   }
 })
 
+test("a notice a tab showed stays acknowledged whatever other tabs reported since its claim (YT-BRK-02)", async () => {
+  const { h, c } = seeded(),
+    other = context("www", false, 2)
+  const enabled = [pageFeature("auto-add")]
+  try {
+    h.seedContext(other, visible, syntheticHealthFacts("www"))
+    h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
+    await h.monitor.wouldAct(c, enabled, "auto-add")
+    await h.advance(60)
+    const read = await h.monitor.statusProducer.read(c, enabled)
+    if (read.kind !== "statuses") throw Error("Expected statuses")
+    const delivery = await h.monitor.claimNotice(c, read)
+    if (delivery.kind !== "delivery") throw Error("Expected delivery")
+    expect((await h.monitor.succeeded(other, "account")).kind).toBe("accepted")
+    expect((await h.monitor.acknowledgeNotice(c, delivery.token)).kind).toBe("accepted")
+    await h.monitor.wouldAct(c, enabled, "auto-add")
+    await h.advance(60_000)
+    const later = await h.monitor.statusProducer.read(c, enabled)
+    if (later.kind !== "statuses") throw Error("Expected statuses")
+    expect(await h.monitor.noticeProducer.read(c, later.statuses)).toMatchObject({ kind: "notices", notices: [] })
+    expect(await h.monitor.claimNotice(c, later)).toEqual({ kind: "none" })
+  } finally {
+    await h.dispose()
+  }
+})
+
+test("in a private window another tab's report doesn't hand a claimed notice to a second tab", async () => {
+  const c = context("www", true),
+    other = context("www", true, 2),
+    { h } = seeded(c)
+  const enabled = [pageFeature("auto-add")]
+  try {
+    h.seedContext(other, visible, { ...syntheticHealthFacts("www"), core: "missing" })
+    h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
+    await h.monitor.wouldAct(c, enabled, "auto-add")
+    await h.monitor.wouldAct(other, enabled, "auto-add")
+    await h.advance(60)
+    const read = await h.monitor.statusProducer.read(c, enabled)
+    if (read.kind !== "statuses") throw Error("Expected statuses")
+    const delivery = await h.monitor.claimNotice(c, read)
+    if (delivery.kind !== "delivery") throw Error("Expected delivery")
+    await h.monitor.succeeded(other, "account")
+    const second = await h.monitor.statusProducer.read(other, enabled)
+    if (second.kind !== "statuses") throw Error("Expected statuses")
+    expect(await h.monitor.claimNotice(other, second)).toEqual({ kind: "none" })
+    expect((await h.monitor.acknowledgeNotice(c, delivery.token)).kind).toBe("accepted")
+    const third = await h.monitor.statusProducer.read(other, enabled)
+    if (third.kind !== "statuses") throw Error("Expected statuses")
+    expect(await h.monitor.claimNotice(other, third)).toEqual({ kind: "none" })
+  } finally {
+    await h.dispose()
+  }
+})
+
 test("the first eligible visible tab claims delivery and a later tab cannot acknowledge it", async () => {
   const { h, c } = seeded(),
     other = context("www", false, 2)

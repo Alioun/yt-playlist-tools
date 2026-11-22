@@ -239,6 +239,32 @@ test("a broken card menu tells the background at a right-click, and the notice i
   expect(heard.filter(entry => entry.startsWith("shown"))).toEqual(["shown 0000000000000001:7"])
 })
 
+test("a notice this page showed isn't claimed or shown again when the background lists it once more (YT-BRK-02)", async () => {
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const heard: string[] = []
+  let claims = 0
+  // A background that lost the page's report offers the same notice again.
+  const tab = await startTab(broken, { heard, claim: () => ({ token: `0000000000000001:${++claims}`, due: { kind: "not-working", features: ["card-menu"] } }) })
+  Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true })
+  cleanups.push(() => Reflect.deleteProperty(document, "fullscreenElement"))
+  tab.core.notices.wouldAct("card-menu")
+  const due = { ...broken, notices: [{ kind: "not-working", features: ["card-menu"] }] }
+  if (!isTabView(due)) throw new Error("Invalid due view")
+  await tab.publish(due)
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(shadowText()).toContain("isn't working")
+  const dismiss = [...document.querySelector("pp-toast-layer")?.shadowRoot?.querySelectorAll("button") ?? []].find(button => button.getAttribute("aria-label"))
+  dismiss?.click()
+  await settle()
+  expect(shadowText()).not.toContain("isn't working")
+  await tab.publish(broken)
+  await tab.publish(due)
+  tab.core.notices.wouldAct("card-menu")
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(shadowText()).not.toContain("isn't working")
+  expect(heard).toEqual(["would-act card-menu", "claim", "shown 0000000000000001:1"])
+})
+
 test("a broken queue button tells the background at the first hover and draws nothing (YT-Q-10)", async () => {
   const heard: string[] = []
   const tab = await startTab({ ...queueView({ state: "not-working" }), notices: [] }, { heard, claim: () => null })
