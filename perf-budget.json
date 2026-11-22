@@ -71,7 +71,7 @@
     },
     {
       "row": "music/core",
-      "kb": 29.12,
+      "kb": 29.13,
       "since": "2026-11-21",
       "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks."
     },
