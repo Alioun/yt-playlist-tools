@@ -180,3 +180,26 @@ test("a broken Diagnostics row says why in a sentence, and a check of one read s
   await userEvent.click(await screen.findByRole("button", { name: "Check now" }))
   expect(await screen.findByText("1 of 1 read answered on YouTube Music.", {}, { timeout: 5000 })).toBeTruthy()
 }, 20_000)
+
+test("a status refresh cannot discard the result of the check in progress", async () => {
+  const open = { ...noTabs, tabs: { www: true, music: false } }
+  const result = { ...open, checks: [{ site: "www", at: 42, jobs: [{ job: "account", ok: true }] }] } as const
+  const pending = Promise.withResolvers<typeof result>()
+  let passiveReads = 0
+  const scripted = diagnostics({
+    settings: {},
+    respond: {
+      "ui.diagnostics": ({ check }) => check
+        ? pending.promise
+        : (passiveReads++, open)
+    }
+  })
+  const button = await screen.findByRole("button", { name: "Check now" })
+  await waitFor(() => expect(button).toBeEnabled())
+  await userEvent.click(button)
+  const previousReads = passiveReads
+  scripted.replace({ breakage: {} }, "session")
+  await waitFor(() => expect(passiveReads).toBeGreaterThan(previousReads))
+  pending.resolve(result)
+  expect(await screen.findByText("1 of 1 read answered on YouTube.")).toBeTruthy()
+})

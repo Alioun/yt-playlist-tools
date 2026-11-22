@@ -7,7 +7,7 @@ import type { BreakageSignal } from "../../shared/contracts/diagnostics"
 import { instance, pageFeature, signalValue, syntheticHealthFacts } from "../../../tools/fixtures/monitor/harness"
 
 const acct = "AAAAAAAAAAAAAAAA"
-function world(options: { consented?: boolean; tabs?: { tabId: number; acct: string | null; privateTab: boolean; site: "www" | "music" | null }[] } = {}) {
+function world(options: { consented?: boolean; deliver?: () => Promise<boolean>; tabs?: { tabId: number; acct: string | null; privateTab: boolean; site: "www" | "music" | null }[] } = {}) {
   const tabs = options.tabs ?? [
     { tabId: 4, acct, privateTab: false, site: "www" },
     { tabId: 5, acct, privateTab: true, site: "www" }
@@ -23,6 +23,7 @@ function world(options: { consented?: boolean; tabs?: { tabId: number; acct: str
     },
     async deliver(tabId) {
       runs.push([tabId, "deliver"])
+      return options.deliver ? options.deliver() : true
     },
     tab: async tabId => {
       const tab = tabs.find(row => row.tabId === tabId)
@@ -151,4 +152,28 @@ test("Check now answers once its reads' signals have reached the Monitor, so the
   expect(result.checks[0]?.jobs).toContainEqual({ job: "playlists", ok: false })
   expect(result.signals).toMatchObject([{ job: "playlists", kind: "unrecognised" }])
   expect(deriveStatus({ enabled: [pageFeature("quick-save")], facts: syntheticHealthFacts("www"), journal, tabId: 4 })).toMatchObject({ statuses: [{ feature: "quick-save", state: "partly-working" }] })
+})
+
+test("Check now reports only the sites it read in that check", async () => {
+  const tabs = [
+    { tabId: 4, acct, privateTab: false, site: "www" as const },
+    { tabId: 5, acct, privateTab: false, site: "music" as const }
+  ]
+  const { diagnostics } = world({ tabs })
+  expect(await diagnostics.read(true)).toMatchObject({ kind: "diagnostics", checks: [{ site: "www" }, { site: "music" }] })
+  tabs.pop()
+  expect(await diagnostics.read(true)).toMatchObject({ kind: "diagnostics", checks: [{ site: "www" }] })
+  expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [{ site: "www" }] })
+})
+
+test("Check now publishes a result only after the tab confirms delivery", async () => {
+  const delivery = Promise.withResolvers<boolean>()
+  const started = Promise.withResolvers<void>()
+  const { diagnostics } = world({ deliver: () => { started.resolve(); return delivery.promise } })
+  const result = diagnostics.read(true)
+  await started.promise
+  expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [] })
+  delivery.resolve(false)
+  expect(await result).toMatchObject({ kind: "unavailable" })
+  expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [] })
 })
