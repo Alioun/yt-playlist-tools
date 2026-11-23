@@ -4,15 +4,20 @@ import { watchSiteTabs, type SiteTabsPort } from "./site-tabs"
 type Listener = Parameters<SiteTabsPort["onUpdated"]["addListener"]>[0]
 function browserTabs(open: readonly { id: number; url?: string }[] = []) {
   const listeners = new Set<Listener>()
+  const closeListeners = new Set<(tabId: number) => void>()
   const port: SiteTabsPort = {
     query: async () => open,
-    onUpdated: { addListener: listener => void listeners.add(listener), removeListener: listener => void listeners.delete(listener) }
+    onUpdated: { addListener: listener => void listeners.add(listener), removeListener: listener => void listeners.delete(listener) },
+    onRemoved: { addListener: listener => void closeListeners.add(listener), removeListener: listener => void closeListeners.delete(listener) }
   }
   // The browser names a tab's address only on a site the extension can read.
   const update = (id: number, url?: string) => {
     for (const listener of [...listeners]) listener(id, {}, url === undefined ? { id } : { id, url })
   }
-  return { port, update, listening: () => listeners.size }
+  const close = (id: number) => {
+    for (const listener of [...closeListeners]) listener(id)
+  }
+  return { port, update, close, listening: () => listeners.size + closeListeners.size }
 }
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 
@@ -64,4 +69,22 @@ test("a tab that left before the first read of the open tabs answered still coun
   tabs.update(5)
   expect(left).toBe(2)
   stop()
+})
+
+test("a tab that showed YouTube and closes has left, and a closing tab that showed no site hasn't", async () => {
+  const tabs = browserTabs([{ id: 1, url: "https://www.youtube.com/watch?v=a" }, { id: 2 }, { id: 3, url: "https://music.youtube.com/" }])
+  let left = 0
+  const stop = watchSiteTabs(tabs.port, () => left++)
+  await settle()
+  tabs.close(2)
+  tabs.close(9)
+  expect(left).toBe(0)
+  tabs.close(1)
+  expect(left).toBe(1)
+  tabs.close(1)
+  expect(left).toBe(1)
+  tabs.close(3)
+  expect(left).toBe(2)
+  stop()
+  expect(tabs.listening()).toBe(0)
 })
