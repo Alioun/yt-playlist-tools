@@ -91,3 +91,28 @@ test("a worker that starts with Save from the browser's menu on draws the menu (
   await new Promise(resolve => setTimeout(resolve, 100))
   expect(drawn).toEqual(["pp-save", "pp-save-quick", "pp-save-later", "pp-save-choose"])
 })
+
+test("agreeing at first run with Save from the browser's menu ticked draws the menu (YT-BM-02)", async () => {
+  // A fresh install, in a browser that already holds the menu permission, as Firefox does.
+  const w = browser({})
+  const worker = w.worker()
+  running.push(worker.background)
+  const native = worker.native as unknown as {
+    permissions: { contains(request: { permissions?: string[] }): Promise<boolean> }
+    contextMenus: { removeAll(): Promise<void>; create(item: { id: string }): void }
+  }
+  const contains = native.permissions.contains.bind(native.permissions)
+  native.permissions.contains = async request => request.permissions?.join() === "contextMenus" || contains(request)
+  let drawn: string[] = []
+  native.contextMenus.removeAll = async () => {
+    drawn = []
+  }
+  native.contextMenus.create = item => {
+    drawn.push(item.id)
+  }
+  await started(worker)
+  const agreed = await worker.onboarding.call("ui.change", { change: { kind: "first-run-agree", displayedVersion: 1, attempt: 1, selected: ["browser-menu"], syncOn: false } })
+  expect(agreed).toMatchObject({ kind: "answered", result: { outcome: { kind: "agreed", applications: [{ feature: "browser-menu", state: "enabled" }] } } })
+  await eventually(() => drawn.length === 4, "the menu")
+  expect(drawn).toEqual(["pp-save", "pp-save-quick", "pp-save-later", "pp-save-choose"])
+})
