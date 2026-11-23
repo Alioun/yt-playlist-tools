@@ -25,6 +25,7 @@ import { createOverlayKit } from "../kit/overlay"
 import { emptyTabView } from "../../background/tabs/teardown"
 import { composeMonitor } from "../../background/compose/monitor"
 import { parseSessionMemory } from "../../background/store/session-memory"
+import { projectionSeed, projectionWorld } from "../../../tools/fixtures/tab-projection/harness"
 import { startSiteCore } from "./core"
 import { WwwItems } from "./items-www"
 
@@ -370,6 +371,63 @@ test("a tab hidden while its claimed notice is being drawn gives the notice back
   expect(shadowText()).toContain("isn't working")
 })
 
+test("a tab shown again while its release is on its way shows the notice once the release is answered (YT-BRK-02)", async () => {
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const heard: string[] = []
+  const asked = Promise.withResolvers<void>(), reply = Promise.withResolvers<void>()
+  const releasing = Promise.withResolvers<void>(), release = Promise.withResolvers<void>()
+  // As the Monitor does, this one refuses a claim while an earlier claim is held.
+  let claims = 0, held = false
+  const tab = await startTab(broken, {
+    heard,
+    async claim() {
+      if (held) return null
+      held = true
+      const token = `0000000000000001:${++claims}`
+      if (claims === 1) { asked.resolve(); await reply.promise }
+      return { token, due: { kind: "not-working", features: ["card-menu"] } }
+    },
+    async released() { releasing.resolve(); await release.promise; held = false }
+  })
+  const page = visibility()
+  await dueCardMenu(tab, broken)
+  await asked.promise
+  page.hide()
+  reply.resolve()
+  await releasing.promise
+  page.show()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(shadowText()).not.toContain("isn't working")
+
+  release.resolve()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(shadowText()).toContain("isn't working")
+  expect(heard.at(-1)).toBe("shown 0000000000000001:2")
+})
+
+test("a tab whose claim is refused asks again when its view arrived while it asked (YT-BRK-02)", async () => {
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const heard: string[] = []
+  const asked = Promise.withResolvers<void>(), reply = Promise.withResolvers<void>()
+  // Another tab holds the notice at the first claim and has given it back by the second.
+  let claims = 0
+  const tab = await startTab(broken, { heard, async claim() {
+    if (++claims > 1) return { token: "0000000000000001:2", due: { kind: "not-working", features: ["card-menu"] } }
+    asked.resolve()
+    await reply.promise
+    return null
+  } })
+  visibility()
+  await dueCardMenu(tab, broken)
+  await asked.promise
+  // The Monitor sends the view again when the other tab gives the notice back. It lands before the refusal does.
+  await dueCardMenu(tab, broken)
+  reply.resolve()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(shadowText()).toContain("isn't working")
+  expect(heard).toEqual(["would-act card-menu", "claim", "claim", "shown 0000000000000001:2"])
+})
+
 test("the Monitor hands a notice to a visible tab once the tab that claimed it was hidden before showing it (YT-BRK-02)", async () => {
   const memory = parseSessionMemory({})
   if (!memory) throw new Error("No session memory")
@@ -427,6 +485,69 @@ test("the Monitor hands a notice to a visible tab once the tab that claimed it w
   for (let turn = 0; turn < 10; turn++) await settle()
   expect(heard.filter(row => row.startsWith("shown"))).toEqual([])
   expect((await claimFor(5)).kind).toBe("delivery")
+})
+
+test("the Monitor's notice reaches a tab that was hidden and shown again before its release landed (YT-BRK-02)", async () => {
+  const store = projectionWorld(projectionSeed())
+  cleanups.push(() => store.owner.dispose())
+  let now = 100
+  const monitor = composeMonitor({ owner: store.owner, clock: { now: () => now, after: () => () => {} } })
+  cleanups.push(() => monitor.dispose())
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const context = {
+    tab: { tabId: 4, windowId: 1, incognito: false, site: "www", lastAccessed: 4, active: true, discarded: false, frozen: false },
+    info: { site: "www", build, signedIn: true, acct: "AAAAAAAAAAAAAAAA" }
+  } as never
+  await monitor.observeAnchor(context, {
+    anchor: "www-cards",
+    signal: { site: "www", feature: null, job: null, route: null, kind: "anchor-missing", watchId: null, shape: null, clientVersion: null, pageType: "watch", count: 1, firstSeen: now, lastSeen: now },
+    observation: { kind: "content", relevant: true, visible: true, navigationAt: 0, observedAt: 3000, distinctMainLinks: 8, recognised: 1 }
+  } as never)
+  await monitor.wouldAct(context, broken.features, "card-menu")
+  now += 61
+  async function statuses() {
+    const read = await monitor.statusProducer.read(context, broken.features)
+    if (read.kind !== "statuses") throw new Error(read.kind)
+    return read
+  }
+  const due = async () => monitor.noticeProducer.read(context, (await statuses()).statuses)
+  const heard: string[] = []
+  const claimed = Promise.withResolvers<void>(), reply = Promise.withResolvers<void>()
+  const releasing = Promise.withResolvers<void>(), land = Promise.withResolvers<void>(), released = Promise.withResolvers<void>()
+  let claims = 0
+  const tab = await startTab(broken, {
+    heard,
+    async claim() {
+      const claim = await monitor.claimNotice(context, await statuses())
+      if (++claims === 1) { claimed.resolve(); await reply.promise }
+      return claim.kind === "delivery" ? { token: `${claim.token.instance}:${claim.token.sequence}`, due: { kind: "not-working", features: ["card-menu"] } } : null
+    },
+    async released(token) {
+      releasing.resolve()
+      await land.promise
+      const [instance, sequence] = token.split(":")
+      await monitor.releaseNotice(context, { instance, sequence: Number(sequence) } as never)
+      released.resolve()
+    }
+  })
+  // The background sends a tab its view again whenever the Monitor says the view changed.
+  cleanups.push(monitor.subscribeView(async () => {
+    const next = await due()
+    if (next.kind === "notices") await tab.publish({ ...broken, notices: next.notices } as TabView)
+  }))
+  const page = visibility()
+  await dueCardMenu(tab, broken)
+  await claimed.promise
+  page.hide()
+  reply.resolve()
+  await releasing.promise
+  page.show()
+  for (let turn = 0; turn < 3; turn++) await settle()
+  land.resolve()
+  await released.promise
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(shadowText()).toContain("isn't working")
+  expect(heard.at(-1)).toMatch(/^shown /)
 })
 
 test("a broken queue button tells the background at the first hover and draws nothing (YT-Q-10)", async () => {
