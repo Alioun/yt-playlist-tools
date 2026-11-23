@@ -119,9 +119,9 @@
     },
     {
       "row": "background",
-      "kb": 230.12,
+      "kb": 230.09,
       "since": "2026-11-22",
-      "why": "The status read drops a registered tab once the browser no longer shows its site in the tab, so an open Diagnostics page keeps up when a tab leaves YouTube. The background stood 0.01 KB under its ceiling before that."
+      "why": "The status read drops a registered tab once the browser no longer shows its site in the tab, so an open Diagnostics page keeps up when a tab leaves YouTube or closes. A tab also hands a notice it can't show back to the Monitor. With both the background measures 0.04 KB over its ceiling."
     }
   ]
 }
