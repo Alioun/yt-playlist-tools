@@ -18,24 +18,41 @@ const sites = Object.keys(prefixes) as Site[]
  */
 export function watchSiteTabs(tabs: SiteTabsPort, left: () => void): () => void {
   const shown = new Map<number, Site>()
+  // Where each tab was in the first event heard before the open tabs were read. Unset once that read has answered.
+  let early: Map<number, Site | undefined> | undefined = new Map()
   let watching = true
-  const place = (tabId: number, url: string | undefined) => {
-    const site = sites.find(site => url?.startsWith(prefixes[site]))
+  const siteOf = (url: string | undefined) => sites.find(site => url?.startsWith(prefixes[site]))
+  const place = (tabId: number, site: Site | undefined) => {
     const before = shown.get(tabId)
     if (site) shown.set(tabId, site)
     else shown.delete(tabId)
     if (before && before !== site) left()
   }
-  const updated: Updated = (tabId, _change, tab) => place(tabId, tab.url)
-  const removed: Removed = tabId => place(tabId, undefined)
+  const heard = (tabId: number, site: Site | undefined) => {
+    if (early && !early.has(tabId)) early.set(tabId, site)
+    place(tabId, site)
+  }
+  const updated: Updated = (tabId, _change, tab) => heard(tabId, siteOf(tab.url))
+  const removed: Removed = tabId => heard(tabId, undefined)
   tabs.onUpdated.addListener(updated)
   tabs.onRemoved.addListener(removed)
-  // Tabs that were open before this page started watching. An update that already placed a tab is newer than this answer.
+  // Tabs that were open before this page started watching.
   void tabs.query({}).then(
     open => {
-      if (watching) for (const tab of open) if (tab.id !== undefined && !shown.has(tab.id)) place(tab.id, tab.url)
+      const first = early ?? new Map<number, Site | undefined>()
+      early = undefined
+      if (!watching) return
+      for (const tab of open) {
+        if (tab.id === undefined) continue
+        const site = siteOf(tab.url)
+        // An event heard first is newer than this answer. The tab has left if the answer shows a site that event didn't.
+        if (!first.has(tab.id)) place(tab.id, site)
+        else if (site && first.get(tab.id) !== site) left()
+      }
     },
-    () => {}
+    () => {
+      early = undefined
+    }
   )
   return () => {
     watching = false
