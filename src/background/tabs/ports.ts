@@ -110,8 +110,7 @@ export type ViewTarget =
   | { readonly kind: "tab"; readonly tabId: number }
 export type PublicationResult = { readonly kind: "sent" | "skipped" }
 export type Tabs = {
-  closed(tabId: number): Promise<void>
-  /** Drops a normal tab's row once the browser no longer shows the row's site in the tab. A tab still on its site keeps it. */
+  /** Drops a normal tab's row once the tab has closed or the browser no longer shows the row's site in it. A tab still on its site keeps it. */
   left(tabId: number): Promise<void>
   known(target: ViewTarget, signal?: AbortSignal): Promise<readonly KnownTab[]>
   publish<View extends TabViewScope>(tab: KnownTab, producer: TabViewProducer<View>, signal: AbortSignal, beforeSend: () => boolean): Promise<PublicationResult>

@@ -186,11 +186,6 @@ export function createTabs(ports: TabsPorts): Tabs {
       if (result.kind !== "committed") return result
     }
   }
-  async function closed(tabId: number): Promise<void> {
-    if (guard()) return
-    const captured = await snapshot()
-    if (captured.kind === "memory") await forget(tabId, privateRows.has(tabId), captured)
-  }
   async function left(tabId: number): Promise<void> {
     if (guard()) return
     const captured = await snapshot()
@@ -540,7 +535,6 @@ export function createTabs(ports: TabsPorts): Tabs {
   }
   return {
     seen,
-    closed,
     left,
     accountInView,
     serve,

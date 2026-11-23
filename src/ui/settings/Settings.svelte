@@ -20,7 +20,7 @@
   let route = $state<Route>(parseRoute(location.hash))
   const onhash = () => { route = parseRoute(location.hash) }
   addEventListener("hashchange", onhash)
-  // UI-SET-17: a tab that leaves its site tells nobody, so the open page watches for it and reads its status again.
+  // UI-SET-17: a tab that leaves its site or closes tells nobody, so the open page watches for both and reads its status again.
   const browserTabs = untrack(() => siteTabs)
   const stopSiteTabs = browserTabs
     ? watchSiteTabs(browserTabs, () => {
