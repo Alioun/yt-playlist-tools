@@ -23,7 +23,7 @@ The page that opens once after a 1.x user updates to 2.0, showing what carried o
 _Avoid_: What's new, changelog
 
 **Beta**:
-A pre-release version the user installs from the project's site; it updates from there until the release it precedes.
+A pre-release version the user installs from the project's site. It updates from there until the release it precedes.
 _Avoid_: Preview, dev build (that's for the developer only, and never offered to testers)
 
 **Dev build**:
@@ -79,7 +79,7 @@ A file the user saves from Settings holding their shared settings and account se
 _Avoid_: Backup, export (as a noun), profile
 
 **Browser menu**:
-The browser's own right-click menu, as opposed to YouTube's ⋮ menu. One feature can add a Save to ▸ entry to it on YouTube pages; the card menu feature replaces it with YouTube's ⋮ menu on cards.
+The browser's own right-click menu, as opposed to YouTube's ⋮ menu. One feature can add a Save to ▸ entry to it on YouTube pages. The card menu feature replaces it with YouTube's ⋮ menu on cards.
 _Avoid_: Context menu, right-click menu (it's ambiguous on cards)
 
 **Job**:
@@ -89,8 +89,8 @@ _Avoid_: Request (one job may send several requests, or none), call, task
 ### Accounts
 
 **Account**:
-The YouTube identity a page is signed in as: a Google account, or a brand account it has switched to. Each account has its own playlists, Watch Later and account setup; a signed-out page has none.
-_Avoid_: Channel (a video's channel), profile, user, identity, Google account (when a brand account may be meant)
+The YouTube identity a page is signed in as: a Google account, or a brand account it has switched to. Each account has its own playlists, Watch Later and account setup. A signed-out page has none.
+_Avoid_: Channel (a video's channel), profile, user, identity, Google account where a brand account may be meant
 
 **Account setup**:
 The settings that belong to one account: every choice that names one of its playlists, such as its auto-add playlists, their channel filters and the playlist each shortcut adds to. All other settings are shared by every account.
@@ -107,7 +107,7 @@ _Avoid_: Current account, selected account, active account
 ### Adding videos
 
 **Auto-add**:
-Adding the current video to each auto-add playlist once its watch progress reaches that playlist's required percentage. One of two add paths that happen without an explicit user action; the other is automatic gathering.
+Adding the current video to each auto-add playlist once its watch progress reaches that playlist's required percentage. One of two add paths that happen without an explicit user action. The other is automatic gathering.
 _Avoid_: Auto-save, auto-playlist
 
 **Auto-add playlist**:
@@ -115,11 +115,11 @@ A playlist the user has selected to receive auto-added videos. Each one takes vi
 _Avoid_: Target playlist, selected playlist
 
 **Watch progress**:
-How much of a video the user has actually played, as a share of its length. Each part counts once, at any speed; ads and anything skipped over don't count.
+How much of a video the user has actually played, as a share of its length. Each part counts once, at any speed. Ads and anything skipped over don't count.
 _Avoid_: Playhead position, watch time, watched percentage
 
 **Required percentage**:
-The watch progress at which auto-add adds a video to an auto-add playlist. One default is shared by every account; an auto-add playlist can set its own.
+The watch progress at which auto-add adds a video to an auto-add playlist. Every account shares one default, and an auto-add playlist can set its own.
 _Avoid_: Watch threshold, threshold, trigger point
 
 **Short**:
@@ -131,7 +131,7 @@ A video that auto-add leaves out of some or all of an account's auto-add playlis
 _Avoid_: Excluded video, blocklist, ignore list
 
 **Paused auto-add**:
-Auto-add stopped by the user until they resume it or the browser restarts; nothing watched meanwhile counts. Unlike switching the feature off, its settings and page code stay.
+Auto-add stopped by the user until they resume it or the browser restarts. Nothing watched meanwhile counts. Unlike switching the feature off, its settings and page code stay.
 _Avoid_: Disabled, off
 
 **Add**:
@@ -181,7 +181,7 @@ _Avoid_: Hover action, menu shortcut
 
 **Save to library**:
 YouTube Music's own action that puts a song, album or playlist into the user's YouTube Music library, or takes it out if it's there. It doesn't touch any playlist or like.
-_Avoid_: Like (for albums), add to library, Save (alone, which means Save to playlist)
+_Avoid_: Like (for albums), add to library, bare Save, which means Save to playlist
 
 **Start mix**:
 YouTube Music's own action that starts an endless mix from a song, album or playlist, replacing the queue.
@@ -239,20 +239,20 @@ _Avoid_: Auto-gather (too close to auto-add), auto-vacuum
 
 **Unvisited tab**:
 A video tab the user hasn't switched to for at least the chosen time. A tab never switched to counts from when it was opened.
-_Avoid_: Idle tab (the browser's idle state means the user is away), stale tab, inactive tab (the browser's word for any tab that isn't selected)
+_Avoid_: Idle tab, stale tab, inactive tab. The browser's idle state means the user is away, and the browser calls any tab that isn't selected inactive.
 
 **Tab opened in the background**:
 A video tab that loaded without being shown, as a middle-clicked link does, and hasn't been switched to since. A tab the browser restores at start isn't one.
-_Avoid_: Hidden tab (any tab not on screen), new tab, background tab (any tab that isn't selected)
+_Avoid_: Hidden tab, new tab, background tab. A hidden tab is any tab not on screen, and a background tab is any tab that isn't selected.
 
 ### Shortcuts
 
 **Shortcut**:
 A key the user gives one of the extension's actions on YouTube and YouTube Music pages: a playlist shortcut, a quick-action shortcut, the picker key or the undo key. It works only while one of those pages has keyboard focus.
-_Avoid_: Hotkey, keybinding, keyboard command (the browser's own; see any-tab key)
+_Avoid_: Hotkey, keybinding, keyboard command (the browser's own kind is the any-tab key)
 
 **Any-tab key**:
-A key the user sets in the browser's own shortcut settings for one of a few fixed actions, such as liking the playing song, which works while YouTube or YouTube Music is in another tab. The extension never records or sets it; it isn't a shortcut.
+A key the user sets in the browser's own shortcut settings for one of a few fixed actions, such as liking the playing song, which works while YouTube or YouTube Music is in another tab. The extension never records or sets it. It isn't a shortcut.
 _Avoid_: Global shortcut, global hotkey, browser command (in user-facing text)
 
 **Playlist shortcut**:
@@ -279,7 +279,7 @@ _Avoid_: Playing video, active video
 
 **Channel filter**:
 An auto-add playlist's rule about which channels' videos may be auto-added to it. Each auto-add playlist has at most one, in either allowlist mode or denylist mode. A filter can be **switched off**: it then lets every channel through but keeps its mode and listed channels.
-_Avoid_: Channel blocklist, channel exclusions; "Off" as a third mode
+_Avoid_: Channel blocklist, channel exclusions, "Off" as a third mode
 
 **Allowlist mode**:
 A channel filter mode in which only videos from listed channels are auto-added.
@@ -289,11 +289,11 @@ A channel filter mode in which videos from listed channels are never auto-added.
 _Avoid_: Blocklist, block mode
 
 **Listed channel**:
-A channel on a channel filter's list, identified by its channel ID. In allowlist mode it is allowed; in denylist mode it is denied.
+A channel on a channel filter's list, identified by its channel ID. In allowlist mode it is allowed, and in denylist mode it is denied.
 _Avoid_: Denied channel, allowed channel (as entry names), filter entry
 
 **Channel label**:
-The title and optional @handle shown for a listed channel. Display only; never used to identify the channel.
+The title and optional @handle shown for a listed channel. It is for display only and never identifies the channel.
 _Avoid_: Channel name (as an identifier)
 
 **Kept filter**:
@@ -304,5 +304,5 @@ _Avoid_: Inactive filter, stale filter
 A kept filter whose playlist no longer exists in the user's account. It is never shown, and still counts as listing its channels.
 
 **Unknown channel**:
-The state where a video's channel can't be identified when auto-add fires. A filter in denylist mode lets the video through; one in allowlist mode does not.
+The state where a video's channel can't be identified when auto-add fires. A filter in denylist mode lets the video through, and one in allowlist mode does not.
 _Avoid_: Unresolved channel, missing channel
