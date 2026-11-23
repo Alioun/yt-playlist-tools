@@ -176,10 +176,6 @@ export function composeServices(deps: {
         .then(tab => native.tabs.create({ url: runtime.getURL(`/options.html#${hash}`), openerTabId: tabId, ...(tab.index === undefined ? {} : { index: tab.index + 1 }) }))
         .catch(() => {})
     },
-    closed(listener) {
-      native.tabs.onRemoved.addListener(listener)
-      return () => native.tabs.onRemoved.removeListener(listener)
-    },
     async requester(origin) {
       const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
       return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }

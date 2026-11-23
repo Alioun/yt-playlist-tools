@@ -143,7 +143,6 @@ function world(
       }
     }
   }
-  const closedListeners = new Set<(tabId: number) => void>()
   const actions = composeActions({
     native: native as never,
     build,
@@ -154,12 +153,6 @@ function world(
       membershipHealth.push(complete)
     },
     writable: () => true,
-    closed: listener => {
-      closedListeners.add(listener)
-      return () => {
-        closedListeners.delete(listener)
-      }
-    },
     registrar: {
       async ensure(tabId, what) {
         ensured.push({ tabId, what })
@@ -225,10 +218,7 @@ function world(
     const rows = store.removal.state().session.recentAdds
     return Array.isArray(rows) ? rows : []
   }
-  const closeTab = (tabId: number) => {
-    for (const listener of [...closedListeners]) listener(tabId)
-  }
-  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab, opened, logs, fallbackNeeds, membershipHealth }
+  return { store, site, page, actions, ensured, ticks, view, recentAdds, opened, logs, fallbackNeeds, membershipHealth }
 }
 
 test("the Music picker reads check marks from YouTube for the same account and window kind and keeps Music's rows", async () => {
@@ -306,26 +296,25 @@ test("the watch-page menu skips the video, pauses auto-add and lists this channe
   expect(await world({ pageAccount: b }).page.skip(video, true)).toBe(false)
 })
 
-test("an Undo handle stops working once the page releases it, its tab closes, or the tab loads a new page", async () => {
-  for (const end of ["release", "close", "new page"] as const) {
-    const { page, site, actions, closeTab } = world()
+test("an Undo handle stops working once the page releases it or the tab loads a new page", async () => {
+  for (const end of ["release", "new page"] as const) {
+    const { page, site, actions } = world()
     const report = await page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never })
     if (report.kind !== "report" || !report.undo) throw Error("Expected an add with Undo")
     if (end === "release") {
       page.release(report.undo)
       await new Promise(resolve => setTimeout(resolve, 0))
-    } else if (end === "close") closeTab(9)
-    else actions.pageStarted(9)
+    } else actions.pageStarted(9)
     expect(await page.undo(report.undo)).toEqual({ kind: "expired" })
     expect(site.jobs).not.toContain("remove")
   }
 })
 
-test("closing another tab leaves this tab's Undo working", async () => {
-  const { page, closeTab } = world()
+test("another tab's new page load leaves this tab's Undo working", async () => {
+  const { page, actions } = world()
   const report = await page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never })
   if (report.kind !== "report" || !report.undo) throw Error("Expected an add with Undo")
-  closeTab(10)
+  actions.pageStarted(10)
   expect(await page.undo(report.undo)).toEqual({ kind: "undone" })
 })
 

@@ -184,8 +184,6 @@ export function composeActions(deps: {
   readonly requester: (origin: Extract<Origin, { kind: "ui" }>) => Promise<Requester | null>
   /** A tab whose current video auto-add just added to a playlist, for the toolbar's tick (YT-AA-42). */
   readonly ticked?: (tabId: number) => void
-  /** Hears each closed tab, whose Undo handles can no longer be used. */
-  readonly closed?: (listener: (tabId: number) => void) => () => void
   /** Opens Settings at a hash, beside the tab that asked (YT-ADD-29). */
   readonly openSettings?: (hash: string, tabId: number) => void
   readonly log?: (line: string) => void
@@ -265,8 +263,6 @@ export function composeActions(deps: {
     }
     return rows ? { kind: "read", rows } : { kind: "unreadable" }
   }
-  const pageEnded = (tabId: number) => flow.releaseTab(`tab:${tabId}`)
-  const stopClosed = deps.closed?.(pageEnded) ?? (() => {})
   const unbind = rpc.handle({
     authenticate: authenticateTab(native),
     handlers: {
@@ -442,9 +438,9 @@ export function composeActions(deps: {
       const read = await owner.readTabProjection({ private: incognito, account: { kind: "unknown" } }).catch(() => null)
       return read?.kind === "projection" && read.projection.settings.kind === "value" ? decodeSettings(read.projection.settings.settings) : null
     },
-    pageStarted: pageEnded,
+    // A closed tab is not heard (ARC-MOD-39). Its handles stay unused until the worker stops, since the browser gives no later tab its id.
+    pageStarted: tabId => flow.releaseTab(`tab:${tabId}`),
     dispose() {
-      stopClosed()
       unbind()
       rpc.dispose()
       void flow.quiesce()
