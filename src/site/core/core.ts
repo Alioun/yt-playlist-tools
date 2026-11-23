@@ -131,15 +131,12 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   const wanted = new Set<PageFeatureId>(), shown = new Set<PageFeatureId>()
   // The claim behind a notice that isn't on screen yet, and the notice it would replace.
   let unshown: { readonly token: string; readonly before: ReturnType<typeof notices.read> } | null = null
-  // One claim or release is out at a time, so the Monitor hears this tab's asks in the order they happened.
-  // Whatever changes while one is out is looked at when it is answered, so a refusal is final only if nothing changed.
+  // One claim or release is out at a time, so the Monitor hears this tab's asks in order, and a change while one is out is looked at once it is answered.
   let asking = false, again = false
   const cantShow = () => document.hidden || document.fullscreenElement !== null
   // The tab may be visible again by the time the Monitor has the release, so it looks once more.
   async function giveBack(token: string) { await actions.noticeReleased(token); again = true }
-  // The view lists a due notice once the Monitor batched it; only a tab whose feature would act claims it, once a page.
-  // A hidden or fullscreen tab couldn't show it, so it leaves the notice for a visible tab until it is shown itself.
-  // A claim it already holds goes back too, or the Monitor would refuse a visible tab for as long as the claim lasts.
+  // Only a tab whose feature would act claims the due notice, once a page. A hidden or fullscreen tab leaves it or gives its claim back, since the Monitor refuses a visible tab while a claim lasts.
   async function look() {
     if (unshown) {
       if (!cantShow()) return
@@ -219,7 +216,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   }
   root.add(link.onView(view => { if (view === null && link.state.kind === "disposed") dispose() }))
   root.add(link.onView(() => void deliver()))
-  for (const shown of ["visibilitychange", "fullscreenchange"] as const) root.on(document, shown, () => void deliver())
+  for (const event of ["visibilitychange", "fullscreenchange"] as const) root.on(document, event, () => void deliver())
   return {
     ...services, site, build, root, pointer, link,
     get disposed() { return disposed },

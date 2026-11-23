@@ -140,8 +140,7 @@ export class PageState {
       this.#liveFrom = null
       return
     }
-    // One ask per account and serving tab. A status change reads the account again, and while both stay the same
-    // the header keeps what it shows, a name or none. Another tab for the same account is asked behind that.
+    // The label is asked once per account and serving tab, and a new tab for the same account is asked while the header keeps what it shows.
     const asked = this.#liveFrom
     if (asked?.acct === account.acct && asked.tabId === account.tabId) return
     const from = (this.#liveFrom = { acct: account.acct, tabId: account.tabId })
