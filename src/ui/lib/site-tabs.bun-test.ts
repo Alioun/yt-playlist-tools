@@ -88,3 +88,24 @@ test("a tab that showed YouTube and closes has left, and a closing tab that show
   stop()
   expect(tabs.listening()).toBe(0)
 })
+
+test("a tab the first read still shows on YouTube has left when its leave or its close was heard before that answer", async () => {
+  let answer: (tabs: readonly { id: number; url?: string }[]) => void = () => {}
+  const tabs = browserTabs()
+  const port: SiteTabsPort = { ...tabs.port, query: () => new Promise(resolve => (answer = resolve)) }
+  let left = 0
+  const stop = watchSiteTabs(port, () => left++)
+  // Tabs 7 and 8 showed YouTube when the browser read its tabs. Both are gone before that answer arrives.
+  tabs.update(7)
+  tabs.close(8)
+  tabs.update(9)
+  expect(left).toBe(0)
+  answer([{ id: 7, url: "https://www.youtube.com/watch?v=a" }, { id: 8, url: "https://www.youtube.com/" }, { id: 9 }])
+  await settle()
+  expect(left).toBe(2)
+  // The watcher doesn't take the older answer for where they are now.
+  tabs.update(7)
+  tabs.close(8)
+  expect(left).toBe(2)
+  stop()
+})
