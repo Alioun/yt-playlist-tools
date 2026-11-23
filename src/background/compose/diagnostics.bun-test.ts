@@ -182,7 +182,7 @@ test("Check now publishes a result only after the tab confirms delivery", async 
 })
 
 // Check now in tab 4 through the tab's own health reporter. The account read fails and raises its signal, as the page does.
-function checkedTab(taken: (reports: readonly TabHealthReport[]) => boolean) {
+function checkedTab(taken: (reports: readonly TabHealthReport[]) => boolean, reading: () => Promise<void> = async () => {}) {
   let journal: MonitorJournal = structuredClone(emptyMonitorJournal),
     sequence = 0,
     raise: (signal: BreakageSignal) => void = () => {},
@@ -216,6 +216,7 @@ function checkedTab(taken: (reports: readonly TabHealthReport[]) => boolean) {
         if (invocation.job.kind !== "account") return { kind: "result", tabId: 4, result: { ok: true, data: {}, route: "r" } } as never
         fail()
         await batch()
+        await reading()
         return { kind: "result", tabId: 4, result: { ok: false, reason: "unavailable" } } as never
       }
     },
@@ -247,4 +248,20 @@ test("a health batch that failed before the check doesn't fail Check now (HEALTH
   fail()
   await batch()
   expect(await diagnostics.read(true)).toMatchObject({ kind: "diagnostics", checks: [{ site: "www" }], signals: [{ job: "account", kind: "unrecognised" }] })
+})
+
+test("two Check nows at once each fail only for a batch lost during their own reads (HEALTH-23)", async () => {
+  let sends = 0
+  let second: Promise<unknown> | undefined
+  // The first check's batch is lost. Another Settings page clicks Check now while the first check still reads.
+  const { diagnostics } = checkedTab(
+    () => ++sends > 1,
+    async () => {
+      if (second) return
+      second = diagnostics.read(true)
+      await new Promise<void>(resolve => setTimeout(resolve, 5))
+    }
+  )
+  expect(await diagnostics.read(true)).toEqual({ kind: "unavailable", reason: "collaborator" })
+  expect(await second).toMatchObject({ kind: "diagnostics", checks: [{ site: "www" }], signals: [{ job: "account", kind: "unrecognised" }] })
 })
