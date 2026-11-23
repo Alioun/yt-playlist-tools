@@ -416,11 +416,6 @@ export async function eventually(check: () => boolean | Promise<boolean>, what: 
   throw new Error(`Timed out waiting: ${what}`)
 }
 
-// The popup's routes and the tab registry answer once the store owner is ready and reports consent.
 export async function started(w: ReturnType<ReturnType<typeof browser>["worker"]>) {
   await w.background.ready
-  await eventually(async () => {
-    const status = await w.popup.call("ui.status", {})
-    return status.kind === "answered" && status.result.kind === "status"
-  }, "the popup's status")
 }

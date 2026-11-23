@@ -123,11 +123,6 @@ test("two gathers in a row whose YouTube's player tab shows no list reach the Mo
   const w = world.worker()
   running.push(w.background)
   await w.background.ready
-  // The tab registry starts once the store reports consent; a hello before that is dropped, as a real tab's would be.
-  await eventually(async () => {
-    const status = await w.popup.call("ui.status", {})
-    return status.kind === "answered" && status.result.kind === "status"
-  }, "the popup's status")
   await w.hello(1)
 
   // YouTube never turns the new tabs' watch_videos address into a list, so neither 10 s check confirms it. Two windows wait out one 10 s together.
