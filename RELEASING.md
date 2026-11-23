@@ -29,10 +29,10 @@ The release checklist (spec 08-release §18, REL-CHK-18). [docs/development/rele
 - [ ] Has `schema` been bumped? Then the release PR says "Rolling back past this version leaves the extension inert."
 - [ ] Merge `dev` to `main` with the bumped version, as a merge commit, never a squash. Read the gate summary (sizes against `main`, the manifest diff, the watch), then approve `amo` and `cws`, or reject one to hold that store.
 - [ ] Afterwards:
-  - AMO shows the version public (within 24 hours), and Chrome shows it approved and published;
-  - the GitHub release is out, with its notes;
-  - store reviews and issues are watched for 48 hours;
-  - the reviewer account's backup codes are refreshed if a reviewer used them.
+  - AMO shows the version public (within 24 hours), and Chrome shows it approved and published
+  - the GitHub release is out, with its notes
+  - store reviews and issues are watched for 48 hours
+  - the reviewer account's backup codes are refreshed if a reviewer used them
 
 ## Beta
 
@@ -45,7 +45,7 @@ The release checklist (spec 08-release §18, REL-CHK-18). [docs/development/rele
 - [ ] Cut `hotfix/X.Y.Z` from the last release tag. Make only the fix, for a YouTube change or a bug of our own, with no change to permissions, the disclosure, the consent version, the data schema, or any user-visible behaviour beyond the fix. A fix for a YouTube change also updates its fixtures and its watch-list entry.
 - [ ] Write `store/release-notes/X.Y.Z.md`, and `store/notes/hotfix/X.Y.Z.md` with one sentence for AMO's reviewers: "Fixes {feature} after a YouTube change to {internal}." or, for a bug of our own, "Fixes {what went wrong} in {feature}." The hotfix reviewer notes start with it.
 - [ ] Run the signed-in live check: hotfix scope for a YouTube change, the whole check for a bug of our own. Merge the PR into `main` with the version `X.Y.Z`, and check that the gates pass, `hotfix-freeze` included.
-- [ ] Afterwards, comment on the fix's issue ("Firefox users get it within about a day; Chrome users after review"), and merge `main` back into `dev`.
+- [ ] Afterwards, comment on the fix's issue ("Firefox users get it within about a day, Chrome users after review"), and merge `main` back into `dev`.
 
 ## Bad release
 

@@ -9,7 +9,7 @@ The wordmark, the lockup with the Perch icon, the Chrome Web Store promo images,
 | `wordmark.svg`, `wordmark-on-light.svg` | "Perchling" as outlines: ink `#262B36`, with the i's dot in brand teal. `wordmark.svg` is the source the build reads. |
 | `wordmark-on-dark.svg` | The same in paper `#F1F3F6`, for dark backgrounds. |
 | `lockup-on-light.svg`, `lockup-on-dark.svg` | The icon and the wordmark side by side. |
-| `*-800.png`, `*-480.png`, `*-960.png` | Transparent PNG exports of the wordmark (800 px wide) and the lockups (480 and 960 px wide). |
+| `*-800.png`, `*-480.png`, `*-960.png` | Transparent PNG exports of the wordmark at 800 px wide and the lockups at 480 and 960 px wide. |
 | `promo-small-440x280.png` (+ `.svg`) | Chrome Web Store small promo tile. Required. |
 | `marquee-1400x560.png` (+ `.svg`) | Chrome Web Store marquee. Optional. |
 | `social-preview-1280x640.png` (+ `.svg`) | The GitHub repository's social preview. |
@@ -23,11 +23,11 @@ The wordmark, the lockup with the Perch icon, the Chrome Web Store promo images,
 - **Source:** google/fonts, `ofl/nunito/Nunito[wght].ttf`, at commit `47d54ca1ebb14fd864695f1d39dc734f39017c33` (2026-10-20). The variable font is instanced at `wght` 800.
 - **What ships:** only glyph outlines, inside the SVGs and PNGs. The font file isn't redistributed. The OFL allows artwork made with the font, outlines in a logo included, under any terms.
 
-**Why Nunito:** the spec names no brand typeface; the extension's UI uses the system font stack and bundles none. Nunito's rounded stroke ends echo Perch's round head and soft corners, which gives the warmth. Its even, open letterforms keep it tidy, and legible down to the promo tile at half size. ExtraBold matches the mark's solid, flat fills. Rubik was the runner-up: sturdier, but less warm.
+**Why Nunito:** the spec names no brand typeface. The extension's UI uses the system font stack and bundles none. Nunito's rounded stroke ends echo Perch's round head and soft corners, which gives the warmth. Its even, open letterforms keep it tidy, and legible down to the promo tile at half size. ExtraBold matches the mark's solid, flat fills. Rubik was the runner-up: sturdier, but less warm.
 
 **The wordmark's details:**
-- the font's own kerning, as Chrome sets it, which tightens "Pe" and "rc";
-- light hand kerning on every pair (`TWEAK` in `tools/wordmark.py`), and −6 units of tracking for display sizes;
+- the font's own kerning, as Chrome sets it, which tightens "Pe" and "rc"
+- light hand kerning on every pair (`TWEAK` in `tools/wordmark.py`), and −6 units of tracking for display sizes
 - the i's dot in brand teal `#14A39A`, the one small tie to the bird's ledge.
 
 ## Using it
@@ -38,17 +38,17 @@ The wordmark, the lockup with the Perch icon, the Chrome Web Store promo images,
   - Don't rebuild it at other proportions.
 - **Clear space:** at least the icon's ledge height (about a tenth of the icon's height) on every side.
 - **Smallest sizes:** the wordmark 80 px wide, the lockup 140 px wide. Below that, use the icon alone.
-- **Backgrounds:** the `on-dark` files go on dark backgrounds; the icon is the same drawing on both.
+- **Backgrounds:** the `on-dark` files go on dark backgrounds. The icon is the same drawing on both.
 - **Never:**
-  - set the name in another typeface in an image;
-  - stretch, outline or recolour the wordmark, beyond ink, paper or one colour;
-  - add YouTube's logo, red or play button;
+  - set the name in another typeface in an image
+  - stretch, outline or recolour the wordmark, beyond ink, paper or one colour
+  - add YouTube's logo, red or play button
   - put the wordmark on a busy photo.
 - **The extension's own pages** still write the name as text, in the system font stack (spec 05 §5.10). The wordmark is for images, the README and the stores.
 
 ## The store images
 
-**Chrome Web Store** (Developer Dashboard › Store listing › Graphic assets): upload `promo-small-440x280.png` and `marquee-1400x560.png`. They follow Google's image guidelines (developer.chrome.com/docs/webstore/images):
+**Chrome Web Store** (Developer Dashboard › Store listing › Graphic assets): upload `promo-small-440x280.png` and `marquee-1400x560.png`. They follow Google's [image guidelines](https://developer.chrome.com/docs/webstore/images):
 - **Colour and fill:** a saturated violet (`#2B2170`) fills the whole region, with well-defined edges on the store's light grey.
 - **Content:** the brand, and no other text. No screenshot, and no claims such as "featured" or "number one".
 - **Size:** it still reads at half size.
@@ -88,7 +88,7 @@ The icon's own colours are in [`../icon/README.md`](../icon/README.md).
 
 ## Rebuilding
 
-The build needs Nunito's variable font from google/fonts (above), and fontTools (`pip install --target <dir> fonttools`). It also needs headless Chrome driven by `playwright-core`; the `PLAYWRIGHT_CORE`, `CHROME` and `CHROME_LIBS` variables point at them.
+The build needs Nunito's variable font from google/fonts, named above, and fontTools (`pip install --target <dir> fonttools`). It also needs headless Chrome driven by `playwright-core`. The `PLAYWRIGHT_CORE`, `CHROME` and `CHROME_LIBS` variables point at them.
 
 1. `python3 -I assets/brand/tools/wordmark.py <Nunito[wght].ttf> [fontTools dir]` writes `wordmark.svg`. The kerned offsets in it were measured with step 2's tool.
 2. `node assets/brand/tools/measure.mjs <Nunito[wght].ttf> assets/brand/tools/lines-in.json <positions.json>` measures the social preview's lines.

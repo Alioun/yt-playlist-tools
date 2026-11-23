@@ -1,6 +1,6 @@
 # Store listings
 
-The listing text and images for Firefox Add-ons (AMO) and the Chrome Web Store, as 08-release §9 specifies them. Patch releases may not change anything in this folder: the `hotfix-freeze` gate compares it with the previous release (REL-CI-38).
+The listing text and images for Firefox Add-ons (AMO) and the Chrome Web Store, as 08-release §9 specifies them. Patch releases may not change anything in this folder: the `hotfix-freeze` gate, REL-CI-38, compares it with the previous release.
 
 Both stores take their text from here by hand, in the AMO Developer Hub and the Chrome Web Store dashboard. Nothing uploads it automatically.
 
@@ -15,7 +15,7 @@ Both stores take their text from here by hand, in the AMO Developer Hub and the 
 
 ## Fields
 
-| Field | AMO (the existing listing) | Chrome Web Store (the new item) |
+| Field | AMO, the existing listing | Chrome Web Store, the new item |
 |---|---|---|
 | Name | Perchling for YouTube™. The manifest sets it, and it's also edited in the Developer Hub. The slug `youtube-playlist-tools` and the add-on ID don't change. | From the manifest: Perchling for YouTube™ |
 | Summary | Save YouTube videos to Watch Later or any playlist in one click or with a shortcut, auto-add the videos you actually watch, and get one-click Play next and Add to queue on YouTube Music. Every feature is opt-in. (Formerly YouTube Playlist Tools.) | From the manifest's `description`: Save to Watch Later or any playlist in one click or a shortcut, auto-add what you actually watch, and Add to queue on YouTube Music. |
@@ -46,4 +46,4 @@ Each caption band uses the extension's own type and palette: Perch's grey with t
 
 ## Credits and attribution
 
-The description credits GatherTube by Karim Elgazar on the Gather tabs line (REL-STORE-38). Its last paragraph is the trademark attribution, word for word (REL-STORE-03). Listing text writes "Shorts" on its own, never "YouTube Shorts", which would have to join the attribution.
+The description credits GatherTube by Karim Elgazar on the Gather tabs line, as REL-STORE-38 asks. Its last paragraph is the trademark attribution, word for word, as REL-STORE-03 asks. Listing text writes "Shorts" on its own, never "YouTube Shorts", which would have to join the attribution.

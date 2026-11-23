@@ -4,7 +4,7 @@
 
 ## Tests
 
-Every test runs under `bun test`; the repo has no other runner. Unit and component tests sit beside their code as `*.bun-test.ts`, and the cross-cutting ones live under `tests/` as `*.test.ts`. [`bunfig.toml`](../../bunfig.toml) preloads Svelte compilation, happy-dom and the fake browser.
+Every test runs under `bun test`, and the repo has no other runner. Unit and component tests sit beside their code as `*.bun-test.ts`, and the cross-cutting ones live under `tests/` as `*.test.ts`. [`bunfig.toml`](../../bunfig.toml) preloads Svelte compilation, happy-dom and the fake browser.
 
 ```bash
 bun run test                    # test:bun, then test:fixtures
@@ -43,4 +43,4 @@ gh run download <run-id>                               # unzips both into ./chro
 
 The Firefox build has the same gecko ID as the AMO listing, so either one replaces an installed 1.4.5. A signed dev build replaces it for good, until you install 1.4.5 or a beta again.
 
-Signing ([R149](../../.scratch/rebuild/spec/resolutions.md#signed-firefox-dev-builds-r149)) runs only while the repo variable `SIGN_DEV_BUILDS` is `true`, with the AMO key in the `amo-dev` environment ([GitHub setup](releasing.md#github-setup)). Each signing uses up an AMO version number for good, which is why PRs aren't signed. Chrome needs no signing: an unpacked extension survives restarts.
+Signing, decided in [R149](../../.scratch/rebuild/spec/resolutions.md#signed-firefox-dev-builds-r149), runs only while the repo variable `SIGN_DEV_BUILDS` is `true`, with the AMO key in the `amo-dev` environment. [GitHub setup](releasing.md#github-setup) covers both. Each signing uses up an AMO version number for good, which is why PRs aren't signed. Chrome needs no signing, because an unpacked extension survives restarts.

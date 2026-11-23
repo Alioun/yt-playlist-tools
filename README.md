@@ -18,11 +18,11 @@ A browser extension for Firefox and Chrome that saves the video or song you're o
 ## What it does
 
 On YouTube:
-- quick-save on thumbnails, where one click saves a video to the playlist you pick and a picker shows where it already is;
-- up to 20 playlist shortcuts, each a key that saves to its own playlist, and Alt+W for Watch Later;
-- auto-add, which saves the videos you actually watch to playlists you pick, with channel filters;
-- a watch-page button, a queue button on thumbnails, Save to ▸ in the browser's right-click menu, and creating playlists from any chooser;
-- Gather tabs, which collects the YouTube videos open in a window into one list, YouTube's queue or a playlist.
+- quick-save on thumbnails, where one click saves a video to the playlist you pick and a picker shows where it already is
+- up to 20 playlist shortcuts, each a key that saves to its own playlist, and Alt+W for Watch Later
+- auto-add, which saves the videos you actually watch to playlists you pick, with channel filters
+- a watch-page button, a queue button on thumbnails, Save to ▸ in the browser's right-click menu, and creating playlists from any chooser
+- Gather tabs, which collects the YouTube videos open in a window into one list, YouTube's queue or a playlist
 
 On YouTube Music, Play next, Add to queue, Save to playlist and Like are one click or one key away. Everywhere, keys from any tab save or like what's playing while YouTube is in another tab, every save has Undo, each YouTube account has its own setup, and settings can sync through your browser.
 

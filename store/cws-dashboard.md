@@ -1,6 +1,8 @@
 # Chrome Web Store dashboard answers
 
-Paste these into the item's Privacy tab in the Chrome Web Store Developer Dashboard (REL-STORE-20). Patch releases may not change this file: the `hotfix-freeze` gate compares it with the previous release (REL-CI-38). A change to data handling updates this file, the privacy policy (`site/privacy/`) and the consent version in the same minor release (REL-STORE-19).
+Paste these into the item's Privacy tab in the Chrome Web Store Developer Dashboard (REL-STORE-20). Patch releases may not change this file: the `hotfix-freeze` gate, REL-CI-38, compares it with the previous release.
+
+Under REL-STORE-19, a change to data handling updates this file, the privacy policy in `site/privacy/` and the consent version in the same minor release.
 
 ## Single purpose
 

@@ -4,8 +4,8 @@
 
 `main` is what's released ([ADR-0014](../adr/0014-dev-integrates-main-releases-on-a-version-bump.md)). Every push to `main` runs [`release.yml`](../../.github/workflows/release.yml), and [`release-meta.sh`](../../scripts/release-meta.sh) decides from the tags alone whether that push releases:
 
-- `package.json`'s version is `MAJOR.MINOR.PATCH`, numbers only;
-- `v{version}` isn't tagged yet, and the version is above the highest tag;
+- `package.json`'s version is `MAJOR.MINOR.PATCH`, numbers only
+- `v{version}` isn't tagged yet, and the version is above the highest tag
 - the first release is `1.99.1`, the first 2.0 beta. 1.5.0 never ships.
 
 A merge that doesn't bump the version releases nothing. A version below the last release, or a malformed one, fails the run.
@@ -17,8 +17,8 @@ A merge that doesn't bump the version releases nothing. A version below the last
 1. On `dev`, bump `version` in `package.json` and write `store/release-notes/{version}.md`. A patch also needs `store/notes/hotfix/{version}.md`, the one sentence that opens its reviewer notes. [`amo-metadata.ts`](../../scripts/amo-metadata.ts) builds AMO's metadata from these and from the reviewer templates in `store/notes/`: `reviewer-full.md` for major and minor releases, `reviewer-hotfix.md` for patches and `reviewer-beta.md` for betas. It drops their `<!-- -->` comments, fills `{version}`, `{next release}`, `{previous version}` and `{fix}`, and fails a release build if a file is missing or a placeholder is left. The one exception is the reviewer test account's `{email}`, `{password}`, `{code1}` and `{code2}` in the full and hotfix templates. A later, owner-gated step fills those (G28), so `amo-metadata.ts` leaves them in place and only lists them.
 2. Open a PR from `dev` to `main`, and merge it with a **merge commit**, not a squash, so the two branches don't diverge.
 3. `release.yml`:
-   1. builds and checks both packages (typecheck, tests, manifests, and the sources zip rebuilding);
-   2. tags `v{version}` and creates the GitHub release with the zips, the manifests and the release notes as its text. Betas get a pre-release;
+   1. builds and checks both packages with the typecheck, the tests, the manifest checks and a rebuild from the sources zip.
+   2. tags `v{version}` and creates the GitHub release with the zips, the manifests and the release notes as its text. Betas get a pre-release.
    3. waits for your approval in the `amo` and `cws` environments, then submits exactly the files it checked. Once G28 is on, a stable release also waits for `amo-reviewer` twice: before `submit-amo` and after it.
 4. Approve each store in the run, or reject one to hold it.
 5. The run's last job starts [`pages.yml`](../../.github/workflows/pages.yml), which rebuilds the site and its `beta/updates.json`.
@@ -27,9 +27,9 @@ The channel comes from the version:
 
 | Version | Channel | AMO | Chrome Web Store |
 | --- | --- | --- | --- |
-| `1.99.N` (2.0's betas) | beta | signed **unlisted**; the `.xpi` is attached to the pre-release | the main item, Unlisted |
+| `1.99.N` (2.0's betas) | beta | signed **unlisted**, with the `.xpi` attached to the pre-release | the main item, Unlisted |
 | `X.Y.9NN` (later betas) | beta | signed unlisted | not submitted |
-| anything else | stable | **listed** | submitted; `CWS_PUBLISH_TYPE`, or always `DEFAULT_PUBLISH` for a patch |
+| anything else | stable | **listed** | submitted with `CWS_PUBLISH_TYPE`, or always `DEFAULT_PUBLISH` for a patch |
 
 ## The site and beta updates
 
@@ -43,10 +43,10 @@ To check a release without publishing, run the workflow by hand (**Actions › R
 
 - **Hold a store:** reject its environment in the run.
 - **Resume:** use **Re-run failed jobs**. It keeps `meta`'s and `build`'s outputs and the checked artifact, and every job picks up where it stopped:
-  - `github-release` finishes a release that's already there, if its tag is this commit;
-  - `submit-amo` uploads only a version AMO doesn't have, attaches the sources if they're missing, and for a beta fetches the signed file;
-  - `fill-reviewer-notes`, once G28 is on, sets the reviewer notes again;
-  - `submit-cws` skips a version that's already submitted or published.
+  - `github-release` finishes a release that's already there, if its tag is this commit
+  - `submit-amo` uploads only a version AMO doesn't have, attaches the sources if they're missing, and for a beta fetches the signed file
+  - `fill-reviewer-notes`, once G28 is on, sets the reviewer notes again
+  - `submit-cws` skips a version that's already submitted or published
 - **Re-run all jobs** isn't a recovery path: `meta` would see the tag and skip everything.
 
 ## Hotfixes
@@ -66,8 +66,8 @@ Once, in the repository settings:
   - `PUBLISH_CWS`, `true` to submit to the Chrome Web Store. It stays `false` until the item exists: the API can't create one, so `v1.99.1`'s Chrome zip is uploaded by hand, as Unlisted, from the run's artifacts.
   - `CWS_PUBLISH_TYPE`, `DEFAULT_PUBLISH` or `STAGED_PUBLISH`.
   - `SIGN_DEV_BUILDS`, `true` to sign the Firefox dev build on every push to `dev`.
-- **A ruleset on `main`:** pull requests required, with at least one approval, review from Code Owners ([`.github/CODEOWNERS`](../../.github/CODEOWNERS)), approval of the most recent push, and stale approvals dismissed; the CI checks `build` and `g28-proof` required; no force pushes; nothing in the bypass list but **Repository admin**. GitHub doesn't let a pull request's author approve it. The reviewer test account's setup below checks this.
-- Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts status 1.4.5` with `FIREFOX_EXTENSION_ID` set to the GUID (with braces) and the JWT pair. It should print `present` or `no-source`; an error means the key is wrong.
+- **A ruleset on `main`:** pull requests required, with at least one approval, review from Code Owners ([`.github/CODEOWNERS`](../../.github/CODEOWNERS)), approval of the most recent push, and stale approvals dismissed. The CI checks `build` and `g28-proof` are required, force pushes are blocked, and the bypass list holds only **Repository admin**. GitHub doesn't let a pull request's author approve it. The reviewer test account's setup below checks this.
+- Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts status 1.4.5` with `FIREFOX_EXTENSION_ID` set to the GUID, braces included, and the JWT pair. It should print `present` or `no-source`. An error means the key is wrong.
 
 ### The reviewer test account (proposed, off until approved)
 
@@ -76,8 +76,8 @@ AMO's full and hotfix reviewer notes carry `{email}`, `{password}`, `{code1}` an
 Set it up in this order. Store nothing until every check in steps 2 and 3 prints `true`.
 
 1. Under **Settings › Environments**, create `amo-reviewer`:
-   - you as required reviewer, self-review allowed;
-   - under **Deployment branches and tags**, **Selected branches and tags** with the one rule `main`, a branch;
+   - you as required reviewer, self-review allowed
+   - under **Deployment branches and tags**, **Selected branches and tags** with the one rule `main`, a branch
    - **Allow administrators to bypass configured protection rules** turned off.
 2. Check that only `main` can deploy to `amo-reviewer`, that you review it, that no administrator can skip your review, and that no repository variable stands in for the environment's digests, which `vars.` would read if the environment lacked them. GitHub reads variable names in any case. Each command prints `true` or `false`, and the last one line per page of variables:
 
@@ -114,10 +114,10 @@ Set it up in this order. Store nothing until every check in steps 2 and 3 prints
 
 `AMO_REVIEWER_LOGIN` is four lines, in this order, with nothing else:
 
-1. the reviewer account's e-mail address;
-2. its password, with no leading or trailing space;
-3. one unused backup code, 8 digits, as `12345678` or `1234 5678`;
-4. a second, different unused backup code.
+1. the reviewer account's e-mail address
+2. its password, with no leading or trailing space
+3. one unused backup code, 8 digits, as `12345678` or `1234 5678`
+4. a second, different unused backup code
 
 Store it without echoing any of it. One way is to paste the four lines into **Settings › Environments › amo-reviewer › Add environment secret**. The other is from 1Password:
 

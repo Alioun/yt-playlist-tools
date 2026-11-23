@@ -1,6 +1,6 @@
 # Perch: the 2.0 icon
 
-A grey pigeon perched on top of a small cabinet of pigeonholes, not in one. The user picked it on 2026-10-20 ([ticket 34](../../.scratch/rebuild/issues/34-icon.md); [R140](../../.scratch/rebuild/spec/resolutions.md#the-icon-perch-r140)). Every shape is hand-placed SVG geometry. The name is Perchling; the wordmark and lockups are in [`assets/brand/`](../brand/README.md).
+A grey pigeon perched on top of a small cabinet of pigeonholes, not in one. The user picked it on 2026-10-20 in [ticket 34](../../.scratch/rebuild/issues/34-icon.md) and [R140](../../.scratch/rebuild/spec/resolutions.md#the-icon-perch-r140). Every shape is hand-placed SVG geometry. The name is Perchling, and the wordmark and lockups are in [`assets/brand/`](../brand/README.md).
 
 `sheet.html` shows every size on light and dark toolbars, with the badges and pixel zooms. `sheet-light.png` and `sheet-dark.png` are its renders.
 
@@ -44,7 +44,7 @@ manifest.action = {
   - `icons` takes 16, 32, 48 and the padded `store-128.png`, which Chrome shows at install and in the store.
   - `action.default_icon` takes 16, 24 and 32. The action icon is 16 dip, so 1x, 1.5x and 2x screens each get their own file.
   - Chrome takes PNG only (no SVG), and has no light/dark icon switch.
-  - The 19 and 38 px exports are Chrome's legacy toolbar sizes; they needn't ship.
+  - The 19 and 38 px exports are Chrome's legacy toolbar sizes. They needn't ship.
 - **Firefox:**
   - `icons` adds 96 for about:addons on 2x screens, and the full-bleed 128.
   - `action.default_icon` is the same as Chrome's.
@@ -53,7 +53,7 @@ manifest.action = {
 
 **In the stores:**
 - **Chrome Web Store:** the item's icon comes from the manifest. If the dashboard asks for a store icon too, upload `store-128.png`.
-- **AMO:** upload `amo-128.png` in the Developer Hub's listing editor. The listing doesn't take the manifest's icon; AMO resizes the upload to 32, 64 and 128 and shows the 64 on the listing.
+- **AMO:** upload `amo-128.png` in the Developer Hub's listing editor. The listing doesn't take the manifest's icon. AMO resizes the upload to 32, 64 and 128 and shows the 64 on the listing.
 
 ## Colours
 
@@ -63,16 +63,16 @@ Flat fills. The teal-to-violet gradient appears only on the neck, from 32 px up 
 |---|---|---|
 | Pigeon grey | `#8B95A4` | head and body |
 | Wing grey | `#78828F` | folded wing |
-| Tail grey | `#6B7584` | tail; the wing line at 16 px (the 16 px tail is `#727C8B`) |
+| Tail grey | `#6B7584` | tail, and the wing line at 16 px, where the tail is `#727C8B` |
 | Tail band | `#4A5360` | tail tip, feet |
 | Primaries | `#5E6875` | the wing's tip |
 | Beak | `#3D4552` | beak |
 | Cere | `#E9EDF2` | the white patch at the beak's base |
 | Eye and cards | `#F5F7FA` | eye ring, eye highlight, cards |
 | Pupil | `#1A1E27` | eye |
-| Brand teal | `#14A39A` | the ledge; the neck gradient's start |
+| Brand teal | `#14A39A` | the ledge, the neck gradient's start |
 | Ledge shade | `#0F8A82` | the ledge's underside |
-| Brand violet | `#7B5CD6` | the neck gradient's end; lines on cards |
+| Brand violet | `#7B5CD6` | the neck gradient's end, lines on cards |
 | Cabinet violet | `#8E74E2` | the cabinet: a light tint of brand violet |
 | Cabinet shade | `#6E52CC` | under the ledge |
 | Pigeonhole ink | `#26223C` | the holes |
@@ -81,7 +81,7 @@ Flat fills. The teal-to-violet gradient appears only on the neck, from 32 px up 
 ## Light and dark
 
 One drawing serves both.
-- **Contrast:** the shapes that carry the silhouette sit near 3:1 on Chrome's and Firefox's light and dark toolbars. Those are the grey bird (2.9 to 4.7:1), the teal ledge (3.0 to 4.6:1) and the light-violet cabinet (3.0 to 3.9:1).
+- **Contrast:** the shapes that carry the silhouette sit near 3:1 on Chrome's and Firefox's light and dark toolbars. Those are the grey bird (2.9 to 4.7:1), the teal ledge at 3.0 to 4.6:1 and the light-violet cabinet at 3.0 to 3.9:1.
 - **Why the lighter violet:** the cabinet uses `#8E74E2` rather than brand violet, which falls to 2.3:1 on Chrome's dark toolbar.
 - **No dark variant:**
   - Chrome can't switch icons by theme.
@@ -91,9 +91,9 @@ One drawing serves both.
 ## Badges
 
 The toolbar states are browser badges (`action.setBadgeText`), per spec UI-IA-08:
-- a teal ✓ (`#0B7A70`);
-- a slate II (`#5E6875`);
-- a violet "!" (`#6949D2`);
+- a teal `✓` (`#0B7A70`)
+- a slate II (`#5E6875`)
+- a violet "!" (`#6949D2`)
 - an amber "!" (`#E8A33A`, black text).
 
 Chrome draws a badge bottom-right and hides the icon's bottom-right quarter. Firefox draws it top-right. The pigeon's head sits top-left, clear of both.

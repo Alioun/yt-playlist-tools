@@ -18,7 +18,7 @@
 | 07 | [Quality](../../.scratch/rebuild/spec/07-quality.md) | Tooling, test layers, fixtures, breakage detection, performance budgets, CI |
 | 08 | [Upgrade and release](../../.scratch/rebuild/spec/08-release.md) | The 1.4.5 migration, consent, betas, store listings, privacy policy, workflows |
 | 09 | [Parity and defects](../../.scratch/rebuild/spec/09-parity.md) | Every 1.5.0 capability and friction item mapped to 2.0, plus what's new |
-| | [Resolutions](../../.scratch/rebuild/spec/resolutions.md) | Every conflict settled during and after assembly, and the user's decisions (R1–R144) |
+| | [Resolutions](../../.scratch/rebuild/spec/resolutions.md) | Every conflict settled during and after assembly, and the user's decisions, R1 to R144 |
 
 ## Behind the spec
 
