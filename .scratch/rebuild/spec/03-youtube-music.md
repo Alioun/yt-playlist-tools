@@ -350,7 +350,7 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
     - it shows "Already in {N} playlists" for the rows that were read, and "Couldn't check {N} playlists" for the rest;
     - if no row was read, it shows "Couldn't check where this song already is" alone;
     - Quick actions is partly working.
-  - **Two lookups can overlap,** when Refresh asks again before the first lookup answers. A lookup that ends after a later one's result was recorded changes nothing, so a slow first lookup can't undo what Refresh found. The order the lookups were asked in decides this, not the clock, so it holds for two results in the same millisecond.
+  - **Two lookups can overlap,** when Refresh asks again before the first lookup answers. A lookup that ends after a later one's result was recorded changes nothing, so a slow first lookup can't undo what Refresh found. The order the lookups were asked in decides this, not the clock, so it holds for two results in the same millisecond. The Monitor asks which lookup is the newest in the same step as it writes the result, and a result whose write was overtaken by another report is read for again, not dropped. So the newest lookup's result stands whichever write lands first.
   - **PROVISIONAL** (ticket 25, M2): whether YouTube Music's own answer carries membership. M2 hasn't run. The YouTube Music specimen PR #89 parses (`addToPlaylistRenderer` with `playlistAddToOptionRenderer` rows) carries no selection state, so the youtube.com tab supplies the checks for now.
 - **YM-PICK-7** **Ticking a row** saves the song there at once, through YM-SAVE-5's flow.
   - The row shows its own result: busy, then checked, or an inline "Couldn't save".

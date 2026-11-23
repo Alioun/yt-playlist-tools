@@ -73,10 +73,10 @@ export function createMusicMembershipHealth(deps: {
   return async (tab: ActingTab, acct: AccountKey, { checks, at, newest }: { readonly checks: MusicChecks; readonly at: number; newest(): boolean }): Promise<void> => {
     if (checks === "noYouTubeTab") return
     const lookup = await deps.tab(tab.tabId)
-    // A read asked later can have recorded during that wait. Its result stands, whatever the clock says.
-    if (!newest() || lookup.kind !== "tab" || lookup.tab.site !== "music" || lookup.tab.incognito !== tab.incognito) return
+    if (lookup.kind !== "tab" || lookup.tab.site !== "music" || lookup.tab.incognito !== tab.incognito) return
     const context: TabContext = { tab: { ...lookup.tab, site: "music" }, info: { site: "music", build: deps.build, signedIn: true, acct } }
-    if (checks === "complete") await deps.monitor.succeeded(context, "membership", at)
+    // A read asked later can record while this one waits. The Monitor asks `newest` as it writes, so that result stands, whatever the clock says.
+    if (checks === "complete") await deps.monitor.succeeded(context, "membership", at, newest)
     else if (deps.route !== undefined) {
       await deps.monitor.signal(
         context,
@@ -94,7 +94,8 @@ export function createMusicMembershipHealth(deps: {
           firstSeen: at,
           lastSeen: at
         },
-        { kind: "diagnostic" }
+        { kind: "diagnostic" },
+        newest
       )
     }
   }

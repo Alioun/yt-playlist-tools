@@ -209,11 +209,22 @@ export function createMonitor(ports: MonitorPorts) {
       armNotice()
     })
   }
-  async function record(input: TabContext, create: (base: { instance: MonitorPorts["instance"]; sequence: number; tabId: number; site: "www" | "music" }) => MonitorOperation): Promise<RecordResult> {
-    const captured = await capture(input)
+  /** `stands` is asked in the same step as the write, so nothing can land between a caller's answer and its record. */
+  async function record(
+    input: TabContext,
+    create: (base: { instance: MonitorPorts["instance"]; sequence: number; tabId: number; site: "www" | "music" }) => MonitorOperation,
+    stands?: () => boolean
+  ): Promise<RecordResult> {
+    // A change that lands while this record reads its tab and session is no reason to lose the record, so it reads again.
+    let captured: Capture | undefined, began: number
+    do {
+      began = generation
+      captured = await capture(input)
+    } while (!captured && !disposed && began !== generation)
     if (!captured || !current(captured) || pending.length + acknowledged.length >= 2_000) return unavailable
     const state = journal(captured)
     if (!state || (!Object.hasOwn(state.seen, ports.instance) && Object.keys(state.seen).length >= MONITOR_SIGNALS)) return unavailable
+    if (stands && !stands()) return unavailable
     const facts = captured.lease.facts
     const operation = create({ instance: ports.instance, sequence: ++sequence, tabId: facts.tabId, site: facts.site })
     if (facts.private) privateJournals.set(facts.acct, applyMonitorOperation(state, operation))
@@ -222,7 +233,7 @@ export function createMonitor(ports: MonitorPorts) {
     armFlush()
     return { kind: "accepted", scope: facts.private ? "private" : "normal" }
   }
-  async function signal(context: TabContext, value: unknown, evidence: Exclude<SignalEvidence, { kind: "anchor" }>): Promise<RecordResult> {
+  async function signal(context: TabContext, value: unknown, evidence: Exclude<SignalEvidence, { kind: "anchor" }>, stands?: () => boolean): Promise<RecordResult> {
     if (
       !isBreakageSignal(value, vocabulary) ||
       value.site !== context.tab.site ||
@@ -234,7 +245,7 @@ export function createMonitor(ports: MonitorPorts) {
       return { kind: "invalid" }
     const safe = structuredClone(value),
       facts = structuredClone(evidence)
-    return record(context, base => ({ ...base, kind: "signal", signal: safe, evidence: facts }))
+    return record(context, base => ({ ...base, kind: "signal", signal: safe, evidence: facts }), stands)
   }
   async function observeAnchor(context: TabContext, input: { readonly anchor: AnchorId; readonly observation: AnchorObservation; readonly signal: unknown }): Promise<RecordResult> {
     if (
@@ -548,8 +559,8 @@ export function createMonitor(ports: MonitorPorts) {
     flush,
     statusProducer,
     noticeProducer,
-    succeeded(context: TabContext, job: JobId, at?: number) {
-      return record(context, base => ({ ...base, kind: "success", job, ...(at === undefined ? {} : { at }) }))
+    succeeded(context: TabContext, job: JobId, at?: number, stands?: () => boolean) {
+      return record(context, base => ({ ...base, kind: "success", job, ...(at === undefined ? {} : { at }) }), stands)
     },
     interrupted(context: TabContext, job: JobId, _reason: NonBreakage) {
       return record(context, base => ({ ...base, kind: "interrupted", job }))
