@@ -33,19 +33,21 @@ function wired() {
   return { monitor, record, status, signals }
 }
 
+const newest = () => true
+
 test("Music check marks that stay incomplete with a YouTube tab open are breakage, and complete ones clear it", async () => {
   const { monitor, record, status, signals } = wired()
-  await record(acting, acct, { checks: "incomplete", at: 1 })
+  await record(acting, acct, { checks: "incomplete", at: 1, newest })
   expect(await signals()).toEqual([["membership", "unrecognised"]])
   expect(await status()).toEqual([{ state: "partly-working", jobs: ["membership"] }])
-  await record(acting, acct, { checks: "complete", at: 2 })
+  await record(acting, acct, { checks: "complete", at: 2, newest })
   expect(await status()).toEqual([{ state: "working", jobs: [] }])
   monitor.dispose()
 })
 
 test("opening the Music picker with no YouTube tab open records no breakage", async () => {
   const { monitor, record, status, signals } = wired()
-  await record(acting, acct, { checks: "noYouTubeTab", at: 1 })
+  await record(acting, acct, { checks: "noYouTubeTab", at: 1, newest })
   expect(await signals()).toEqual([])
   expect(await status()).toEqual([{ state: "working", jobs: [] }])
   monitor.dispose()
@@ -53,9 +55,17 @@ test("opening the Music picker with no YouTube tab open records no breakage", as
 
 test("a missing YouTube tab neither clears nor repeats breakage that a real failure recorded", async () => {
   const { monitor, record, status, signals } = wired()
-  await record(acting, acct, { checks: "incomplete", at: 1 })
-  await record(acting, acct, { checks: "noYouTubeTab", at: 2 })
+  await record(acting, acct, { checks: "incomplete", at: 1, newest })
+  await record(acting, acct, { checks: "noYouTubeTab", at: 2, newest })
   expect(await signals()).toEqual([["membership", "unrecognised"]])
   expect(await status()).toEqual([{ state: "partly-working", jobs: ["membership"] }])
+  monitor.dispose()
+})
+
+test("a Music record that a later read overtook while it waited for its tab writes nothing", async () => {
+  const { monitor, record, status, signals } = wired()
+  await record(acting, acct, { checks: "incomplete", at: 1, newest: () => false })
+  expect(await signals()).toEqual([])
+  expect(await status()).toEqual([{ state: "working", jobs: [] }])
   monitor.dispose()
 })

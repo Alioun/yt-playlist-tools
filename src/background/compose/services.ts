@@ -70,10 +70,11 @@ export function createMusicMembershipHealth(deps: {
   /** YouTube Music's shipped `membership` route, which a signal has to name. */
   readonly route: RouteId | undefined
 }) {
-  return async (tab: ActingTab, acct: AccountKey, { checks, at }: { readonly checks: MusicChecks; readonly at: number }): Promise<void> => {
+  return async (tab: ActingTab, acct: AccountKey, { checks, at, newest }: { readonly checks: MusicChecks; readonly at: number; newest(): boolean }): Promise<void> => {
     if (checks === "noYouTubeTab") return
     const lookup = await deps.tab(tab.tabId)
-    if (lookup.kind !== "tab" || lookup.tab.site !== "music" || lookup.tab.incognito !== tab.incognito) return
+    // A read asked later can have recorded during that wait. Its result stands, whatever the clock says.
+    if (!newest() || lookup.kind !== "tab" || lookup.tab.site !== "music" || lookup.tab.incognito !== tab.incognito) return
     const context: TabContext = { tab: { ...lookup.tab, site: "music" }, info: { site: "music", build: deps.build, signedIn: true, acct } }
     if (checks === "complete") await deps.monitor.succeeded(context, "membership", at)
     else if (deps.route !== undefined) {

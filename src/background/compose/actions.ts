@@ -185,7 +185,8 @@ export function composeActions(deps: {
   >
   readonly tabs: Tabs
   readonly playlists: Playlists
-  readonly musicMembershipHealth?: (tab: ActingTab, acct: AccountKey, outcome: { readonly checks: MusicChecks; readonly at: number }) => Promise<void>
+  /** `newest` is false once a read asked later has recorded. The recorder asks it again right before it writes. */
+  readonly musicMembershipHealth?: (tab: ActingTab, acct: AccountKey, outcome: { readonly checks: MusicChecks; readonly at: number; newest(): boolean }) => Promise<void>
   readonly registrar: Pick<Registrar, "ensure">
   readonly writable: () => boolean
   readonly requester: (origin: Extract<Origin, { kind: "ui" }>) => Promise<Requester | null>
@@ -257,10 +258,11 @@ export function composeActions(deps: {
     const account = { kind: "account", acct, signedIn: true } as const
     // A read that ends after a later one's result was recorded says nothing about the tab's check marks now.
     const asked = ++membershipReads
+    const newest = () => (membershipRecorded.get(tab.tabId) ?? 0) <= asked
     async function health(checks: MusicChecks) {
-      if ((membershipRecorded.get(tab.tabId) ?? 0) > asked) return
+      if (!newest()) return
       membershipRecorded.set(tab.tabId, asked)
-      await deps.musicMembershipHealth?.(tab, acct, { checks, at: Date.now() }).catch(() => {})
+      await deps.musicMembershipHealth?.(tab, acct, { checks, at: Date.now(), newest }).catch(() => {})
     }
     if (!youtube) {
       const outcome = await tabs.runIn<JobOf<"membership">>(tab.tabId, request, { site: tab.site, req, account })
