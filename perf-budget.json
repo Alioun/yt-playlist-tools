@@ -65,15 +65,15 @@
     },
     {
       "row": "www/core",
-      "kb": 29.08,
+      "kb": 29.17,
       "since": "2026-11-21",
-      "why": "The shared site core validates picker membership and timestamped health reports, delivers its health batch at once when Check now asks, reports a lost batch again, and asks the background for a broken feature's not-working notice while the tab is visible."
+      "why": "The shared site core validates picker membership and timestamped health reports, delivers its health batch at once when Check now asks, reports a lost batch again, asks the background for a broken feature's not-working notice while the tab is visible, and gives the notice back if the tab is hidden before showing it."
     },
     {
       "row": "music/core",
-      "kb": 29.59,
+      "kb": 29.66,
       "since": "2026-11-21",
-      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks, reports a lost batch again, and asks the background for a broken feature's not-working notice while the tab is visible."
+      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks, reports a lost batch again, asks the background for a broken feature's not-working notice while the tab is visible, and gives the notice back if the tab is hidden before showing it."
     },
     {
       "row": "popup/www/js",
