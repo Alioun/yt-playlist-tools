@@ -343,6 +343,42 @@ test("an older YouTube lookup that fails after a newer one answered leaves the n
   expect(status.kind === "statuses" && status.statuses.map(row => row.state)).toEqual(["working"])
 })
 
+test("an older failed lookup whose health record is still on its way can't land after a newer read's in the same millisecond (YM-PICK-6)", async () => {
+  const memory = parseSessionMemory({})
+  if (!memory) throw Error("no empty session")
+  const wallClock = Date.now
+  Date.now = () => 1000
+  const monitor = composeMonitor({
+    owner: { readSession: async () => ({ kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }), changeSession: async () => ({ kind: "unavailable", reason: "stale" }), subscribeView: () => () => {} },
+    clock: { now: () => 1000, after: () => () => {} },
+    sites: { www: { vocabulary: { routes: [], watchIds: [], schemaKeys: [] }, routes: {} }, music: { vocabulary: { routes: [route], watchIds: [], schemaKeys: [] }, routes: { membership: [route] } } }
+  })
+  disposers.push(() => { Date.now = wallClock }, () => monitor.dispose())
+  const musicTab = { tabId: 9, windowId: 3, incognito: false, site: "music", lastAccessed: 0, active: true, discarded: false, frozen: false } as const
+  // The older read's record waits for the browser to say where its tab is.
+  const slow = Promise.withResolvers<{ kind: "tab"; tab: typeof musicTab }>(), waiting = Promise.withResolvers<void>()
+  let lookups = 0
+  const health = createMusicMembershipHealth({
+    async tab() {
+      if (++lookups > 1) return { kind: "tab", tab: musicTab }
+      waiting.resolve()
+      return slow.promise
+    },
+    monitor,
+    build,
+    route
+  })
+  const w = world({ music: { rows: musicRows, fallback: "failed" }, health })
+  const older = w.page.membership(video, { need: [beta, alpha] })
+  await waiting.promise
+  w.tabs.serve = (async () => ({ kind: "result", tabId: 10, result: { ok: true, route, data: youtubeRows } })) as never
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "read", rows: youtubeRows.slice(0, 2) })
+  slow.resolve({ kind: "tab", tab: musicTab })
+  expect(await older).toEqual({ kind: "unreadable" })
+  const status = await monitor.statusProducer.read({ tab: musicTab, info: { site: "music", build, signedIn: true, acct: a } }, [{ id: "music-actions", options: { ...defaultSettings().musicActions, on: true } }] as never)
+  expect(status.kind === "statuses" && status.statuses.map(row => row.state)).toEqual(["working"])
+})
+
 test("when Music's own read and the YouTube lookup both fail, the lookup records nothing more", async () => {
   const w = world({ music: { rows: "unavailable", fallback: "failed" } })
   expect(await w.page.membership(video, { need: null })).toEqual({ kind: "unreadable" })
