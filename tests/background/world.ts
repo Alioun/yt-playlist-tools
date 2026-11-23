@@ -136,7 +136,6 @@ function youtube() {
   const toasts: unknown[] = []
   const jobs: string[] = []
   const views: { site: string; acct: string | null; features: unknown[] }[] = []
-  // The video the tab plays, which a key from any tab or the browser's menu saves.
   let playing: string | null = null
   function answer(kind: string, payload: { job: { kind: string; videoId?: string; videoIds?: string[]; setVideoIds?: string[] } }): unknown {
     switch (kind) {

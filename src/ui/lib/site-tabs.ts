@@ -36,7 +36,6 @@ export function watchSiteTabs(tabs: SiteTabsPort, left: () => void): () => void 
   const removed: Removed = tabId => heard(tabId, undefined)
   tabs.onUpdated.addListener(updated)
   tabs.onRemoved.addListener(removed)
-  // Tabs that were open before this page started watching.
   void tabs.query({}).then(
     open => {
       const first = early ?? new Map<number, Site | undefined>()
