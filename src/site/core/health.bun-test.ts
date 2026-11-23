@@ -52,14 +52,14 @@ test("Check now's delivery sends what's waiting at once and settles only when th
   expect(r.batches).toHaveLength(2)
 })
 
-test("a batch the background didn't take fails the next delivery ask, and its reports go again when they recur (HEALTH-23, HEALTH-28)", async () => {
+test("a batch the background didn't take counts in every later delivery answer, and its reports go again when they recur (HEALTH-23, HEALTH-28)", async () => {
   const answers = [false, true, false, true, true, false]
   const r = reporter("www", async () => answers.shift() ?? true)
   const settle = () => new Promise<void>(resolve => setTimeout(resolve))
   r.emit(r.signal("missing")); r.advance(0)
   await settle()
-  expect(await r.health.deliver()).toBe(false)
-  expect(await r.health.deliver()).toBe(true)
+  expect(await r.health.deliver()).toBe(1)
+  expect(await r.health.deliver()).toBe(1)
   r.emit(r.signal("missing")); r.advance(HEALTH_SEND_MS)
   expect(kinds(r.batches[1])).toEqual(["missing"])
   await settle()
@@ -76,6 +76,17 @@ test("a batch the background didn't take fails the next delivery ask, and its re
   await settle()
   r.health.measured(); r.advance(HEALTH_SEND_MS)
   expect(kinds(r.batches[6])).toEqual(["measured"])
+})
+
+test("another check's ask between a check's two asks leaves that check's lost batch countable (HEALTH-23)", async () => {
+  const answers = [false]
+  const r = reporter("www", async () => answers.shift() ?? true)
+  const before = await r.health.deliver()
+  r.emit(r.signal("unrecognised", "account"))
+  // The other check asks before its own reads, and the first check's batch is lost while it waits.
+  const other = await r.health.deliver()
+  expect(await r.health.deliver()).not.toBe(before)
+  expect(await r.health.deliver()).toBe(other)
 })
 
 test("timeouts keep up to three in a batch, since only three in a row count (HEALTH-01)", () => {

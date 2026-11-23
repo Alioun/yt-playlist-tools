@@ -332,8 +332,11 @@ export type TabAskMessages = {
   "bg.music": { payload: { readonly action: "save" | "like"; readonly feedback: boolean }; result: MusicAskAnswer }
   /** What a feature exposes about this tab: auto-add's view of the playing video, for the popup's This video (06 §6.8.2). */
   "bg.query": { payload: { readonly name: "auto-add"; readonly channel?: false }; result: ThisVideo | null }
-  /** Check now's reads are done: send the waiting health reports now, and answer once the background has them (HEALTH-23). */
-  "bg.health": { payload: Record<never, never>; result: boolean }
+  /**
+   * Check now asks before and after its reads: send the waiting health reports now, and once the background has answered
+   * for them, say how many batches this page has lost so far. `null` when the page can't say (HEALTH-23).
+   */
+  "bg.health": { payload: Record<never, never>; result: number | null }
 }
 /** `done` is the ✓ and `failed` the ✕ on the toolbar icon; `text` is the answer's tooltip (YM-ANY-4). */
 export type MusicAskAnswer = { readonly kind: "done" | "failed"; readonly text: string | null }
@@ -364,5 +367,5 @@ export const tabAskContract: RpcContract<TabAskMessages> = {
     result: (v): v is ThisVideo | null => v === null || isThisVideo(v),
     timeoutMs: 8_000
   },
-  "bg.health": { payload: (v): v is TabAskMessages["bg.health"]["payload"] => objectShape(v, {}), result: (v): v is boolean => typeof v === "boolean", timeoutMs: 8_000 }
+  "bg.health": { payload: (v): v is TabAskMessages["bg.health"]["payload"] => objectShape(v, {}), result: (v): v is number | null => v === null || (Number.isSafeInteger(v) && (v as number) >= 0), timeoutMs: 8_000 }
 }

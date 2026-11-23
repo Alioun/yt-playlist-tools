@@ -259,7 +259,7 @@ export function composeServices(deps: {
     tab: tabId => browserTabs.port.get(tabId),
     async deliver(tabId) {
       const answer = await ask(tabId, "bg.health", {})
-      return answer.kind === "answered" && answer.result
+      return answer.kind === "answered" ? answer.result : null
     },
     monitor,
     build,

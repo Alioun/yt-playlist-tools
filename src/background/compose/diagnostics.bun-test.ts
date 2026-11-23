@@ -8,7 +8,7 @@ import type { TabHealthReport } from "../../shared/contracts/tab-health"
 import { instance, pageFeature, signalValue, syntheticHealthFacts } from "../../../tools/fixtures/monitor/harness"
 
 const acct = "AAAAAAAAAAAAAAAA"
-function world(options: { consented?: boolean; deliver?: () => Promise<boolean>; tabs?: { tabId: number; acct: string | null; privateTab: boolean; site: "www" | "music" | null }[] } = {}) {
+function world(options: { consented?: boolean; deliver?: () => Promise<number | null>; tabs?: { tabId: number; acct: string | null; privateTab: boolean; site: "www" | "music" | null }[] } = {}) {
   const tabs = options.tabs ?? [
     { tabId: 4, acct, privateTab: false, site: "www" },
     { tabId: 5, acct, privateTab: true, site: "www" }
@@ -24,7 +24,7 @@ function world(options: { consented?: boolean; deliver?: () => Promise<boolean>;
     },
     async deliver(tabId) {
       runs.push([tabId, "deliver"])
-      return options.deliver ? options.deliver() : true
+      return options.deliver ? options.deliver() : 0
     },
     tab: async tabId => {
       const tab = tabs.find(row => row.tabId === tabId)
@@ -169,14 +169,14 @@ test("Check now reports only the sites it read in that check", async () => {
 })
 
 test("Check now publishes a result only after the tab confirms delivery", async () => {
-  const delivery = Promise.withResolvers<boolean>()
+  const delivery = Promise.withResolvers<number | null>()
   const started = Promise.withResolvers<void>()
   let asks = 0
-  const { diagnostics } = world({ deliver: async () => { if (++asks === 1) return true; started.resolve(); return delivery.promise } })
+  const { diagnostics } = world({ deliver: async () => { if (++asks === 1) return 0; started.resolve(); return delivery.promise } })
   const result = diagnostics.read(true)
   await started.promise
   expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [] })
-  delivery.resolve(false)
+  delivery.resolve(1)
   expect(await result).toMatchObject({ kind: "unavailable" })
   expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [] })
 })

@@ -1345,7 +1345,7 @@ sequenceDiagram
 | `bg.job { job }` | `JobResult` | Add-flow steps, serving-tab jobs, and the popup's Playing now (`nowPlaying`, ARC-ACC-68) |
 | `bg.ping` | `{ site, build, acct, signedIn }` | 2 s budget |
 | `bg.query { name }` | whatever the feature exposes | The popup's This video (auto-add's `status`) |
-| `bg.health` | `boolean` | Before and after Check now's reads, send pending health reports and wait for confirmation of any batches in flight. `false` when the Monitor didn't take a batch sent since the last ask (HEALTH-23). |
+| `bg.health` | `number \| null` | Before and after Check now's reads, send pending health reports and wait for confirmation of any batches in flight. The answer is how many batches the Monitor didn't take from this page so far. A check compares its own two answers, so two checks at once never hide each other's lost batch. `null` when the page can't say (HEALTH-23). |
 
 - **ARC-MSG-05. `TabView`** holds:
   - the features on for this site, and their options from shared settings;

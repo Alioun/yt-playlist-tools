@@ -27,8 +27,8 @@ const reads: Readonly<Record<Site, readonly { readonly job: JobId; readonly acco
 export function createDiagnostics(deps: {
   readonly tabs: Pick<Tabs, "known" | "runIn">
   tab(tabId: number): Promise<TabLookup>
-  /** Asks a tab to send its waiting health reports, settling once the Monitor has them. */
-  deliver(tabId: number): Promise<boolean>
+  /** Asks a tab to send its waiting health reports. Answers with the batches that page has lost so far, or `null` when it can't say. */
+  deliver(tabId: number): Promise<number | null>
   readonly monitor: Pick<Monitor, "diagnostics">
   readonly build: BuildId
   consented(): boolean
@@ -97,11 +97,11 @@ export function createDiagnostics(deps: {
         const targets = [serving.www, serving.music].filter(tab => tab !== undefined)
         if (!targets.length) return { kind: "refused", reason: "no-tab" }
         const checked = await Promise.all(targets.map(async tab => {
-          // Settles the tab's earlier reports, so only a batch lost during this check fails it.
-          await deps.deliver(tab.context.tab.tabId).catch(() => false)
+          // The first ask settles the tab's earlier reports. Only a batch lost between this check's own two asks fails it.
+          const before = await deps.deliver(tab.context.tab.tabId).catch(() => null)
           const answer = await check(tab)
-          const delivered = await deps.deliver(tab.context.tab.tabId).catch(() => false)
-          return delivered ? answer : null
+          const after = await deps.deliver(tab.context.tab.tabId).catch(() => null)
+          return before !== null && after === before ? answer : null
         }))
         const confirmed = checked.filter(answer => answer !== null)
         if (confirmed.length !== targets.length) return { kind: "unavailable", reason: "collaborator" }

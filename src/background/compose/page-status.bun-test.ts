@@ -83,7 +83,7 @@ test("a registered tab that left YouTube is no open tab, for the statuses and fo
   const evidence = await createDiagnostics({
     tabs: { known: async () => [{ tabId: 7, acct, privateTab: false }] as never, runIn: async () => ({ kind: "no-tab", attempted: [] }) as never },
     tab: async tabId => native(tabId, null),
-    deliver: async () => true,
+    deliver: async () => 0,
     monitor: { diagnostics: async () => undefined as never },
     build: "build" as never,
     consented: () => true,

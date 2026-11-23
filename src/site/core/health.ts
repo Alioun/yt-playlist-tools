@@ -24,7 +24,7 @@ export type SiteHealth = {
 /**
  * The tab's half of the Monitor's transport (HEALTH-28): signals wait in a batch sent at most every 5 s, a signal
  * already sent this page goes again only once its job has succeeded since, and a success goes only for a job with a signal.
- * Check now has the batch delivered at once, before its reads and after them (HEALTH-23).
+ * Check now has the batch delivered at once, before its reads and after them, and counts the batches lost between (HEALTH-23).
  */
 export function createSiteHealth(options: {
   readonly site: Site
@@ -34,9 +34,9 @@ export function createSiteHealth(options: {
   now(): number
   online(): boolean
   later(run: () => void, milliseconds: number): () => void
-}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; deliver(): Promise<boolean>; dispose(): void } {
+}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; deliver(): Promise<number | null>; dispose(): void } {
   let queue: TabHealthReport[] = [], lastSent = -Infinity, cancel: (() => void) | null = null, answeredAt = -Infinity, disposed = false, unmeasured = false
-  let lost = 0, lostAtDelivery = 0
+  let lost = 0
   const sending = new Set<Promise<void>>()
   const sent = new Map<string, JobId | null>(), batched = new Map<string, number>(), signalled = new Set<JobId>()
   // A batch the background didn't take was never sent, so each of its reports goes again when it recurs.
@@ -136,14 +136,12 @@ export function createSiteHealth(options: {
       push({ kind: "anchor", anchor: observation.anchor, signal, observation: { relevant: observation.relevant, visible: observation.visible,
         settledMs: observation.delayMs, distinctMainLinks: observation.distinctMainLinks, recognised: observation.recognised } })
     },
-    // False when any batch was lost since the last ask, so a check never confirms evidence the Monitor lacks.
+    // Answers with the batches this page has lost so far. A check compares its own two answers, so one check's asks never hide another's loss.
     async deliver() {
-      const since = lostAtDelivery
       cancel?.(); cancel = null
       while (!disposed && queue.length) send()
       await Promise.all(sending)
-      lostAtDelivery = lost
-      return !disposed && lost === since
+      return disposed ? null : lost
     },
     dispose() {
       if (disposed) return
