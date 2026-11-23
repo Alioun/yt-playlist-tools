@@ -196,6 +196,40 @@ test("a notice the tab showed isn't owed again when another tab reported while i
   }
 })
 
+test("a tab that gives its claimed notice back leaves it for another tab with the same problem, and only its own claim (YT-BRK-02)", async () => {
+  const features = [pageFeature("queue-button"), pageFeature("card-menu")]
+  const w = await noticeWorld(features)
+  const other = { ...w.tab, tab: { ...w.tab.tab, tabId: w.tab.tab.tabId + 1 } }
+  w.h.seedContext(other, { visible: true, fullscreen: false }, syntheticHealthFacts("www"))
+  async function otherClaims() {
+    const read = await w.h.monitor.statusProducer.read(other, features)
+    if (read.kind !== "statuses") throw Error("Expected statuses")
+    return w.h.monitor.claimNotice(other, read)
+  }
+  try {
+    w.h.routes(w.tab, "openCardMenu", "missing")
+    w.h.routes(other, "openCardMenu", "missing")
+    await w.h.monitor.wouldAct(other, features, "card-menu")
+    await w.send("tab.wouldAct", { feature: "card-menu" })
+    await w.h.advance(60)
+    const held = await otherClaims()
+    if (held.kind !== "delivery") throw Error("Expected the other tab's delivery")
+    // The router's tab holds no claim, so its release of the other tab's token changes nothing.
+    await w.send("tab.noticeReleased", { token: `${held.token.instance}:${held.token.sequence}` })
+    expect(held.current()).toBe(true)
+    expect(await w.send("tab.claimNotice", null)).toBeNull()
+    expect((await w.h.monitor.releaseNotice(other, held.token)).kind).toBe("accepted")
+
+    const claim = (await w.send("tab.claimNotice", null)) as { token: string } | null
+    expect(claim).toMatchObject({ due: { kind: "not-working", features: ["card-menu"] } })
+    expect((await otherClaims()).kind).toBe("none")
+    await w.send("tab.noticeReleased", { token: claim?.token })
+    expect((await otherClaims()).kind).toBe("delivery")
+  } finally {
+    await w.dispose()
+  }
+})
+
 test("a working feature or one the user switched off owes no notice", async () => {
   const w = await noticeWorld([pageFeature("card-menu")])
   try {

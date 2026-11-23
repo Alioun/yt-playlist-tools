@@ -23,6 +23,8 @@ import { pageGlobal } from "../global"
 import { startKit } from "../kit/start"
 import { createOverlayKit } from "../kit/overlay"
 import { emptyTabView } from "../../background/tabs/teardown"
+import { composeMonitor } from "../../background/compose/monitor"
+import { parseSessionMemory } from "../../background/store/session-memory"
 import { startSiteCore } from "./core"
 import { WwwItems } from "./items-www"
 
@@ -51,12 +53,12 @@ function brokenCardMenu(view: TabView): TabView {
   if (!isTabView(value)) throw new Error("Invalid broken card-menu view")
   return value
 }
-type NoticeMessages = Pick<TabHealthMessages, "tab.wouldAct" | "tab.claimNotice" | "tab.noticeShown">
+type NoticeMessages = Pick<TabHealthMessages, "tab.wouldAct" | "tab.claimNotice" | "tab.noticeShown" | "tab.noticeReleased">
 function shadowText(): string {
   return [...document.querySelectorAll("*")].map(element => element.shadowRoot?.textContent ?? "").join(" ")
 }
 
-async function startTab(view: TabView, monitor?: { claim(): TabNoticeClaim | null; heard: string[] }) {
+async function startTab(view: TabView, monitor?: { claim(): TabNoticeClaim | null | Promise<TabNoticeClaim | null>; heard: string[]; released?(token: string): Promise<void> }) {
   Object.assign(window, { ytcfg: { get: (key: string) => ({ LOGGED_IN: true, DATASYNC_ID: rawIdentity } as Record<string, unknown>)[key] } })
   const channel = createDirectPageChannel()
   const page = startPage({ site: "www", build, window, document, channel, createReads: createLiveWwwReads })
@@ -79,11 +81,13 @@ async function startTab(view: TabView, monitor?: { claim(): TabNoticeClaim | nul
     return { kind: here() ? "ok" : "failed" }
   } } })
   const notices = createRpc<NoticeMessages, Sender>(background, { build, deadline, contract: {
-    "tab.wouldAct": tabHealthContract["tab.wouldAct"], "tab.claimNotice": tabHealthContract["tab.claimNotice"], "tab.noticeShown": tabHealthContract["tab.noticeShown"] } })
+    "tab.wouldAct": tabHealthContract["tab.wouldAct"], "tab.claimNotice": tabHealthContract["tab.claimNotice"], "tab.noticeShown": tabHealthContract["tab.noticeShown"],
+    "tab.noticeReleased": tabHealthContract["tab.noticeReleased"] } })
   notices.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: {
     "tab.wouldAct": ({ request }) => { monitor?.heard.push(`would-act ${request.feature}`); return null },
     "tab.claimNotice": () => { monitor?.heard.push("claim"); return monitor?.claim() ?? null },
-    "tab.noticeShown": ({ request }) => { monitor?.heard.push(`shown ${request.token}`); return null }
+    "tab.noticeShown": ({ request }) => { monitor?.heard.push(`shown ${request.token}`); return null },
+    "tab.noticeReleased": async ({ request }) => { monitor?.heard.push(`released ${request.token}`); await monitor?.released?.(request.token); return null }
   } })
   const push = createRpcCaller<TabMessages<TabView>>(background, { build, deadline, contract: tabMessages(isTabView) })
   const core = startSiteCore({
@@ -292,6 +296,137 @@ test("a hidden or fullscreen tab leaves the due notice for a visible one, and ta
   for (let turn = 0; turn < 10; turn++) await settle()
   expect(heard).toEqual(["would-act card-menu", "claim", "shown 0000000000000001:7"])
   expect(shadowText()).toContain("isn't working")
+})
+
+function visibility() {
+  const seen = { hidden: false, fullscreen: null as Element | null }
+  Object.defineProperty(document, "hidden", { get: () => seen.hidden, configurable: true })
+  Object.defineProperty(document, "visibilityState", { get: () => (seen.hidden ? "hidden" : "visible"), configurable: true })
+  Object.defineProperty(document, "fullscreenElement", { get: () => seen.fullscreen, configurable: true })
+  cleanups.push(() => { for (const name of ["hidden", "visibilityState", "fullscreenElement"]) Reflect.deleteProperty(document, name) })
+  return {
+    hide() { seen.hidden = true; document.dispatchEvent(new Event("visibilitychange")) },
+    show() { seen.hidden = false; document.dispatchEvent(new Event("visibilitychange")) },
+    set hidden(value: boolean) { seen.hidden = value }
+  }
+}
+async function dueCardMenu(tab: Awaited<ReturnType<typeof startTab>>, broken: TabView) {
+  tab.core.notices.wouldAct("card-menu")
+  const due = { ...broken, notices: [{ kind: "not-working", features: ["card-menu"] }] }
+  if (!isTabView(due)) throw new Error("Invalid due view")
+  await tab.publish(due)
+}
+
+test("a tab hidden while its claim is on its way gives the notice back, and claims it again once it is shown (YT-BRK-02)", async () => {
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const heard: string[] = []
+  const asked = Promise.withResolvers<void>(), reply = Promise.withResolvers<void>()
+  let claims = 0
+  const tab = await startTab(broken, { heard, async claim() {
+    const token = `0000000000000001:${++claims}`
+    if (claims === 1) { asked.resolve(); await reply.promise }
+    return { token, due: { kind: "not-working", features: ["card-menu"] } }
+  } })
+  const page = visibility()
+  await dueCardMenu(tab, broken)
+  await asked.promise
+  page.hide()
+  reply.resolve()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(heard).toEqual(["would-act card-menu", "claim", "released 0000000000000001:1"])
+  expect(shadowText()).not.toContain("isn't working")
+
+  page.show()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(heard).toEqual(["would-act card-menu", "claim", "released 0000000000000001:1", "claim", "shown 0000000000000001:2"])
+  expect(shadowText()).toContain("isn't working")
+})
+
+test("a tab hidden while its claimed notice is being drawn gives the notice back, and claims it again once it is shown (YT-BRK-02)", async () => {
+  const broken = brokenCardMenu(queueView({ on: false }))
+  const heard: string[] = []
+  let claims = 0
+  const tab = await startTab(broken, { heard, claim: () => ({ token: `0000000000000001:${++claims}`, due: { kind: "not-working", features: ["card-menu"] } }) })
+  const page = visibility()
+  // The notice's layer is built over a few turns. The tab is hidden before it is on screen.
+  const create = document.createElement
+  let hides = 0
+  document.createElement = function (this: Document, name: string, ...rest: unknown[]) {
+    if (name === "pp-toast-layer" && hides++ === 0) page.hidden = true
+    return Reflect.apply(create, this, [name, ...rest])
+  } as typeof document.createElement
+  cleanups.push(() => { document.createElement = create })
+  await dueCardMenu(tab, broken)
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(hides).toBeGreaterThan(0)
+  page.hide()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(heard).toEqual(["would-act card-menu", "claim", "released 0000000000000001:1"])
+  expect(shadowText()).not.toContain("isn't working")
+
+  page.show()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(heard).toEqual(["would-act card-menu", "claim", "released 0000000000000001:1", "claim", "shown 0000000000000001:2"])
+  expect(shadowText()).toContain("isn't working")
+})
+
+test("the Monitor hands a notice to a visible tab once the tab that claimed it was hidden before showing it (YT-BRK-02)", async () => {
+  const memory = parseSessionMemory({})
+  if (!memory) throw new Error("No session memory")
+  let now = 100
+  const monitor = composeMonitor({
+    owner: {
+      readSession: async () => ({ kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }) as never,
+      changeSession: async () => ({ kind: "unavailable", reason: "stale" }) as never,
+      subscribeView: () => () => {}
+    },
+    clock: { now: () => now, after: () => () => {} }
+  })
+  cleanups.push(() => monitor.dispose())
+  const broken = brokenCardMenu(queueView({ on: false }))
+  // Two private tabs with the same broken card menu. A private claim is held in the Monitor's memory alone.
+  const context = (tabId: number) => ({
+    tab: { tabId, windowId: 1, incognito: true, site: "www", lastAccessed: tabId, active: true, discarded: false, frozen: false },
+    info: { site: "www", build, signedIn: true, acct: "AAAAAAAAAAAAAAAA" }
+  }) as never
+  for (const tabId of [4, 5]) {
+    await monitor.observeAnchor(context(tabId), {
+      anchor: "www-cards",
+      signal: { site: "www", feature: null, job: null, route: null, kind: "anchor-missing", watchId: null, shape: null, clientVersion: null, pageType: "watch", count: 1, firstSeen: now, lastSeen: now },
+      observation: { kind: "content", relevant: true, visible: true, navigationAt: 0, observedAt: 3000, distinctMainLinks: 8, recognised: 1 }
+    } as never)
+    await monitor.wouldAct(context(tabId), broken.features, "card-menu")
+  }
+  now += 61
+  async function claimFor(tabId: number) {
+    const read = await monitor.statusProducer.read(context(tabId), broken.features)
+    if (read.kind !== "statuses") throw new Error(read.kind)
+    return monitor.claimNotice(context(tabId), read)
+  }
+  const heard: string[] = []
+  const asked = Promise.withResolvers<void>(), reply = Promise.withResolvers<void>()
+  const tab = await startTab(broken, {
+    heard,
+    async claim() {
+      const claim = await claimFor(4)
+      asked.resolve()
+      await reply.promise
+      return claim.kind === "delivery" ? { token: `${claim.token.instance}:${claim.token.sequence}`, due: { kind: "not-working", features: ["card-menu"] } } : null
+    },
+    async released(token) {
+      const [instance, sequence] = token.split(":")
+      await monitor.releaseNotice(context(4), { instance, sequence: Number(sequence) } as never)
+    }
+  })
+  const page = visibility()
+  await dueCardMenu(tab, broken)
+  await asked.promise
+  expect((await claimFor(5)).kind).toBe("none")
+  page.hide()
+  reply.resolve()
+  for (let turn = 0; turn < 10; turn++) await settle()
+  expect(heard.filter(row => row.startsWith("shown"))).toEqual([])
+  expect((await claimFor(5)).kind).toBe("delivery")
 })
 
 test("a broken queue button tells the background at the first hover and draws nothing (YT-Q-10)", async () => {
