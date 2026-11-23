@@ -157,7 +157,7 @@ test("HTTP and application rejections stop fallback including HTTP 200 failure",
   }
 })
 
-test("a slow first route keeps the whole budget instead of losing half of it to the fallback", async () => {
+test("a slow first route keeps the job's whole budget", async () => {
   const p = recorded(),
     waiting = held()
   p.scripts.push(waiting.script, response(membership(true)))

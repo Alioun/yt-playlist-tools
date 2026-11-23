@@ -145,7 +145,7 @@ export function createReadGateway(options: { site: Site; page: PageReadPort; sig
   const account = pinAccount()
 
   function navigation(job: JobId | null): Navigation | undefined {
-    // YouTube's first navigation event can come before the page half listens. Until the next one there is nothing to read, and that isn't breakage.
+    // YouTube's first navigation event can come before the page half listens, and that absence isn't breakage.
     const raw = readIfPresent("navigation", job)
     return parsed(readWatches.navigation, raw, job, () => parseNavigation(raw))
   }

@@ -44,7 +44,7 @@ export function createWwwQueue(options: {
   routes: QueueRoutes
   card(target: Element): unknown
   check(): JobFailure | null
-  /** Whether a refusal counts as breakage. The rule is the gateway's, so queue edits and playlist requests share it. */
+  /** The gateway's rule for which refusals count as breakage, so queue edits and playlist requests share it. */
   rejects(failure: JobFailure): boolean
   notice(kind: BreakageKind, route: RequestRoute | PageUiRoute, raw?: unknown): void
 }) {
@@ -247,10 +247,7 @@ export function createWwwQueue(options: {
     })
   }
 
-  /**
-   * Reads the card when the job arrives and answers with the add to run once the lane is free. YouTube can give the
-   * renderer another video while the job waits, so the card is never read again.
-   */
+  /** YouTube can give the renderer another video while the job waits for the lane, so the card is read once, when the job arrives. */
   function add(job: JobOf<"queueAdd">, target: Element | undefined): JobFailure | ((scope: JobScope) => Promise<PageJobResult<JobOf<"queueAdd">>>) {
     const route = routes.add
     if (!target || !connected(target)) return unavailable

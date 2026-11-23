@@ -41,7 +41,6 @@ export function attempt(options: {
     }
     stopScope = scope.onClose(() => finish({ kind: "timeout" }))
     if (!active) return
-    // An attempt may use all the time the job has left. A later route runs only when this one fails before then.
     stopTimer = clock.after(scope.remaining(), () => finish({ kind: "timeout" }))
     const blocked = guarded.check()
     if (blocked) {

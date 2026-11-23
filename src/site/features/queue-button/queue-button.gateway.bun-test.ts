@@ -14,7 +14,6 @@ afterEach(() => {
   }
 })
 
-/** The real button, page link and gateway. Only YouTube's queue and the data its cards hold are scripted. */
 async function setup() {
   const world = queueWorld({ signedIn: false })
   const ui = await queueFixture({ view: queueView({ signedIn: false }), signedInPage: false })

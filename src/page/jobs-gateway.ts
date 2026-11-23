@@ -89,7 +89,7 @@ export function createJobsGateway(options: {
       lastSeen: at
     })
   }
-  /** A refusal is breakage when YouTube calls our own request wrong, or turns a signed-in page away. A failed status, a conflict or a server error isn't. */
+  /** A refusal is breakage when YouTube calls our own request wrong, or turns a signed-in page away. */
   function rejects(failure: JobFailure): boolean {
     const { http } = failure
     return failure.reason === "failed" && (http === 400 || http === 404 || ((http === 401 || http === 403) && reads.account?.signedIn === true))
