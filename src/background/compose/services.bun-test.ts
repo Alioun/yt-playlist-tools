@@ -12,8 +12,20 @@ function wired() {
   const memory = parseSessionMemory({})
   if (!memory) throw Error("no empty session")
   const read: SessionRead = { kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }
+  // A record reads the session before it writes. A test can hold the next read to act while a record is in there.
+  let hold: { readonly reading: () => void; readonly released: Promise<void> } | undefined
   const monitor = composeMonitor({
-    owner: { readSession: async () => read, changeSession: async () => ({ kind: "unavailable", reason: "stale" }), subscribeView: () => () => {} },
+    owner: {
+      async readSession() {
+        const held = hold
+        hold = undefined
+        held?.reading()
+        await held?.released
+        return read
+      },
+      changeSession: async () => ({ kind: "unavailable", reason: "stale" }),
+      subscribeView: () => () => {}
+    },
     clock: { now: () => 0, after: () => () => {} },
     sites: {
       www: { vocabulary: { routes: [], watchIds: [], schemaKeys: [] }, routes: {} },
@@ -30,7 +42,13 @@ function wired() {
     return answer.statuses.map(row => ({ state: row.state, jobs: row.jobs }))
   }
   const signals = async () => (await monitor.diagnostics(context))?.signals.map(row => [row.signal.job, row.signal.kind]) ?? []
-  return { monitor, record, status, signals }
+  function holdNextRead() {
+    const reading = Promise.withResolvers<void>(),
+      released = Promise.withResolvers<void>()
+    hold = { reading: reading.resolve, released: released.promise }
+    return { reading: reading.promise, release: released.resolve }
+  }
+  return { monitor, record, status, signals, holdNextRead }
 }
 
 const newest = () => true
@@ -66,6 +84,24 @@ test("a Music record that a later read overtook while it waited for its tab writ
   const { monitor, record, status, signals } = wired()
   await record(acting, acct, { checks: "incomplete", at: 1, newest: () => false })
   expect(await signals()).toEqual([])
+  expect(await status()).toEqual([{ state: "working", jobs: [] }])
+  monitor.dispose()
+})
+
+test("a Music record isn't lost when another tab's report lands while the Monitor reads for it", async () => {
+  const { monitor, record, status, holdNextRead } = wired()
+  await record(acting, acct, { checks: "incomplete", at: 1, newest })
+  expect(await status()).toEqual([{ state: "partly-working", jobs: ["membership"] }])
+  const held = holdNextRead()
+  const recorded = record(acting, acct, { checks: "complete", at: 2, newest })
+  await held.reading
+  const other = {
+    tab: { tabId: 8, windowId: 1, incognito: false, site: "music", lastAccessed: 0, active: false, discarded: false, frozen: false },
+    info: { site: "music", build: "test", signedIn: true, acct }
+  } as never
+  expect(await monitor.succeeded(other, "account")).toMatchObject({ kind: "accepted" })
+  held.release()
+  await recorded
   expect(await status()).toEqual([{ state: "working", jobs: [] }])
   monitor.dispose()
 })

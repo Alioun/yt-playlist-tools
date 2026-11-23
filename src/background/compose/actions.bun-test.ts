@@ -379,6 +379,59 @@ test("an older failed lookup whose health record is still on its way can't land 
   expect(status.kind === "statuses" && status.statuses.map(row => row.state)).toEqual(["working"])
 })
 
+for (const first of ["older", "newer"] as const) {
+  test(`an older failed lookup and a newer read both write their health, and the newer read's stands when the ${first} one's write lands first (YM-PICK-6)`, async () => {
+    const memory = parseSessionMemory({})
+    if (!memory) throw Error("no empty session")
+    const read = { kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 } as const
+    const wallClock = Date.now
+    Date.now = () => 1000
+    // The Monitor reads the session before it writes. Holding each record's read puts both records inside the Monitor at once.
+    const reading = [Promise.withResolvers<void>(), Promise.withResolvers<void>()] as const
+    const held = [Promise.withResolvers<typeof read>(), Promise.withResolvers<typeof read>()] as const
+    let reads = 0
+    const monitor = composeMonitor({
+      owner: {
+        async readSession() {
+          const turn = reads++
+          if (turn > 1) return read
+          reading[turn as 0 | 1].resolve()
+          return held[turn as 0 | 1].promise
+        },
+        changeSession: async () => ({ kind: "unavailable", reason: "stale" }),
+        subscribeView: () => () => {}
+      },
+      clock: { now: () => 1000, after: () => () => {} },
+      sites: {
+        www: { vocabulary: { routes: [], watchIds: [], schemaKeys: [] }, routes: {} },
+        music: { vocabulary: { routes: [route], watchIds: [], schemaKeys: [] }, routes: { membership: [route] } }
+      }
+    })
+    disposers.push(
+      () => {
+        Date.now = wallClock
+      },
+      () => monitor.dispose()
+    )
+    const musicTab = { tabId: 9, windowId: 3, incognito: false, site: "music", lastAccessed: 0, active: true, discarded: false, frozen: false } as const
+    const w = world({ music: { rows: musicRows, fallback: "failed" }, health: createMusicMembershipHealth({ tab: async () => ({ kind: "tab", tab: musicTab }), monitor, build, route }) })
+    const older = w.page.membership(video, { need: [beta, alpha] })
+    await reading[0].promise
+    w.tabs.serve = (async () => ({ kind: "result", tabId: 10, result: { ok: true, route, data: youtubeRows } })) as never
+    const newer = w.page.membership(video, { need: [beta, alpha] })
+    await reading[1].promise
+    held[first === "older" ? 0 : 1].resolve(read)
+    await (first === "older" ? older : newer)
+    held[first === "older" ? 1 : 0].resolve(read)
+    expect(await older).toEqual({ kind: "unreadable" })
+    expect(await newer).toEqual({ kind: "read", rows: youtubeRows.slice(0, 2) })
+    const status = await monitor.statusProducer.read({ tab: musicTab, info: { site: "music", build, signedIn: true, acct: a } }, [
+      { id: "music-actions", options: { ...defaultSettings().musicActions, on: true } }
+    ] as never)
+    expect(status.kind === "statuses" && status.statuses.map(row => row.state)).toEqual(["working"])
+  })
+}
+
 test("when Music's own read and the YouTube lookup both fail, the lookup records nothing more", async () => {
   const w = world({ music: { rows: "unavailable", fallback: "failed" } })
   expect(await w.page.membership(video, { need: null })).toEqual({ kind: "unreadable" })
