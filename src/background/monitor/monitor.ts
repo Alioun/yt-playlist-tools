@@ -345,9 +345,10 @@ export function createMonitor(ports: MonitorPorts) {
       return result
     }
   }
-  async function releaseNotice(token: NoticeToken): Promise<RecordResult> {
+  /** Only the tab that holds a delivery gives it back. */
+  async function releaseNotice(context: TabContext, token: NoticeToken): Promise<RecordResult> {
     const delivery = token.instance === ports.instance ? deliveries.get(token.sequence) : undefined
-    if (disposed || !delivery) return unavailable
+    if (disposed || !delivery || delivery.capture.lease.facts.tabId !== context.tab.tabId) return unavailable
     deliveries.delete(token.sequence)
     if (!delivery.capture.lease.facts.private) {
       let read: SessionRead

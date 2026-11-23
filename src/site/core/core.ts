@@ -130,17 +130,30 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   }
   const wanted = new Set<PageFeatureId>(), shown = new Set<PageFeatureId>()
   let claiming = false
+  // The claim behind a notice that isn't on screen yet, and the notice it would replace.
+  let unshown: { readonly token: string; readonly before: ReturnType<typeof notices.read> } | null = null
+  const cantShow = () => document.hidden || document.fullscreenElement !== null
+  function giveBack(token: string) { claiming = false; actions.noticeReleased(token) }
   // The view lists a due notice once the Monitor batched it; only a tab whose feature would act claims it, once a page.
   // A hidden or fullscreen tab couldn't show it, so it leaves the notice for a visible tab until it is shown itself.
+  // A claim it already holds goes back too, or the Monitor would refuse a visible tab for as long as the claim lasts.
   async function deliver() {
-    if (claiming || document.hidden || document.fullscreenElement) return
+    if (unshown && cantShow()) {
+      const { token, before } = unshown
+      unshown = null
+      notices.update(before && { ...before, presented: ignore })
+      giveBack(token)
+    }
+    if (claiming || cantShow()) return
     if (!link.view?.notices.some(notice => notice.features.some(id => wanted.has(id) && !shown.has(id)))) return
     claiming = true
     const claim = await actions.claimNotice()
     if (!claim || root.disposed) { claiming = false; return }
-    const showing = notices.read()?.due.features ?? []
-    request({ kind: "not-working", features: [...new Set([...showing, ...claim.due.features])] }, () => {
-      claiming = false
+    if (cantShow()) { giveBack(claim.token); return }
+    const before = notices.read()
+    unshown = { token: claim.token, before }
+    request({ kind: "not-working", features: [...new Set([...(before?.due.features ?? []), ...claim.due.features])] }, () => {
+      claiming = false; unshown = null
       for (const id of claim.due.features) shown.add(id)
       actions.noticeShown(claim.token)
     })

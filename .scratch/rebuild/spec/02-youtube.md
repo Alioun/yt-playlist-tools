@@ -1304,7 +1304,7 @@ This section covers only what the user sees on YouTube. The breakage-signal iden
 - **Behaviour:**
   - It's the failure toast made sticky: it stays until dismissed with ✕.
   - Its action is **Details**, which opens Settings at Diagnostics.
-  - Like any unprompted toast, it waits while the tab is hidden or fullscreen, and leaves the notice for a visible tab with the same problem.
+  - Like any unprompted toast, it waits while the tab is hidden or fullscreen, and leaves the notice for a visible tab with the same problem. A tab that had taken the notice gives it back if it is hidden or goes fullscreen before the notice is on screen ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows)).
   - Show feedback never hides it.
 - **A feature that isn't working draws nothing.**
 

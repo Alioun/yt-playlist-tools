@@ -44,6 +44,8 @@ export type TabHealthMessages = {
   "tab.claimNotice": { payload: Pinned<null>; result: TabNoticeClaim | null }
   /** The claimed notice is on screen, so it isn't shown again this browser session. */
   "tab.noticeShown": { payload: Pinned<{ readonly token: string }>; result: null }
+  /** The tab was hidden or went fullscreen before the claimed notice was on screen, so a visible tab may take it. */
+  "tab.noticeReleased": { payload: Pinned<{ readonly token: string }>; result: null }
 }
 export const HEALTH_REPORTS = 40
 
@@ -97,6 +99,11 @@ export const tabHealthContract: RpcContract<TabHealthMessages> = {
   },
   "tab.noticeShown": {
     payload: (v): v is TabHealthMessages["tab.noticeShown"]["payload"] => objectShape(v, { acct, request: r => objectShape(r, { token }) }),
+    result: (v): v is null => v === null,
+    timeoutMs: 5_000
+  },
+  "tab.noticeReleased": {
+    payload: (v): v is TabHealthMessages["tab.noticeReleased"]["payload"] => objectShape(v, { acct, request: r => objectShape(r, { token }) }),
     result: (v): v is null => v === null,
     timeoutMs: 5_000
   }

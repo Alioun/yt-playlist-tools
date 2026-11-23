@@ -25,7 +25,7 @@ export function createTabHealthRouter(deps: {
   context(sender: SenderContext, acct: AccountKey | null): Promise<TabContext | null>
   /** The page features switched on for the tab's site, which the Monitor reads statuses for. */
   enabled(context: TabContext): Promise<readonly TabFeature[] | undefined>
-  readonly monitor: Pick<Monitor, "signal" | "observeAnchor" | "succeeded" | "measured" | "wouldAct" | "statusProducer" | "claimNotice" | "acknowledgeNotice">
+  readonly monitor: Pick<Monitor, "signal" | "observeAnchor" | "succeeded" | "measured" | "wouldAct" | "statusProducer" | "claimNotice" | "acknowledgeNotice" | "releaseNotice">
 }): { dispose(): void } {
   const rpc = createRpc<TabHealthMessages, NativeSender>(deps.transport, { build: deps.build, deadline: deps.deadline, contract: tabHealthContract })
   async function apply(context: TabContext, report: TabHealthReport) {
@@ -83,6 +83,12 @@ export function createTabHealthRouter(deps: {
         const context = await deps.context(sender, acct)
         const [instance, sequence] = request.token.split(":")
         if (context && isMonitorInstance(instance)) await deps.monitor.acknowledgeNotice(context, { instance, sequence: Number(sequence) })
+        return null
+      },
+      async "tab.noticeReleased"({ acct, request }, sender) {
+        const context = await deps.context(sender, acct)
+        const [instance, sequence] = request.token.split(":")
+        if (context && isMonitorInstance(instance)) await deps.monitor.releaseNotice(context, { instance, sequence: Number(sequence) })
         return null
       }
     }

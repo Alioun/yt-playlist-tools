@@ -36,6 +36,8 @@ export type TabActions = {
   claimNotice(): Promise<TabNoticeClaim | null>
   /** The claimed notice is on screen, so no tab shows it again this browser session. */
   noticeShown(token: string): void
+  /** Gives a claimed notice back before it was on screen. */
+  noticeReleased(token: string): void
   /** Tells the background a listed channel's title or @handle changed (YT-CF-10). */
   channelLabel(channel: TabChannelLabel): void
   /** Opens Settings at a feature's playlist, for a failure toast's **Settings** (YT-ADD-29). */
@@ -108,6 +110,7 @@ export function createTabActions(options: {
     wouldAct(feature) { void call("tab.wouldAct", { feature }, null) },
     claimNotice: () => call("tab.claimNotice", null, null),
     noticeShown(token) { void call("tab.noticeShown", { token }, null) },
+    noticeReleased(token) { void call("tab.noticeReleased", { token }, null) },
     settings(target) { void rpc.call("tab.settings", target) },
     skip: async (video, skip) => (await call("tab.skip", { video, skip }, null))?.kind === "done",
     pause: async paused => (await call("tab.pause", { paused }, null))?.kind === "done",
