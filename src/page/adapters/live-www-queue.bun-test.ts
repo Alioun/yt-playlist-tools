@@ -65,7 +65,6 @@ test("the card's own menu opens at the right-click point and leaves no anchor be
   stop()
 })
 
-/** Stands in for the browser's ResizeObserver, so a test can say when YouTube changed an element's size. */
 function resizes() {
   const watching = new Map<Element, () => void>()
   const real = globalThis.ResizeObserver

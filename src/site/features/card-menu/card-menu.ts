@@ -53,8 +53,8 @@ function underPreview(services: CardMenuServices, at: Point, path: readonly Elem
   return { own: path.slice(0, end + 1), path: covered }
 }
 /**
- * A menu opened from the keyboard has no pointer, and the browser reports a point of its own. It counts only when the browser's hit test finds a part of the card there.
- * Element boxes cannot answer that. On YouTube a pointer hits a card on pixels that lie outside the box of the card and of every part in it.
+ * A menu opened from the keyboard has no pointer, so the browser's point counts only when its hit test finds a part of the card there.
+ * Element boxes can't decide that, because on YouTube a pointer hits a card on pixels outside the card's box.
  */
 function menuPoint(services: CardMenuServices, at: Point, card: Element, button: Element): Point {
   if (services.document.elementsFromPoint(at.x, at.y).some(element => card.contains(element))) return at
