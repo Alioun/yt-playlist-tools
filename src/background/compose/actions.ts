@@ -276,8 +276,7 @@ export function composeActions(deps: {
     const [current] = await tabs.known({ kind: "tab", tabId: tab.tabId })
     if (current !== known) return { kind: "account-changed" }
     if (outcome?.kind === "no-tab") {
-      // A tab the registry holds for this account was tried and didn't serve: a failed read, not the limit of having no
-      // YouTube tab. A tried tab that answered as another account isn't held for this one.
+      // A tried tab the registry holds for this account didn't serve, which is a failed read and not a missing YouTube tab. A tried tab that answered as another account isn't held for this one.
       const held = await tabs.known({ kind: "account", acct, scope: tab.incognito ? "private" : "normal" })
       if (!held.some(row => outcome.attempted.includes(row.tabId))) {
         await health("noYouTubeTab")

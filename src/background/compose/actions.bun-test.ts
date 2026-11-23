@@ -87,8 +87,10 @@ function world(
     tabAccount?: AccountKey | null
     pageAccount?: AccountKey | null
     prepare?: (initial: Seed) => void
-    /** `rows`: YouTube Music's own answer, or how its read failed. `fallback`: the YouTube tab's answer, absent when no YouTube tab is open. */
-    /** `youtube`: the account of a YouTube tab the registry holds, which the lookup tries and gets no answer from. */
+    /**
+     * `rows`: YouTube Music's own answer, or how its read failed. `fallback`: the YouTube tab's answer, absent when no YouTube tab is open.
+     * `youtube`: the account of a YouTube tab the registry holds, which the lookup tries and gets no answer from.
+     */
     music?: { rows: MembershipRow[] | "unavailable" | "unconfirmed" | "timeout"; fallback?: MembershipRow[] | "failed"; incognito?: boolean; youtube?: AccountKey }
     /** Where the Music picker's health records go, beside the list the world keeps. */
     health?: ReturnType<typeof createMusicMembershipHealth>
