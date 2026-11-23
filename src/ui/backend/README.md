@@ -2,7 +2,7 @@
 
 This is an authored, inactive first-run subset. No compiler, test, fixture, build, browser or native runtime gate has run for this unit. UI/picker qualification is in progress. Setup destination dependencies are authored and unqualified.
 
-`Backend` provides `load`, `watch`, `change`, typed `call` and `access`. Only `browser.ts` names native browser types in `src/ui`. It accepts the real browser object through `BrowserBackendPort`; construction starts no reads, messages, permission requests or listeners. `scripted.ts` implements the same contract through the shared JSON RPC receiver and caller.
+`Backend` provides `load`, `watch`, `change`, typed `call` and `access`. Only `browser.ts` names native browser types in `src/ui`. It accepts the real browser object through `BrowserBackendPort`. Construction starts no reads, messages, permission requests or listeners. `scripted.ts` implements the same contract through the shared JSON RPC receiver and caller.
 
 ## Reads
 
@@ -30,7 +30,7 @@ One authenticated request calls the real owner's `readAgreement`, checks the dis
 
 Only semantic `committed` and `joined` results with ordinary gates, the submitted consent version and every exact requested application scope can confirm. Rejected setters followed by exact readback retain that meaning. Resolved but unconfirmed setters and `unchanged` results cannot confirm. The scope parity check uses the actual canonical planner for every page feature, including both scopes of shortcuts and any-tab keys. Off, missing, duplicate, unexpected and access-inconsistent applications refuse confirmation. Raw errors and owner results never become DTOs.
 
-Held, retained, upgrade-note and pending presentations refuse this first-run path. Explicit agreement never resumes retained work. A real sync join that needs a side returns `join-required`; no dialog, side choice or review continuation is implemented.
+Held, retained, upgrade-note and pending presentations refuse this first-run path. Explicit agreement never resumes retained work. A real sync join that needs a side returns `join-required`. No dialog, side choice or review continuation is implemented.
 
 ## Permissions and lifecycle
 

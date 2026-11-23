@@ -10,7 +10,7 @@ The gateway is a read half and a jobs half, joined by `composeGateway` in `compo
 
 - `read-gateway.ts` is the page half's own code in `page-<site>.js`. It pins the account, answers `account`, the current video's `videoInfo`, `nowPlaying` and `castState`, and serves the streams. `serves(job, ctx)` names the jobs it answers.
 - `jobs-gateway.ts` is `page-jobs-<site>.js`. It answers every other job and the probe, on the read half's port, guarded reads, signal sinks and pinned identity (`PageReads`). That includes a pointed card's `videoInfo`, `itemInfo` and `channelOf`, whose plain request fallback stays in the same half.
-- `start.ts` holds the jobs half as a loader until the file arrives. The first job sends `need`; the file offers itself with `offerJobs` (`jobs-port.ts`) and is taken only while asked for. Waiting jobs run after the core's `loaded { ok: true }`, each with what is left of its 10 s (`JobContext.budget`).
+- `start.ts` holds the jobs half as a loader until the file arrives. The first job sends `need`. The file offers itself with `offerJobs` from `jobs-port.ts` and is taken only while asked for. Waiting jobs run after the core's `loaded { ok: true }`, each with what is left of its 10 s (`JobContext.budget`).
 - `createGateway` builds both halves at once, for fixtures and tests that drive the whole gateway.
 
 ## Supported read subset
@@ -128,7 +128,7 @@ Plain requests read no cookies or signing session.
 This is an authored candidate. No product, compiler, test, fixture, control, build, browser, server, package manager, network, or credential operation ran for this unit.
 The new signer never executed, even with dummy values.
 Future dummy checks require a separate runtime lease.
-Real credentials additionally require passing credential-free failure tests, a separate secret-flow review, owner approval of the exact frozen code and controlling files, and an owner-controlled frozen execution path.
+Real credentials also require passing credential-free failure tests, a separate secret-flow review, owner approval of the exact frozen code and controlling files, and an owner-controlled frozen execution path.
 No such authority exists for this candidate.
 Production entry assembly remains a later unit.
 Navigation envelopes and native event compatibility still require captured variants and live checks.

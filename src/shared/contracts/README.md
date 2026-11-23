@@ -94,13 +94,13 @@ function pagePending<J extends Job>(job: J, resolve: (result: PageJobResult<J>) 
 }
 ```
 
-PageLink owns projection into a fresh safe result before forwarding outside the tab. The trusted core supplies a pin from TabView, and PageLink compares it before forwarding only the job. The gateway owns page-load identity, response checks, and its tripped state. These validators implement neither authorization nor that lifecycle. The page entrypoint prevents accidental safe-root use; direct imports still depend on the caller respecting the tab boundary.
+PageLink owns projection into a fresh safe result before forwarding outside the tab. The trusted core supplies a pin from TabView, and PageLink compares it before forwarding only the job. The gateway owns page-load identity, response checks, and its tripped state. These validators implement neither authorization nor that lifecycle. The page entrypoint prevents accidental safe-root use. Direct imports still depend on the caller respecting the tab boundary.
 
 ## Opaque endpoints and item capabilities
 
 Six separate endpoint brands retain the item's complete JSON command. Guards require exactly one recognised top-level command family and preserve additional native JSON fields. Queue insert requires a native insert position and exactly one video or playlist target. Navigation distinguishes watch, watch-playlist, and browse families. Other endpoint bodies require nonempty JSON objects. These checks do not certify an upstream schema, route, token, action provenance, or successful effect.
 
-`ItemInfo.endpoints` exposes only the item's recognised menu capabilities. Next and end match their native insert position. Mix permits watch families; album and artist permit browse. Library couples the native endpoint with its inLibrary state. Song Like and like-family library remain separate branded slots whose semantic provenance belongs to the item parser. Queue removal and selected current entries require a queue occurrence ID. An item's kind alone invents no capability.
+`ItemInfo.endpoints` exposes only the item's recognised menu capabilities. Next and end match their native insert position. Mix permits watch families, and album and artist permit browse. Library couples the native endpoint with its inLibrary state. Song Like and like-family library remain separate branded slots whose semantic provenance belongs to the item parser. Queue removal and selected current entries require a queue occurrence ID. An item's kind alone invents no capability.
 
 `LikeState` preserves liked, not-liked, and disliked. Null item like state means the state is not exposed. Source `MusicType` and `PageType` labels remain opaque branded strings, separate from normalised item kinds and navigation branches. `hasOwnLike`, selected, autoplay, and readable header count remain independent facts.
 
@@ -151,7 +151,7 @@ Every envelope has flat own `v`, `build`, and `kind` fields. The wire uses the f
 
 The hello snapshot contains the raw C1 account branch, opaque `PageType`, optional C1 `VideoInfo`, own `startedHidden`, and own `navType`. Navigation is `navigate`, `reload`, `back_forward`, `prerender`, or null. These are observations at page start. Contracts infer neither current visibility nor freshness. PageLink later projects a fresh safe value and hashes raw identity before forwarding.
 
-`isPageRunAnswerFor` requires the exact pending ID and actual job, preserving C1 batch order and count checks. `isPageStreamEventFor` requires the active subscription ID and actual stream. `isPageProbeAnswerFor` requires the pending ID, site, and applicable static watch IDs. `isPageHelloAnswer` requires the expected build and site. `isPageSignalEvent` additionally requires trusted diagnostic vocabulary. There is no generic gateway receive guard.
+`isPageRunAnswerFor` requires the exact pending ID and actual job, preserving C1 batch order and count checks. `isPageStreamEventFor` requires the active subscription ID and actual stream. `isPageProbeAnswerFor` requires the pending ID, site, and applicable static watch IDs. `isPageHelloAnswer` requires the expected build and site. `isPageSignalEvent` also requires trusted diagnostic vocabulary. There is no generic gateway receive guard.
 
 ```ts
 import { isPageRunAnswerFor } from "./page"

@@ -10,13 +10,13 @@
 
 `onrelease` is required. It receives the model, context, reason, and outstanding `Promise<PickerEvent>` values. The caller owns disposal timing and calls `picker.close()` under its eventual policy. The renderer detaches the prior panel and suppresses stale UI callbacks. It never reuses a released model.
 
-The three first-pick policies were settled on 2026-11-01 (R171 to R173). A picked outcome never closes this container. The caller closes it when the choice is `ok` or skipped. A private first pick's row shows "Saved. Private windows don't keep your playlist choice." (R171). A refused choice after a confirmed save shows the save, the refusal, **Undo** and **Try again** on the row, and Try again retries only the choice (R172). A first pick under way finishes after release, in the model, so the release callback may close the model at once (R173). The renderer still provides no first-pick toast.
+The three first-pick policies were settled on 2026-11-01 (R171 to R173). A picked outcome never closes this container. The caller closes it when the choice is `ok` or skipped. Under R171, a private first pick's row shows "Saved. Private windows don't keep your playlist choice." Under R172, a refused choice after a confirmed save shows the save, the refusal, **Undo** and **Try again** on the row, and Try again retries only the choice. Under R173, a first pick under way finishes after release, in the model, so the release callback may close the model at once. The renderer still provides no first-pick toast.
 
 The synthetic fixture closes models immediately in its own release handler. That handler is fixture behavior, not a production policy.
 
 ## Displayed state
 
-Rows keep the model's order. Membership reads do not disable cached rows. A row that is busy retains focus, ignores repeated activation, and shows its last settled check until the answer arrives. Missing titles and counts remain unavailable. Counts use `Intl.PluralRules` through `I18n`; saved timestamps use its `Intl.DateTimeFormat` wrapper.
+Rows keep the model's order. Membership reads do not disable cached rows. A row that is busy retains focus, ignores repeated activation, and shows its last settled check until the answer arrives. Missing titles and counts remain unavailable. Counts use `Intl.PluralRules` through `I18n`, and saved timestamps use its `Intl.DateTimeFormat` wrapper.
 
 The inline form uses `picker.form`, `titleCheck`, `creation`, and `creating`. A creation failure preserves typed text. Duplicate titles are hints. Undo callbacks remain with the owner and never delete a playlist. Pins and marks are sibling controls, so a row contains no nested button.
 

@@ -54,7 +54,7 @@ Every pending failure leaves delivery unknown. The receiver may already have run
 Native adapters are later units. They live only in the documented adapter locations, never in `shared/`.
 
 - **The tab** (`src/site/core/adapters/runtime.ts`). `send` wraps `browser.runtime.sendMessage(message)`. `listen` registers a `browser.runtime.onMessage` listener that passes `{ message, sender }` to `receive`. An unclaimed delivery returns `false`. A claimed delivery returns literal `true` synchronously and answers through `sendResponse` when the claim settles. Its disposer removes that listener once.
-- **The background** (`src/background/adapters/`). One send-only target per tab sends through `browser.tabs.sendMessage(tabId, message, { frameId: 0 })` (ARC-MSG-04). Use `createRpcCaller` for that target. It has no listener or `handle`. A separate receiving transport uses the tab's `onMessage` callback shape. Its authenticator wraps `resolveSenderOrigin` and maps an unavailable result to `rejected`.
+- **The background** in `src/background/adapters/`. Under ARC-MSG-04, one send-only target per tab sends through `browser.tabs.sendMessage(tabId, message, { frameId: 0 })`. Use `createRpcCaller` for that target. It has no listener or `handle`. A separate receiving transport uses the tab's `onMessage` callback shape. Its authenticator wraps `resolveSenderOrigin` and maps an unavailable result to `rejected`.
 - **Extension pages** (`src/ui/backend/browser.ts`). `send` and `listen` take the tab's shape.
 - **Deadlines.** Each context injects a one-shot timer, such as `setTimeout` with `clearTimeout` as its canceller, from its adapter.
 

@@ -1,6 +1,6 @@
 # Add outcomes and toast copy
 
-`rules/outcomes.ts` and `copy/` hold the add flow's feedback as pure data (06 §6.4.1). They cover YT-ADD-04, YT-ADD-12 to YT-ADD-39 and UI-TOAST-01 to UI-TOAST-12, plus R7, R22, R24, R26, R27, R45, R55, R56 and R77. The background add flow (`src/background/add-flow`) calls `toastPlan`. No site or kit calls them yet.
+`rules/outcomes.ts` and `copy/` hold the add flow's feedback as pure data (06 §6.4.1). They cover YT-ADD-04, YT-ADD-12 to YT-ADD-39 and UI-TOAST-01 to UI-TOAST-12, plus R7, R22, R24, R26, R27, R45, R55, R56 and R77. The background add flow in `src/background/add-flow` calls `toastPlan`. No site or kit calls them yet.
 
 ```ts
 const failure = failureOf(jobFailure)                // per playlist, from the gateway's JobFailure
@@ -28,12 +28,12 @@ Two shapes were compared. Pre-grouped buckets (`added[]`, `failed[]`, and so on)
 - The runtime owner keeps a set per tab and one per browser session, passes them as `shown`, and adds the plan's `remember` keys. A failure already shown gives way to the next failure, else to the confirmation.
 - Several failure kinds name only the first in YT-ADD-28's order, with that failure's playlists and fix.
 - Saved and failed carries the failure's fix, never Undo. Saved and filtered keeps Undo.
-- An ordinary picker tick gets no toast, whatever its outcome. Its row answers in place (YT-PK-04, UI-PICK-07). The picker's toasts are choose mode's first pick and an untick (YT-PK-05), and the untick's copy is not in this planner yet.
+- An ordinary picker tick gets no toast, whatever its outcome. Its row answers in place (YT-PK-04, UI-PICK-07). Under YT-PK-05, the picker's toasts are choose mode's first pick and an untick. The untick's copy is not in this planner yet.
 - Missing and full open Settings for auto-add and shortcuts, and Choose for quick-save. Choose picks get no fix. Try again appears only on auto-add's offline, no-answer and unrecognised failures.
 
 ## Copy
 
-`toastText` follows YT-ADD-18, YT-ADD-27, YT-ADD-28 and 03 §13. Titles are cut after 40 user-perceived characters with "…". Video titles are quoted, playlist titles are not, except in "{Shortcut} now saves to “{Playlist}”.". An unknown video reads "this video" ("This video" at a sentence start, "this song" on YouTube Music). An unknown playlist reads "a playlist that's no longer available". "save" reads "auto-add" in auto-add's own failures.
+`toastText` follows YT-ADD-18, YT-ADD-27, YT-ADD-28 and 03 §13. Titles are cut after 40 user-perceived characters with "…". Video titles are quoted, playlist titles are not, except in `{Shortcut} now saves to “{Playlist}”.`. An unknown video reads "this video" ("This video" at a sentence start, "this song" on YouTube Music). An unknown playlist reads "a playlist that's no longer available". "save" reads "auto-add" in auto-add's own failures.
 
 Some copy is derived, not quoted from a table. That covers the saved-and-failed second sentence for every failure except missing, plural missing and full, auto-add's refused wording, and the "This shortcut" and "this channel" fallbacks.
 

@@ -31,7 +31,7 @@ The module has no timer, polling loop or page observer. It never hashes, signs o
 ## Left to later units
 
 - **createGateway** implements `PageGatewayOperations` with `PageJobResult`, so `account` carries the raw `datasyncId`. The spec's `servePage(gateway, { site, build }, win)` becomes `servePage(gateway, options, createDomPageChannel(win.document))`. The page entry supplies `snapshot` from the gateway's account read and its `document_start` observations, and `signals` from the breakage reporter that `createGateway({ signals })` feeds.
-- **PageLink** owns request and watch ID generation, timeouts, sending `retire` for its own build, the `hello` handshake, account-key hashing (ARC-ACC-46) and the trusted-account check (ARC-ACC-47).
+- **PageLink** owns request and watch ID generation, timeouts, sending `retire` for its own build, the `hello` handshake, account-key hashing under ARC-ACC-46 and the trusted-account check under ARC-ACC-47.
 
 ## Checks
 
