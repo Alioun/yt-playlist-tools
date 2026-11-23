@@ -117,6 +117,35 @@ test("two adds run one at a time in the app-state lane", async () => {
   released(w)
 })
 
+test("a first add that waits its turn queues the clicked video after YouTube rewrites the card's data for another", async () => {
+  const command = cardCommand(videoA)
+  const data = { videoId: videoA, title: { simpleText: "Queue card" }, menu: { menuRenderer: { items: [{ menuServiceItemRenderer: { serviceEndpoint: command } }] } } }
+  const w = queueWorld({ signedIn: false, card: data })
+  w.scripts.push(
+    pending(() => undefined),
+    pending((world, call) => {
+      const sent = call.endpoint as ReturnType<typeof cardCommand>
+      return answer(added(world.add(sent.signalServiceEndpoint.actions[0]!.addToPlaylistCommand.videoId)))
+    })
+  )
+  const first = queueAdd(w),
+    second = queueAdd(w)
+  await settle(w, 0)
+  expect(w.calls.length).toBe(1)
+
+  const add = command.signalServiceEndpoint.actions[0]!.addToPlaylistCommand
+  data.videoId = videoB
+  add.videoId = videoB
+  add.videoIds[0] = videoB
+  add.onCreateListCommand.createPlaylistServiceEndpoint.videoIds[0] = videoB
+  await settle(w, 5_000)
+
+  expect(await first).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  expect(w.state.entries.map(row => row.videoId)).toEqual([videoA])
+  expect(await second).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
+  released(w)
+})
+
 test("callback success without a panel effect is confirmed false with no Undo", async () => {
   const w = queueWorld()
   w.replace(listA, [])
