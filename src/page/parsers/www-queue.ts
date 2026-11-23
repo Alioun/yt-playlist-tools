@@ -74,7 +74,14 @@ export function parseQueueCard(raw: unknown): QueueCard | undefined {
       continue
     }
     if (!record(value)) continue
-    if (queueCommandFor(value, video.videoId)) return { videoId: video.videoId, command: owner ?? value }
+    if (queueCommandFor(value, video.videoId)) {
+      // A copy, because YouTube rewrites a card's data in place when it reuses the card for another video.
+      try {
+        return { videoId: video.videoId, command: structuredClone(owner ?? value) }
+      } catch {
+        return undefined
+      }
+    }
     const signal = Array.isArray(field(value, "signalServiceEndpoint", "actions"))
     for (const [key, child] of Object.entries(value)) {
       // YouTube ignores the hover toggle's queue command when it's resolved away from its own button.
