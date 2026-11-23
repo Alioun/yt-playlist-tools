@@ -129,34 +129,44 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       details: () => { actions.settings({ section: "diagnostics" }); notices.update(null) } })
   }
   const wanted = new Set<PageFeatureId>(), shown = new Set<PageFeatureId>()
-  let claiming = false
   // The claim behind a notice that isn't on screen yet, and the notice it would replace.
   let unshown: { readonly token: string; readonly before: ReturnType<typeof notices.read> } | null = null
+  // One claim or release is out at a time, so the Monitor hears this tab's asks in the order they happened.
+  // Whatever changes while one is out is looked at when it is answered, so a refusal is final only if nothing changed.
+  let asking = false, again = false
   const cantShow = () => document.hidden || document.fullscreenElement !== null
-  function giveBack(token: string) { claiming = false; actions.noticeReleased(token) }
+  // The tab may be visible again by the time the Monitor has the release, so it looks once more.
+  async function giveBack(token: string) { await actions.noticeReleased(token); again = true }
   // The view lists a due notice once the Monitor batched it; only a tab whose feature would act claims it, once a page.
   // A hidden or fullscreen tab couldn't show it, so it leaves the notice for a visible tab until it is shown itself.
   // A claim it already holds goes back too, or the Monitor would refuse a visible tab for as long as the claim lasts.
-  async function deliver() {
-    if (unshown && cantShow()) {
+  async function look() {
+    if (unshown) {
+      if (!cantShow()) return
       const { token, before } = unshown
       unshown = null
       notices.update(before && { ...before, presented: ignore })
-      giveBack(token)
+      return giveBack(token)
     }
-    if (claiming || cantShow()) return
-    if (!link.view?.notices.some(notice => notice.features.some(id => wanted.has(id) && !shown.has(id)))) return
-    claiming = true
+    if (cantShow() || !link.view?.notices.some(notice => notice.features.some(id => wanted.has(id) && !shown.has(id)))) return
     const claim = await actions.claimNotice()
-    if (!claim || root.disposed) { claiming = false; return }
-    if (cantShow()) { giveBack(claim.token); return }
+    if (!claim || root.disposed) return
+    if (cantShow()) return giveBack(claim.token)
     const before = notices.read()
     unshown = { token: claim.token, before }
     request({ kind: "not-working", features: [...new Set([...(before?.due.features ?? []), ...claim.due.features])] }, () => {
-      claiming = false; unshown = null
+      unshown = null
       for (const id of claim.due.features) shown.add(id)
       actions.noticeShown(claim.token)
     })
+  }
+  async function deliver() {
+    again = true
+    if (asking) return
+    asking = true
+    try {
+      while (again && !root.disposed) { again = false; await look() }
+    } finally { asking = false }
   }
   const thisVideo = createThisVideoChannel()
   // The popup's This video names the channel, for its Allow and Deny, so the channel is read only when asked (YT-CF-15).

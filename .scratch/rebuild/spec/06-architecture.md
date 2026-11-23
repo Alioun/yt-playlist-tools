@@ -1341,7 +1341,7 @@ sequenceDiagram
 | `tab.wouldAct { feature }` | — | A feature that isn't working was about to act in this tab ([YT-BRK-02](02-youtube.md#213-when-youtube-changes-something)) |
 | `tab.claimNotice` | `{ token, due } \| null` | Takes the notice the tab's view lists as due. `null` when another tab holds it or none is due |
 | `tab.noticeShown { token }` | — | The claimed notice is on screen |
-| `tab.noticeReleased { token }` | — | The tab was hidden or went fullscreen before the claimed notice was on screen, so a visible tab may take it ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows)) |
+| `tab.noticeReleased { token }` | — | The tab was hidden or went fullscreen before the claimed notice was on screen, so a visible tab may take it. The tab claims again only once this is answered ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows)) |
 
 | Message (background → tab, frame 0) | Answer | Notes |
 |---|---|---|
