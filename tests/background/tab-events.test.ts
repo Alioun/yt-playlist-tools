@@ -34,3 +34,13 @@ test("closing tabs the extension never saw reads nothing from session storage (A
     session.get = get
   }
 })
+
+test("the background listens to no tab close, so a closing tab never wakes it (ARC-MOD-39)", async () => {
+  const world = browser({})
+  await world.seed()
+  const w = world.worker()
+  running.push(w.background)
+  await started(w)
+  const native = w.native as unknown as { tabs: TabEvents }
+  expect(native.tabs.onRemoved.listeners.size).toBe(0)
+})
