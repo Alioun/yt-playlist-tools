@@ -92,7 +92,16 @@ export type TabSettingsTarget = { readonly feature: "auto-add" | "shortcuts" | "
 export type TabSkip = { readonly video: VideoId; readonly skip: boolean }
 export type TabFilterChannel = Omit<FilterChannelChange, "acct">
 export type TabMemoryAnswer = { readonly kind: "done" | "refused" }
-export type TabMembershipAnswer = readonly MembershipRow[] | null
+/**
+ * The second part of a YouTube Music picker's membership read (YM-PICK-6). The tab's own list carries no check marks,
+ * so a YouTube tab on the same account supplies them. `need` lists the playlists still unchecked. It is null when the
+ * tab's own list could not be read, and then YouTube's rows are the whole list.
+ */
+export type YouTubeChecks = { readonly need: readonly PlaylistId[] | null }
+/** Without `youtube`, the tab's own list. */
+export type TabMembershipRequest = { readonly video: VideoId; readonly youtube?: YouTubeChecks }
+/** "noYouTubeTab": no YouTube tab is open on this account to ask, which is an expected limit. */
+export type TabMembershipAnswer = { readonly kind: "read"; readonly rows: readonly MembershipRow[] } | { readonly kind: "noYouTubeTab" | "unreadable" }
 export type TabActionMessages = {
   "tab.add": { payload: Pinned<TabAddRequest>; result: TabAddReport }
   "tab.remove": { payload: Pinned<TabRemoveRequest>; result: TabRemoveReport }
@@ -101,7 +110,7 @@ export type TabActionMessages = {
   /** Loads the picker, or this page's jobs file on its first job (G42), into the asking tab. */
   "tab.need": { payload: { readonly popovers: true } | { readonly jobs: true }; result: { readonly kind: "ok" | "failed" } }
   "tab.playlists": { payload: Pinned<{ readonly refresh: boolean }>; result: TabPlaylists }
-  "tab.membership": { payload: Pinned<VideoId>; result: TabMembershipAnswer }
+  "tab.membership": { payload: Pinned<TabMembershipRequest>; result: TabMembershipAnswer }
   "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
   "tab.device": { payload: { readonly change: TabDeviceChange }; result: TabDeviceAnswer }
@@ -198,6 +207,9 @@ export function isTabPlaylists(value: unknown): value is TabPlaylists {
     objectShape(value, { kind: oneOf("noTab", "failed") })
   )
 }
+export function isYouTubeChecks(value: unknown): value is YouTubeChecks {
+  return objectShape(value, { need: nullable(v => Array.isArray(v) && v.length <= 5000 && v.every(isPlaylistId)) })
+}
 export function isTabCreated(value: unknown): value is TabCreated {
   return (
     objectShape(value, { kind: oneOf("created"), id: isPlaylistId }) || objectShape(value, { kind: oneOf("failed"), reason: oneOf("rateLimited", "publicCap", "noChannel", "notAllowed", "failed") })
@@ -228,8 +240,9 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
   },
   "tab.playlists": { payload: (v): v is TabActionMessages["tab.playlists"]["payload"] => pinned(r => objectShape(r, { refresh: bool }))(v), result: isTabPlaylists, timeoutMs: 45_000 },
   "tab.membership": {
-    payload: (v): v is TabActionMessages["tab.membership"]["payload"] => pinned(isVideoId)(v),
-    result: (v): v is TabMembershipAnswer => v === null || (Array.isArray(v) && v.length <= 5000 && v.every(isMembershipRow)),
+    payload: (v): v is TabActionMessages["tab.membership"]["payload"] => pinned(r => objectShape(r, { video: isVideoId }, { youtube: isYouTubeChecks }))(v),
+    result: (v): v is TabMembershipAnswer =>
+      objectShape(v, { kind: oneOf("read"), rows: r => Array.isArray(r) && r.length <= 5000 && r.every(isMembershipRow) }) || objectShape(v, { kind: oneOf("noYouTubeTab", "unreadable") }),
     timeoutMs: 45_000
   },
   "tab.create": {

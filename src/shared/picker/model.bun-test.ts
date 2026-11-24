@@ -134,7 +134,7 @@ describe("loading", () => {
     ledger.answer("membership", { kind: "unreadable" })
     await settle()
     expect(picker.membership).toEqual({ kind: "unreadable" })
-    expect(checked(picker)).toEqual([])
+    expect(picker.rows.map(item => item.check)).toEqual(["unknown", "unknown", "unknown"])
     const ticked = picker.tick(MIX)
     ledger.answer("add", { kind: "already-in" })
     expect(await ticked).toEqual({ kind: "already-in" })
@@ -514,7 +514,7 @@ describe("refresh and freshness", () => {
       ledger.answer("cachedList", listing(ROWS, at))
       await settle()
       expect(ledger.calls("freshList")).toHaveLength(fetches)
-      expect(picker.list).toEqual({ at, refreshing: fetches === 1, refreshable: true })
+      expect(picker.list).toEqual({ at, known: true, refreshing: fetches === 1, refreshable: true })
     })
   }
 
@@ -522,11 +522,11 @@ describe("refresh and freshness", () => {
     const { picker, ledger } = open("choose")
     ledger.answer("cachedList", null)
     await settle()
-    expect(picker.list).toEqual({ at: null, refreshing: true, refreshable: true })
+    expect(picker.list).toEqual({ at: null, known: false, refreshing: true, refreshable: true })
     ledger.answer("freshList", { kind: "listed", listing: listing(ROWS, NOW + 1) })
     await settle()
     expect(titles(picker)).toEqual(["Watch later", "Road trip", "mix tape"])
-    expect(picker.list).toEqual({ at: NOW + 1, refreshing: false, refreshable: true })
+    expect(picker.list).toEqual({ at: NOW + 1, known: true, refreshing: false, refreshable: true })
     expect(ledger.calls("freshList")).toHaveLength(1)
   })
 
@@ -544,7 +544,7 @@ describe("refresh and freshness", () => {
     ledger.answer("freshList", { kind: "failed" })
     expect(await second).toEqual({ kind: "failed" })
     expect(titles(picker)).toEqual(["Ambient"])
-    expect(picker.list).toEqual({ at: NOW + 1, refreshing: false, refreshable: true })
+    expect(picker.list).toEqual({ at: NOW + 1, known: true, refreshing: false, refreshable: true })
     expect(ledger.calls("freshList")).toHaveLength(2)
   })
 
@@ -554,7 +554,7 @@ describe("refresh and freshness", () => {
     ledger.answer("cachedList", listing(ROWS, at))
     await settle()
     expect(ledger.calls("freshList")).toEqual([])
-    expect(picker.list).toEqual({ at, refreshing: false, refreshable: false })
+    expect(picker.list).toEqual({ at, known: true, refreshing: false, refreshable: false })
     expect(await picker.refresh()).toEqual({ kind: "unavailable", reason: "noTab" })
     expect(picker.creation).toBe("noTab")
     expect(await picker.create("Focus", "PRIVATE")).toEqual({ kind: "unavailable", reason: "noTab" })
@@ -568,7 +568,7 @@ describe("refresh and freshness", () => {
     await settle()
     ledger.answer("freshList", { kind: "noTab" })
     await settle()
-    expect(picker.list).toEqual({ at, refreshing: false, refreshable: false })
+    expect(picker.list).toEqual({ at, known: true, refreshing: false, refreshable: false })
     expect(await picker.refresh()).toEqual({ kind: "unavailable", reason: "noTab" })
     expect(ledger.calls("freshList")).toHaveLength(1)
   })
@@ -582,6 +582,216 @@ describe("refresh and freshness", () => {
     await settle()
     expect(titles(picker)).toEqual(["Ambient"])
     expect(ledger.calls("freshList")).toHaveLength(1)
+  })
+})
+
+describe("YouTube Music list", () => {
+  test("an account with no playlists has a list, and it is empty", async () => {
+    const { picker, ledger } = open("save", "music")
+    ledger.answer("cachedList", null)
+    expect(picker.list).toMatchObject({ at: null, known: false })
+    ledger.answer("membership", { kind: "read", rows: [] })
+    await settle()
+    expect(picker.rows).toEqual([])
+    expect(picker.list).toMatchObject({ at: null, known: true, refreshing: false })
+    expect(ledger.calls("freshList")).toEqual([])
+  })
+})
+
+describe("YouTube Music check marks", () => {
+  const added: AddAnswer = { kind: "added", entry: entry("sv-road"), undo: undoing() }
+  const OWN: readonly MembershipRow[] = [
+    { id: ROAD, title: "Road trip", contains: null },
+    { id: MIX, title: "mix tape", contains: null }
+  ]
+  const YOUTUBE = [member(WL, "Watch later", false), member(ROAD, "Road trip", false), member(MIX, "mix tape", true)]
+  const checks = (picker: PickerModel) => picker.rows.map(item => [item.title, item.check])
+
+  async function openedMusic() {
+    const opened = open("save", "music", { checks: true })
+    opened.ledger.answer("cachedList", null)
+    opened.ledger.answer("membership", { kind: "read", rows: OWN })
+    await settle()
+    return opened
+  }
+
+  test("Music's own rows show at once, and the YouTube lookup then fills in their check marks", async () => {
+    const { picker, ledger } = await openedMusic()
+    expect(checks(picker)).toEqual([
+      ["Road trip", "loading"],
+      ["mix tape", "loading"]
+    ])
+    expect(picker.membership).toEqual({ kind: "checking" })
+    expect(picker.list).toMatchObject({ known: true, refreshing: false })
+    expect(ledger.calls("checks")).toEqual([[[ROAD, MIX]]])
+    ledger.answer("checks", { kind: "read", rows: YOUTUBE })
+    await settle()
+    expect(checks(picker)).toEqual([
+      ["Road trip", "off"],
+      ["mix tape", "on"]
+    ])
+    expect(picker.membership).toEqual({ kind: "known", count: 1 })
+    expect(ledger.calls("freshList")).toEqual([])
+  })
+
+  test("a refresh answers once the rows are in, and a row works while the lookup is still out", async () => {
+    const { picker, ledger } = await openedMusic()
+    ledger.answer("checks", { kind: "read", rows: YOUTUBE })
+    await settle()
+    const refreshed = picker.refresh()
+    ledger.answer("membership", { kind: "read", rows: OWN })
+    expect(await refreshed).toEqual({ kind: "refreshed" })
+    expect(ledger.pending("checks")).toBe(1)
+    const ticked = picker.tick(ROAD)
+    ledger.answer("add", added)
+    expect(await ticked).toEqual({ kind: "added" })
+    expect(row(picker, ROAD).check).toBe("on")
+  })
+
+  test("an answer that already has every check mark asks nowhere else", async () => {
+    const { picker, ledger } = open("save", "music", { checks: true })
+    ledger.answer("cachedList", null)
+    ledger.answer("membership", { kind: "read", rows: MEMBERS })
+    await settle()
+    expect(ledger.calls("checks")).toEqual([])
+    expect(picker.membership).toEqual({ kind: "known", count: 1 })
+  })
+
+  test("with no YouTube tab open the rows are unchecked, not off, and the status names the limit", async () => {
+    const { picker, ledger } = await openedMusic()
+    ledger.answer("checks", { kind: "noYouTubeTab" })
+    await settle()
+    expect(checks(picker)).toEqual([
+      ["Road trip", "unknown"],
+      ["mix tape", "unknown"]
+    ])
+    expect(picker.membership).toEqual({ kind: "partial", count: 0, checked: 0, unchecked: 2, reason: "noYouTubeTab" })
+    expect(picker.list).toMatchObject({ refreshing: false, refreshable: true })
+    expect(ledger.calls("freshList")).toEqual([])
+    const ticked = picker.tick(ROAD)
+    ledger.answer("add", { kind: "already-in" })
+    expect(await ticked).toEqual({ kind: "already-in" })
+    expect(checks(picker)).toEqual([
+      ["Road trip", "on"],
+      ["mix tape", "unknown"]
+    ])
+    expect(picker.membership).toEqual({ kind: "partial", count: 1, checked: 1, unchecked: 1, reason: "noYouTubeTab" })
+  })
+
+  test("a lookup that covers only some rows leaves the others unchecked, apart from the ones it read", async () => {
+    const { picker, ledger } = await openedMusic()
+    ledger.answer("checks", { kind: "read", rows: [member(MIX, "mix tape", true)] })
+    await settle()
+    expect(checks(picker)).toEqual([
+      ["Road trip", "unknown"],
+      ["mix tape", "on"]
+    ])
+    expect(picker.membership).toEqual({ kind: "partial", count: 1, checked: 1, unchecked: 1, reason: "failed" })
+  })
+
+  test("a lookup that fails leaves every row unchecked", async () => {
+    const { picker, ledger } = await openedMusic()
+    ledger.answer("checks", { kind: "unreadable" })
+    await settle()
+    expect(checks(picker)).toEqual([
+      ["Road trip", "unknown"],
+      ["mix tape", "unknown"]
+    ])
+    expect(picker.membership).toEqual({ kind: "partial", count: 0, checked: 0, unchecked: 2, reason: "failed" })
+  })
+
+  test("a source that cannot look elsewhere leaves the rows its answer skipped unchecked", async () => {
+    const { picker, ledger } = open("save", "music")
+    ledger.answer("cachedList", null)
+    ledger.answer("membership", { kind: "read", rows: [OWN[0]!, member(MIX, "mix tape", true)] })
+    await settle()
+    expect(checks(picker)).toEqual([
+      ["Road trip", "unknown"],
+      ["mix tape", "on"]
+    ])
+    expect(picker.membership).toEqual({ kind: "partial", count: 1, checked: 1, unchecked: 1, reason: "failed" })
+  })
+
+  test("when Music's own read fails, the list and its check marks come from the YouTube lookup", async () => {
+    const { picker, ledger } = open("save", "music", { checks: true })
+    ledger.answer("cachedList", null)
+    ledger.answer("membership", { kind: "unreadable" })
+    await settle()
+    expect(ledger.calls("checks")).toEqual([[null]])
+    expect(picker.list.refreshing).toBe(true)
+    expect(ledger.calls("freshList")).toEqual([])
+    ledger.answer("checks", { kind: "read", rows: [member(ROAD, "Road trip", false), member(MIX, "mix tape", true)] })
+    await settle()
+    expect(checks(picker)).toEqual([
+      ["Road trip", "off"],
+      ["mix tape", "on"]
+    ])
+    expect(picker.membership).toEqual({ kind: "known", count: 1 })
+    expect(picker.list).toMatchObject({ known: true, refreshing: false })
+    expect(ledger.calls("freshList")).toEqual([])
+  })
+
+  test("when Music's own read and the YouTube lookup both fail, the picker falls back to the saved list", async () => {
+    const { picker, ledger } = open("save", "music", { checks: true })
+    ledger.answer("cachedList", listing())
+    ledger.answer("membership", { kind: "unreadable" })
+    await settle()
+    ledger.answer("checks", { kind: "noYouTubeTab" })
+    await settle()
+    expect(picker.membership).toEqual({ kind: "unreadable" })
+    expect(picker.rows.map(item => item.check)).toEqual(["unknown", "unknown", "unknown"])
+    expect(ledger.calls("freshList")).toHaveLength(1)
+  })
+
+  test("an earlier read's lookup never replaces a later read", async () => {
+    const { picker, ledger } = await openedMusic()
+    const refreshed = picker.refresh()
+    ledger.answer("membership", { kind: "read", rows: OWN })
+    await refreshed
+    expect(ledger.pending("checks")).toBe(2)
+    ledger.answer("checks", { kind: "read", rows: [member(ROAD, "Road trip", true), member(MIX, "mix tape", true)] })
+    await settle()
+    expect(picker.membership).toEqual({ kind: "checking" })
+    ledger.answer("checks", { kind: "read", rows: YOUTUBE })
+    await settle()
+    expect(checked(picker)).toEqual([MIX])
+  })
+
+  test("a refresh that reads after a tick replaces that tick's check mark", async () => {
+    const { picker, ledger } = await openedSave("music")
+    const ticked = picker.tick(ROAD)
+    ledger.answer("add", added)
+    await ticked
+    expect(checked(picker)).toEqual([ROAD, MIX])
+    const refreshed = picker.refresh()
+    ledger.answer("membership", { kind: "read", rows: MEMBERS })
+    expect(await refreshed).toEqual({ kind: "refreshed" })
+    expect(row(picker, ROAD)).toMatchObject({ check: "off", status: { kind: "idle" } })
+    expect(picker.membership).toEqual({ kind: "known", count: 1 })
+  })
+
+  test("a refresh that started before a tick answered keeps that tick's check mark", async () => {
+    const { picker, ledger } = await openedSave("music")
+    const refreshed = picker.refresh()
+    const ticked = picker.tick(ROAD)
+    ledger.answer("add", added)
+    await ticked
+    ledger.answer("membership", { kind: "read", rows: MEMBERS })
+    await refreshed
+    expect(checked(picker)).toEqual([ROAD, MIX])
+    expect(picker.membership).toEqual({ kind: "known", count: 2 })
+  })
+
+  test("a refresh keeps the check mark of a row whose removal is still under way", async () => {
+    const { picker, ledger } = await openedSave("music")
+    const unticked = picker.untick(MIX)
+    const refreshed = picker.refresh()
+    ledger.answer("membership", { kind: "read", rows: MEMBERS })
+    await refreshed
+    expect(row(picker, MIX)).toMatchObject({ busy: true, check: "off" })
+    ledger.answer("remove", { kind: "removed", undo: undoing() })
+    await unticked
+    expect(row(picker, MIX)).toMatchObject({ busy: false, check: "off", status: { kind: "removed" } })
   })
 })
 

@@ -66,12 +66,13 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> &
     async membership() {
       if (acct === null) return { kind: "unreadable" }
       if (site === "music") {
-        const rows = await actions.membership(request.video)
-        return rows ? { kind: "read", rows } : { kind: "unreadable" }
+        const answer = await actions.membership(request.video)
+        return answer.kind === "read" ? answer : { kind: "unreadable" }
       }
       const answer = await page.run<JobOf<"membership">>({ job: { kind: "membership", videoId: request.video }, acct })
       return answer.ok ? { kind: "read", rows: answer.data } : { kind: "unreadable" }
     },
+    ...(site === "music" && acct !== null && { checks: need => actions.membership(request.video, { need }) }),
     async add(id): Promise<AddAnswer> {
       const report = await actions.add({ site, video: request.video, via, opener: request.opener, playlist: id, ...(request.title ? { title: request.title } : {}) })
       if (report.kind !== "report") return { kind: "failed" }

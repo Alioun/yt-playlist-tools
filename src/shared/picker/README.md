@@ -12,8 +12,8 @@
 const picker = new PickerModel({ source, site: "www", mode: "save" })
 picker.rows                    // search-filtered, in the site's order or A-Z
 picker.query = "mix"
-picker.membership              // none | checking | known (count) | unreadable
-picker.list                    // { at, refreshing, refreshable }
+picker.membership              // none | checking | known (count) | partial (count, checked, unchecked, reason) | unreadable
+picker.list                    // { at, known, refreshing, refreshable }
 picker.pins                    // available | private | none
 picker.creation                // available | private | noTab | signedOut | noChannel
 picker.form, picker.titleCheck, picker.creating
@@ -32,7 +32,8 @@ Every method resolves with an outcome and never throws. A container acts on it. 
 ## Rules the model owns
 
 - Rows paint from `cachedList()` and work before membership arrives. Membership is read whenever the source has an item, in save and choose modes. Save checks mean membership. Choose and many checks mean selected choices. Membership supplies its own set, order and titles, and the list still supplies thumbnails and counts (UI-PICK-04, DATA-21).
-- Row results, membership facts and choices live in separate slots, so an answer never erases another slot. A row's own confirmed result outranks an older membership read.
+- Row results, membership facts and choices live in separate slots, so an answer never erases another slot. A row's own confirmed result outranks a membership read that started before it. A read that started after it replaces it, unless the row is busy.
+- A membership answer may leave a row's `contains` null, as YouTube Music's does. The rows show at once. If the source has `checks`, the model asks it for the marks still missing, and for the whole list when `membership` could not be read. A row no read answered for is `unknown`, never `off`, and `partial` counts those rows and says whether the cause is a missing YouTube tab (YM-PICK-6).
 - Each list answer applies only if it is newer than the last one applied. After `close()` no answer changes state and no method calls the source, with one exception. A first pick already under way finishes its save and its choice for the source's account. Its choice starts only while `source.authorized()` says consent and the account's authority still hold, and is reported as `skipped: "unauthorized"` otherwise (R173).
 - On YouTube, Watch later moves first. On YouTube Music it appears only where the source lists it. Sort A-Z sorts every row by title. Search matches titles case-insensitively in every mode.
 - Opening refreshes a cache older than 5 minutes, once. `refresh()` always fetches where a tab exists and joins a fetch already in flight. Without a tab the stamp stays and refresh and creating are unavailable (UI-PICK-25, FT-54).

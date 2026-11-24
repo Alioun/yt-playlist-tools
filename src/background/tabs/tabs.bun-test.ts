@@ -154,6 +154,21 @@ test("a ping that finds a gone tab evicts only that row", async () => {
   }
 })
 
+test("a closed tab still in the registry is never tried, so a job sees no tab and not a silent one", async () => {
+  const h = tabsFixture()
+  try {
+    h.seedTab(nativeTab(1), signedIn())
+    await h.engine.seen(1, hello(), fixtureView)
+    // Nothing tells the background that the tab closed, so its row stays.
+    h.tabs.delete(1)
+    expect(await h.engine.serve(invocation, need)).toEqual({ kind: "no-tab", attempted: [] })
+    expect((await h.engine.known({ kind: "account", acct: a, scope: "normal" })).map(tab => tab.tabId)).toEqual([1])
+    expect(h.calls.filter(call => call.kind === "ping" || call.kind === "run")).toEqual([])
+  } finally {
+    await h.dispose()
+  }
+})
+
 test("signed-out active state precedes recent accounts and normal cache", async () => {
   const h = tabsFixture()
   try {

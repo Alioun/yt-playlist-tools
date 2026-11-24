@@ -1,6 +1,6 @@
 import { isAccountKey, isPlaylistId, isVideoId, type AccountKey, type PlaylistId, type VideoId } from "../model/validation"
 import { objectShape } from "./object-shape"
-import { isUndoHandle, TITLE_LIMIT, type UndoHandle } from "./tab-actions"
+import { isUndoHandle, isYouTubeChecks, TITLE_LIMIT, type UndoHandle, type YouTubeChecks } from "./tab-actions"
 import { isMembershipRow, type MembershipRow } from "./jobs"
 import { isSite, type Site } from "./vocabulary"
 import type { RpcContract } from "../rpc/rpc"
@@ -19,9 +19,10 @@ export type PopupOpener = "playing-now" | "popup"
 export type PopupRemoveRequest = { readonly site: Site; readonly video: VideoId; readonly playlist: PlaylistId; readonly opener: PopupOpener; readonly tick: UndoHandle | null }
 export type UiRemovePayload = { readonly windowId?: number; readonly tabId: number; readonly acct: AccountKey; readonly request: PopupRemoveRequest }
 export type UiRemoveAnswer = { readonly kind: "removed"; readonly undo: UndoHandle | null } | { readonly kind: "failed" | "no-tab" | "account-changed" | "unavailable" }
-/** The picker sheet's membership read, in the same tab as the same account (UI-PICK-04). */
-export type UiMembershipPayload = { readonly windowId?: number; readonly tabId: number; readonly acct: AccountKey; readonly site: Site; readonly video: VideoId }
-export type UiMembershipAnswer = { readonly kind: "read"; readonly rows: readonly MembershipRow[] } | { readonly kind: "unreadable" | "no-tab" | "account-changed" | "unavailable" }
+/** The picker sheet's membership read, in the same tab as the same account (UI-PICK-04). With `youtube`, its second part on YouTube Music (YM-PICK-6). */
+export type UiMembershipPayload = { readonly windowId?: number; readonly tabId: number; readonly acct: AccountKey; readonly site: Site; readonly video: VideoId; readonly youtube?: YouTubeChecks }
+/** "no-youtube-tab": no YouTube tab is open on this account to ask for check marks, which is an expected limit. */
+export type UiMembershipAnswer = { readonly kind: "read"; readonly rows: readonly MembershipRow[] } | { readonly kind: "unreadable" | "no-tab" | "account-changed" | "unavailable" | "no-youtube-tab" }
 export type UiAddPayload = { readonly windowId?: number; readonly tabId: number; readonly acct: AccountKey; readonly request: PopupAddRequest }
 /** `text` is the save's answer in YM-SAVE's words, which the row shows in place (YM-POP-3). A save carries its Undo. */
 export type UiAddAnswer =
@@ -55,7 +56,7 @@ function isPopupAddRequest(value: unknown): value is PopupAddRequest {
 function isUiMembershipAnswer(value: unknown): value is UiMembershipAnswer {
   return (
     objectShape(value, { kind: oneOf("read"), rows: r => Array.isArray(r) && r.length <= 5000 && r.every(row => isMembershipRow(row) && row.title.length <= 1000) }) ||
-    objectShape(value, { kind: oneOf("unreadable", "no-tab", "account-changed", "unavailable") })
+    objectShape(value, { kind: oneOf("unreadable", "no-tab", "account-changed", "unavailable", "no-youtube-tab") })
   )
 }
 export const uiAddContract: RpcContract<UiAddMessages> = {
@@ -80,7 +81,7 @@ export const uiAddContract: RpcContract<UiAddMessages> = {
     timeoutMs: 60_000
   },
   "ui.membership": {
-    payload: (value): value is UiMembershipPayload => objectShape(value, { tabId: natural, acct: isAccountKey, site: isSite, video: isVideoId }, { windowId: natural }),
+    payload: (value): value is UiMembershipPayload => objectShape(value, { tabId: natural, acct: isAccountKey, site: isSite, video: isVideoId }, { windowId: natural, youtube: isYouTubeChecks }),
     result: isUiMembershipAnswer,
     timeoutMs: 45_000
   },

@@ -1,5 +1,9 @@
 import { afterEach, expect, test } from "bun:test"
 import { composeActions, createAddFlowOwner } from "./actions"
+import { composeMonitor } from "./monitor"
+import { createMusicMembershipHealth } from "./services"
+import { parseSessionMemory } from "../store/session-memory"
+import { defaultSettings } from "../../shared/model/defaults"
 import { createPlayingSave, createPlayingUndo, createPopupItem } from "./playing-now"
 import { createPageReceiver, type PageReceiverPorts } from "../router/ui-pages"
 import { runtimeTransport } from "../adapters/runtime"
@@ -14,7 +18,7 @@ import type { ToastContent } from "../../site/kit/toaster/types"
 import type { NavData, PlayerData } from "../../shared/contracts/streams"
 import type { ToastPlan } from "../../shared/rules/outcomes"
 import type { Playlists } from "../playlists/playlists"
-import type { RoutingNeed, Tabs, TabJobOutcome } from "../tabs/ports"
+import type { RoutingNeed, Tabs, TabJobOutcome, ViewTarget } from "../tabs/ports"
 import type { KnownTab } from "../tabs/tabs"
 import type { NativeSender } from "../adapters/sender-origin"
 import type { Job, JobInvocation, JobResult, MembershipRow, RouteId, SetVideoId } from "../../shared/contracts"
@@ -83,7 +87,13 @@ function world(
     tabAccount?: AccountKey | null
     pageAccount?: AccountKey | null
     prepare?: (initial: Seed) => void
-    music?: { rows: MembershipRow[] | null; fallback?: MembershipRow[]; incognito?: boolean }
+    /**
+     * `rows`: YouTube Music's own answer, or how its read failed. `fallback`: the YouTube tab's answer, absent when no YouTube tab is open.
+     * `youtube`: the account of a YouTube tab the registry holds, which the lookup tries and gets no answer from.
+     */
+    music?: { rows: MembershipRow[] | "unavailable" | "unconfirmed" | "timeout"; fallback?: MembershipRow[] | "failed"; incognito?: boolean; youtube?: AccountKey }
+    /** Where the Music picker's health records go, beside the list the world keeps. */
+    health?: ReturnType<typeof createMusicMembershipHealth>
   } = {}
 ) {
   const initial = seed(options.settings)
@@ -97,21 +107,27 @@ function world(
     logs: string[] = []
   const known = { tabId: 9, acct: options.tabAccount === undefined ? a : options.tabAccount, privateTab: options.music?.incognito ?? false } as unknown as KnownTab
   const fallbackNeeds: RoutingNeed[] = []
-  const membershipHealth: boolean[] = []
+  const membershipHealth: string[] = []
   const tabs = {
-    async known() {
-      return [known]
+    async known(target: ViewTarget) {
+      const youtube = options.music?.youtube
+      const held = youtube ? [known, { tabId: 10, acct: youtube, privateTab: known.privateTab } as unknown as KnownTab] : [known]
+      return target.kind === "account" ? held.filter(row => row.acct === target.acct) : [known]
     },
     async runIn<J extends Job>(tabId: number, invocation: JobInvocation<J>): Promise<TabJobOutcome<J>> {
       if (options.music && invocation.job.kind === "membership") {
         const { rows } = options.music
-        return { kind: "result", tabId, result: rows === null ? { ok: false, reason: "unavailable" } : { ok: true, route, data: rows } } as never
+        if (rows === "timeout") return { kind: "transport", tabId, failure: "timeout", delivery: "unknown" }
+        return { kind: "result", tabId, result: typeof rows === "string" ? { ok: false, reason: rows } : { ok: true, route, data: rows } } as never
       }
       return { kind: "result", tabId, result: site.answer(invocation) }
     },
     async serve(_invocation: unknown, need: RoutingNeed) {
       fallbackNeeds.push(need)
-      if (options.music?.fallback) return { kind: "result", tabId: 10, result: { ok: true, route, data: options.music.fallback } }
+      const fallback = options.music?.fallback
+      if (options.music?.youtube) return { kind: "no-tab", attempted: [10] }
+      if (fallback === "failed") return { kind: "result", tabId: 10, result: { ok: false, reason: "unavailable" } }
+      if (fallback) return { kind: "result", tabId: 10, result: { ok: true, route, data: fallback } }
       return { kind: "no-tab", attempted: [] }
     },
     async accountInView() {
@@ -149,8 +165,9 @@ function world(
     owner: store.owner,
     tabs,
     playlists,
-    async musicMembershipHealth(_tab, _acct, { complete }) {
-      membershipHealth.push(complete)
+    async musicMembershipHealth(tab, acct, record) {
+      membershipHealth.push(record.checks)
+      await options.health?.(tab, acct, record)
     },
     writable: () => true,
     registrar: {
@@ -218,48 +235,234 @@ function world(
     const rows = store.removal.state().session.recentAdds
     return Array.isArray(rows) ? rows : []
   }
-  return { store, site, page, actions, ensured, ticks, view, recentAdds, opened, logs, fallbackNeeds, membershipHealth }
+  return { store, site, page, actions, tabs, ensured, ticks, view, recentAdds, opened, logs, fallbackNeeds, membershipHealth }
 }
 
-test("the Music picker reads check marks from YouTube for the same account and window kind and keeps Music's rows", async () => {
-  const rows = [
-    { id: beta, title: "B in Music", contains: null },
-    { id: alpha, title: "A in Music", contains: false }
-  ]
-  const w = world({
-    music: {
-      rows,
-      fallback: [
-        { id: alpha, title: "A", contains: true },
-        { id: beta, title: "B", contains: true }
-      ],
-      incognito: true
-    }
-  })
-  expect(await w.page.membership(video)).toEqual([
-    { id: beta, title: "B in Music", contains: true },
-    { id: alpha, title: "A in Music", contains: false }
-  ])
-  expect(w.fallbackNeeds).toEqual([{ site: "www", req: { windowId: 3, activeTabId: 9, incognito: true }, account: { kind: "account", acct: a, signedIn: true } }])
-  expect(w.membershipHealth).toEqual([true])
-})
+const musicRows = [
+  { id: beta, title: "B in Music", contains: null },
+  { id: alpha, title: "A in Music", contains: null }
+]
+const youtubeRows = [
+  { id: alpha, title: "A", contains: true },
+  { id: beta, title: "B", contains: false },
+  { id: "WL" as PlaylistId, title: "Watch later", contains: false }
+]
+const popupTab = { tabId: 9, incognito: false, site: "music" } as const
+const popupReq = { windowId: 3, activeTabId: 9, incognito: false }
 
-test("the Music popup keeps playlist rows with unknown checks when YouTube cannot serve the account", async () => {
-  const rows = [{ id: alpha, title: "A in Music", contains: null }]
-  const w = world({ music: { rows } })
-  const req = { windowId: 3, activeTabId: 9, incognito: false }
-  const tab = { tabId: 9, incognito: false, site: "music" } as const
-  expect(await w.actions.membershipFromPopup(tab, b, video, req)).toEqual({ kind: "account-changed" })
+test("the Music picker gets Music's own rows without asking YouTube, then YouTube's check marks for the same account and window kind", async () => {
+  const w = world({ music: { rows: musicRows, fallback: youtubeRows, incognito: true } })
+  expect(await w.page.membership(video)).toEqual({ kind: "read", rows: musicRows })
   expect(w.fallbackNeeds).toEqual([])
-  expect(await w.actions.membershipFromPopup(tab, a, video, req)).toEqual({ kind: "read", rows })
-  expect(w.membershipHealth).toEqual([false])
+  expect(w.membershipHealth).toEqual([])
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "read", rows: youtubeRows.slice(0, 2) })
+  expect(w.fallbackNeeds).toEqual([{ site: "www", req: { windowId: 3, activeTabId: 9, incognito: true }, account: { kind: "account", acct: a, signedIn: true } }])
+  expect(w.membershipHealth).toEqual(["complete"])
 })
 
-test("the Music picker uses same-account YouTube rows if the Music response is unreadable", async () => {
-  const row = { id: alpha, title: "YouTube playlist", contains: true }
-  const w = world({ music: { rows: null, fallback: [row, { id: "WL" as PlaylistId, title: "Watch Later", contains: false }] } })
-  expect(await w.page.membership(video)).toEqual([row])
-  expect(w.membershipHealth).toEqual([true])
+test("a Music answer that carries every check mark is complete by itself", async () => {
+  const rows = [{ id: alpha, title: "A in Music", contains: true }]
+  const w = world({ music: { rows } })
+  expect(await w.page.membership(video)).toEqual({ kind: "read", rows })
+  expect(w.fallbackNeeds).toEqual([])
+  expect(w.membershipHealth).toEqual(["complete"])
+})
+
+test("with no YouTube tab open the Music picker hears that, and the health record names the limit", async () => {
+  const w = world({ music: { rows: musicRows } })
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "noYouTubeTab" })
+  expect(w.membershipHealth).toEqual(["noYouTubeTab"])
+})
+
+test("a YouTube tab of the account that was asked and didn't answer is a failed lookup, not a missing tab (YM-PICK-6)", async () => {
+  const w = world({ music: { rows: musicRows, youtube: a } })
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "unreadable" })
+  expect(w.membershipHealth).toEqual(["incomplete"])
+})
+
+test("a YouTube tab that was tried and belongs to another account still counts as no YouTube tab", async () => {
+  const w = world({ music: { rows: musicRows, youtube: b } })
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "noYouTubeTab" })
+  expect(w.membershipHealth).toEqual(["noYouTubeTab"])
+})
+
+test("the Music popup reads the same two parts, as the account its row named", async () => {
+  const w = world({ music: { rows: musicRows } })
+  expect(await w.actions.membershipFromPopup(popupTab, b, video, popupReq)).toEqual({ kind: "account-changed" })
+  expect(await w.actions.membershipFromPopup(popupTab, b, video, popupReq, { need: null })).toEqual({ kind: "account-changed" })
+  expect(w.fallbackNeeds).toEqual([])
+  expect(await w.actions.membershipFromPopup(popupTab, a, video, popupReq)).toEqual({ kind: "read", rows: musicRows })
+  expect(await w.actions.membershipFromPopup(popupTab, a, video, popupReq, { need: [beta, alpha] })).toEqual({ kind: "no-youtube-tab" })
+  expect(w.membershipHealth).toEqual(["noYouTubeTab"])
+})
+
+test.each(["unavailable", "unconfirmed", "timeout"] as const)("a Music read that ends as %s still gets its list from a same-account YouTube tab", async rows => {
+  const w = world({ music: { rows, fallback: youtubeRows } })
+  expect(await w.page.membership(video)).toEqual({ kind: "unreadable" })
+  expect(await w.page.membership(video, { need: null })).toEqual({ kind: "read", rows: youtubeRows.slice(0, 2) })
+  expect(w.fallbackNeeds).toHaveLength(1)
+  expect(w.membershipHealth).toEqual(["complete"])
+})
+
+test("a YouTube lookup that fails, or that misses a row Music listed, leaves the check marks incomplete", async () => {
+  const failed = world({ music: { rows: musicRows, fallback: "failed" } })
+  expect(await failed.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "unreadable" })
+  expect(failed.membershipHealth).toEqual(["incomplete"])
+  const short = world({ music: { rows: musicRows, fallback: youtubeRows.slice(0, 1) } })
+  expect(await short.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "read", rows: youtubeRows.slice(0, 1) })
+  expect(short.membershipHealth).toEqual(["incomplete"])
+})
+
+test("an older YouTube lookup that fails after a newer one answered leaves the newer check marks' health alone (YM-PICK-6)", async () => {
+  const memory = parseSessionMemory({})
+  if (!memory) throw Error("no empty session")
+  let now = 1000
+  const wallClock = Date.now
+  Date.now = () => now
+  const monitor = composeMonitor({
+    owner: {
+      readSession: async () => ({ kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }),
+      changeSession: async () => ({ kind: "unavailable", reason: "stale" }),
+      subscribeView: () => () => {}
+    },
+    clock: { now: () => now, after: () => () => {} },
+    sites: { www: { vocabulary: { routes: [], watchIds: [], schemaKeys: [] }, routes: {} }, music: { vocabulary: { routes: [route], watchIds: [], schemaKeys: [] }, routes: { membership: [route] } } }
+  })
+  disposers.push(
+    () => {
+      Date.now = wallClock
+    },
+    () => monitor.dispose()
+  )
+  const musicTab = { tabId: 9, windowId: 3, incognito: false, site: "music", lastAccessed: 0, active: true, discarded: false, frozen: false } as const
+  const w = world({ music: { rows: musicRows }, health: createMusicMembershipHealth({ tab: async () => ({ kind: "tab", tab: musicTab }), monitor, build, route }) })
+  const lookups: ((outcome: unknown) => void)[] = []
+  w.tabs.serve = (() => new Promise(resolve => lookups.push(resolve))) as never
+  const asked = async (count: number) => {
+    while (lookups.length < count) await new Promise(resolve => setTimeout(resolve))
+  }
+  // Opening the picker asks YouTube, and Refresh asks again before the first lookup answers.
+  const opened = w.page.membership(video, { need: [beta, alpha] })
+  await asked(1)
+  const refreshed = w.page.membership(video, { need: [beta, alpha] })
+  await asked(2)
+  now = 2000
+  lookups[1]?.({ kind: "result", tabId: 10, result: { ok: true, route, data: youtubeRows } })
+  expect(await refreshed).toEqual({ kind: "read", rows: youtubeRows.slice(0, 2) })
+  now = 3000
+  lookups[0]?.({ kind: "result", tabId: 10, result: { ok: false, reason: "unavailable" } })
+  expect(await opened).toEqual({ kind: "unreadable" })
+  const status = await monitor.statusProducer.read({ tab: musicTab, info: { site: "music", build, signedIn: true, acct: a } }, [
+    { id: "music-actions", options: { ...defaultSettings().musicActions, on: true } }
+  ] as never)
+  expect(status.kind === "statuses" && status.statuses.map(row => row.state)).toEqual(["working"])
+})
+
+test("an older failed lookup whose health record is still on its way can't land after a newer read's in the same millisecond (YM-PICK-6)", async () => {
+  const memory = parseSessionMemory({})
+  if (!memory) throw Error("no empty session")
+  const wallClock = Date.now
+  Date.now = () => 1000
+  const monitor = composeMonitor({
+    owner: {
+      readSession: async () => ({ kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }),
+      changeSession: async () => ({ kind: "unavailable", reason: "stale" }),
+      subscribeView: () => () => {}
+    },
+    clock: { now: () => 1000, after: () => () => {} },
+    sites: { www: { vocabulary: { routes: [], watchIds: [], schemaKeys: [] }, routes: {} }, music: { vocabulary: { routes: [route], watchIds: [], schemaKeys: [] }, routes: { membership: [route] } } }
+  })
+  disposers.push(
+    () => {
+      Date.now = wallClock
+    },
+    () => monitor.dispose()
+  )
+  const musicTab = { tabId: 9, windowId: 3, incognito: false, site: "music", lastAccessed: 0, active: true, discarded: false, frozen: false } as const
+  // The older read's record waits for the browser to say where its tab is.
+  const slow = Promise.withResolvers<{ kind: "tab"; tab: typeof musicTab }>(),
+    waiting = Promise.withResolvers<void>()
+  let lookups = 0
+  const health = createMusicMembershipHealth({
+    async tab() {
+      if (++lookups > 1) return { kind: "tab", tab: musicTab }
+      waiting.resolve()
+      return slow.promise
+    },
+    monitor,
+    build,
+    route
+  })
+  const w = world({ music: { rows: musicRows, fallback: "failed" }, health })
+  const older = w.page.membership(video, { need: [beta, alpha] })
+  await waiting.promise
+  w.tabs.serve = (async () => ({ kind: "result", tabId: 10, result: { ok: true, route, data: youtubeRows } })) as never
+  expect(await w.page.membership(video, { need: [beta, alpha] })).toEqual({ kind: "read", rows: youtubeRows.slice(0, 2) })
+  slow.resolve({ kind: "tab", tab: musicTab })
+  expect(await older).toEqual({ kind: "unreadable" })
+  const status = await monitor.statusProducer.read({ tab: musicTab, info: { site: "music", build, signedIn: true, acct: a } }, [
+    { id: "music-actions", options: { ...defaultSettings().musicActions, on: true } }
+  ] as never)
+  expect(status.kind === "statuses" && status.statuses.map(row => row.state)).toEqual(["working"])
+})
+
+for (const first of ["older", "newer"] as const) {
+  test(`an older failed lookup and a newer read both write their health, and the newer read's stands when the ${first} one's write lands first (YM-PICK-6)`, async () => {
+    const memory = parseSessionMemory({})
+    if (!memory) throw Error("no empty session")
+    const read = { kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 } as const
+    const wallClock = Date.now
+    Date.now = () => 1000
+    // The Monitor reads the session before it writes. Holding each record's read puts both records inside the Monitor at once.
+    const reading = [Promise.withResolvers<void>(), Promise.withResolvers<void>()] as const
+    const held = [Promise.withResolvers<typeof read>(), Promise.withResolvers<typeof read>()] as const
+    let reads = 0
+    const monitor = composeMonitor({
+      owner: {
+        async readSession() {
+          const turn = reads++
+          if (turn > 1) return read
+          reading[turn as 0 | 1].resolve()
+          return held[turn as 0 | 1].promise
+        },
+        changeSession: async () => ({ kind: "unavailable", reason: "stale" }),
+        subscribeView: () => () => {}
+      },
+      clock: { now: () => 1000, after: () => () => {} },
+      sites: {
+        www: { vocabulary: { routes: [], watchIds: [], schemaKeys: [] }, routes: {} },
+        music: { vocabulary: { routes: [route], watchIds: [], schemaKeys: [] }, routes: { membership: [route] } }
+      }
+    })
+    disposers.push(
+      () => {
+        Date.now = wallClock
+      },
+      () => monitor.dispose()
+    )
+    const musicTab = { tabId: 9, windowId: 3, incognito: false, site: "music", lastAccessed: 0, active: true, discarded: false, frozen: false } as const
+    const w = world({ music: { rows: musicRows, fallback: "failed" }, health: createMusicMembershipHealth({ tab: async () => ({ kind: "tab", tab: musicTab }), monitor, build, route }) })
+    const older = w.page.membership(video, { need: [beta, alpha] })
+    await reading[0].promise
+    w.tabs.serve = (async () => ({ kind: "result", tabId: 10, result: { ok: true, route, data: youtubeRows } })) as never
+    const newer = w.page.membership(video, { need: [beta, alpha] })
+    await reading[1].promise
+    held[first === "older" ? 0 : 1].resolve(read)
+    await (first === "older" ? older : newer)
+    held[first === "older" ? 1 : 0].resolve(read)
+    expect(await older).toEqual({ kind: "unreadable" })
+    expect(await newer).toEqual({ kind: "read", rows: youtubeRows.slice(0, 2) })
+    const status = await monitor.statusProducer.read({ tab: musicTab, info: { site: "music", build, signedIn: true, acct: a } }, [
+      { id: "music-actions", options: { ...defaultSettings().musicActions, on: true } }
+    ] as never)
+    expect(status.kind === "statuses" && status.statuses.map(row => row.state)).toEqual(["working"])
+  })
+}
+
+test("when Music's own read and the YouTube lookup both fail, the lookup records nothing more", async () => {
+  const w = world({ music: { rows: "unavailable", fallback: "failed" } })
+  expect(await w.page.membership(video, { need: null })).toEqual({ kind: "unreadable" })
+  expect(w.membershipHealth).toEqual([])
 })
 
 test("a playlist shortcut saves the pointed video to this account's shortcut playlist, with Undo", async () => {

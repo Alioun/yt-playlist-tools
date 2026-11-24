@@ -7,7 +7,7 @@ import type { Registrar } from "../registrar/ports"
 import { projectDestination } from "../router/first-run-results"
 import type { StartingOwner } from "../store/store-lifecycle"
 import type { Requester, Tabs } from "../tabs/ports"
-import type { BuildId, FeatureId, Origin, RouteId, Site } from "../../shared/contracts"
+import type { BuildId, FeatureId, Origin, Site } from "../../shared/contracts"
 import { toastPlan, type ExplicitOutcome } from "../../shared/rules/outcomes"
 import {
   tabActionContract,
@@ -16,9 +16,11 @@ import {
   type TabAddReport,
   type TabAddRequest,
   type TabCreated,
+  type TabMembershipAnswer,
   type TabPlaylists,
   type TabUndoReport,
-  type UndoHandle
+  type UndoHandle,
+  type YouTubeChecks
 } from "../../shared/contracts/tab-actions"
 import type { PopupAddRequest, PopupRemoveRequest, UiMembershipAnswer, UiRemoveAnswer } from "../../shared/contracts/ui-add"
 import type { JobOf } from "../../shared/contracts"
@@ -149,6 +151,11 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
 }
 
 export type ActingTab = { readonly tabId: number; readonly incognito: boolean; readonly site: Site }
+/**
+ * How a YouTube Music picker's check marks ended. "noYouTubeTab" is an expected limit, because YouTube Music's own
+ * answer carries none and only an open YouTube tab can supply them. "incomplete" had a tab to ask and still lacks some.
+ */
+export type MusicChecks = "complete" | "incomplete" | "noYouTubeTab"
 export type Actions = {
   readonly flow: AddFlow
   /** A gather's batch, once the projection is loaded, so it records Recent adds only while Keep a list of recent adds is on (DATA-52). */
@@ -159,7 +166,7 @@ export type Actions = {
   addFromPopup(tab: ActingTab, acct: AccountKey, request: PopupAddRequest): Promise<TabAddReport | { readonly kind: "account-changed" }>
   /** The popup picker sheet's untick and membership read, in the same tab, while it still shows `acct` (UI-POP-14, YM-POP-4). */
   removeFromPopup(tab: ActingTab, acct: AccountKey, request: PopupRemoveRequest): Promise<UiRemoveAnswer>
-  membershipFromPopup(tab: ActingTab, acct: AccountKey, video: VideoId, req: Requester): Promise<UiMembershipAnswer>
+  membershipFromPopup(tab: ActingTab, acct: AccountKey, video: VideoId, req: Requester, youtube?: YouTubeChecks): Promise<UiMembershipAnswer>
   /** Undo of Playing now's save, in the same tab, while it still shows `acct` (YM-POP-3). */
   undoFromPopup(tab: ActingTab, acct: AccountKey, handle: UndoHandle): Promise<TabUndoReport | { readonly kind: "account-changed" }>
   settings(incognito: boolean): Promise<Settings | null>
@@ -178,7 +185,8 @@ export function composeActions(deps: {
   >
   readonly tabs: Tabs
   readonly playlists: Playlists
-  readonly musicMembershipHealth?: (tab: ActingTab, acct: AccountKey, outcome: { route: RouteId | null; complete: boolean; at: number }) => Promise<void>
+  /** `newest` is false once a read asked later has recorded. The recorder asks it again right before it writes. */
+  readonly musicMembershipHealth?: (tab: ActingTab, acct: AccountKey, outcome: { readonly checks: MusicChecks; readonly at: number; newest(): boolean }) => Promise<void>
   readonly registrar: Pick<Registrar, "ensure">
   readonly writable: () => boolean
   readonly requester: (origin: Extract<Origin, { kind: "ui" }>) => Promise<Requester | null>
@@ -235,32 +243,51 @@ export function composeActions(deps: {
   function requestOf(context: TabContext): Requester {
     return { windowId: context.windowId, incognito: context.origin.incognito, activeTabId: context.origin.tabId }
   }
-  async function membership(tab: ActingTab, acct: AccountKey, video: VideoId, req: Requester): Promise<UiMembershipAnswer> {
+  // Each tab's latest membership read whose health was recorded, by the order the reads were asked in.
+  const membershipRecorded = new Map<number, number>()
+  let membershipReads = 0
+  /**
+   * The tab's own list, or with `youtube` the second part of a YouTube Music read (YM-PICK-6). The two are separate
+   * requests so the picker can show the tab's rows before the YouTube tab answers.
+   */
+  async function membership(tab: ActingTab, acct: AccountKey, video: VideoId, req: Requester, youtube?: YouTubeChecks): Promise<UiMembershipAnswer> {
     const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
     if (!known) return { kind: "no-tab" }
     if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
     const request = { job: { kind: "membership", videoId: video }, acct } as const
     const account = { kind: "account", acct, signedIn: true } as const
-    const outcome = await tabs.runIn<JobOf<"membership">>(tab.tabId, request, { site: tab.site, req, account })
-    if (outcome.kind !== "result") return { kind: "unreadable" }
-    const native = outcome.result
-    if (!native.ok && (tab.site !== "music" || native.reason !== "unavailable")) return { kind: "unreadable" }
-    let rows = native.ok ? native.data : null
-    if (tab.site === "music") {
-      if (rows === null || rows.some(row => row.contains === null)) {
-        const fallback = await tabs.serve<JobOf<"membership">>(request, { site: "www", req, account }).catch(() => null)
-        if (fallback?.kind === "result" && fallback.result.ok) {
-          if (rows === null) rows = fallback.result.data.filter(row => row.id !== "WL")
-          else {
-            const checks = new Map(fallback.result.data.map(row => [row.id, row.contains]))
-            rows = rows.map(row => ({ ...row, contains: row.contains ?? checks.get(row.id) ?? null }))
-          }
-        }
-      }
-      const [current] = await tabs.known({ kind: "tab", tabId: tab.tabId })
-      if (current !== known) return { kind: "account-changed" }
-      if (rows) await deps.musicMembershipHealth?.(tab, acct, { route: native.ok ? native.route : null, complete: rows.every(row => row.contains !== null), at: Date.now() }).catch(() => {})
+    // A read that ends after a later one's result was recorded says nothing about the tab's check marks now.
+    const asked = ++membershipReads
+    const newest = () => (membershipRecorded.get(tab.tabId) ?? 0) <= asked
+    async function health(checks: MusicChecks) {
+      if (!newest()) return
+      membershipRecorded.set(tab.tabId, asked)
+      await deps.musicMembershipHealth?.(tab, acct, { checks, at: Date.now(), newest }).catch(() => {})
     }
+    if (!youtube) {
+      const outcome = await tabs.runIn<JobOf<"membership">>(tab.tabId, request, { site: tab.site, req, account })
+      if (outcome.kind !== "result" || !outcome.result.ok) return { kind: "unreadable" }
+      const rows = outcome.result.data
+      if (tab.site === "music" && rows.every(row => row.contains !== null)) await health("complete")
+      return { kind: "read", rows }
+    }
+    if (tab.site !== "music") return { kind: "unreadable" }
+    const outcome = await tabs.serve<JobOf<"membership">>(request, { site: "www", req, account }).catch(() => null)
+    const [current] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+    if (current !== known) return { kind: "account-changed" }
+    if (outcome?.kind === "no-tab") {
+      // A tried tab the registry holds for this account didn't serve, which is a failed read and not a missing YouTube tab. A tried tab that answered as another account isn't held for this one.
+      const held = await tabs.known({ kind: "account", acct, scope: tab.incognito ? "private" : "normal" })
+      if (!held.some(row => outcome.attempted.includes(row.tabId))) {
+        await health("noYouTubeTab")
+        return { kind: "no-youtube-tab" }
+      }
+    }
+    const rows = outcome?.kind === "result" && outcome.result.ok ? outcome.result.data.filter(row => row.id !== "WL") : null
+    const listed = new Set(rows?.map(row => row.id))
+    const { need } = youtube
+    // With no list from either site the picker has nothing to show, and the tab's own read already reported why.
+    if (rows || need) await health(rows && (!need || need.every(id => listed.has(id))) ? "complete" : "incomplete")
     return rows ? { kind: "read", rows } : { kind: "unreadable" }
   }
   const unbind = rpc.handle({
@@ -350,10 +377,11 @@ export function composeActions(deps: {
         if (fresh?.kind === "listed") return { kind: "listed", listing: { rows: fresh.listing.rows, at: fresh.listing.at } }
         return { kind: fresh?.outcome.kind === "no-tab" ? "noTab" : "failed" }
       },
-      async "tab.membership"({ acct, request: video }, context) {
-        if (acct === null) return null
-        const answer = await membership({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, video, requestOf(context))
-        return answer.kind === "read" ? answer.rows : null
+      async "tab.membership"({ acct, request }, context): Promise<TabMembershipAnswer> {
+        if (acct === null) return { kind: "unreadable" }
+        const answer = await membership({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, request.video, requestOf(context), request.youtube)
+        if (answer.kind === "read") return answer
+        return { kind: answer.kind === "no-youtube-tab" ? "noYouTubeTab" : "unreadable" }
       },
       async "tab.create"({ acct, request }, context): Promise<TabCreated> {
         if (acct === null || !(await pinned(context, acct))) return { kind: "failed", reason: "failed" }
@@ -440,7 +468,10 @@ export function composeActions(deps: {
       return read?.kind === "projection" && read.projection.settings.kind === "value" ? decodeSettings(read.projection.settings.settings) : null
     },
     // A closed tab is not heard (ARC-MOD-39). Its handles stay unused until the worker stops, since the browser gives no later tab its id.
-    pageStarted: tabId => flow.releaseTab(`tab:${tabId}`),
+    pageStarted(tabId) {
+      membershipRecorded.delete(tabId)
+      flow.releaseTab(`tab:${tabId}`)
+    },
     dispose() {
       unbind()
       rpc.dispose()

@@ -349,6 +349,10 @@ export type MessageParameters = {
   "picker_known_other": readonly ["count"]
   "picker_unreadableVideo": readonly []
   "picker_unreadableSong": readonly []
+  "picker_needsYouTubeSong": readonly []
+  "picker_unchecked_one": readonly ["count"]
+  "picker_unchecked_other": readonly ["count"]
+  "picker_uncheckedRow": readonly []
   "picker_savedList": readonly ["time"]
   "picker_noSavedList": readonly []
   "picker_noTab": readonly []
@@ -1450,6 +1454,8 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "picker_gatherSubtitle": ["account"],
   "picker_known_one": ["count"],
   "picker_known_other": ["count"],
+  "picker_unchecked_one": ["count"],
+  "picker_unchecked_other": ["count"],
   "picker_savedList": ["time"],
   "picker_videos_one": ["count"],
   "picker_videos_other": ["count"],

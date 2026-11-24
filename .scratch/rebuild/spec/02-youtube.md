@@ -817,7 +817,7 @@ The **playlist picker** is the extension's list of the user's playlists, with a 
 - Ticking the row again also puts the video back, at the end of the playlist.
 - Unticking an auto-add playlist also sets the session skip for that video (YT-AA-05). (R84)
 
-**YT-PK-06: membership unreadable.** The rows show no check marks, and the picker notes "Couldn't check where this video already is." Ticking still adds, and *already in* is still reported on the row.
+**YT-PK-06: membership unreadable.** Each row shows the unread box, dashed and holding a "?", with the description "Couldn't check this playlist" ([05](05-ui.md) UI-PICK-06). A row is never drawn with an empty box here, because an empty box means "not in this playlist". The picker notes "Couldn't check where this video already is." Ticking still adds, and *already in* is still reported on the row.
 
 **YT-PK-07: keys on rows.** A playlist that a playlist shortcut targets on this account shows that shortcut's key at the end of its row, while Playlist shortcuts is on (YT-KEY-34).
 

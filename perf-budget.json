@@ -65,27 +65,27 @@
     },
     {
       "row": "www/core",
-      "kb": 29.21,
-      "since": "2026-11-21",
-      "why": "The shared site core validates picker membership and timestamped health reports, delivers its health batch at once when Check now asks, reports a lost batch again, asks the background for a broken feature's not-working notice while the tab is visible, gives the notice back if the tab is hidden before showing it, and waits for that to be answered before it claims again."
+      "kb": 29.28,
+      "since": "2026-11-22",
+      "why": "The shared site core validates picker membership and timestamped health reports, delivers its health batch at once when Check now asks, reports a lost batch again, asks the background for a broken feature's not-working notice while the tab is visible, gives the notice back if the tab is hidden before showing it, and waits for that to be answered before it claims again. The membership messages carry the YouTube Music picker's second read, which asks a YouTube tab for check marks."
     },
     {
       "row": "music/core",
-      "kb": 29.7,
-      "since": "2026-11-21",
-      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks, reports a lost batch again, asks the background for a broken feature's not-working notice while the tab is visible, gives the notice back if the tab is hidden before showing it, and waits for that to be answered before it claims again."
+      "kb": 29.76,
+      "since": "2026-11-22",
+      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. It asks in two parts, so the rows show before the YouTube tab answers. The core delivers its health batch at once when Check now asks, reports a lost batch again, asks the background for a broken feature's not-working notice while the tab is visible, gives the notice back if the tab is hidden before showing it, and waits for that to be answered before it claims again."
     },
     {
       "row": "popup/www/js",
-      "kb": 58.13,
-      "since": "2026-11-21",
-      "why": "The popup validates the casting-specific health status in the shared health contract, reads the status again when a tab opens or a breakage signal lands, and reads the name of an account with no setup from its tab."
+      "kb": 58.17,
+      "since": "2026-11-22",
+      "why": "The popup validates the casting-specific health status in the shared health contract, reads the status again when a tab opens or a breakage signal lands, and reads the name of an account with no setup from its tab. Its membership contract carries the YouTube Music sheet's second read."
     },
     {
       "row": "popup/music/js",
-      "kb": 68.33,
-      "since": "2026-11-21",
-      "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, reads the status again when a tab opens or a breakage signal lands, and shows the live account name."
+      "kb": 68.47,
+      "since": "2026-11-22",
+      "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, reads the status again when a tab opens or a breakage signal lands, and shows the live account name. Its membership contract carries the sheet's second read, which asks a YouTube tab for check marks."
     },
     {
       "row": "www/kit",
@@ -95,19 +95,19 @@
     },
     {
       "row": "popovers",
-      "kb": 51,
-      "since": "2026-11-07",
-      "why": "The in-page Save picker now includes its own control utilities and a small shadow-root reset so YouTube's styles and 10px root cannot leave controls unstyled or shrink the text."
+      "kb": 51.6,
+      "since": "2026-11-22",
+      "why": "The in-page Save picker now includes its own control utilities and a small shadow-root reset so YouTube's styles and 10px root cannot leave controls unstyled or shrink the text. It also marks the rows no read answered for, and says why check marks are missing."
     },
     {
       "row": "first-run/js",
-      "kb": 63.79,
+      "kb": 63.82,
       "since": "2026-11-22",
       "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk. The shared UI contract includes the live account name."
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 67.58,
+      "kb": 67.61,
       "since": "2026-11-22",
       "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader, and the shared UI contract."
     },
@@ -116,6 +116,12 @@
       "kb": 1.77,
       "since": "2026-11-22",
       "why": "The card menu finds the card under YouTube's hover preview and leaves the preview's own links to the browser. It opens a keyboard-opened menu at the card's own menu button when the browser reports no point on the card."
+    },
+    {
+      "row": "background",
+      "kb": 230.14,
+      "since": "2026-11-22",
+      "why": "The status read drops a registered tab once the browser no longer shows its site in the tab, so an open Diagnostics page keeps up when a tab leaves YouTube or closes. A tab also hands a notice it can't show back to the Monitor. The Monitor reads again for a record that another report overtook, and asks a caller's newest-read check as it writes. With these the background measures 0.09 KB over its ceiling."
     }
   ]
 }

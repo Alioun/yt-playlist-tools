@@ -848,6 +848,36 @@ test("Playing now's ▾ opens the picker sheet for the playing song, in its own 
   await waitFor(() => expect(adds).toEqual([{ tabId: 9, acct, request: { site: "music", video: "bbbbbbbbbbb", opener: "playing-now", title: "Song", via: "picker", playlist: "PLb" } }]))
 }, 20_000)
 
+test("Playing now's sheet asks a YouTube tab for the check marks Music's rows lack, and says when none is open (YM-PICK-6)", async () => {
+  const reads: unknown[] = []
+  popup(
+    { ...agreed, [`doc:setup:${acct}`]: stamped({ musicSave: "PLa" }), [`cache:${acct}`]: { listAt: 1, playlists: [{ id: "PLa", title: "Music" }], order: {}, created: [], labelAt: null } },
+    {
+      ...sheetList,
+      "ui.playingNow": () => ({ kind: "song", tabId: 9, acct: acct as never, song: { videoId: "bbbbbbbbbbb" as never, title: "Song", artist: "Band", pos: 1, len: 100 } }),
+      "ui.membership": payload => {
+        reads.push(payload)
+        if (payload.youtube) return { kind: "no-youtube-tab" }
+        return {
+          kind: "read",
+          rows: [
+            { id: "PLa" as never, title: "Music", contains: null },
+            { id: "PLb" as never, title: "Talks", contains: null }
+          ]
+        }
+      }
+    },
+    { www: true, music: true, browserMenu: false }
+  )
+  await userEvent.click(await screen.findByRole("tab", { name: "YouTube Music" }))
+  await userEvent.click(await screen.findByRole("button", { name: "Save to playlist…" }, { timeout: 5000 }))
+  const sheet = await screen.findByRole("dialog", {}, { timeout: 5000 })
+  expect(await within(sheet).findByText("To see where this song already is, open YouTube in another tab.", {}, { timeout: 5000 })).toBeTruthy()
+  expect(within(sheet).getByRole("checkbox", { name: "Talks" })).toHaveAccessibleDescription(/Couldn't check this playlist/)
+  const read = { tabId: 9, acct, site: "music", video: "bbbbbbbbbbb" }
+  expect(reads).toEqual([read, { ...read, youtube: { need: ["PLa", "PLb"] } }])
+}, 20_000)
+
 test("a reset another browser sent shows once, until OK (UI-POP-10 row 2, DATA-40)", async () => {
   const reset = { ...agreed, sync: { joined: "r1", pushed: {}, status: "ok", editedSinceOff: false, resetReceived: { v: 1, id: "r1", created: 1, reset: true } } }
   popup(reset)

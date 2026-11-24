@@ -422,6 +422,85 @@ test("unreadable membership and unknown list facts stay explicit", async () => {
   visible(screen.getByText("Couldn't check where this song already is"))
   visible(screen.getByText("Visibility unavailable"))
   expect(screen.queryByText(/\d+ songs?/)).toBeNull()
+  expect(checkOf("Synthetic Alpha")).toBe("unknown")
+})
+
+const checkOf = (name: string) => screen.getByRole("checkbox", { name }).closest("li")?.getAttribute("data-check")
+
+async function musicPanel() {
+  const { source, ledger } = itemSource({ checks: true })
+  panel({ source, site: "music", mode: "save" })
+  ledger.answer("cachedList", null)
+  ledger.answer("membership", { kind: "read", rows: rows.map(row => ({ id: row.id, title: row.title, contains: null })) })
+  await settle()
+  flushSync()
+  return ledger
+}
+
+test("Music rows show while YouTube is asked, and with no YouTube tab the panel says what check marks need", async () => {
+  const ledger = await musicPanel()
+  const status = screen.getByText("Checking where this song already is…")
+  visible(status)
+  expect(checkOf("Synthetic Alpha")).toBe("loading")
+  ledger.answer("checks", { kind: "noYouTubeTab" })
+  await settle()
+  flushSync()
+  visible(screen.getByText("To see where this song already is, open YouTube in another tab."))
+  // The same live region changes its text. A replaced one would not be announced.
+  expect(status).toHaveTextContent("To see where this song already is, open YouTube in another tab.")
+  expect(screen.queryByText("Couldn't check where this song already is")).toBeNull()
+  expect(screen.queryByText(/Already in/)).toBeNull()
+  for (const name of ["Synthetic Alpha", "Synthetic Beta"]) {
+    expect(checkOf(name)).toBe("unknown")
+    expect(screen.getByRole("checkbox", { name })).toHaveAccessibleDescription(/Couldn't check this playlist/)
+  }
+  expect(screen.getByRole("button", { name: "Refresh playlists" })).not.toBeDisabled()
+  expect(screen.queryByText("Open YouTube to refresh playlists.")).toBeNull()
+})
+
+test("a read that misses some rows counts them and marks only them", async () => {
+  const ledger = await musicPanel()
+  ledger.answer("checks", { kind: "read", rows: [{ id: beta, title: "Synthetic Beta", contains: true }] })
+  await settle()
+  flushSync()
+  visible(screen.getByText("Already in 1 playlist"))
+  visible(screen.getByText("Couldn't check 1 playlist"))
+  expect(screen.queryByText("Couldn't check where this song already is")).toBeNull()
+  expect([checkOf("Synthetic Alpha"), checkOf("Synthetic Beta")]).toEqual(["unknown", "on"])
+  expect(screen.getByRole("checkbox", { name: "Synthetic Alpha" })).toHaveAccessibleDescription(/Couldn't check this playlist/)
+  expect(screen.getByRole("checkbox", { name: "Synthetic Beta" })).not.toHaveAccessibleDescription(/Couldn't check this playlist/)
+})
+
+test("a YouTube lookup that fails says the song couldn't be checked and marks every row", async () => {
+  const ledger = await musicPanel()
+  ledger.answer("checks", { kind: "unreadable" })
+  await settle()
+  flushSync()
+  visible(screen.getByText("Couldn't check where this song already is"))
+  expect(screen.queryByText(/Already in/)).toBeNull()
+  expect([checkOf("Synthetic Alpha"), checkOf("Synthetic Beta")]).toEqual(["unknown", "unknown"])
+})
+
+test("a Music account with no playlists gets the empty-list line, and a list that could not be read gets the unavailable one", async () => {
+  const empty = itemSource()
+  const first = panel({ source: empty.source, site: "music", mode: "save" })
+  empty.ledger.answer("cachedList", null)
+  empty.ledger.answer("membership", { kind: "read", rows: [] })
+  await settle()
+  flushSync()
+  visible(screen.getByText("No playlists to show."))
+  expect(screen.queryByText("Playlist data is unavailable. Refresh playlists to try again.")).toBeNull()
+  expect(screen.queryByText(/Already in/)).toBeNull()
+  first.unmount()
+  const unread = itemSource()
+  panel({ source: unread.source, site: "music", mode: "save" })
+  unread.ledger.answer("cachedList", null)
+  unread.ledger.answer("membership", { kind: "unreadable" })
+  await settle()
+  unread.ledger.answer("freshList", { kind: "failed" })
+  await settle()
+  flushSync()
+  visible(screen.getByText("Playlist data is unavailable. Refresh playlists to try again."))
 })
 
 test("a missing title is not replaced with a playlist identifier", async () => {
