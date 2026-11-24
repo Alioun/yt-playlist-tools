@@ -21,7 +21,7 @@ const rawJobs = {
   channelOf: { kind: "channelOf", videoId: "synthetic01" },
   resolveChannel: { kind: "resolveChannel", input: "Synthetic" },
   videoInfo: { kind: "videoInfo" },
-  queueAdd: { kind: "queueAdd" },
+  queueAdd: { kind: "queueAdd", videoId: "synthetic01" },
   queueUndo: { kind: "queueUndo", listId: "list", setVideoId: "entry" },
   queueAddList: { kind: "queueAddList", videoIds: ["synthetic01"] },
   openCardMenu: { kind: "openCardMenu", videoId: "synthetic01", at: { x: 10, y: 20 } },

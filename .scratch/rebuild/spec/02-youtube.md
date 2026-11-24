@@ -1167,7 +1167,7 @@ Clicking a card that shows saved reports *already in*. States belong to the item
 
 **YT-Q-01: the feature.** Queue button on thumbnails has two options. Position on thumbnails picks the thumbnail corner it sits in: top left (the default), top right, bottom left or bottom right. Show feedback is on by default (YT-ADD-13).
 
-**YT-Q-02: what it does.** An Add to queue button sits on recognised items' thumbnails, on hover or keyboard focus, in the corner its option names (placement: [05](05-ui.md) UI-YT-07). A click puts the card's video at the end of YouTube's queue, through YouTube's own queue command. The first add starts the queue in the miniplayer, as YouTube's own Add to queue does.
+**YT-Q-02: what it does.** An Add to queue button sits on recognised items' thumbnails, on hover or keyboard focus, in the corner its option names (placement: [05](05-ui.md) UI-YT-07). A click puts the clicked video at the end of YouTube's queue, through YouTube's own queue command. YouTube reuses a card's element for another video as the page changes. An add queues only the video that was clicked: if the card already shows another video when the add starts, nothing is added and the button shows *Couldn't add* ([06](06-architecture.md#6284-youtubes-queue-quiet-add-confirmation-and-undo) ARC-ACC-38). The first add starts the queue in the miniplayer, as YouTube's own Add to queue does.
 
 **YT-Q-03: Add to queue isn't an add.** It needs no sign-in, has no membership or duplicate check, is never channel-filtered, and ignores session skips. It works signed out, and it carries on when the account keys are missing (YT-BRK-05).
 
@@ -1180,7 +1180,7 @@ Clicking a card that shows saved reports *already in*. States belong to the item
 - the add is kept, and our own toast is suppressed, so only YouTube's shows;
 - once YouTube's own toast is detected after a quiet queue edit, an add or its Undo, a `quiet-route-noisy` breakage signal is recorded and the feature is marked partly working ([07](07-quality.md) Q-WATCH-24, Q-WATCH-28; R40, R51).
 
-**YT-Q-06: success is confirmed.** Success is shown only once YouTube confirms the video is in the queue: it appears in the queue's own data within 2 s, or, for a first add, the miniplayer turns active. Without either signal, the result is *Sent, not confirmed*, never success. PROVISIONAL (ticket 25: L8).
+**YT-Q-06: success is confirmed.** Success is shown only once the queue's own data holds the video, within 5 s of the add. Nothing else confirms an add. YouTube opens the miniplayer before it answers a first add, and also when that add fails, so the miniplayer turning active proves nothing. Without the entry in the queue's data, the result is *Sent, not confirmed*, never success. PROVISIONAL (ticket 25: L8).
 
 **YT-Q-07: states.** Each state has an icon and an accessible label, never colour alone.
 

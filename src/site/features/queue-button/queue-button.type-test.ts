@@ -7,9 +7,9 @@ import type { OverlayKit } from "../../kit/overlay"
 import { queueButton, outcomeOf, toastOf, type QueueButtonServices, type QueueButtonState, type QueueOutcome } from "./index"
 
 export function queueButtonTypes(services: QueueButtonServices, scope: Scope, kit: OverlayKit, i18n: I18n, text: QueueButtonText,
-  listId: QueueListId, setVideoId: SetVideoId, state: QueueButtonState, outcome: QueueOutcome): void {
+  listId: QueueListId, setVideoId: SetVideoId, state: QueueButtonState, outcome: QueueOutcome, videoId: JobOf<"queueAdd">["videoId"]): void {
   const definition: FeatureDefinition<"www", QueueButtonServices> = queueButton
-  const add: JobInvocation<JobOf<"queueAdd">> = { job: { kind: "queueAdd" } }
+  const add: JobInvocation<JobOf<"queueAdd">> = { job: { kind: "queueAdd", videoId } }
   const undo: JobInvocation<JobOf<"queueUndo">> = { job: { kind: "queueUndo", listId, setVideoId } }
   const lease = kit.use(scope, "queue")
   const reserved = kit.use(scope, "quick-save")
@@ -21,7 +21,7 @@ export function queueButtonTypes(services: QueueButtonServices, scope: Scope, ki
   const answer = outcomeOf({ ok: false, reason: "unconfirmed" })
   if (state.kind === "added") { const entry: { listId: QueueListId; setVideoId: SetVideoId } | null = state.entry; void entry }
   // @ts-expect-error A queue add carries no account pin.
-  const pinned: JobInvocation<JobOf<"queueAdd">> = { job: { kind: "queueAdd" }, acct: services.page }
+  const pinned: JobInvocation<JobOf<"queueAdd">> = { job: { kind: "queueAdd", videoId }, acct: services.page }
   // @ts-expect-error Undo requires the branded queue entry, never a video ID.
   const byVideo: JobInvocation<JobOf<"queueUndo">> = { job: { kind: "queueUndo", listId, videoId: "AAAAAAAAAAA" } }
   // @ts-expect-error Undo needs the list and entry identities, not plain strings.

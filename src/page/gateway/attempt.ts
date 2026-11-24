@@ -10,7 +10,6 @@ export function attempt(options: {
   spec: RequestSpec
   scope: JobScope
   clock: GatewayClock
-  budget: number
   context: AttemptContext
   observe(body: unknown): void
 }): Promise<Attempt> {
@@ -42,7 +41,7 @@ export function attempt(options: {
     }
     stopScope = scope.onClose(() => finish({ kind: "timeout" }))
     if (!active) return
-    stopTimer = clock.after(Math.max(0, Math.min(scope.remaining(), options.budget)), () => finish({ kind: "timeout" }))
+    stopTimer = clock.after(scope.remaining(), () => finish({ kind: "timeout" }))
     const blocked = guarded.check()
     if (blocked) {
       finish({ kind: "blocked", failure: blocked })

@@ -235,6 +235,25 @@ export function createLiveReadPort(options: { site: Site; window: Window; docume
       }
     }
   }
+  /**
+   * A channel card in search results draws its shelf's lockups itself, so they hold no data. The card's data holds
+   * theirs, and each lockup carries its item's tracking params.
+   */
+  function shelved(lockup: Element): unknown {
+    const tracking = field(lockup, "veContainer", "trackingParams")
+    const props = field(lockup.closest("yt-official-card-view-model"), "rawProps")
+    const contents = callable(props, "data") ? field(invoke(props, "data"), "contents") : undefined
+    if (typeof tracking !== "string" || !Array.isArray(contents)) return undefined
+    for (const content of contents) {
+      const items: unknown = field(content, "horizontalShelfViewModel", "items")
+      if (!Array.isArray(items)) continue
+      for (const item of items) {
+        const data = field(item, "lockupViewModel")
+        if (field(data, "rendererContext", "loggingContext", "loggingDirectives", "trackingParams") === tracking) return data
+      }
+    }
+    return undefined
+  }
   function targetData(target?: Element): unknown {
     if (!target) return undefined
     const renderer = target.closest(targetRenderers)
@@ -244,7 +263,9 @@ export function createLiveReadPort(options: { site: Site; window: Window; docume
     if (site !== "www" || !renderer.isConnected || renderer.ownerDocument !== doc || renderer.closest("ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer")) return undefined
     const key = renderer.matches("yt-lockup-view-model") ? "lockupViewModel" : "shortsLockupViewModel"
     const props = field(renderer, "rawProps")
-    const data = callable(props, "data") ? invoke(props, "data") : field(renderer, "data")
+    const own = callable(props, "data") ? invoke(props, "data") : field(renderer, "data")
+    // A data property YouTube never set reads as a symbol.
+    const data = own === undefined || typeof own === "symbol" ? shelved(renderer) : own
     const wrapped = field(data, key)
     const direct = field(renderer, key)
     const other = key === "lockupViewModel" ? "shortsLockupViewModel" : "lockupViewModel"

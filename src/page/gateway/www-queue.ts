@@ -1,8 +1,8 @@
 import type { BreakageKind, JobFailure, JobOf, QueueListId, SetVideoId } from "../../shared/contracts"
 import type { PageJobResult } from "../../shared/contracts/page"
 import type { VideoId } from "../../shared/model/validation"
-import { hasQueueList, isQueueToast, parseMiniplayer, parseQueueAnswer, parseQueueCard, parseQueuePanel } from "../parsers/www-queue"
-import type { QueueAnswer, QueuePanel } from "../parsers/www-queue"
+import { hasQueueList, isQueueToast, parseQueueAnswer, parseQueueCard, parseQueuePanel } from "../parsers/www-queue"
+import type { QueueAnswer, QueueCard, QueuePanel } from "../parsers/www-queue"
 import { parseTargetVideo } from "../read-parsers"
 import type { GatewayClock, JobScope } from "./lanes"
 import type { AttemptContext, Dispatch, HttpAnswer, PageUiRoute, RequestRoute } from "./port"
@@ -12,8 +12,8 @@ import type { QueueCommand } from "./requests"
 export interface WwwQueuePort {
   has(): boolean
   resolve(endpoint: Record<string, unknown>, context: AttemptContext): Dispatch | Promise<Dispatch>
+  /** Every place YouTube keeps queue data: each playlist panel's, then its playlist manager's. */
   panel(): unknown
-  miniplayer(): unknown
   connected(target: Element): boolean
   onAction(seen: (detail: unknown) => void): () => void
   /** Moves the next menu YouTube opens from the card's own button to the viewport point, and reports that it opened. */
@@ -30,6 +30,9 @@ type Dispatched =
 export const confirmWindow = 2_000
 export const menuWindow = 1_000
 const confirmChecks = [0, 150, 400, 800, 1_300, 2_000]
+// An add is two requests in a row before its entry shows. Live that takes about 1.1 s, and took 2.9 s on a slow page.
+const addWindow = 5_000
+const addChecks = [...confirmChecks, 3_000, 4_000, 5_000]
 const listChecks = [0, 250, 750, 1_500, 3_000, 5_000, 7_500]
 const removalAnswer = 1_500
 const laneMargin = 100
@@ -41,6 +44,8 @@ export function createWwwQueue(options: {
   routes: QueueRoutes
   card(target: Element): unknown
   check(): JobFailure | null
+  /** The gateway's rule for which refusals count as breakage, so queue edits and playlist requests share it. */
+  rejects(failure: JobFailure): boolean
   notice(kind: BreakageKind, route: RequestRoute | PageUiRoute, raw?: unknown): void
 }) {
   const { port, clock, routes, notice } = options
@@ -58,13 +63,6 @@ export function createWwwQueue(options: {
     const value = parseQueuePanel(raw)
     if (!value && hasQueueList(raw)) notice("unrecognised", route, raw)
     return value
-  }
-  function miniplayer(): boolean | undefined {
-    try {
-      return parseMiniplayer(port.miniplayer())
-    } catch {
-      return undefined
-    }
   }
   function listen(scope: JobScope, route: RequestRoute | PageUiRoute, seen: (detail: unknown) => void): () => void {
     let stop = () => {}
@@ -215,6 +213,9 @@ export function createWwwQueue(options: {
     }
     return undefined
   }
+  function refused(failure: JobFailure, route: RequestRoute): void {
+    if (options.rejects(failure)) notice("rejected", route)
+  }
   function notSent(sent: Dispatched, route: RequestRoute): JobFailure | undefined {
     if (sent.kind === "blocked") return sent.failure
     if (sent.kind === "not-sent") {
@@ -246,7 +247,8 @@ export function createWwwQueue(options: {
     })
   }
 
-  async function add(target: Element | undefined, scope: JobScope): Promise<PageJobResult<JobOf<"queueAdd">>> {
+  /** YouTube can give the renderer another video while the job waits for the lane, so the card is read once, when the job arrives. */
+  function add(job: JobOf<"queueAdd">, target: Element | undefined): JobFailure | ((scope: JobScope) => Promise<PageJobResult<JobOf<"queueAdd">>>) {
     const route = routes.add
     if (!target || !connected(target)) return unavailable
     let raw: unknown
@@ -258,12 +260,18 @@ export function createWwwQueue(options: {
     }
     const card = parseQueueCard(raw)
     if (!card) {
-      if (raw !== undefined) notice("unrecognised", route, raw)
+      // The button only draws on a card the site recognised, so data that can't be read there is breakage too.
+      notice("unrecognised", route, raw)
       return unavailable
     }
+    // YouTube gave the renderer another video since the click.
+    if (card.videoId !== job.videoId) return unavailable
+    return scope => addCard(card, scope)
+  }
+  async function addCard(card: QueueCard, scope: JobScope): Promise<PageJobResult<JobOf<"queueAdd">>> {
+    const route = routes.add
     const before = panel(route)
     const known = new Set(before?.entries.map(entry => entry.setVideoId))
-    const miniplayerBefore = before ? undefined : miniplayer()
     let noisy = false
     const stopActions = listen(scope, route, detail => {
       if (isQueueToast(detail)) noisy = true
@@ -275,17 +283,14 @@ export function createWwwQueue(options: {
       let failure: JobFailure | undefined
       let undo: { listId: QueueListId; setVideoId: SetVideoId } | undefined
       let confirmed = false
-      await observe(scope, confirmChecks, confirmWindow, () => {
+      await observe(scope, addChecks, addWindow, () => {
         const outcome = sent.outcome()
         failure = rejected(outcome)
         if (failure) return true
         if (outcome?.kind === "answer" && outcome.parsed.noisy) noisy = true
+        // Only the queue's own data confirms. YouTube opens the miniplayer before a first add is answered, and when it fails.
         const after = panel(route)
-        if (!after) {
-          confirmed = !before && miniplayerBefore === false && miniplayer() === true
-          return confirmed
-        }
-        if (before && after.listId !== before.listId) return false
+        if (!after || (before && after.listId !== before.listId)) return false
         const fresh = after.entries.filter(entry => entry.videoId === card.videoId && !known.has(entry.setVideoId))
         const returned = outcome?.kind === "answer" ? outcome.parsed.setVideoId : undefined
         const entry = returned === undefined ? (fresh.length === 1 ? fresh[0] : undefined) : fresh.find(item => item.setVideoId === returned)
@@ -297,12 +302,13 @@ export function createWwwQueue(options: {
       const outcome = sent.outcome()
       if (outcome?.kind === "answer" && outcome.parsed.noisy) noisy = true
       if (failure) {
-        notice("rejected", route)
+        refused(failure, route)
         return failure
       }
       if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
       if (!confirmed) {
-        uncertain(outcome, route)
+        // No answer isn't a timeout here. The card's own command never answers, and this stops listening well inside the job's budget.
+        if (outcome?.kind === "lost") notice("threw", route)
         return { ok: true, data: { confirmed: false, quiet: !noisy }, route: route.id }
       }
       if (noisy && before) notice("quiet-route-noisy", route)
@@ -338,7 +344,8 @@ export function createWwwQueue(options: {
         await within(removal.settled, scope, removalAnswer)
         const answered = removal.outcome()
         if (answered?.kind === "answer" && answered.parsed.noisy) noisy = true
-        if (rejected(answered)) notice("rejected", route)
+        const refusal = rejected(answered)
+        if (refusal) refused(refusal, route)
         else if (answered?.kind !== "answer") uncertain(answered, route)
         removal.stop()
         if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
@@ -391,7 +398,7 @@ export function createWwwQueue(options: {
         return count === job.videoIds.length
       })
       if (failure) {
-        notice("rejected", route)
+        refused(failure, route)
         return failure
       }
       if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
@@ -413,7 +420,7 @@ export function createWwwQueue(options: {
       return Promise.resolve(unavailable)
     }
     const shown = parseTargetVideo(raw)
-    if (!shown && raw !== undefined) notice("unrecognised", route, raw)
+    if (!shown) notice("unrecognised", route, raw)
     if (shown?.videoId !== job.videoId) return Promise.resolve(unavailable)
     return new Promise(resolve => {
       let active = true

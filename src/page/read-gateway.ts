@@ -145,7 +145,8 @@ export function createReadGateway(options: { site: Site; page: PageReadPort; sig
   const account = pinAccount()
 
   function navigation(job: JobId | null): Navigation | undefined {
-    const raw = read("navigation", job)
+    // YouTube's first navigation event can come before the page half listens, and that absence isn't breakage.
+    const raw = readIfPresent("navigation", job)
     return parsed(readWatches.navigation, raw, job, () => parseNavigation(raw))
   }
   function locationAgrees(nav: Navigation | undefined, id: unknown): boolean {
@@ -279,7 +280,7 @@ export function createReadGateway(options: { site: Site; page: PageReadPort; sig
       const changed = (detail: unknown) => {
         if (!active || disposed) return
         if (event === "navigation") confirmedMiniplayerVideo = undefined
-        if (event === "playerIdentity" && field(detail, "id") === "movie_player") confirmedMiniplayerVideo = field(read("watchPlayer"), "videoData", "video_id")
+        if (event === "playerIdentity" && field(detail, "id") === "movie_player") confirmedMiniplayerVideo = field(readIfPresent("watchPlayer", null), "videoData", "video_id")
         publish(stream)
       }
       releases.push(page.on(event, changed))

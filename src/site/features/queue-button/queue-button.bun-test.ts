@@ -292,6 +292,25 @@ test("navigation during the awaited add resets the page view without reviving th
   expect(label(f)).toBe("Add to queue")
 })
 
+test("the player changing on the same page, as the miniplayer does after a first add, keeps the add's state", async () => {
+  const f = await setup()
+  const answer = f.deferred<unknown>()
+  f.respond(() => answer.promise)
+  const target = card()
+  f.hover(target.thumbnail, [target.element])
+  await click(f)
+  f.playerChanged()
+  expect(label(f)).toBe("Adding…")
+  answer.resolve({ ok: true, data: { confirmed: true, quiet: true }, route: f.route })
+  await settle()
+  expect(label(f)).toBe("Added to queue")
+  f.playerChanged()
+  expect(label(f)).toBe("Added to queue")
+  f.navigate()
+  f.hover(target.thumbnail, [target.element])
+  expect(label(f)).toBe("Add to queue")
+})
+
 test("turning the feature off during an awaited add leaves no host, toast or revived state", async () => {
   const f = await setup()
   const answer = f.deferred<unknown>()
@@ -349,6 +368,30 @@ for (const deadline of [150, 900] as const) {
     expect(native.isConnected).toBe(true)
   })
 }
+
+test("a native queue control that appears during an add keeps Perchling's feedback visible", async () => {
+  const f = await setup()
+  const target = card()
+  const answer = f.deferred<unknown>()
+  f.respond(() => answer.promise)
+  f.hover(target.thumbnail, [target.element])
+  await click(f)
+
+  const native = document.createElement("button")
+  native.setAttribute("aria-label", "Add to queue")
+  target.thumbnail.append(native)
+  await settle()
+  expect(label(f)).toBe("Adding…")
+
+  answer.resolve({ ok: true, data: { confirmed: true, quiet: true }, route: f.route })
+  await settle()
+  expect(label(f)).toBe("Added to queue")
+  f.hover(document.body)
+  f.hover(target.thumbnail, [target.element])
+  expect(label(f)).toBe("Added to queue")
+  expect(f.button()?.getAttribute("aria-disabled")).toBe("true")
+  expect(native.isConnected).toBe(true)
+})
 
 test("moving to another card cancels the obsolete rechecks", async () => {
   const f = await setup()

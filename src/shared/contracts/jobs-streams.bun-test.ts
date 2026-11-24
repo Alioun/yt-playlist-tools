@@ -140,7 +140,7 @@ const fixtures = {
   channelOf: { job: { kind: "channelOf", videoId: video }, data: { channelId: null } },
   resolveChannel: { job: { kind: "resolveChannel", input: "synthetic free text" }, data: { channelId: channel, title: "", handle: "" } },
   videoInfo: { job: { kind: "videoInfo" }, data: videoInfo },
-  queueAdd: { job: { kind: "queueAdd" }, data: { confirmed: false, quiet: true } },
+  queueAdd: { job: { kind: "queueAdd", videoId: video }, data: { confirmed: false, quiet: true } },
   queueUndo: { job: { kind: "queueUndo", listId, setVideoId: setId }, data: null },
   queueAddList: { job: { kind: "queueAddList", videoIds: [video, video2] }, data: { confirmed: false, count: 1 } },
   openCardMenu: { job: { kind: "openCardMenu", videoId: video, at: { x: 10, y: 20 } }, data: null },

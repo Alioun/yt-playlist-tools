@@ -43,7 +43,7 @@ function released(world: QueueWorld) {
 }
 const cardMenu = (videoId = videoA): JobOf<"openCardMenu"> => ({ kind: "openCardMenu", videoId, at: menuPoint })
 function queueAdd(world: QueueWorld, element: Element = target()) {
-  return world.gateway.run({ kind: "queueAdd" }, { target: element })
+  return world.gateway.run({ kind: "queueAdd", videoId: videoA }, { target: element })
 }
 
 test("signed-out first add resolves the card's own queue command and confirms a new panel entry", async () => {
@@ -110,9 +110,38 @@ test("two adds run one at a time in the app-state lane", async () => {
     second = queueAdd(w)
   await settle(w, 0)
   expect(w.calls.length).toBe(1)
-  await settle(w, 2_000)
+  await settle(w, 5_000)
   expect(await first).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   expect(w.calls.length).toBe(2)
+  expect(await second).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
+  released(w)
+})
+
+test("a first add that waits its turn queues the clicked video after YouTube rewrites the card's data for another", async () => {
+  const command = cardCommand(videoA)
+  const data = { videoId: videoA, title: { simpleText: "Queue card" }, menu: { menuRenderer: { items: [{ menuServiceItemRenderer: { serviceEndpoint: command } }] } } }
+  const w = queueWorld({ signedIn: false, card: data })
+  w.scripts.push(
+    pending(() => undefined),
+    pending((world, call) => {
+      const sent = call.endpoint as ReturnType<typeof cardCommand>
+      return answer(added(world.add(sent.signalServiceEndpoint.actions[0]!.addToPlaylistCommand.videoId)))
+    })
+  )
+  const first = queueAdd(w),
+    second = queueAdd(w)
+  await settle(w, 0)
+  expect(w.calls.length).toBe(1)
+
+  const add = command.signalServiceEndpoint.actions[0]!.addToPlaylistCommand
+  data.videoId = videoB
+  add.videoId = videoB
+  add.videoIds[0] = videoB
+  add.onCreateListCommand.createPlaylistServiceEndpoint.videoIds[0] = videoB
+  await settle(w, 5_000)
+
+  expect(await first).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  expect(w.state.entries.map(row => row.videoId)).toEqual([videoA])
   expect(await second).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
   released(w)
 })
@@ -122,7 +151,7 @@ test("callback success without a panel effect is confirmed false with no Undo", 
   w.replace(listA, [])
   w.scripts.push(pending(() => answer(added("entry-claimed"))))
   const result = queueAdd(w)
-  await settle(w, 2_000)
+  await settle(w, 5_000)
   expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   expect(w.calls.length).toBe(1)
   released(w)
@@ -137,7 +166,7 @@ test("an entry in a replaced queue list never confirms the add", async () => {
     })
   )
   const result = queueAdd(w)
-  await settle(w, 2_000)
+  await settle(w, 5_000)
   expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   released(w)
 })
@@ -199,36 +228,73 @@ test("stale targets and unrecognised cards send nothing", async () => {
   released(plain)
 })
 
-test("the miniplayer fallback confirms only a first add whose miniplayer turns active", async () => {
+test("an add still confirms when its entry takes three seconds to show in the queue's data", async () => {
+  const w = queueWorld()
+  w.replace(listA, [])
+  w.scripts.push(pending(() => answer(added("entry-1"))))
+  const result = queueAdd(w)
+  await settle(w, 2_900)
+  expect(w.add(videoA)).toBe("entry-1")
+  await settle(w, 200)
+  expect(await result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
+  expect(kinds(w)).toEqual([])
+  expect(w.calls.length).toBe(1)
+  released(w)
+})
+
+test("an add whose outcome is unknown is unconfirmed and is never called a timeout", async () => {
   const first = queueWorld()
-  first.state.readable = false
-  first.scripts.push(
-    pending(world => {
-      world.state.miniplayer = true
-    })
-  )
-  expect(await queueAdd(first)).toEqual(success("queueAdd", { confirmed: true, quiet: true }))
+  first.scripts.push(pending(() => undefined))
+  const created = queueAdd(first)
+  await settle(first, 5_000)
+  expect(await created).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  expect(kinds(first)).toEqual([])
   released(first)
-  const already = queueWorld()
-  already.state.readable = false
-  already.state.miniplayer = true
-  already.scripts.push(pending(() => undefined))
-  const open = queueAdd(already)
-  await settle(already, 2_000)
-  expect(await open).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
-  released(already)
   const later = queueWorld()
   later.replace(listA, [])
-  later.scripts.push(
-    pending(world => {
-      world.state.readable = false
-      world.state.miniplayer = true
-    })
-  )
-  const result = queueAdd(later)
-  await settle(later, 2_000)
-  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  later.scripts.push(pending(() => undefined))
+  const edited = queueAdd(later)
+  await settle(later, 5_000)
+  expect(await edited).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
+  expect(kinds(later)).toEqual([])
   released(later)
+})
+
+test("a refused add fails, and counts as breakage only as a refused playlist request does", async () => {
+  for (const [signedIn, http, body, failure, signals] of [
+    [true, 200, { status: "STATUS_FAILED" }, { status: "STATUS_FAILED" }, []],
+    [true, 409, { error: { code: 409 } }, { http: 409 }, []],
+    [true, 500, { error: { code: 500 } }, { http: 500 }, []],
+    [true, 400, { error: { code: 400 } }, { http: 400 }, ["rejected"]],
+    [true, 404, { error: { code: 404 } }, { http: 404 }, ["rejected"]],
+    [true, 403, { error: { code: 403 } }, { http: 403 }, ["rejected"]],
+    [false, 403, { error: { code: 403 } }, { http: 403 }, []]
+  ] as const) {
+    const w = queueWorld({ signedIn })
+    w.replace(listA, [])
+    w.scripts.push(pending(() => answer(body, http)))
+    const result = queueAdd(w)
+    await settle(w, 2_000)
+    expect(await result).toEqual({ ok: false, reason: "failed", ...failure })
+    expect(kinds(w)).toEqual([...signals])
+    expect(w.calls.length).toBe(1)
+    released(w)
+  }
+})
+
+test("a card whose data can't be read is breakage for an add and for the card menu", async () => {
+  const w = queueWorld()
+  w.page.values.targetData = undefined
+  expect(await queueAdd(w)).toEqual({ ok: false, reason: "unavailable" })
+  expect(w.signals.map(signal => [signal.job, signal.kind])).toEqual([["queueAdd", "unrecognised"]])
+  expect(await w.gateway.run(cardMenu(), { target: target() })).toEqual({ ok: false, reason: "unavailable" })
+  expect(w.signals.map(signal => [signal.job, signal.kind])).toEqual([
+    ["queueAdd", "unrecognised"],
+    ["openCardMenu", "unrecognised"]
+  ])
+  expect(w.calls).toHaveLength(0)
+  expect(w.menuTargets).toEqual([])
+  released(w)
 })
 
 test("a missing resolver is unavailable and a thrown hook is never resent", async () => {
@@ -241,7 +307,7 @@ test("a missing resolver is unavailable and a thrown hook is never resent", asyn
   thrown.replace(listA, [])
   thrown.state.faults.add("resolve")
   const result = queueAdd(thrown)
-  await settle(thrown, 2_000)
+  await settle(thrown, 5_000)
   expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   expect(kinds(thrown)).toEqual(["threw"])
   expect(scrubbed(thrown.signals)).toBe(true)
@@ -393,7 +459,7 @@ test("openCardMenu clicks the targeted card's own menu outside the lane", async 
   expect(await menu).toEqual(success("openCardMenu", null))
   expect(w.menuTargets).toEqual([element])
   expect(w.menuPoints).toEqual([menuPoint])
-  await settle(w, 2_000)
+  await settle(w, 5_000)
   await held
   w.state.menu = "missing"
   expect(await w.gateway.run(cardMenu(), { target: element })).toEqual({ ok: false, reason: "unavailable" })

@@ -187,7 +187,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 | `channelOf` | www | `{ videoId }` | `{ channelId \| null, title?, handle? }` | none, or playlist when it falls back to a request | no |
 | `resolveChannel` | www | `{ input }` (a typed handle, URL or ID) | `{ channelId, title, handle? }` | playlist | no |
 | `videoInfo` | www | target, or the current video | `{ videoId, title, length, kind: "video" \| "short" }` | none | no |
-| `queueAdd` | www | target card | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
+| `queueAdd` | www | target card, and `{ videoId }`: the clicked video, the only one the add may queue (ARC-ACC-38) | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
 | `queueUndo` | www | `{ listId, setVideoId }` | — | app-state | no |
 | `queueAddList` | www | `{ videoIds }`: the rest of a gather into YouTube's queue, after the first video, which the tab the gather opened plays; at most 199 ([YT-GT-14](02-youtube.md#2163-destinations); R123) | `{ confirmed, count }` | app-state | no |
 | `openCardMenu` | www | target card, and `{ videoId, at }`: `at` is the right-click's viewport point, where the menu opens ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)) | — | none | no |
@@ -336,11 +336,11 @@ YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session
   - 1.5.0's command, used here, would make YouTube show its own "Added to Queue" toast for every add after the first.
 - **ARC-ACC-34. When the quiet value stops working:** if YouTube shows its own toast after a quiet queue edit (an add or its Undo), the edit stands. That's seen when the answer carries YouTube's toast action despite `IAE%3D`, or when YouTube's toast appears. Our own toast for an add is suppressed, so only one toast shows. A `quiet-route-noisy` breakage signal is recorded, and it marks the queue button *partly working* (tickets 12 and 18; [YT-Q-05](02-youtube.md#210-the-thumbnail-add-to-queue-button)). (R40)
 - **ARC-ACC-35. Confirmation** (PROVISIONAL, L8, T29.Q7):
-  - **Where it reads:** the queue panel's data: `ytd-playlist-panel-renderer`'s `.data`, `.polymerController.data` or `.inst.data`, whichever carries a `playlistId` starting `TLPQ`.
-  - **What it looks for:** the entry with our `videoId` whose `playlistSetVideoId` wasn't in the panel before our add. Comparing the before and after sets copes with duplicates.
-  - **Budget:** 2 s.
-  - **First add:** if the panel can't be read, the miniplayer turning active is the fallback signal.
-  - **No signal:** the result is `confirmed: false`, which the queue button shows as *Sent, not confirmed*, never as success ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)). Add to queue isn't an add ([YT-Q-03](02-youtube.md#210-the-thumbnail-add-to-queue-button)): `queueAdd` runs in the tab and never goes through the add flow.
+  - **Where it reads:** the queue's own data, in two places. The first is each `ytd-playlist-panel-renderer`'s `.data`, `.polymerController.data` or `.inst.data`. The second is `yt-playlist-manager`'s `getPlaylistData()`, the only place that holds the queue off the watch page. The first of these that carries a `playlistId` starting `TLPQ` is used.
+  - **What it looks for:** the entry with our `videoId` whose `playlistSetVideoId` wasn't in the queue's data before our add. Comparing the before and after sets copes with duplicates.
+  - **Budget:** 5 s for an add. An add is two requests in a row before its entry shows. Live that took about 1.1 s, and 2.9 s on a slow page. Undo's checks keep 2 s (ARC-ACC-36, ARC-ACC-44).
+  - **First add:** it's confirmed the same way, and nothing else confirms it. The miniplayer turning active is no signal, because YouTube opens the miniplayer about 60 ms after a first add, before the request is answered, and also when the add fails.
+  - **No signal:** the result is `confirmed: false`, which the queue button shows as *Sent, not confirmed*, never as success ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)). An add that ends this way with no answer records no `timeout` signal. The card's own command never answers, and the add stops listening well inside the job's 10 s. Add to queue isn't an add ([YT-Q-03](02-youtube.md#210-the-thumbnail-add-to-queue-button)): `queueAdd` runs in the tab and never goes through the add flow.
 - **ARC-ACC-36. Undo** (PROVISIONAL, T29.Q2, T29.Q5–Q7):
   1. Wait until the entry has its `playlistSetVideoId`, which shows the add's own edit has finished. T29.Q6 sets the wait.
   2. Resolve `playlistEditEndpoint {playlistId: "TLPQ…", actions: [{action: "ACTION_REMOVE_VIDEO", setVideoId}], params: "IAE%3D"}` with no `clientActions`.
@@ -349,15 +349,16 @@ YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session
 
   The result comes from the refreshed panel, never from the callbacks.
 - **ARC-ACC-37.** The gateway never removes a queue entry by video ID, which removes every copy. It never uses the panel's own remove item or `playlistRemoveVideosAction`; both make YouTube show "Removed from Queue".
-- **ARC-ACC-38.** YouTube queue edits run in the app-state lane, so our own edits never overlap.
+- **ARC-ACC-38.** YouTube queue edits run in the app-state lane, so our own edits never overlap. An add may wait there behind an earlier edit, and YouTube can give its card's element another video meanwhile. So `queueAdd` names the clicked video, and the gateway reads the card once, when the job arrives and before it waits. It keeps its own copy of the card's queue command, because YouTube can rewrite a card's data in place for the next video. It then adds that video, whatever the element or its data holds later. A card that already holds another video is refused as unavailable: nothing is sent, and no signal is recorded. A card whose data can't be read or recognised is unavailable too, and records `unrecognised` ([07](07-quality.md#757-runtime-breakage-signals) Q-WATCH-24).
 
 ### 6.2.9 Runtime rules
 
 - **ARC-ACC-39. Route unavailable vs. job failed.**
-  - **Route unavailable:** the hook is missing, it throws before sending, or no answer arrives within the budget. The gateway moves to the job's next route and raises a breakage signal.
+  - **Route unavailable:** the hook is missing, or it throws before sending. The gateway moves to the job's next route and raises a breakage signal.
+  - **No answer:** a route attempt may use all the time the job has left. A route that never answers holds the job to the end of its 10 s. The job then answers `unconfirmed`, a `timeout` signal names that route, and no later route runs.
   - **Job failed:** YouTube answered: `STATUS_FAILED`, HTTP 4xx or 5xx, signed out, or a different account. The failure is reported as it is, and no second route is tried.
   - When every route is unavailable, the job answers `unavailable`.
-- **ARC-ACC-40. Writes never run twice.** A write falls back only when the first route provably sent nothing: the hook was missing, or it threw synchronously. A write that may have been sent but whose answer was lost is reported as failed or unconfirmed, and never retried. Reads may fall back on a timeout.
+- **ARC-ACC-40. Writes never run twice.** A write falls back only when the first route provably sent nothing: the hook was missing, or it threw synchronously. A write that may have been sent but whose answer was lost is reported as failed or unconfirmed, and never retried. A read may fall back when its route's answer is lost. No job falls back on a timeout, because the route that timed out used all the time the job had left (ARC-ACC-39).
 - **ARC-ACC-41. Success is read from the answer** (`status` and the expected fields), never from the HTTP code. `edit_playlist` reports a failure as HTTP 200 with `STATUS_FAILED`.
 - **ARC-ACC-42. Two lanes per tab.** Each runs one job at a time, in order:
   - **app-state lane:** jobs that change YouTube's own state in the tab: queue edits on both sites, and likes;
@@ -368,7 +369,7 @@ YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session
   - one request per user intent;
   - nothing crawls: a playlist list refreshes only on ↻ "Refresh playlists", by itself when it's opened and its cache is older than 5 minutes, and from every membership read, which an add or a picker open makes anyway ([UI-PICK-25](05-ui.md#contents-and-behaviour-every-container), [DATA-20, DATA-21](04-features-accounts-data.md#45-caches-and-expiry)) (R39);
   - on HTTP 429, the add flow pauses that account for 60 s.
-- **ARC-ACC-44. Timeouts:** pings 2 s, jobs 10 s, the YouTube queue confirmation 2 s, and the YouTube Music queue growth check 10 s.
+- **ARC-ACC-44. Timeouts:** pings 2 s, jobs 10 s, a YouTube queue add's confirmation 5 s, YouTube queue Undo's checks 2 s, and the YouTube Music queue growth check 10 s. A route attempt has no timeout of its own. It may use all the time its job has left (ARC-ACC-39).
 - **ARC-ACC-45. The page world logs nothing.** No `console` call exists under `src/page/`.
 - **ARC-ACC-71. Streams cost nothing without a watcher.** The gateway's streams (`nav`, `player`, `nowPlaying`, `queue`) attach to the page's own events only while something watches them, and detach when the last watcher goes. They never use a timer. The `player` stream emits only for the counting player (`movie_player` or `shorts-player`), and only while auto-add's tracker watches it ([YT-AA-44](02-youtube.md#2312-what-tracking-costs)). (R106, R114)
 
@@ -525,7 +526,7 @@ What the signed-out run found:
 | **L5** | The shapes of `get_add_to_playlist` (renderer or view model, paging, privacy, Watch Later) and of the `FEplaylist_aggregation` lockups | Parsers fixed to those shapes | — (shape detail) |
 | **L6** | A duplicate add on www; `ACTION_REMOVE_VIDEO` by `setVideoId` removes one entry; the full-playlist error | [02-youtube.md](02-youtube.md)'s duplicate rules apply as written | Its PROVISIONAL rule for unattended adds applies ([YT-ADD-07](02-youtube.md#251-order-and-membership)) |
 | **L7** | `DATASYNC_ID` stability, and the presence of `responseContext…datasyncId` | The account guard as specified | Setups are re-attached by playlist ownership |
-| **L8** | After a queue add on an existing queue, the video shows in the panel data, and which field holds it | Confirmation reads that field | Only the fallback signal remains, and Add to queue on an open queue shows *Sent, not confirmed* ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)) |
+| **L8** | After a queue add on an existing queue, the video shows in the panel data, and which field holds it | Confirmation reads that field | Nothing confirms an add, and Add to queue shows *Sent, not confirmed* ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)) |
 | **L9** | `#shorts-player`'s player API, and `yt-navigate-finish` on every swipe | Page reads as specified | The Shorts channel comes from a plain request, and progress from the `<video>` alone |
 | **M1** | The menu-item route queues correctly and shows nothing once `commands` are stripped; queue replay works signed in | Menu-item route primary, replay as fallback | Replay is primary. Either way, queue edits are unavailable while casting (ARC-ACC-31; R5, R46). |
 | **M2** | `networkManager.fetch` returns signed answers for `get_add_to_playlist`, `browse/edit_playlist`, `playlist/create` and `account/account_menu`; membership (`containsSelectedVideos`) is present; answers carry `datasyncId` | Membership is read on YouTube Music | Membership comes from a www serving tab, else those rows have no ticks. This is how 2.0 ships until M2 runs (R202). Without `datasyncId`, the YouTube Music guard uses only the page-load `ytcfg`. |

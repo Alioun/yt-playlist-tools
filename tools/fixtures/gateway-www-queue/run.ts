@@ -116,8 +116,8 @@ export async function runGatewayQueueConsumer(dom: boolean): Promise<string> {
   try {
     records.push({ step: "hello", answer: await link.hello })
     records.push({ step: "account", answer: await link.run({ job: { kind: "account" } }) })
-    await step("first-add", link.run({ job: { kind: "queueAdd" } }, { target: element }), 0)
-    await step("duplicate-add", link.run({ job: { kind: "queueAdd" } }, { target: element }), 0)
+    await step("first-add", link.run({ job: { kind: "queueAdd", videoId: videoA } }, { target: element }), 0)
+    await step("duplicate-add", link.run({ job: { kind: "queueAdd", videoId: videoA } }, { target: element }), 0)
     await step("undo", link.run({ job: { kind: "queueUndo", listId: listA, setVideoId: "entry-2" } } as never, undefined), 100)
     await step("add-list", link.run({ job: { kind: "queueAddList", videoIds: [videoB, videoA, videoB] } } as never, undefined), 10_000)
     const menu = link.run({ job: { kind: "openCardMenu", videoId: checked(isVideoId, videoA), at: menuPoint } }, { target: element })

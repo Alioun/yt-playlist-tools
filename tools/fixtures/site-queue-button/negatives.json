@@ -7,7 +7,7 @@
    "directiveLine": 23,
    "intendedLine": 24,
    "reason": "A queue add carries no account pin.",
-   "text": "const pinned: JobInvocation<JobOf<\"queueAdd\">> = { job: { kind: \"queueAdd\" }, acct: services.page }"
+   "text": "const pinned: JobInvocation<JobOf<\"queueAdd\">> = { job: { kind: \"queueAdd\", videoId }, acct: services.page }"
   },
   {
    "file": "src/site/features/queue-button/queue-button.type-test.ts",

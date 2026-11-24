@@ -31,7 +31,6 @@ export type QueueState = {
   listId: string | undefined
   entries: Entry[]
   readable: boolean
-  miniplayer: boolean | undefined
   resolver: boolean
   connected: boolean
   menu: unknown
@@ -117,7 +116,6 @@ export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unk
     listId: undefined,
     entries: [],
     readable: true,
-    miniplayer: false,
     resolver: true,
     connected: true,
     menu: "clicked",
@@ -188,7 +186,6 @@ export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unk
       if (!state.readable) return undefined
       return [state.listId ? panelData(state.listId, state.entries) : { contents: [] }, undefined, undefined]
     },
-    miniplayer: () => state.miniplayer,
     connected: () => state.connected,
     onAction(seen) {
       if (state.faults.has("action")) throw new Error(syntheticIdentity)
