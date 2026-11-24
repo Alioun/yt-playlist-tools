@@ -95,21 +95,21 @@
     },
     {
       "row": "popovers",
-      "kb": 51.6,
+      "kb": 52,
       "since": "2026-11-22",
-      "why": "The in-page Save picker now includes its own control utilities and a small shadow-root reset so YouTube's styles and 10px root cannot leave controls unstyled or shrink the text. It also marks the rows no read answered for, and says why check marks are missing."
+      "why": "The in-page Save picker now includes its own control utilities and a small shadow-root reset so YouTube's styles and 10px root cannot leave controls unstyled or shrink the text. It also marks the rows no read answered for, and says why check marks are missing. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0."
     },
     {
       "row": "first-run/js",
-      "kb": 63.82,
+      "kb": 64.2,
       "since": "2026-11-22",
-      "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk. The shared UI contract includes the live account name."
+      "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk. The shared UI contract includes the live account name. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0."
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 67.61,
+      "kb": 68,
       "since": "2026-11-22",
-      "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader, and the shared UI contract."
+      "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader, and the shared UI contract. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0."
     },
     {
       "row": "www/card-menu",
