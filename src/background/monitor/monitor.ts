@@ -327,10 +327,7 @@ export function createMonitor(ports: MonitorPorts) {
     if (!captured || !current(captured)) return unavailable
     const rows = due(captured, statuses)
     const allowed = rows.filter(
-      row =>
-        ![...deliveries.values()].some(
-          delivery => delivery.keys.includes(pendingKey(row.private, row.key)) && delivery.capture.lease.facts.tabId !== captured.lease.facts.tabId && held(delivery)
-        )
+      row => ![...deliveries.values()].some(delivery => delivery.keys.includes(pendingKey(row.private, row.key)) && delivery.capture.lease.facts.tabId !== captured.lease.facts.tabId && held(delivery))
     )
     const features = allowed.map(row => row.feature).filter(isPageFeatureId)
     return { kind: "notices", facts: structuredClone(captured.lease.facts), notices: features.length ? [{ kind: "not-working", features }] : [], current: () => current(captured) }

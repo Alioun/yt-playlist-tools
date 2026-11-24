@@ -127,7 +127,11 @@ export function isUiAccountInView(value: unknown): value is UiAccountInView {
   )
 }
 const label = (value: unknown) =>
-  objectShape(value, { name: v => typeof v === "string" && v.length <= 400 }, { handle: v => typeof v === "string" && v.length <= 100, avatar: v => typeof v === "string" && v.startsWith("https://") && v.length <= 2_000 })
+  objectShape(
+    value,
+    { name: v => typeof v === "string" && v.length <= 400 },
+    { handle: v => typeof v === "string" && v.length <= 100, avatar: v => typeof v === "string" && v.startsWith("https://") && v.length <= 2_000 }
+  )
 export function isUiAccountLabel(value: unknown): value is UiAccountLabel {
   return isUiUnavailable(value) || objectShape(value, { kind: v => v === "none" }) || objectShape(value, { kind: v => v === "label", acct: isAccountKey, label })
 }

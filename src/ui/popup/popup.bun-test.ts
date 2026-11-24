@@ -438,7 +438,9 @@ test("an account with no setup is named in the header from its tab, with a place
   popup(agreed, {
     "ui.accountLabel": payload => {
       asked.push(payload)
-      return new Promise(resolve => { answer = resolve }) as never
+      return new Promise(resolve => {
+        answer = resolve
+      }) as never
     }
   })
   expect(await screen.findByLabelText("Reading the account in this tab", {}, { timeout: 5000 })).toBeTruthy()
@@ -457,10 +459,17 @@ test("the header keeps a name read from the tab across status changes, and asks 
   let answer: (value: unknown) => void = () => {}
   const { scripted } = popup(agreed, {
     "ui.accountInView": () => ({ kind: "account", source: "active", tabId, signedIn: true, acct: acct as never }),
-    "ui.status": () => { statuses++; return status() },
+    "ui.status": () => {
+      statuses++
+      return status()
+    },
     "ui.accountLabel": () => {
       asked++
-      return asked === 1 ? ({ kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe" } } as never) : (new Promise(resolve => { answer = resolve }) as never)
+      return asked === 1
+        ? ({ kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe" } } as never)
+        : (new Promise(resolve => {
+            answer = resolve
+          }) as never)
     }
   })
   expect(await screen.findByText("Alex Doe", {}, { timeout: 5000 })).toBeTruthy()
@@ -484,7 +493,10 @@ test("a tab that couldn't name the account is asked once, and a status change ke
   let asked = 0,
     statuses = 0
   const { scripted } = popup(agreed, {
-    "ui.status": () => { statuses++; return status() },
+    "ui.status": () => {
+      statuses++
+      return status()
+    },
     "ui.accountLabel": () => {
       asked++
       return asked === 1 ? { kind: "none" } : (new Promise(() => {}) as never)
@@ -503,12 +515,15 @@ test("a tab that couldn't name the account is asked once, and a status change ke
 
 test("an account whose setup has a label isn't read live", async () => {
   const asked: unknown[] = []
-  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }] }) }, {
-    "ui.accountLabel": payload => {
-      asked.push(payload)
-      return { kind: "none" }
+  popup(
+    { ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }] }) },
+    {
+      "ui.accountLabel": payload => {
+        asked.push(payload)
+        return { kind: "none" }
+      }
     }
-  })
+  )
   expect(await screen.findByText("Ann", {}, { timeout: 5000 })).toBeTruthy()
   expect(asked).toEqual([])
 })

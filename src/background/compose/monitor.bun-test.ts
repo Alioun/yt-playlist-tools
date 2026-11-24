@@ -110,12 +110,19 @@ test("a tab the browser isn't showing can't take the notice, so the visible tab 
   if (!memory) throw Error("no empty session")
   let now = 100
   const monitor = composeMonitor({
-    owner: { readSession: async () => ({ kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }), changeSession: async () => ({ kind: "unavailable", reason: "stale" }), subscribeView: () => () => {} },
+    owner: {
+      readSession: async () => ({ kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }),
+      changeSession: async () => ({ kind: "unavailable", reason: "stale" }),
+      subscribeView: () => () => {}
+    },
     clock: { now: () => now, after: () => () => {} }
   })
   // Private tabs keep the notice in memory, so no session write is needed here.
   const tab = (tabId: number, active: boolean) =>
-    ({ tab: { tabId, windowId: 1, incognito: true, site: "www", lastAccessed: tabId, active, discarded: false, frozen: false }, info: { site: "www", build: "test", signedIn: true, acct: "AAAAAAAAAAAAAAAA" } }) as never
+    ({
+      tab: { tabId, windowId: 1, incognito: true, site: "www", lastAccessed: tabId, active, discarded: false, frozen: false },
+      info: { site: "www", build: "test", signedIn: true, acct: "AAAAAAAAAAAAAAAA" }
+    }) as never
   const enabled = [{ id: "quick-save", options: { on: true, feedback: true, shortsShelves: false } }] as never
   const cards = {
     anchor: "www-cards",

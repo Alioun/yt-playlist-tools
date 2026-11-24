@@ -90,23 +90,26 @@ try {
       await page.goto(`https://perchling.test/?view=popup&theme=${theme}&setups=${setups}&name=${encodeURIComponent(name)}&handle=${encodeURIComponent(handle)}`)
       await page.locator("header").getByText(name, { exact: true }).waitFor()
       assert.equal(await page.getByRole("button", { name: "Show the setup for" }).count(), setups - 1)
-      const header = await page.locator("header").evaluate((node, [name, handle]) => {
-        const texts = [...node.querySelectorAll("span")].filter(span => span.childElementCount === 0)
-        const nameBox = texts.find(span => span.textContent === name),
-          handleBox = texts.find(span => span.textContent === handle)
-        const cut = box => box.scrollWidth > box.clientWidth
-        const settings = [...node.querySelectorAll("button")].at(-1).getBoundingClientRect()
-        return {
-          nameCut: cut(nameBox),
-          nameWidth: nameBox.getBoundingClientRect().width,
-          handleCut: cut(handleBox),
-          handleWidth: handleBox.getBoundingClientRect().width,
-          tooltip: nameBox.closest("[title]")?.getAttribute("title") ?? null,
-          iconWidth: node.querySelector("span svg").getBoundingClientRect().width,
-          settingsRight: settings.right,
-          fits: document.documentElement.scrollWidth <= innerWidth
-        }
-      }, [name, handle])
+      const header = await page.locator("header").evaluate(
+        (node, [name, handle]) => {
+          const texts = [...node.querySelectorAll("span")].filter(span => span.childElementCount === 0)
+          const nameBox = texts.find(span => span.textContent === name),
+            handleBox = texts.find(span => span.textContent === handle)
+          const cut = box => box.scrollWidth > box.clientWidth
+          const settings = [...node.querySelectorAll("button")].at(-1).getBoundingClientRect()
+          return {
+            nameCut: cut(nameBox),
+            nameWidth: nameBox.getBoundingClientRect().width,
+            handleCut: cut(handleBox),
+            handleWidth: handleBox.getBoundingClientRect().width,
+            tooltip: nameBox.closest("[title]")?.getAttribute("title") ?? null,
+            iconWidth: node.querySelector("span svg").getBoundingClientRect().width,
+            settingsRight: settings.right,
+            fits: document.documentElement.scrollWidth <= innerWidth
+          }
+        },
+        [name, handle]
+      )
       assert.equal(header.tooltip, `${name} ${handle}`, "The header's tooltip must give the name and the @handle in full")
       assert(header.fits && header.settingsRight <= 360, "The header must fit the popup's 360 px")
       assert.equal(header.iconWidth, 16, "The account's icon must keep its size beside a long name")

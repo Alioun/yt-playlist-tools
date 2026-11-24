@@ -23,7 +23,13 @@ function world(view: AccountInView, answer: LiveLabel = { kind: "label", acct, l
     build: "test" as never,
     now: () => now
   })
-  return { read, reads, later: (ms: number) => { now += ms } }
+  return {
+    read,
+    reads,
+    later: (ms: number) => {
+      now += ms
+    }
+  }
 }
 
 test("an account with no setup is named from its tab's live label, as that tab's account (ACC-17)", async () => {

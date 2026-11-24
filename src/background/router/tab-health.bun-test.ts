@@ -147,11 +147,21 @@ async function noticeWorld(features = [pageFeature("queue-button"), pageFeature(
   let id = 0
   async function send(kind: string, request: unknown) {
     const replies: { kind: string; result?: unknown }[] = []
-    await Promise.all(await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: `n-${++id}`, kind, payload: { acct: tab.info.acct, request } }, sender, value => replies.push(value as never)))
+    await Promise.all(
+      await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: `n-${++id}`, kind, payload: { acct: tab.info.acct, request } }, sender, value => replies.push(value as never))
+    )
     for (let turn = 0; turn < 200 && !replies.length; turn++) await settle()
     return replies[0]?.result
   }
-  return { h, tab, send, async dispose() { router.dispose(); await h.dispose() } }
+  return {
+    h,
+    tab,
+    send,
+    async dispose() {
+      router.dispose()
+      await h.dispose()
+    }
+  }
 }
 
 test("a broken feature about to act gets one notice in its tab, and once shown it isn't owed again (YT-BRK-02)", async () => {
