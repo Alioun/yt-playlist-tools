@@ -326,10 +326,12 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **ACC-16** Requests for the account in view go through an open tab of that account, in a window of the same kind; the order tabs are tried in is [ARC-ACC-54](06-architecture.md#6211-serving-tab-routing). Containers don't matter, because the account decides. If no tab answers, the popup shows cached data and "{Account} isn't open in any tab. Open YouTube and switch to this account to refresh its playlists."
 - **ACC-17** The account header always names the account, with its avatar, name and @handle.
   - While the account is being read, it shows a placeholder, never the signed-out state.
+  - An account with no setup is named from the tab that serves it. That tab is asked once. A status change keeps what the header shows, a name or "Unnamed account", and the name is asked for again only when the account or its tab changes.
   - Before consent it shows nothing (FT-30).
 - **ACC-18** **Account labels:**
   - they come from YouTube's account menu;
   - they're stored only for accounts with a setup, inside the setup, so they sync;
+  - an account with no setup is named live. The popup, settings and the first-run page ask the background, which reads the label from that account's tab (ACC-17). Nothing about such an account is stored (ACC-08, [DATA-19](#45-caches-and-expiry)), so the background holds the answer only in its worker's memory, for 24 h at most. The answer is gone when the worker stops, and the next page that needs it reads the tab again. A private window's answer is never held;
   - they're checked when the account is seen in a normal window, at most once per 24 h per browser, and written only when they change;
   - names are cut to 100 characters, and the fallback is "Unnamed account".
 
@@ -1092,10 +1094,10 @@ type GatherRecord = {
 ### 5.3 Where it shows
 
 - **HEALTH-13** **In-page notice** ([YT-BRK-02](02-youtube.md#213-when-youtube-changes-something), [UI-TOAST-15](05-ui.md#the-not-working-notice)):
-  - once per browser session per feature and site, at the moment the feature would act (when its buttons would be drawn, when the watch-page button would be placed, when auto-add would arm, at a right-click, or when a key is pressed);
+  - once per browser session per feature and site, at the moment the feature would act (when its buttons would be drawn, when the watch-page button would be placed, when auto-add would arm, at a right-click, or when a key is pressed). A tab that takes the notice holds it for 60 s unless it gives it back, and what other tabs report in that time neither frees it nor undoes the tab's report that it showed. A page never shows a feature's notice twice;
   - in the first visible tab where the problem is found; features found within 60 ms share one notice, which names each by its full name from FT-01 (R75);
   - it uses the site's toast with the failure styling, and stays until dismissed. With only the card menu on, it's the site core's tiny kit-free notice instead, with the same copy and actions, so the card menu alone still loads no kit ([UI-TOAST-16](05-ui.md#the-not-working-notice); R28);
-  - like any unprompted toast, it waits while the tab is hidden or fullscreen;
+  - like any unprompted toast, it waits while the tab is hidden or fullscreen. Such a tab doesn't take the notice, so a visible tab with the same problem can. A tab that took the notice and is hidden or goes fullscreen before the notice is on screen gives it back at once, so the visible tab isn't refused for those 60 s. It takes the notice when it is shown again, unless another tab showed it first;
   - its action, **Details**, opens Settings at Diagnostics. (R28, R75)
 - **HEALTH-14** **Explicit actions:** every click or key press on something not working gets that action's failure toast.
 - **HEALTH-15** **Toolbar badge:** while any feature is not working in a tab, that tab shows an amber "!", titled "{Feature} isn't working in this tab". Consent or upgrade pending and missing site access take priority over it, and it takes priority over Missing or Full (FT-57, FT-58). Partly working sets no badge, so neither does a YouTube Music action that's unavailable on its own (R50). (R12)

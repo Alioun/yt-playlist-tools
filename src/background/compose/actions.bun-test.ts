@@ -283,6 +283,13 @@ test("a failure toast's Settings opens Settings at that feature's playlist, besi
   expect(opened).toEqual([{ hash: `feature-shortcuts&playlist=${beta}`, tabId: 9 }])
 })
 
+test("a not-working notice's Details opens Settings at Diagnostics, beside the tab that asked (UI-TOAST-15)", async () => {
+  const { page, opened } = world()
+  page.settings({ section: "diagnostics" })
+  await until(() => opened.length === 1, "Settings opened")
+  expect(opened).toEqual([{ hash: "diagnostics", tabId: 9 }])
+})
+
 test("the watch-page menu skips the video, pauses auto-add and lists this channel, as the tab's account (UI-YT-22)", async () => {
   const w = world()
   expect(await w.page.skip(video, true)).toBe(true)

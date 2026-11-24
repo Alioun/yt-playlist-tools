@@ -1,4 +1,5 @@
 import { createAccounts } from "../accounts/accounts"
+import { composeAccountLabel } from "./account-label"
 import { composeActions, type Actions } from "./actions"
 import { composeAnyTab } from "./any-tab"
 import { composePlayingNow, createPlayingSave, createPlayingUndo, createPopupItem } from "./playing-now"
@@ -22,7 +23,8 @@ import { createTabHealthRouter } from "../router/tab-health"
 import type { SiteDiagnostics } from "../monitor/ports"
 import type { TabContext } from "../tabs/ports"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
-import { createTabViewProducer } from "../tab-view/producer"
+import { createTabViewProducer, enabledTabFeatures } from "../tab-view/producer"
+import { decodeSettings } from "../../shared/model/decodeSettings"
 import { createViewPublication } from "../tab-view/publication"
 import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
@@ -110,7 +112,8 @@ export function composeServices(deps: {
   })
   const monitor = composeMonitor({
     owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change), subscribeView: fn => owner.subscribeView(fn) },
-    clock: { now: () => performance.now(), after: timerDeadline },
+    // Session memory keeps the Monitor's times past a worker restart and accepts only whole wall-clock milliseconds.
+    clock: { now: () => Date.now(), after: timerDeadline },
     sites: deps.sites,
     player: () => gather.player()
   })
@@ -238,6 +241,10 @@ export function composeServices(deps: {
     build,
     deadline: timerDeadline,
     monitor,
+    async enabled(context) {
+      const read = await owner.read("settings")
+      return read.kind === "value" ? enabledTabFeatures(decodeSettings(read.settings), context.tab.site) : undefined
+    },
     async context(sender, acct) {
       const [known] = await tabs.known({ kind: "tab", tabId: sender.origin.tabId })
       if (!known || known.acct !== acct || known.privateTab !== sender.origin.incognito) return null
@@ -285,6 +292,7 @@ export function composeServices(deps: {
     firstRun: firstRunPorts(native, owner),
     transport: runtimeTransport(deps.runtime),
     rpc: { build, deadline: timerDeadline },
+    accountLabel: composeAccountLabel({ tabs, tab: tabId => browserTabs.port.get(tabId), accounts, build, now: () => Date.now() }),
     playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented }),
     add: createPlayingSave({ actions, i18n: siteI18n, consented: deps.consented }),
     addUndo: createPlayingUndo({ actions, i18n: siteI18n, consented: deps.consented }),

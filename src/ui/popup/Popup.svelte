@@ -164,13 +164,18 @@
     <span class="text-[15px] font-semibold tracking-[-0.01em]">{i18n.message("extShortName")}</span>
     <span class="min-w-0 flex-1">
       {#if pageState.agreed}
-        {#if pageState.account === null}
+        {#if pageState.account === null || pageState.labelReading}
           <span aria-label={i18n.message("pop_readingAccount")} class="bg-muted block h-4 w-24 rounded motion-safe:animate-pulse"></span>
         {:else if pageState.acct}
           {#snippet who()}
-            {#if pageState.setup?.setup.label?.avatar}<img src={pageState.setup.setup.label.avatar} alt="" class="size-5 rounded-full" />{:else}<Glyph name="user" class="text-muted-foreground size-4" />{/if}
-            <span class="truncate font-medium">{pageState.accountName()}</span>
-            {#if pageState.setup?.setup.label?.handle}<span class="text-muted-foreground truncate">{pageState.setup.setup.label.handle}</span>{/if}
+            {@const label = pageState.label()}
+            {@const name = pageState.accountName()}
+            {#if label?.avatar}<img src={label.avatar} alt="" class="size-5 shrink-0 rounded-full" />{:else}<Glyph name="user" class="text-muted-foreground size-4 shrink-0" />{/if}
+            <!-- The name never shrinks, so the @handle gives up its room first. The name is cut only when it alone is too long. -->
+            <span class="flex min-w-0 gap-1.5" title={label?.handle ? `${name} ${label.handle}` : name}>
+              <span class="max-w-full shrink-0 truncate font-medium">{name}</span>
+              {#if label?.handle}<span class="text-muted-foreground min-w-0 truncate">{label.handle}</span>{/if}
+            </span>
           {/snippet}
           {#if menuable}
             <button bind:this={menuButton} type="button" aria-haspopup="menu" aria-expanded={menuOpen} aria-label={i18n.message("pop_showSetupFor")}

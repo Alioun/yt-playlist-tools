@@ -8,7 +8,7 @@ import type { HostRequest } from "./picker-host"
 import { createFirstRunText } from "./text"
 
 /**
- * The first-run page over the real backend (B39): the account in view with its stored name, playlist titles from
+ * The first-run page over the real backend (B39): the account in view with its name, playlist titles from
  * the account's cache, and the extension pages' picker for step 3's destinations and auto-add's list.
  */
 export function startFirstRun(page: ExtensionPage) {
@@ -36,7 +36,7 @@ export function startFirstRun(page: ExtensionPage) {
     const answer = pageState.account
     if (answer?.kind !== "account" || answer.source === "last-account") return { kind: "no-tab" }
     if (!answer.signedIn) return { kind: "signed-out" }
-    const label = (await page.backend.loadPage()).kind === "view" ? pageState.ready?.setups.find(entry => entry.acct === answer.acct)?.setup.label : null
+    const label = (await page.backend.loadPage()).kind === "view" ? pageState.label(answer.acct) : null
     return { kind: "account", key: answer.acct, account: { name: label?.name || page.i18n.message("copy_account"), ...(label?.handle ? { handle: label.handle } : {}) } }
   }
   const purposes: Record<"quick-save" | "music-quick-save" | "shortcut", PickerPurpose> = {

@@ -2874,6 +2874,12 @@
   "notice_watch": {
     "message": "The watch-page button isn't working right now because YouTube changed something. This video's status is still in the toolbar popup."
   },
+  "notice_one_shortcuts": {
+    "message": "Playlist shortcuts aren't working right now because YouTube changed something. Use YouTube's own Save for now."
+  },
+  "notice_one_quick_save": {
+    "message": "Quick-save on thumbnails isn't working right now because YouTube changed something. Use YouTube's own Save for now."
+  },
   "notice_music_one": {
     "message": "$FEATURES$ isn't working right now because YouTube Music changed something. Use its ⋮ menu for now.",
     "placeholders": {

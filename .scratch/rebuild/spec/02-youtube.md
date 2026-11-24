@@ -1298,13 +1298,13 @@ This section covers only what the user sees on YouTube. The breakage-signal iden
 - **Clearing:** a status clears when the job next succeeds, or on reload when the check passes. There's no manual reset.
 
 **YT-BRK-02: the in-page notice.**
-- **When:** once per browser session per feature, at the moment the feature would act: when its buttons would be drawn (the first hover over a card), when the watch-page button would be placed, when auto-add would arm, at a right-click, or when a key is pressed.
+- **When:** once per browser session per feature, at the moment the feature would act: when its buttons would be drawn (the first hover over a card), when the watch-page button would be placed, when auto-add would arm, at a right-click, or when a key is pressed. Once dismissed it doesn't come back, whatever other tabs report in the meantime ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows)).
 - **Where:** in the first visible tab where the problem is found.
 - **Batching:** features found within 60 ms share one notice, which names them by their full feature names (YT-GEN-01), e.g. "Quick-save on thumbnails and Queue button on thumbnails aren't working right now because YouTube changed something. Use YouTube's own buttons for now." (R75)
 - **Behaviour:**
   - It's the failure toast made sticky: it stays until dismissed with ✕.
   - Its action is **Details**, which opens Settings at Diagnostics.
-  - Like any unprompted toast, it waits while the tab is hidden or fullscreen.
+  - Like any unprompted toast, it waits while the tab is hidden or fullscreen, and leaves the notice for a visible tab with the same problem. A tab that had taken the notice gives it back if it is hidden or goes fullscreen before the notice is on screen. It has one claim or release out at a time and looks again when each is answered, so a tab that is seen again before its release lands still shows the notice ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows)).
   - Show feedback never hides it.
 - **A feature that isn't working draws nothing.**
 

@@ -84,9 +84,10 @@ export type TabProgress = { readonly len: number; readonly parts: readonly (read
 type Pinned<T> = { readonly acct: AccountKey | null; readonly request: T }
 /**
  * Settings at a feature's card: a failure toast's **Settings** names the playlist that's Missing or Full (YT-ADD-29,
- * YT-GT-33), and the watch-page menu's **Perchling settings** opens its own card (UI-YT-22).
+ * YT-GT-33), and the watch-page menu's **Perchling settings** opens its own card (UI-YT-22). A not-working notice's
+ * **Details** opens Diagnostics (UI-TOAST-15).
  */
-export type TabSettingsTarget = { readonly feature: "auto-add" | "shortcuts" | "gather" | "watch-button"; readonly playlist?: PlaylistId }
+export type TabSettingsTarget = { readonly feature: "auto-add" | "shortcuts" | "gather" | "watch-button"; readonly playlist?: PlaylistId } | { readonly section: "diagnostics" }
 /** The watch-page menu's auto-add rows, as the tab's account: Don't auto-add this video, Pause, and this channel's chips (UI-YT-22). */
 export type TabSkip = { readonly video: VideoId; readonly skip: boolean }
 export type TabFilterChannel = Omit<FilterChannelChange, "acct">
@@ -254,7 +255,8 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
     timeoutMs: 8_000
   },
   "tab.settings": {
-    payload: (v): v is TabSettingsTarget => objectShape(v, { feature: oneOf("auto-add", "shortcuts", "gather", "watch-button") }, { playlist: isPlaylistId }),
+    payload: (v): v is TabSettingsTarget =>
+      objectShape(v, { feature: oneOf("auto-add", "shortcuts", "gather", "watch-button") }, { playlist: isPlaylistId }) || objectShape(v, { section: oneOf("diagnostics") }),
     result: (v): v is null => v === null,
     timeoutMs: 2_000
   },

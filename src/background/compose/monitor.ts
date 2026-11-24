@@ -71,5 +71,8 @@ export function composeMonitor(deps: {
     }
   }
   const instance = Array.from(crypto.getRandomValues(new Uint8Array(8)), byte => byte.toString(16).padStart(2, "0")).join("") as MonitorInstance
-  return createMonitor({ owner: deps.owner, authority, vocabulary, instance, clock: deps.clock })
+  const monitor = createMonitor({ owner: deps.owner, authority, vocabulary, instance, clock: deps.clock })
+  // A tab the browser isn't showing can't take the notice from a visible one (YT-BRK-02). Only the claim checks this, because the context the Monitor last saw may be older than the tab's place in its window.
+  const claimNotice: typeof monitor.claimNotice = async (context, read) => (context.tab.active ? monitor.claimNotice(context, read) : { kind: "none" })
+  return { ...monitor, claimNotice }
 }

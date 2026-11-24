@@ -14,6 +14,7 @@ export type CatalogueProofs = [
       | "ui.change"
       | "ui.syncedChoices"
       | "ui.accountInView"
+      | "ui.accountLabel"
       | "ui.playlists"
       | "ui.create"
       | "ui.resolveChannel"

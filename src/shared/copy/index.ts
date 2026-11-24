@@ -93,6 +93,16 @@ const featureKeys = {
   "music-keys": "notice_feature_music_keys"
 } satisfies Record<PageFeatureId, SimpleMessageKey>
 
+// YT-BRK-06: a feature alone gets its own two sentences, so no sentence is put together from pieces (UI-RULE-43).
+const singleNotices = {
+  "auto-add": "breakage_autoAdd",
+  "shortcuts": "notice_one_shortcuts",
+  "quick-save": "notice_one_quick_save",
+  "queue-button": "breakage_queueButton",
+  "watch-button": "notice_watch",
+  "card-menu": "breakage_cardMenu"
+} satisfies Partial<Record<PageFeatureId, SimpleMessageKey>>
+
 export function siteFeedbackText(i18n: I18n) {
   return {
     actions: {
@@ -110,7 +120,9 @@ export function siteFeedbackText(i18n: I18n) {
 }
 
 export function noticeText(input: { readonly due: DueNotice; readonly site: Site; readonly unavailableActionNames: readonly string[] }, i18n: I18n): string {
-  if (input.site === "www" && input.due.features.length === 1 && input.due.features[0] === "watch-button") return i18n.message("notice_watch")
+  const [only, ...others] = input.due.features
+  const single = input.site === "www" && only !== undefined && !others.length && Object.hasOwn(singleNotices, only) ? singleNotices[only as keyof typeof singleNotices] : undefined
+  if (single) return i18n.message(single)
   const names = input.site === "music" && input.unavailableActionNames.length ? input.unavailableActionNames : input.due.features.map(id => i18n.message(featureKeys[id]))
   const features = list(names, i18n)
   if (input.site === "music") return names.length === 1 ? i18n.message("notice_music_one", { features }) : i18n.message("notice_music_other", { features })

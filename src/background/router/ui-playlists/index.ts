@@ -13,7 +13,8 @@ import type {
   UiListRefresh,
   UiUnavailable,
   UiCreationAnswer,
-  UiCreationPayload
+  UiCreationPayload,
+  UiAccountLabel
 } from "../../../shared/contracts/ui-playlists"
 import { isChangePayload, isLookupPayload } from "../../../shared/contracts/first-run"
 import { objectShape } from "../../../shared/contracts/object-shape"
@@ -51,6 +52,8 @@ export type UiRouterPorts = {
   readonly rpc: Omit<RpcOptions<UiMessages>, "contract">
   /** The popup's and settings' own routes. Without them each page call answers unavailable. */
   readonly pages?: PageReceiverPorts
+  /** The account in view's name read live from its tab, for an account with no setup (ACC-17). */
+  readonly accountLabel?: (requester: Requester) => Promise<UiAccountLabel>
   /** Reads the popup's Playing now from the YouTube Music tab it picks (YM-POP-10, YM-POP-11). */
   readonly playingNow?: (requester: Requester) => Promise<PlayingNow>
   /** Playing now's Save, in the tab the row read (ARC-ACC-68), and its Undo. */
@@ -419,6 +422,14 @@ export function createUiRouter(ports: UiRouterPorts) {
         if (held) return held
         if (ports.services.kind !== "ready") return unavailable("collaborator")
         const answer = await ports.services.tabs.accountInView(ui.requester)
+        return (await gate(ui)) ?? structuredClone(answer)
+      },
+      async "ui.accountLabel"(_payload, context) {
+        const ui = requireUi(context),
+          held = await gate(ui)
+        if (held) return held
+        if (!ports.accountLabel) return unavailable("collaborator")
+        const answer = await ports.accountLabel(ui.requester)
         return (await gate(ui)) ?? structuredClone(answer)
       },
       "ui.playlists"(payload, context) {

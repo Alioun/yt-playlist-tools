@@ -69,7 +69,8 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.membership": payload => take("ui.membership", payload),
       "ui.pausedWork": payload => take("ui.pausedWork", payload),
       "ui.heldAgree": payload => take("ui.heldAgree", payload),
-      "ui.sync": payload => take("ui.sync", payload)
+      "ui.sync": payload => take("ui.sync", payload),
+      "ui.accountLabel": payload => take("ui.accountLabel", payload)
     }
   })
   async function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): Promise<UiMessages[K]["result"]> {

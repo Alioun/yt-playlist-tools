@@ -78,6 +78,46 @@ try {
       await page.locator("[data-feature-preview='quick-save']").screenshot({ path: resolve(evidence, `onboarding-${theme}-${width}.png`) })
       results.push({ view: "onboarding", theme, width, examples: 11 })
     }
+    // The popup is 360 px wide, so the account's name and @handle rarely both fit in its header.
+    await page.setViewportSize({ width: 360, height: 600 })
+    // With two setups the account is the menu button of which setup to show, which also holds a chevron.
+    for (const [name, handle, setups] of [
+      ["Alex Doe", "@alexdoe", 1],
+      ["Alex Doe", "@alexdoe", 2],
+      ["Alexandria Montgomery-Fairweather", "@alexandriamontgomery", 1],
+      ["Alexandria Montgomery-Fairweather", "@alexandriamontgomery", 2]
+    ]) {
+      await page.goto(`https://perchling.test/?view=popup&theme=${theme}&setups=${setups}&name=${encodeURIComponent(name)}&handle=${encodeURIComponent(handle)}`)
+      await page.locator("header").getByText(name, { exact: true }).waitFor()
+      assert.equal(await page.getByRole("button", { name: "Show the setup for" }).count(), setups - 1)
+      const header = await page.locator("header").evaluate(
+        (node, [name, handle]) => {
+          const texts = [...node.querySelectorAll("span")].filter(span => span.childElementCount === 0)
+          const nameBox = texts.find(span => span.textContent === name),
+            handleBox = texts.find(span => span.textContent === handle)
+          const cut = box => box.scrollWidth > box.clientWidth
+          const settings = [...node.querySelectorAll("button")].at(-1).getBoundingClientRect()
+          return {
+            nameCut: cut(nameBox),
+            nameWidth: nameBox.getBoundingClientRect().width,
+            handleCut: cut(handleBox),
+            handleWidth: handleBox.getBoundingClientRect().width,
+            tooltip: nameBox.closest("[title]")?.getAttribute("title") ?? null,
+            iconWidth: node.querySelector("span svg").getBoundingClientRect().width,
+            settingsRight: settings.right,
+            fits: document.documentElement.scrollWidth <= innerWidth
+          }
+        },
+        [name, handle]
+      )
+      assert.equal(header.tooltip, `${name} ${handle}`, "The header's tooltip must give the name and the @handle in full")
+      assert(header.fits && header.settingsRight <= 360, "The header must fit the popup's 360 px")
+      assert.equal(header.iconWidth, 16, "The account's icon must keep its size beside a long name")
+      if (name === "Alex Doe") assert(!header.nameCut, "A short name must show whole; the @handle is the part that gives way")
+      else assert(header.nameCut && header.handleWidth < 1, "A name too long for the header is cut only after the @handle has given all its room")
+      await page.locator("header").screenshot({ path: resolve(evidence, `popup-header-${theme}-${name === "Alex Doe" ? "short" : "long"}-${setups}.png`) })
+      results.push({ view: "popup-header", theme, name, handle, setups, ...header })
+    }
     assert.deepEqual(errors, [])
     await context.close()
   }
@@ -85,4 +125,4 @@ try {
   await browser.close()
 }
 await writeFile(resolve(evidence, "results.json"), JSON.stringify(results, null, 2) + "\n")
-process.stdout.write(`Verified isolated picker sizing, styling, search, and all onboarding examples: ${evidence}\n`)
+process.stdout.write(`Verified isolated picker sizing, styling, search, all onboarding examples, and the popup header's account: ${evidence}\n`)

@@ -104,3 +104,42 @@ test("a signal on a route this build doesn't ship is refused, and a missing card
   expect(await states()).toEqual({ "auto-add": "working", "quick-save": "working" })
   monitor.dispose()
 })
+
+test("a tab the browser isn't showing can't take the notice, so the visible tab with the same problem gets it (YT-BRK-02, HEALTH-13)", async () => {
+  const memory = parseSessionMemory({})
+  if (!memory) throw Error("no empty session")
+  let now = 100
+  const monitor = composeMonitor({
+    owner: {
+      readSession: async () => ({ kind: "memory", memory, revision: { reset: 0, accounts: new Map() }, sequence: 0 }),
+      changeSession: async () => ({ kind: "unavailable", reason: "stale" }),
+      subscribeView: () => () => {}
+    },
+    clock: { now: () => now, after: () => () => {} }
+  })
+  // Private tabs keep the notice in memory, so no session write is needed here.
+  const tab = (tabId: number, active: boolean) =>
+    ({
+      tab: { tabId, windowId: 1, incognito: true, site: "www", lastAccessed: tabId, active, discarded: false, frozen: false },
+      info: { site: "www", build: "test", signedIn: true, acct: "AAAAAAAAAAAAAAAA" }
+    }) as never
+  const enabled = [{ id: "quick-save", options: { on: true, feedback: true, shortsShelves: false } }] as never
+  const cards = {
+    anchor: "www-cards",
+    signal: { site: "www", feature: null, job: null, route: null, kind: "anchor-missing", watchId: null, shape: null, clientVersion: null, pageType: "watch", count: 1, firstSeen: now, lastSeen: now },
+    observation: { kind: "content", relevant: true, visible: true, navigationAt: 0, observedAt: 3000, distinctMainLinks: 8, recognised: 1 }
+  } as never
+  const claim = async (context: never) => {
+    const read = await monitor.statusProducer.read(context, enabled)
+    if (read.kind !== "statuses") throw Error(read.kind)
+    return (await monitor.claimNotice(context, read)).kind
+  }
+  for (const context of [tab(4, false), tab(5, true)]) {
+    await monitor.observeAnchor(context, cards)
+    await monitor.wouldAct(context, enabled, "quick-save")
+  }
+  now += 61
+  expect(await claim(tab(4, false))).toBe("none")
+  expect(await claim(tab(5, true))).toBe("delivery")
+  monitor.dispose()
+})

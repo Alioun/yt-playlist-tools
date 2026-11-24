@@ -419,6 +419,115 @@ test("with one setup the header's account is a label, not a menu", async () => {
   expect(screen.queryByRole("button", { name: "Show the setup for" })).toBeNull()
 })
 
+test("the header's account gives its name and @handle in full as a tooltip, since the header can cut them (UI-POP-06, UI-RULE-43)", async () => {
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Alex Doe", handle: "@alexdoe" } }) })
+  const name = await screen.findByText("Alex Doe", {}, { timeout: 5000 })
+  expect(screen.getByTitle("Alex Doe @alexdoe").contains(name)).toBe(true)
+  expect(screen.getByTitle("Alex Doe @alexdoe").contains(screen.getByText("@alexdoe"))).toBe(true)
+})
+
+test("an account with no @handle has its name alone as the header's tooltip", async () => {
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) })
+  const name = await screen.findByText("Ann", {}, { timeout: 5000 })
+  expect(screen.getByTitle("Ann").contains(name)).toBe(true)
+})
+
+test("an account with no setup is named in the header from its tab, with a placeholder while that is read (ACC-17, ACC-08)", async () => {
+  let answer: (value: unknown) => void = () => {}
+  const asked: unknown[] = []
+  popup(agreed, {
+    "ui.accountLabel": payload => {
+      asked.push(payload)
+      return new Promise(resolve => {
+        answer = resolve
+      }) as never
+    }
+  })
+  expect(await screen.findByLabelText("Reading the account in this tab", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.queryByText("Unnamed account")).toBeNull()
+  await waitFor(() => expect(asked).toHaveLength(1))
+  answer({ kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe", avatar: "https://yt3.ggpht.com/a.jpg" } })
+  expect(await screen.findByText("Alex Doe", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.getByText("@alexdoe")).toBeTruthy()
+  expect(screen.queryByText("Unnamed account")).toBeNull()
+})
+
+test("the header keeps a name read from the tab across status changes, and asks again only of another tab (ACC-17, UI-SET-17)", async () => {
+  let asked = 0,
+    statuses = 0,
+    tabId = 4
+  let answer: (value: unknown) => void = () => {}
+  const { scripted } = popup(agreed, {
+    "ui.accountInView": () => ({ kind: "account", source: "active", tabId, signedIn: true, acct: acct as never }),
+    "ui.status": () => {
+      statuses++
+      return status()
+    },
+    "ui.accountLabel": () => {
+      asked++
+      return asked === 1
+        ? ({ kind: "label", acct, label: { name: "Alex Doe", handle: "@alexdoe" } } as never)
+        : (new Promise(resolve => {
+            answer = resolve
+          }) as never)
+    }
+  })
+  expect(await screen.findByText("Alex Doe", {}, { timeout: 5000 })).toBeTruthy()
+  const before = statuses
+  scripted.replace({ breakage: {} }, "session")
+  await waitFor(() => expect(statuses).toBeGreaterThan(before))
+  await new Promise(resolve => setTimeout(resolve, 50))
+  expect(asked).toBe(1)
+  expect(screen.getByText("Alex Doe")).toBeTruthy()
+  // Another tab now serves the same account.
+  tabId = 5
+  scripted.replace({ breakage: { x: 1 } }, "session")
+  await waitFor(() => expect(asked).toBe(2))
+  expect(screen.getByText("Alex Doe")).toBeTruthy()
+  expect(screen.queryByLabelText("Reading the account in this tab")).toBeNull()
+  answer({ kind: "label", acct, label: { name: "Alex D. Doe", handle: "@alexdoe" } })
+  expect(await screen.findByText("Alex D. Doe", {}, { timeout: 5000 })).toBeTruthy()
+})
+
+test("a tab that couldn't name the account is asked once, and a status change keeps the header as it is (ACC-17)", async () => {
+  let asked = 0,
+    statuses = 0
+  const { scripted } = popup(agreed, {
+    "ui.status": () => {
+      statuses++
+      return status()
+    },
+    "ui.accountLabel": () => {
+      asked++
+      return asked === 1 ? { kind: "none" } : (new Promise(() => {}) as never)
+    }
+  })
+  expect(await screen.findByText("Unnamed account", {}, { timeout: 5000 })).toBeTruthy()
+  const before = statuses
+  // A breakage signal or a tab opening somewhere writes storage.session.
+  scripted.replace({ breakage: {} }, "session")
+  await waitFor(() => expect(statuses).toBeGreaterThan(before))
+  await new Promise(resolve => setTimeout(resolve, 50))
+  expect(screen.getByText("Unnamed account")).toBeTruthy()
+  expect(screen.queryByLabelText("Reading the account in this tab")).toBeNull()
+  expect(asked).toBe(1)
+})
+
+test("an account whose setup has a label isn't read live", async () => {
+  const asked: unknown[] = []
+  popup(
+    { ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }] }) },
+    {
+      "ui.accountLabel": payload => {
+        asked.push(payload)
+        return { kind: "none" }
+      }
+    }
+  )
+  expect(await screen.findByText("Ann", {}, { timeout: 5000 })).toBeTruthy()
+  expect(asked).toEqual([])
+})
+
 const thisVideo = (video: Record<string, unknown> = {}) =>
   ({
     kind: "video",

@@ -1338,7 +1338,10 @@ sequenceDiagram
 | `tab.progress.load { video }` / `tab.progress.save { video, len, parts }` | `Parts \| null` / — | Refused for private tabs, which keep progress in memory |
 | `tab.health { acct, request: { reports[] } }` | `boolean` | Batched. True confirms that the Monitor accepted the reports. |
 | `tab.need { popovers: true }` or `tab.need { jobs: true }` | `ok` | The picker, or the page's jobs file on its first job (ARC-MAN-16, ARC-MAN-26) |
-| `tab.noticeShown { features }` | — | |
+| `tab.wouldAct { feature }` | — | A feature that isn't working was about to act in this tab ([YT-BRK-02](02-youtube.md#213-when-youtube-changes-something)) |
+| `tab.claimNotice` | `{ token, due } \| null` | Takes the notice the tab's view lists as due. `null` when another tab holds it or none is due |
+| `tab.noticeShown { token }` | — | The claimed notice is on screen |
+| `tab.noticeReleased { token }` | — | The tab was hidden or went fullscreen before the claimed notice was on screen, so a visible tab may take it. The tab claims again only once this is answered ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows)) |
 
 | Message (background → tab, frame 0) | Answer | Notes |
 |---|---|---|
@@ -1406,7 +1409,8 @@ sequenceDiagram
 - **ARC-MSG-13. A view goes only where it can change.** After a store change, the background pushes a new `TabView` only to the tabs that change can alter: a setup or filter edit to that account's tabs, a status to its own tab, and a shared setting or switch to every known tab. Writes to progress, caches and the tab registry never change a view, and neither does a signal that changes no status. Pushes to one tab are coalesced: at most one per 250 ms, carrying the latest view. (R110)
 - **ARC-MSG-14. Hot events never become messages.** A tab sends to the background only:
   - `tab.hello`, once per page load (ARC-ACC-70);
-  - what a user action needs: `tab.add`, `tab.undo`, `tab.change`, `tab.need`, `tab.noticeShown`;
+  - what a user action needs: `tab.add`, `tab.undo`, `tab.change`, `tab.need`;
+  - for a not-working notice: `tab.wouldAct` once per feature and page, then `tab.claimNotice`, and `tab.noticeShown` or `tab.noticeReleased` as the notice is shown or given back ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows));
   - auto-add's goals reached (`tab.add`), and progress at [DATA-27](04-features-accounts-data.md#46-watch-progress)'s checkpoints (`tab.progress.load` once per video, `tab.progress.save`);
   - `tab.health`, at most every 5 s, only with a new signal, or a success for a job that has a signal in that tab ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)), and at once when Check now asks with `bg.health`;
   - `tab.videoChanged`, only while its toolbar tick shows (ARC-MOD-38).

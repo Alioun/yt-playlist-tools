@@ -1,8 +1,8 @@
 import type { FeatureSettingAnswer } from "../../shared/contracts/shared-settings"
-import type { UiAccountInView } from "../../shared/contracts/ui-playlists"
+import type { UiAccountInView, UiAccountLabel } from "../../shared/contracts/ui-playlists"
 import type { UiStatus } from "../../shared/contracts/ui-pages"
 import type { PageSetup, PageView } from "../../shared/model/page-view"
-import type { Settings } from "../../shared/model/types"
+import type { AccountLabel, Settings } from "../../shared/model/types"
 import type { Snapshot } from "../../shared/model/settings-view"
 import type { AccountKey, PlaylistId } from "../../shared/model/validation"
 import { cacheRows, WATCH_LATER } from "../../shared/model/account-cache"
@@ -21,12 +21,16 @@ export class PageState {
   view = $state.raw<PageView | null>(null)
   status = $state.raw<UiStatus | null>(null)
   account = $state.raw<UiAccountInView | null>(null)
+  /** The tab account's label read live when it has no setup to hold one (ACC-17); "reading" while the tab answers. */
+  live = $state.raw<UiAccountLabel | "reading" | null>(null)
   access = $state.raw<SiteAccess | null>(null)
   /** The setup the header's "Show the setup for" picked, else the account in view's (UI-POP-07). */
   chosen = $state<AccountKey | null>(null)
   readonly page: ExtensionPage
   readonly #stops: (() => void)[] = []
   #accountRead = false
+  /** The account and serving tab the live label was asked of. */
+  #liveFrom: { readonly acct: AccountKey; readonly tabId: number } | null = null
   #accountReads = 0
   #statusReads = 0
 
@@ -95,9 +99,19 @@ export class PageState {
   get tab(): boolean {
     return this.account?.kind === "account" && this.account.source !== "last-account" && this.chosen === null
   }
-  accountName(acct: AccountKey | null = this.acct): string {
+  /** A setup's label, else the label read live for the tab's account. */
+  label(acct: AccountKey | null = this.acct): AccountLabel | null {
     const setup = acct ? this.ready?.setups.find(entry => entry.acct === acct) : undefined
-    return setup?.setup.label?.name || this.page.i18n.message("copy_account")
+    if (setup?.setup.label) return setup.setup.label
+    const live = this.live
+    return typeof live === "object" && live?.kind === "label" && live.acct === acct ? live.label : null
+  }
+  /** The header shows a placeholder, not "Unnamed account", while the live label is read (ACC-17). */
+  get labelReading(): boolean {
+    return this.live === "reading" && !this.setup?.setup.label
+  }
+  accountName(acct: AccountKey | null = this.acct): string {
+    return this.label(acct)?.name || this.page.i18n.message("copy_account")
   }
   /** A playlist's title from the account's cache, for summaries and choosers. */
   title(id: PlaylistId | null, acct: AccountKey | null = this.acct): string | null {
@@ -115,7 +129,24 @@ export class PageState {
   async refreshAccount() {
     const read = ++this.#accountReads
     const answer = await this.page.backend.call("ui.accountInView", {})
-    if (read === this.#accountReads) this.account = answer.kind === "answered" ? answer.result : { kind: "unavailable", reason: "native" }
+    if (read !== this.#accountReads) return
+    this.account = answer.kind === "answered" ? answer.result : { kind: "unavailable", reason: "native" }
+    await this.#readLabel()
+  }
+  async #readLabel() {
+    const account = this.account
+    if (account?.kind !== "account" || account.source === "last-account" || !account.signedIn || this.ready?.setups.find(entry => entry.acct === account.acct)?.setup.label) {
+      this.live = null
+      this.#liveFrom = null
+      return
+    }
+    // The label is asked once per account and serving tab, and a new tab for the same account is asked while the header keeps what it shows.
+    const asked = this.#liveFrom
+    if (asked?.acct === account.acct && asked.tabId === account.tabId) return
+    const from = (this.#liveFrom = { acct: account.acct, tabId: account.tabId })
+    if (asked?.acct !== account.acct) this.live = "reading"
+    const answer = await this.page.backend.call("ui.accountLabel", {})
+    if (this.#liveFrom === from) this.live = answer.kind === "answered" ? answer.result : null
   }
   async refreshStatus() {
     const read = ++this.#statusReads

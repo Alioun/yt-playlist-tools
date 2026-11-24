@@ -17,7 +17,7 @@
 {"case":"keep-link-thumbnail","prevented":false,"scopes":1}
 {"case":"keep-link-empty","prevented":true,"scopes":1}
 {"case":"not-working","prevented":false,"requests":1}
-{"case":"not-working-again","prevented":false,"requests":1}
+{"case":"not-working-again","prevented":false,"requests":2}
 {"case":"off","prevented":false,"disposed":true}
 {"case":"on","prevented":true,"scopes":2}
 {"case":"end","prevented":false,"resources":[0,0],"errors":0,"seen":23,"jobs":5}

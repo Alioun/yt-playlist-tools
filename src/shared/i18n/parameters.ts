@@ -441,6 +441,8 @@ export type MessageParameters = {
   "notice_www_one": readonly ["features"]
   "notice_www_other": readonly ["features"]
   "notice_watch": readonly []
+  "notice_one_shortcuts": readonly []
+  "notice_one_quick_save": readonly []
   "notice_music_one": readonly ["features"]
   "notice_music_other": readonly ["features"]
   "notice_feature_auto_add": readonly []

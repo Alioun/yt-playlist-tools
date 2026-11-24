@@ -2,6 +2,7 @@ import { objectShape } from "./object-shape"
 import { isJobDataFor, isJobResultFor, type AccountData, type Job, type JobOf, type JobResult, type PlaylistRow } from "./jobs"
 import { isPrivacy, isSite, type Site, type Privacy } from "./vocabulary"
 import { isAccountKey, isPlaylistId, isVideoId, type AccountKey, type PlaylistId, type VideoId } from "../model/validation"
+import type { AccountLabel } from "../model/types"
 import type { RpcContract, RpcFailure } from "../rpc/rpc"
 
 export type CreationId = string & { readonly __brand: "UiCreationId" }
@@ -15,6 +16,8 @@ export type UiAccountInView =
   | { readonly kind: "none" }
   | { readonly kind: "unavailable"; readonly reason: "held" | "disposed" | "native" | "session" }
   | UiUnavailable
+/** The account in view's name, avatar and @handle, read live from its tab when it has no setup to keep them in (ACC-17, ACC-08). */
+export type UiAccountLabel = { readonly kind: "label"; readonly acct: AccountKey; readonly label: AccountLabel } | { readonly kind: "none" } | UiUnavailable
 export type UiListing = { readonly rows: readonly PlaylistRow[]; readonly at: number | null }
 export type UiCacheStatus =
   | { readonly kind: "committed" | "unchanged" }
@@ -93,6 +96,7 @@ export type UiCreationPayload = WindowClaim &
   )
 export type PlaylistUiMessages = {
   readonly "ui.accountInView": { readonly payload: WindowClaim; readonly result: UiAccountInView }
+  readonly "ui.accountLabel": { readonly payload: WindowClaim; readonly result: UiAccountLabel }
   readonly "ui.playlists": { readonly payload: UiPlaylistPayload; readonly result: UiPlaylistAnswer }
   readonly "ui.create": { readonly payload: UiCreationPayload; readonly result: UiCreationAnswer }
   readonly "ui.resolveChannel": { readonly payload: WindowClaim & { readonly input: string }; readonly result: UiJobOutcome<JobOf<"resolveChannel">> | UiUnavailable }
@@ -121,6 +125,15 @@ export function isUiAccountInView(value: unknown): value is UiAccountInView {
     objectShape(value, { kind: v => v === "none" }) ||
     objectShape(value, { kind: v => v === "unavailable", reason: oneOf("held", "disposed", "native", "session") })
   )
+}
+const label = (value: unknown) =>
+  objectShape(
+    value,
+    { name: v => typeof v === "string" && v.length <= 400 },
+    { handle: v => typeof v === "string" && v.length <= 100, avatar: v => typeof v === "string" && v.startsWith("https://") && v.length <= 2_000 }
+  )
+export function isUiAccountLabel(value: unknown): value is UiAccountLabel {
+  return isUiUnavailable(value) || objectShape(value, { kind: v => v === "none" }) || objectShape(value, { kind: v => v === "label", acct: isAccountKey, label })
 }
 export function isUiListing(value: unknown): value is UiListing {
   return objectShape(value, { rows: v => isJobDataFor({ kind: "playlists" }, v), at: v => v === null || natural(v) })
@@ -221,6 +234,7 @@ export function isUiCreationAnswer(value: unknown): value is UiCreationAnswer {
 }
 export const playlistUiContract: RpcContract<PlaylistUiMessages> = {
   "ui.accountInView": { payload: (v): v is PlaylistUiMessages["ui.accountInView"]["payload"] => objectShape(v, {}, windowClaim), result: isUiAccountInView, timeoutMs: 12_000 },
+  "ui.accountLabel": { payload: (v): v is PlaylistUiMessages["ui.accountLabel"]["payload"] => objectShape(v, {}, windowClaim), result: isUiAccountLabel, timeoutMs: 20_000 },
   "ui.playlists": { payload: isUiPlaylistPayload, result: isUiPlaylistAnswer, timeoutMs: 45_000 },
   "ui.create": { payload: isUiCreationPayload, result: isUiCreationAnswer, timeoutMs: 45_000 },
   "ui.resolveChannel": {

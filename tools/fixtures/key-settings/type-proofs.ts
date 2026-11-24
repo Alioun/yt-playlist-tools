@@ -21,6 +21,7 @@ export type Proofs = [
       | "ui.change"
       | "ui.syncedChoices"
       | "ui.accountInView"
+      | "ui.accountLabel"
       | "ui.playlists"
       | "ui.create"
       | "ui.resolveChannel"

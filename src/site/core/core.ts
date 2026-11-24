@@ -1,6 +1,6 @@
 import type { BuildId, DiagnosticVocabulary, JobOf, Site } from "../../shared/contracts"
 import { isMembershipRow } from "../../shared/contracts/jobs"
-import { isTabView, type DueNotice, type TabView } from "../../shared/contracts/tab-view"
+import { isTabView, type DueNotice, type PageFeatureId, type TabView } from "../../shared/contracts/tab-view"
 import { noticeText, siteFeedbackText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
 import type { PageChannel } from "../../shared/rpc/page-channel"
@@ -35,7 +35,7 @@ export type CoreServices<S extends Site> = {
   readonly i18n: I18n
   /** User actions through the background: adds, removals, Undo, the playlist list and the popovers (06 §6.8.2). */
   readonly actions: TabActions
-  readonly notice: { request(due: DueNotice): void }
+  /** A feature that isn't working calls this when it would act; the Monitor decides whether this tab shows its notice (YT-BRK-02). */
   readonly notices: { wouldAct(feature: SiteFeatureId<S>): void }
   /** Breakage a feature sees itself, for the Monitor (HEALTH-01). */
   readonly health: SiteHealth
@@ -123,9 +123,47 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     return mount.mount(component, props, where)
   } }
 
-  function request(due: DueNotice) {
+  function request(due: DueNotice, presented: () => void) {
     notices.update({ due, generation: {}, text: noticeText({ due, site, unavailableActionNames: [] }, i18n),
-      detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented: ignore })
+      detailsLabel: labels.details, dismissLabel: labels.dismiss, dismiss: ignore, presented,
+      details: () => { actions.settings({ section: "diagnostics" }); notices.update(null) } })
+  }
+  const wanted = new Set<PageFeatureId>(), shown = new Set<PageFeatureId>()
+  // The claim behind a notice that isn't on screen yet, and the notice it would replace.
+  let unshown: { readonly token: string; readonly before: ReturnType<typeof notices.read> } | null = null
+  // One claim or release is out at a time, so the Monitor hears this tab's asks in order, and a change while one is out is looked at once it is answered.
+  let asking = false, again = false
+  const cantShow = () => document.hidden || document.fullscreenElement !== null
+  // The tab may be visible again by the time the Monitor has the release, so it looks once more.
+  async function giveBack(token: string) { await actions.noticeReleased(token); again = true }
+  // Only a tab whose feature would act claims the due notice, once a page. A hidden or fullscreen tab leaves it or gives its claim back, since the Monitor refuses a visible tab while a claim lasts.
+  async function look() {
+    if (unshown) {
+      if (!cantShow()) return
+      const { token, before } = unshown
+      unshown = null
+      notices.update(before && { ...before, presented: ignore })
+      return giveBack(token)
+    }
+    if (cantShow() || !link.view?.notices.some(notice => notice.features.some(id => wanted.has(id) && !shown.has(id)))) return
+    const claim = await actions.claimNotice()
+    if (!claim || root.disposed) return
+    if (cantShow()) return giveBack(claim.token)
+    const before = notices.read()
+    unshown = { token: claim.token, before }
+    request({ kind: "not-working", features: [...new Set([...(before?.due.features ?? []), ...claim.due.features])] }, () => {
+      unshown = null
+      for (const id of claim.due.features) shown.add(id)
+      actions.noticeShown(claim.token)
+    })
+  }
+  async function deliver() {
+    again = true
+    if (asking) return
+    asking = true
+    try {
+      while (again && !root.disposed) { again = false; await look() }
+    } finally { asking = false }
   }
   const thisVideo = createThisVideoChannel()
   // The popup's This video names the channel, for its Allow and Deny, so the channel is read only when asked (YT-CF-15).
@@ -138,10 +176,9 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   }
   const services: CoreServices<S> = {
     document, page, items, keys, i18n, actions, health, thisVideo,
-    notice: { request },
     notices: { wouldAct(feature) {
-      const due = link.view?.notices.find(notice => notice.features.some(id => id === feature))
-      if (due) request(due)
+      if (!wanted.has(feature)) { wanted.add(feature); actions.wouldAct(feature) }
+      void deliver()
     } }
   }
   const host = createFeatureHost<S, CoreServices<S>>({
@@ -178,6 +215,8 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     }
   }
   root.add(link.onView(view => { if (view === null && link.state.kind === "disposed") dispose() }))
+  root.add(link.onView(() => void deliver()))
+  for (const event of ["visibilitychange", "fullscreenchange"] as const) root.on(document, event, () => void deliver())
   return {
     ...services, site, build, root, pointer, link,
     get disposed() { return disposed },

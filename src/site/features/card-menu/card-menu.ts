@@ -1,18 +1,18 @@
-import type { DueNotice, WwwFeature } from "../../../shared/contracts/tab-view"
+import type { WwwFeature } from "../../../shared/contracts/tab-view"
 import { cardMenuButtons } from "../../../shared/youtube/card-menu-buttons"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
 import type { WwwItems, WwwItemTarget, WwwPointed } from "../../core/items-www"
 import type { PageLink } from "../../core/page-link"
 
-export interface CardMenuNotice {
-  request(due: DueNotice): void
+export interface CardMenuNotices {
+  wouldAct(feature: "card-menu"): void
 }
 type Recognition = Pick<WwwItems, "recognise" | "linkedVideo">
 export type CardMenuServices = {
   readonly document: Document
   readonly items: Recognition
   readonly page: Pick<PageLink, "run" | "state">
-  readonly notice: CardMenuNotice
+  readonly notices: CardMenuNotices
 }
 export type CardMenuContext = FeatureContext<"www", CardMenuServices>
 export type CardMenuKeep =
@@ -108,25 +108,14 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   return { kind: "open", target, at: menuPoint(services, at, target.element, button) }
 }
 
-function dueNotice(view: SiteView<"www"> | null): DueNotice | undefined {
-  return view?.notices.find(notice => notice.features.includes("card-menu"))
-}
-
 export const cardMenuFeature: FeatureDefinition<"www", CardMenuServices> = {
   id: "card-menu",
   start(context: CardMenuContext): void {
-    const { scope, view, document, page, notice } = context
-    let requested = false
-    view.subscribe(next => { if (!dueNotice(next)) requested = false })
+    const { scope, view, document, page, notices } = context
     scope.on(document, "contextmenu", event => {
-      const current = view.read()
-      const decision = decideCardMenu(event, current, context)
+      const decision = decideCardMenu(event, view.read(), context)
       if (decision.kind === "keep") {
-        const due = decision.reason === "not-working" ? dueNotice(current) : undefined
-        if (due && !requested) {
-          requested = true
-          notice.request(due)
-        }
+        if (decision.reason === "not-working") notices.wouldAct("card-menu")
         return
       }
       event.preventDefault()
