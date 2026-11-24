@@ -96,13 +96,15 @@ export function createDiagnostics(deps: {
         if (!deps.consented()) return { kind: "refused", reason: "consent" }
         const targets = [serving.www, serving.music].filter(tab => tab !== undefined)
         if (!targets.length) return { kind: "refused", reason: "no-tab" }
-        const checked = await Promise.all(targets.map(async tab => {
-          // The first ask settles the tab's earlier reports. Only a batch lost between this check's own two asks fails it.
-          const before = await deps.deliver(tab.context.tab.tabId).catch(() => null)
-          const answer = await check(tab)
-          const after = await deps.deliver(tab.context.tab.tabId).catch(() => null)
-          return before !== null && after === before ? answer : null
-        }))
+        const checked = await Promise.all(
+          targets.map(async tab => {
+            // The first ask settles the tab's earlier reports. Only a batch lost between this check's own two asks fails it.
+            const before = await deps.deliver(tab.context.tab.tabId).catch(() => null)
+            const answer = await check(tab)
+            const after = await deps.deliver(tab.context.tab.tabId).catch(() => null)
+            return before !== null && after === before ? answer : null
+          })
+        )
         const confirmed = checked.filter(answer => answer !== null)
         if (confirmed.length !== targets.length) return { kind: "unavailable", reason: "collaborator" }
         result = confirmed

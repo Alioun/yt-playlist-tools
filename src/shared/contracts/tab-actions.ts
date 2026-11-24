@@ -367,5 +367,9 @@ export const tabAskContract: RpcContract<TabAskMessages> = {
     result: (v): v is ThisVideo | null => v === null || isThisVideo(v),
     timeoutMs: 8_000
   },
-  "bg.health": { payload: (v): v is TabAskMessages["bg.health"]["payload"] => objectShape(v, {}), result: (v): v is number | null => v === null || (Number.isSafeInteger(v) && (v as number) >= 0), timeoutMs: 8_000 }
+  "bg.health": {
+    payload: (v): v is TabAskMessages["bg.health"]["payload"] => objectShape(v, {}),
+    result: (v): v is number | null => v === null || (Number.isSafeInteger(v) && (v as number) >= 0),
+    timeoutMs: 8_000
+  }
 }

@@ -43,7 +43,12 @@ export function statusRows(page: Pick<PageState, "settings" | "agreed" | "access
 }
 
 // The report and Report a problem's address are English for the developer, so these words aren't in the catalogue.
-const heldWords = { consent: "waiting for consent", "site-access": "needs site access", "music-off": "YouTube Music is off", "browser-menu": "needs the browser menu permission" } as const satisfies Record<Held, string>
+const heldWords = {
+  consent: "waiting for consent",
+  "site-access": "needs site access",
+  "music-off": "YouTube Music is off",
+  "browser-menu": "needs the browser menu permission"
+} as const satisfies Record<Held, string>
 const gapWords = {
   playlists: "can't refresh the playlist list",
   actions: "some of its buttons can't run",

@@ -123,7 +123,9 @@ test("Report a problem sends the state the feature's row shows, not Working (HEA
 test("a partly working status reaches Report a problem and the report in words, not gap names (HEALTH-24, HEALTH-27)", async () => {
   let address = ""
   diagnostics({
-    open: url => { address = url },
+    open: url => {
+      address = url
+    },
     settings: { musicActions: { on: true, feedback: true }, gather: { on: true } },
     health: () => [
       { feature: "gather", site: "www", state: "partly-working", gaps: ["playlist"] },
@@ -136,7 +138,9 @@ test("a partly working status reaches Report a problem and the report in words, 
   expect(report).toContain("music-actions on YouTube Music: Partly working (queue changes may only affect this tab while casting)")
   await userEvent.click(within(document.querySelector('[data-status="music-actions"]') as HTMLElement).getByRole("button", { name: "Report a problem" }))
   await waitFor(() =>
-    expect(document.querySelector("[data-report-values]")?.textContent).toBe("GitHub opens with 2.0.0 · Firefox · Quick actions · Partly working (queue changes may only affect this tab while casting).")
+    expect(document.querySelector("[data-report-values]")?.textContent).toBe(
+      "GitHub opens with 2.0.0 · Firefox · Quick actions · Partly working (queue changes may only affect this tab while casting)."
+    )
   )
   await userEvent.click(screen.getByRole("button", { name: "Open GitHub" }))
   expect(new URL(address).searchParams.get("status")).toBe("Partly working (queue changes may only affect this tab while casting)")
@@ -165,7 +169,22 @@ test("Check now's result and its failure are announced politely (HEALTH-23)", as
     respond: {
       "ui.diagnostics": ({ check }) => {
         if (check && ++runs === 2) return { kind: "refused", reason: "no-tab" }
-        return { ...noTabs, tabs: { www: true, music: false }, checks: runs ? [{ site: "www", at: runs, jobs: [{ job: "account", ok: true }, { job: "playlists", ok: false }] }] : [] }
+        return {
+          ...noTabs,
+          tabs: { www: true, music: false },
+          checks: runs
+            ? [
+                {
+                  site: "www",
+                  at: runs,
+                  jobs: [
+                    { job: "account", ok: true },
+                    { job: "playlists", ok: false }
+                  ]
+                }
+              ]
+            : []
+        }
       }
     }
   })
@@ -220,9 +239,7 @@ test("a status refresh cannot discard the result of the check in progress", asyn
   const scripted = diagnostics({
     settings: {},
     respond: {
-      "ui.diagnostics": ({ check }) => check
-        ? pending.promise
-        : (passiveReads++, open)
+      "ui.diagnostics": ({ check }) => (check ? pending.promise : (passiveReads++, open))
     }
   })
   const button = await screen.findByRole("button", { name: "Check now" })

@@ -153,7 +153,9 @@ test("Check now answers once its reads' signals have reached the Monitor, so the
   if (result.kind !== "diagnostics") throw Error("Check now refused")
   expect(result.checks[0]?.jobs).toContainEqual({ job: "playlists", ok: false })
   expect(result.signals).toMatchObject([{ job: "playlists", kind: "unrecognised" }])
-  expect(deriveStatus({ enabled: [pageFeature("quick-save")], facts: syntheticHealthFacts("www"), journal, tabId: 4 })).toMatchObject({ statuses: [{ feature: "quick-save", state: "partly-working" }] })
+  expect(deriveStatus({ enabled: [pageFeature("quick-save")], facts: syntheticHealthFacts("www"), journal, tabId: 4 })).toMatchObject({
+    statuses: [{ feature: "quick-save", state: "partly-working" }]
+  })
 })
 
 test("Check now reports only the sites it read in that check", async () => {
@@ -172,7 +174,13 @@ test("Check now publishes a result only after the tab confirms delivery", async 
   const delivery = Promise.withResolvers<number | null>()
   const started = Promise.withResolvers<void>()
   let asks = 0
-  const { diagnostics } = world({ deliver: async () => { if (++asks === 1) return 0; started.resolve(); return delivery.promise } })
+  const { diagnostics } = world({
+    deliver: async () => {
+      if (++asks === 1) return 0
+      started.resolve()
+      return delivery.promise
+    }
+  })
   const result = diagnostics.read(true)
   await started.promise
   expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [] })
@@ -189,19 +197,33 @@ function checkedTab(taken: (reports: readonly TabHealthReport[]) => boolean, rea
     timer: (() => void) | undefined
   const health = createSiteHealth({
     site: "www",
-    page: { onSignal(listener) { raise = listener; return () => {} }, state: { kind: "ready", snapshot: { pageType: "watch" } } as never },
+    page: {
+      onSignal(listener) {
+        raise = listener
+        return () => {}
+      },
+      state: { kind: "ready", snapshot: { pageType: "watch" } } as never
+    },
     async send(reports) {
       if (!taken(reports)) return false
       for (const report of reports)
         journal = applyMonitorOperation(journal, {
           ...(report.kind === "signal" ? { kind: "signal", signal: report.signal, evidence: { kind: "job", online: true, otherRequestsAnswer: true } } : report),
-          instance: instance(), sequence: ++sequence, tabId: 4, site: "www"
+          instance: instance(),
+          sequence: ++sequence,
+          tabId: 4,
+          site: "www"
         } as MonitorOperation)
       return true
     },
     now: () => 100,
     online: () => true,
-    later(run) { timer = run; return () => { timer = undefined } }
+    later(run) {
+      timer = run
+      return () => {
+        timer = undefined
+      }
+    }
   })
   // The 5 s batch goes out and settles, as it does while the check's later reads run.
   async function batch() {
@@ -237,7 +259,16 @@ test("Check now can't confirm a check whose health batch failed during its reads
   expect(await diagnostics.read(false)).toMatchObject({ kind: "diagnostics", checks: [], signals: [] })
   expect(await diagnostics.read(true)).toMatchObject({
     kind: "diagnostics",
-    checks: [{ site: "www", jobs: [{ job: "account", ok: false }, { job: "accountLabel", ok: true }, { job: "playlists", ok: true }] }],
+    checks: [
+      {
+        site: "www",
+        jobs: [
+          { job: "account", ok: false },
+          { job: "accountLabel", ok: true },
+          { job: "playlists", ok: true }
+        ]
+      }
+    ],
     signals: [{ job: "account", kind: "unrecognised" }]
   })
 })

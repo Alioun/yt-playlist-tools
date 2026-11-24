@@ -63,7 +63,10 @@ test("a tab that left before the first read of the open tabs answered still coun
   const stop = watchSiteTabs(port, () => left++)
   tabs.update(1, "https://www.youtube.com/")
   tabs.update(1)
-  answer([{ id: 1, url: "https://www.youtube.com/" }, { id: 5, url: "https://www.youtube.com/" }])
+  answer([
+    { id: 1, url: "https://www.youtube.com/" },
+    { id: 5, url: "https://www.youtube.com/" }
+  ])
   await settle()
   expect(left).toBe(1)
   tabs.update(5)

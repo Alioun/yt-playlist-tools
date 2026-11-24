@@ -50,7 +50,8 @@ test("the popup's health list carries the background features: the browser's men
 
 // Settings is the active tab, so the status covers the open tabs of each site.
 const settingsPage = { ...ui, requester: { windowId: 3, incognito: false, activeTabId: 99 } } as unknown as UiRequester
-const native = (tabId: number, site: "www" | "music" | null) => ({ kind: "tab", tab: { tabId, windowId: 3, incognito: false, site, lastAccessed: tabId, active: false, discarded: false, frozen: false } }) as never
+const native = (tabId: number, site: "www" | "music" | null) =>
+  ({ kind: "tab", tab: { tabId, windowId: 3, incognito: false, site, lastAccessed: tabId, active: false, discarded: false, frozen: false } }) as never
 const working = async (_context: unknown, enabled: readonly EnabledMonitorFeature[]) => ({ kind: "statuses" as const, statuses: enabled.map(feature => status(feature.id, "working")) })
 
 test("an open YouTube Music tab reports its health however many YouTube tabs are registered (UI-SET-17)", async () => {
@@ -74,7 +75,10 @@ test("a registered tab that left YouTube is no open tab, for the statuses and fo
   settings.cardMenu.on = true
   // Tab 7 said hello on youtube.com and then went to another site, so the browser reports it with no site.
   const answer = await createPageStatus({
-    owner: { readSession: async () => ({ kind: "memory", memory: { tabs: new Map([[7, { site: "www", signedIn: true, acct }]]) } }) as never, read: async () => ({ kind: "value", settings }) as never },
+    owner: {
+      readSession: async () => ({ kind: "memory", memory: { tabs: new Map([[7, { site: "www", signedIn: true, acct }]]) } }) as never,
+      read: async () => ({ kind: "value", settings }) as never
+    },
     statuses: { read: async () => ({ kind: "unavailable" }) as never },
     tab: async tabId => native(tabId, null),
     build: "build" as never,
