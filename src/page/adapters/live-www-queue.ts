@@ -4,6 +4,8 @@ import { cardMenuButtons } from "../../shared/youtube/card-menu-buttons"
 import type { WwwResolver } from "./www-resolver"
 
 const youtube = "https://www.youtube.com"
+// YouTube keeps a menu 8 px off its button and, for some menus, 24 px inside the window. At a pointer both hold the menu off the point.
+const buttonGaps = ["addSpacing", "avoidOuterEdge"]
 
 export function createLiveWwwQueue(options: { window: Window; document: Document; resolver: WwwResolver }): WwwQueuePort {
   const { window: win, document: doc, resolver } = options
@@ -42,9 +44,19 @@ export function createLiveWwwQueue(options: { window: Window; document: Document
         anchor.style.cssText = `position:fixed;left:${at.x}px;top:${at.y}px;width:0;height:0;pointer-events:none`
         doc.body.append(anchor)
         Reflect.set(dropdown, "positionTarget", anchor)
+        const gaps = buttonGaps.filter(gap => field(dropdown, gap) === true)
+        for (const gap of gaps) Reflect.set(dropdown, gap, false)
+        // YouTube places the menu before its rows settle. A menu that opened upward keeps its top, so its bottom edge would leave the pointer.
+        const settled = new ResizeObserver(() => {
+          const refit = field(dropdown, "refit")
+          if (typeof refit === "function") Reflect.apply(refit, dropdown, [])
+        })
+        settled.observe(dropdown)
         const closed = (change: Event) => {
           if (change.target !== dropdown || field(change, "detail", "value") !== false) return
           dropdown.removeEventListener("opened-changed", closed)
+          settled.disconnect()
+          for (const gap of gaps) Reflect.set(dropdown, gap, true)
           if (field(dropdown, "positionTarget") === anchor) Reflect.set(dropdown, "positionTarget", anchoredAt)
           anchor.remove()
         }

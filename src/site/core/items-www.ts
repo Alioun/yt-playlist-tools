@@ -7,7 +7,7 @@ import { Scope, type Dispose, type ScopeOptions } from "./scope"
 
 export type WwwCardFamily = "lockup" | "video" | "rich-grid" | "grid" | "compact" | "playlist-panel" | "playlist-row" | "shorts"
 export type WwwUnsupportedKind = "playlist" | "mix" | "channel" | "post" | "ad"
-export type WwwNoPointReason = "ordinary" | "outside" | "player" | "fullscreen" | "inactive"
+export type WwwNoPointReason = "ordinary" | "preview" | "outside" | "player" | "fullscreen" | "inactive"
 export type WwwItemTarget = {
   readonly element: Element
   readonly family: WwwCardFamily
@@ -128,7 +128,7 @@ function collectionKind(element: Element): "playlist" | "mix" | undefined {
 }
 
 export function recogniseWwwItem(element: Element): WwwPointed {
-  if (element.closest(previews)) return { kind: "no-pointed-item", reason: "ordinary" }
+  if (element.closest(previews)) return { kind: "no-pointed-item", reason: "preview" }
   if (element.closest(players)) return { kind: "no-pointed-item", reason: "player" }
   const ad = element.closest(ads)
   if (ad) return { kind: "unsupported-item", element: ad, reason: "ad" }

@@ -66,8 +66,25 @@ export function view(options: { keepLinkMenu?: boolean; signedIn?: boolean; setu
 }
 
 export const rightClickPoint = { x: 212, y: 148 }
-export function rightClick(init: { shiftKey?: boolean } = {}): MouseEvent {
-  return new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, button: 2, shiftKey: init.shiftKey ?? false, clientX: rightClickPoint.x, clientY: rightClickPoint.y })
+/** happy-dom lays nothing out, so the harness gives every card and menu button the box a browser would. The right-click point is on the card. */
+export const cardBox = { x: 100, y: 100, width: 600, height: 300 }
+export const menuButtonBox = { x: 660, y: 110, width: 40, height: 40 }
+export function layOut(selector: string, box: typeof cardBox) {
+  for (const element of document.querySelectorAll(selector)) {
+    Object.defineProperty(element, "getBoundingClientRect", { configurable: true, value: () => new DOMRect(box.x, box.y, box.width, box.height) })
+  }
+}
+/** happy-dom has no hit test. The harness answers one from the boxes it laid out, innermost first. */
+function laidOutAt(x: number, y: number): Element[] {
+  return [...document.querySelectorAll("*")].reverse().filter(element => {
+    const box = element.getBoundingClientRect()
+    return x >= box.left && x < box.right && y >= box.top && y < box.bottom
+  })
+}
+export type RightClick = { shiftKey?: boolean; at?: { x: number; y: number }; button?: number }
+export function rightClick(init: RightClick = {}): MouseEvent {
+  const at = init.at ?? rightClickPoint
+  return new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, button: init.button ?? 2, shiftKey: init.shiftKey ?? false, clientX: at.x, clientY: at.y })
 }
 
 export async function cardMenuHarness(
@@ -80,6 +97,9 @@ export async function cardMenuHarness(
   } = {}
 ) {
   document.body.innerHTML = markup
+  layOut("[id^='card-']", cardBox)
+  layOut("ytd-menu-renderer button", menuButtonBox)
+  Object.defineProperty(document, "elementsFromPoint", { configurable: true, value: laidOutAt })
   const gate = options.gate
   const page = harness({
     ...(options.signedIn === false ? { pageSnapshot: () => snapshot(null) } : {}),
@@ -147,16 +167,21 @@ export async function cardMenuHarness(
       if (!element) throw Error(`Missing fixture element ${id}`)
       return element
     },
-    click(target: EventTarget, init: { shiftKey?: boolean } = {}) {
+    click(target: EventTarget, init: RightClick = {}) {
       const event = rightClick(init)
       target.dispatchEvent(event)
       return event
+    },
+    /** The elements under the right-click point, topmost first. A test names them where the laid-out boxes cannot say, such as under a hover preview. */
+    under(stack: readonly Element[]) {
+      Object.defineProperty(document, "elementsFromPoint", { configurable: true, value: () => [...stack] })
     },
     settle: flush,
     dispose() {
       host.dispose()
       observer.dispose()
       page.dispose()
+      Reflect.deleteProperty(document, "elementsFromPoint")
       document.body.innerHTML = ""
     }
   }

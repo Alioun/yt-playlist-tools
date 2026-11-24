@@ -18,8 +18,9 @@ export type CardMenuContext = FeatureContext<"www", CardMenuServices>
 export type CardMenuKeep =
   | "handled" | "shift" | "revoked" | "not-working" | "page-not-ready" | "no-card" | "unsupported"
   | "unrecognised" | "detached" | "link" | "channel" | "own-link" | "no-button" | "foreign-button"
+type Point = { readonly x: number; readonly y: number }
 export type CardMenuDecision =
-  | { readonly kind: "open"; readonly target: WwwItemTarget }
+  | { readonly kind: "open"; readonly target: WwwItemTarget; readonly at: Point }
   | { readonly kind: "keep"; readonly reason: CardMenuKeep }
 
 const channelParts = "ytd-channel-name, #channel-name, #channel-info, #avatar, #avatar-link, #avatar-container, " +
@@ -33,6 +34,32 @@ function cardPart(items: Recognition, path: readonly Element[]): WwwPointed {
     if (result.kind !== "no-pointed-item" || result.reason === "player") return result
   }
   return { kind: "no-pointed-item", reason: "ordinary" }
+}
+/**
+ * YouTube's hover preview sits above its card from another part of the page, so the card is not in the right-click's own path.
+ * `own` is the preview's part of that path and `path` is what the preview covers.
+ */
+function underPreview(services: CardMenuServices, at: Point, path: readonly Element[]): { readonly own: readonly Element[]; readonly path: readonly Element[] } {
+  const preview = (element: Element) => {
+    const part = services.items.recognise(element)
+    return part.kind === "no-pointed-item" && part.reason === "preview"
+  }
+  // A button Perchling draws over the preview is in its own shadow tree, so only its host reads as a preview.
+  const end = path.findLastIndex(preview)
+  if (end < 0) return { own: [], path }
+  const covered: Element[] = []
+  const top = services.document.elementsFromPoint(at.x, at.y).find(element => !preview(element))
+  for (let node = top ?? null; node; node = node.parentElement) covered.push(node)
+  return { own: path.slice(0, end + 1), path: covered }
+}
+/**
+ * A menu opened from the keyboard has no pointer, so the browser's point counts only when its hit test finds a part of the card there.
+ * Element boxes can't decide that, because on YouTube a pointer hits a card on pixels outside the card's box.
+ */
+function menuPoint(services: CardMenuServices, at: Point, card: Element, button: Element): Point {
+  if (services.document.elementsFromPoint(at.x, at.y).some(element => card.contains(element))) return at
+  const own = button.getBoundingClientRect()
+  return { x: (own.left + own.right) / 2, y: (own.top + own.bottom) / 2 }
 }
 function hiddenWithin(element: Element, card: Element): boolean {
   for (let node: Element | null = element; node && node !== card; node = node.parentElement) {
@@ -59,7 +86,8 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   if (!view || !feature) return keep("revoked")
   if (view.statuses.some(status => status.feature === "card-menu" && status.state === "not-working")) return keep("not-working")
   if (services.page.state.kind !== "ready") return keep("page-not-ready")
-  const path = event.composedPath().filter((node): node is Element => node instanceof Element)
+  const at = { x: event.clientX, y: event.clientY }
+  const { own, path } = underPreview(services, at, event.composedPath().filter((node): node is Element => node instanceof Element))
   const pointed = cardPart(services.items, path)
   if (pointed.kind === "unsupported-item") return keep("unsupported")
   if (pointed.kind === "unrecognised-item") return keep("unrecognised")
@@ -67,8 +95,9 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   const target = pointed.target
   const card = path.indexOf(target.element)
   if (!target.element.isConnected || target.element.ownerDocument !== services.document || card < 0) return keep("detached")
-  for (const [index, element] of path.entries()) {
-    if (index < card && element.matches(channelParts)) return keep("channel")
+  if (path.slice(0, card).some(element => element.matches(channelParts))) return keep("channel")
+  // A link in the preview itself is one the user right-clicked, like a link on the card.
+  for (const element of [...own, ...path]) {
     if (!element.matches(links)) continue
     if (services.items.linkedVideo(element)?.videoId !== target.identity.videoId) return keep("link")
     if (feature.options.keepLinkMenu) return keep("own-link")
@@ -76,7 +105,7 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   const button = ownMenuButton(services.items, target)
   if (button === "foreign") return keep("foreign-button")
   if (!button) return keep("no-button")
-  return { kind: "open", target }
+  return { kind: "open", target, at: menuPoint(services, at, target.element, button) }
 }
 
 function dueNotice(view: SiteView<"www"> | null): DueNotice | undefined {
@@ -101,8 +130,7 @@ export const cardMenuFeature: FeatureDefinition<"www", CardMenuServices> = {
         return
       }
       event.preventDefault()
-      const at = { x: event.clientX, y: event.clientY }
-      void page.run({ job: { kind: "openCardMenu", videoId: decision.target.identity.videoId, at } }, { target: decision.target.element }).catch(() => undefined)
+      void page.run({ job: { kind: "openCardMenu", videoId: decision.target.identity.videoId, at: decision.at } }, { target: decision.target.element }).catch(() => undefined)
     }, { capture: true })
   }
 }
