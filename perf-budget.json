@@ -65,27 +65,27 @@
     },
     {
       "row": "www/core",
-      "kb": 28.5,
-      "since": "2026-11-18",
-      "why": "The shared site core validates picker membership and timestamped health reports."
+      "kb": 28.72,
+      "since": "2026-11-21",
+      "why": "The shared site core validates picker membership and timestamped health reports, delivers its health batch at once when Check now asks, and reports a lost batch again."
     },
     {
       "row": "music/core",
-      "kb": 29.01,
-      "since": "2026-11-18",
-      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode."
+      "kb": 29.22,
+      "since": "2026-11-21",
+      "why": "The Music picker asks the background for membership so the fallback uses a tab with the same account and privacy mode. The core delivers its health batch at once when Check now asks, and reports a lost batch again."
     },
     {
       "row": "popup/www/js",
-      "kb": 57.62,
-      "since": "2026-11-18",
-      "why": "The popup validates the casting-specific health status in the shared health contract."
+      "kb": 57.76,
+      "since": "2026-11-21",
+      "why": "The popup validates the casting-specific health status in the shared health contract, and reads the status again when a tab opens or a breakage signal lands."
     },
     {
       "row": "popup/music/js",
-      "kb": 67.82,
-      "since": "2026-11-18",
-      "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions."
+      "kb": 67.96,
+      "since": "2026-11-21",
+      "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, and reads the status again when a tab opens or a breakage signal lands."
     },
     {
       "row": "www/kit",

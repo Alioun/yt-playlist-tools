@@ -1,5 +1,5 @@
-import type { I18n } from "../../shared/i18n"
-import type { UiFeatureHealth } from "../../shared/contracts/ui-pages"
+import type { I18n, SimpleMessageKey } from "../../shared/i18n"
+import type { HealthGap, UiFeatureHealth } from "../../shared/contracts/ui-pages"
 import type { FeatureId } from "../../shared/contracts/vocabulary"
 import type { createFeatureCopy } from "../onboarding/features"
 
@@ -16,25 +16,22 @@ export function stripLine(i18n: I18n, features: FeatureCopy, health: readonly Ui
   const partly = health.find(row => row.state === "partly-working")
   return partly ? i18n.message("strip_partly", { feature: featureName(features, partly.feature) }) : null
 }
-/** A settings card's health line (UI-SET-09). */
+// One whole sentence per gap, since a sentence built from translated pieces can't be translated (UI-RULE-43).
+const partlyLines = {
+  playlists: "health_partly_playlists",
+  actions: "health_partly_actions",
+  casting: "health_partly_casting",
+  measure: "health_partly_measure",
+  player: "health_partly_player",
+  queue: "health_partly_queue",
+  playlist: "health_partly_playlist"
+} as const satisfies Record<Exclude<HealthGap, "membership">, SimpleMessageKey>
+/** A feature's health line on one site (UI-SET-09), for its settings card, its popup row and its Diagnostics row. */
 export function healthLine(i18n: I18n, row: UiFeatureHealth | undefined): string | null {
   if (!row || row.state === "working") return null
   if (row.state === "not-working") return i18n.message(row.site === "music" ? "health_notWorking_music" : "health_notWorking_www")
   const gap = row.gaps[0]
-  if (gap === "casting") return i18n.message("health_partly", { gap: i18n.message("health_gap_casting") })
-  const text =
-    gap === "membership"
-      ? i18n.message("health_gap_membership")
-      : gap === "playlists"
-        ? i18n.message("health_gap_playlists")
-        : gap === "actions"
-          ? i18n.message("health_gap_actions")
-          : gap === "measure"
-            ? i18n.message("health_gap_measure")
-            : gap
-              ? i18n.message("health_gap_destination", {
-                  destination: i18n.message(gap === "player" ? "gather_destination_player" : gap === "queue" ? "gather_destination_queue" : "gather_into_playlist")
-                })
-              : i18n.message("health_gap_actions")
-  return i18n.message("health_partly", { gap: text })
+  if (gap === undefined) return i18n.message("health_partly_other")
+  if (gap === "membership") return i18n.message(row.site === "music" ? "health_partly_membership_music" : "health_partly_membership_www")
+  return i18n.message(partlyLines[gap])
 }

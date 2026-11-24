@@ -1066,7 +1066,7 @@ type GatherRecord = {
 - **HEALTH-06** Starting values (3 timeouts, 2 no-effects, 3 can't-measure, 3 s settle, 6 links, one half; [Q-WATCH-29](07-quality.md#757-runtime-breakage-signals)) are tuned after ticket 25 and the first weeks of use.
 - **HEALTH-28** **Checking costs little.**
   - The anchor check (HEALTH-02) runs only in a visible tab. In a hidden tab it waits until the tab is shown, then runs once.
-  - A tab sends signals at most every 5 s, and only new ones, or a success for a job that has a signal in that tab ([ARC-MSG-14](06-architecture.md#684-rules-for-every-channel)).
+  - A tab sends signals at most every 5 s, and only new ones, or a success for a job that has a signal in that tab ([ARC-MSG-14](06-architecture.md#684-rules-for-every-channel)). A batch the background didn't take counts as not sent, so each of its reports goes again the next time the tab sees the same thing. Check now is the one exception to the 5 s: before its reads in a tab and once they are done, that tab sends what it holds at once (HEALTH-23).
   - The monitor counts them in memory and writes `storage.session` at most every 10 s. It keeps at most 200 distinct signals, dropping the oldest first. (R111)
 
 ### 5.2 Status
@@ -1086,7 +1086,7 @@ type GatherRecord = {
 - **HEALTH-12** **Clearing:** a tab's status clears when the job next succeeds, or on reload when the probe passes. There's no manual reset.
 - **HEALTH-29** **Gather tabs' status follows its destinations** ([YT-GT-36](02-youtube.md#2166-feedback-keys-and-copy)):
   - **not working** while YouTube's player isn't: its new tab keeps showing no list (`no-effect`);
-  - **partly working** while YouTube's queue or the playlist route isn't, because YouTube's player still works. The health line names the destination, e.g. "Partly working: it can't gather into YouTube's queue right now.";
+  - **partly working** while YouTube's queue or the playlist route isn't, because YouTube's player still works. The health line names the destination, e.g. "Partly working, because it can't gather into YouTube's queue.";
   - a gather into a destination that isn't working answers in its own result, and nothing closes. (R136)
 
 ### 5.3 Where it shows
@@ -1099,7 +1099,7 @@ type GatherRecord = {
   - its action, **Details**, opens Settings at Diagnostics. (R28, R75)
 - **HEALTH-14** **Explicit actions:** every click or key press on something not working gets that action's failure toast.
 - **HEALTH-15** **Toolbar badge:** while any feature is not working in a tab, that tab shows an amber "!", titled "{Feature} isn't working in this tab". Consent or upgrade pending and missing site access take priority over it, and it takes priority over Missing or Full (FT-57, FT-58). Partly working sets no badge, so neither does a YouTube Music action that's unavailable on its own (R50). (R12)
-- **HEALTH-16** **Popup:** while a feature is not working or partly working, a strip under the header with **Details** ([UI-POP-09](05-ui.md#breakage-strip)). Over a YouTube or YouTube Music tab it covers that tab; over any other tab, every open tab of the site.
+- **HEALTH-16** **Popup:** while a feature is not working or partly working, a strip under the header with **Details** ([UI-POP-09](05-ui.md#breakage-strip)). Over a YouTube or YouTube Music tab it covers that tab; over any other tab, every open tab of the site, which a tab that has gone to another site no longer is.
 - **HEALTH-17** **Settings:** a status line under each affected feature's switch, always ([UI-SET-07](05-ui.md#feature-cards), which calls it the health line), and the Diagnostics section.
 - **HEALTH-18** Show feedback hides none of this. A user who doesn't want the notice switches the feature off.
 - **HEALTH-19** No banner across YouTube's page, no notice for a fallback that worked, and no "works again" toast: the status line simply clears.
@@ -1123,8 +1123,8 @@ type GatherRecord = {
 | Account keys missing | Saving isn't working right now because YouTube changed how it shows which account you're using. {Product} saves nothing, so nothing lands in the wrong account. |
 | The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 | Popup strip | {Feature} isn't working in this tab because YouTube changed something. / {N} features aren't working in this tab. / {Feature} is partly working in this tab. |
-| Settings, not working | Not working right now: YouTube changed something it relies on. |
-| Settings, partly working | Partly working: {gap}. For example "it can't show where a video is already saved", "it can't refresh the playlist list", "it can't confirm queue adds", "it can't follow some videos' progress", and on YouTube Music in Chrome "it can't tell whether YouTube Music is casting". On YouTube Music, {gap} names the unavailable actions (R50). |
+| Settings, not working | See the site-specific health lines in [UI-SET-09](05-ui.md#sections). |
+| Settings, partly working | One whole sentence for each gap, listed in [UI-SET-09](05-ui.md#feature-cards). For example "Partly working, because it can't show where a video is already saved.", "Partly working, because it can't refresh the playlist list.", and on YouTube Music in Chrome "Partly working, because it can't tell when YouTube Music is casting. While you cast, queue changes may not reach the cast device." A YouTube Music feature with some actions unavailable reads "Partly working, because some of its buttons can't run." (R50). |
 
   The copy matches [YT-BRK-06](02-youtube.md#213-when-youtube-changes-something), 03's [§14](03-youtube-music.md#14-failures-and-breakage) and [UI-TOAST-15](05-ui.md#the-not-working-notice), which own it on their sites. (R4, R50, R68, R75)
 
@@ -1132,13 +1132,14 @@ type GatherRecord = {
 
 - **HEALTH-21** **Nothing is ever sent:** no error reporting, analytics or crash upload, opt-in or not. Fixes reach users only as releases; there's no remote config or kill switch ([ADR-0005](../../../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md)). The one thing the user can send is a problem report they start, see and submit themselves (HEALTH-27; R89).
 - **HEALTH-22** **Settings › Diagnostics** loads only when shown. It holds:
-  - each feature's status per site, one row for each site whose open tabs report it: "Working", "Partly working" or "Not working". A feature no open tab reports reads "Not checked", and one that can't run yet reads "Can't run yet". A successful **Check now** refreshes the rows;
+  - one row per site for each feature that's on, in the order defined in [UI-SET-17](05-ui.md#sections). When a feature can run and has no open tab on that site, its row reads **No tab open**;
   - **Check now**;
   - the diagnostics report, shown in full, with **Copy**;
   - **Known problems**, a plain link to the public issues labelled `youtube-change`, and **Report a problem**, which opens HEALTH-27's chooser. There's no support e-mail (R89);
   - **Detailed console log**, off by default, this browser only;
   - the version, with "(beta)" on beta builds ([REL-CI-15](08-release.md#71-firefox)), and a note that updates install by themselves. There's no update button. (R65)
-- **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report. The line beside it reads "Check now reads from an open YouTube tab. It changes nothing." A result reads "{done} of {total} reads answered on {site}.", and a check that can't run reads "Couldn't run the check. Try again." (R197)
+- **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report. The line beside it reads "Check now reads from an open YouTube tab. It changes nothing." A result reads "{done} of {total} reads answered on YouTube." or "…on YouTube Music.", one sentence per site, with "read" when the total is one. A check that can't run reads "Couldn't run the check. Try again." (R197)
+  - Before its reads and after them, **Check now** asks each serving tab to deliver its pending health reports (HEALTH-28). The first ask settles reports from before the check. It publishes results for the sites it just read once the Monitor confirms delivery. If delivery fails, or the Monitor didn't take a batch the tab sent while the reads ran, the check shows the failure and the report keeps the previous confirmed result.
   - **With no YouTube tab open,** it's disabled, with "Open YouTube to check" and **Open YouTube** ([UI-SET-17](05-ui.md#sections)).
   - **Before consent** it can't run, because nothing is read from YouTube (FT-30). (R15)
 - **HEALTH-24** **The diagnostics report** is plain text. It contains:
@@ -1148,7 +1149,7 @@ type GatherRecord = {
   - which features are on, and site access per site;
   - settings sync on or off, the sync status, and the `schema` version;
   - whether the tab is signed in;
-  - each feature's status per site;
+  - each feature's status per site, as Diagnostics' rows show it ([UI-SET-17](05-ui.md#sections)), with a description of each gap for a partly working feature, such as trouble refreshing playlists, gathering tabs into a playlist, or changing the queue on a cast device;
   - the session's breakage signals, with their shape outlines;
   - the last Check now result.
 - **HEALTH-25** The report never contains account IDs, names or handles; video, playlist or channel IDs or titles; URLs; setting values (keys, filters, setups); cookies; or the country. It leaves the browser only if the user copies it.
@@ -1164,7 +1165,7 @@ type GatherRecord = {
     - **Something went wrong:** "Say what you did, what you expected and what happened instead. Paste the diagnostics report if you can.";
     - **An idea:** "Say what you'd like to do, and where you'd look for it."
   - **Feature:** a choice of every feature, plus "Upgrade from 1.x", "The popup or Settings" and "Something else", preselected when the chooser opens from a feature's status.
-  - **What goes to GitHub** is shown before it's sent, e.g. "GitHub opens with: {Product} 2.0.0 · Firefox 141 · Auto-add · Not working.": the version ("(beta)" on betas), the browser and its major version, the chosen feature's name, and its status in this browser (HEALTH-07's words, with its gap for partly working). Nothing else. It never names a video, playlist, channel or account.
+  - **What goes to GitHub** is shown before it's sent, e.g. "GitHub opens with: {Product} 2.0.0 · Firefox 141 · Auto-add · Not working.": the version ("(beta)" on betas), the browser and its major version, the chosen feature's name, and its status in this browser: what its Diagnostics rows show (HEALTH-07's words, its gap in words for partly working, "No YouTube tab open", or "Can't run yet" with the held reason), naming the site when its two rows differ. Like the report, it's in English for the developer. "Upgrade from 1.x", "The popup or Settings" and "Something else" carry no status, and neither does Settings sync without a status from its tab. Nothing else. It never names a video, playlist, channel or account.
   - **The diagnostics report** never goes into the address. **Copy diagnostics report** copies it, with "Paste it into the form's Diagnostics field if you want to share it."
   - **Open GitHub** opens GitHub's new-issue page in a new tab, with the matching form and those values prefilled. They reach GitHub when its page opens, and the developer only if the user submits the issue.
 

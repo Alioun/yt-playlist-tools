@@ -155,7 +155,8 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
   gate.onAnswered(() => {
     void owner.refresh()
   })
-  const ready = lifecycle
+  // The lifecycle is active before its owner has read the store, and until then consent reads as missing, so the event that woke the worker waits for the owner.
+  const ready = owner.port
     .ready()
     .then(start, () => {})
     .finally(() => {

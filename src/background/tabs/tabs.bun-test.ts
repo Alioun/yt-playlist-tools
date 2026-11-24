@@ -665,3 +665,27 @@ test("a known handle belongs to one Tabs lifetime and cancellation stops late na
     await h.dispose()
   }
 })
+
+test("a tab the browser no longer shows on its site leaves the registry, and a tab still on it stays", async () => {
+  const h = tabsFixture()
+  try {
+    h.seedTab(nativeTab(1), signedIn(a))
+    h.seedTab(nativeTab(2), signedIn(b))
+    h.seedTab(nativeTab(3), signedIn(a))
+    await h.engine.seen(1, hello(), fixtureView)
+    await h.engine.seen(2, hello(signedIn(b)), fixtureView)
+    await h.engine.seen(3, hello(), fixtureView)
+    const writes = h.sessionWrites()
+    await h.engine.left(2)
+    expect(h.sessionWrites()).toEqual(writes)
+    // Tab 1 went to a site the extension can't read, and tab 3 closed.
+    h.seedTab(nativeTab(1, { site: null }))
+    h.tabs.delete(3)
+    await h.engine.left(1)
+    await h.engine.left(3)
+    expect(h.stored().tabs).toEqual({ "2": expect.objectContaining({ acct: b }) })
+    expect((await h.engine.known({ kind: "all" })).map(tab => tab.tabId)).toEqual([2])
+  } finally {
+    await h.dispose()
+  }
+})

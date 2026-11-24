@@ -3,12 +3,12 @@ import { createSiteHealth, HEALTH_SEND_MS } from "./health"
 import type { BreakageSignal } from "../../shared/contracts/diagnostics"
 import type { TabHealthReport } from "../../shared/contracts/tab-health"
 
-function reporter(site: BreakageSignal["site"] = "www") {
+function reporter(site: BreakageSignal["site"] = "www", acknowledged: () => Promise<boolean> = async () => true) {
   let now = 10_000
   const timers: { at: number; run: () => void }[] = [], batches: (readonly TabHealthReport[])[] = []
   let listener: (signal: BreakageSignal) => void = () => {}
   const health = createSiteHealth({
-    site, now: () => now, online: () => true, send: reports => { batches.push(reports) },
+    site, now: () => now, online: () => true, send: reports => { batches.push(reports); return acknowledged() },
     later(run, ms) { const timer = { at: now + ms, run }; timers.push(timer); return () => { timers.splice(timers.indexOf(timer), 1) } },
     page: { onSignal(fn) { listener = fn; return () => {} }, state: { kind: "ready", snapshot: { pageType: "watch" } } as never }
   })
@@ -32,6 +32,61 @@ test("signals go out in one batch, then at most every 5 s, and a repeated one go
   expect(r.batches).toHaveLength(1)
   r.advance(1)
   expect(kinds(r.batches[1])).toEqual(["rejected"])
+})
+
+test("Check now's delivery sends what's waiting at once and settles only when the background has it (HEALTH-23)", async () => {
+  const waiting: (() => void)[] = []
+  const r = reporter("www", () => new Promise<boolean>(resolve => { waiting.push(() => resolve(true)) }))
+  r.emit(r.signal("missing"))
+  r.advance(0)
+  r.emit(r.signal("unrecognised"))
+  let settled = false
+  const delivery = r.health.deliver().then(() => { settled = true })
+  expect(kinds(r.batches[1])).toEqual(["unrecognised"])
+  await Promise.resolve()
+  expect(settled).toBe(false)
+  for (const acknowledge of waiting) acknowledge()
+  await delivery
+  expect(settled).toBe(true)
+  r.advance(HEALTH_SEND_MS)
+  expect(r.batches).toHaveLength(2)
+})
+
+test("a batch the background didn't take counts in every later delivery answer, and its reports go again when they recur (HEALTH-23, HEALTH-28)", async () => {
+  const answers = [false, true, false, true, true, false]
+  const r = reporter("www", async () => answers.shift() ?? true)
+  const settle = () => new Promise<void>(resolve => setTimeout(resolve))
+  r.emit(r.signal("missing")); r.advance(0)
+  await settle()
+  expect(await r.health.deliver()).toBe(1)
+  expect(await r.health.deliver()).toBe(1)
+  r.emit(r.signal("missing")); r.advance(HEALTH_SEND_MS)
+  expect(kinds(r.batches[1])).toEqual(["missing"])
+  await settle()
+  r.health.answered("add"); r.advance(HEALTH_SEND_MS)
+  expect(kinds(r.batches[2])).toEqual(["success"])
+  await settle()
+  r.health.answered("add"); r.advance(HEALTH_SEND_MS)
+  expect(kinds(r.batches[3])).toEqual(["success"])
+  await settle()
+  r.health.cantMeasure(); r.advance(HEALTH_SEND_MS)
+  await settle()
+  r.health.measured(); r.advance(HEALTH_SEND_MS)
+  expect(kinds(r.batches[5])).toEqual(["measured"])
+  await settle()
+  r.health.measured(); r.advance(HEALTH_SEND_MS)
+  expect(kinds(r.batches[6])).toEqual(["measured"])
+})
+
+test("another check's ask between a check's two asks leaves that check's lost batch countable (HEALTH-23)", async () => {
+  const answers = [false]
+  const r = reporter("www", async () => answers.shift() ?? true)
+  const before = await r.health.deliver()
+  r.emit(r.signal("unrecognised", "account"))
+  // The other check asks before its own reads, and the first check's batch is lost while it waits.
+  const other = await r.health.deliver()
+  expect(await r.health.deliver()).not.toBe(before)
+  expect(await r.health.deliver()).toBe(other)
 })
 
 test("timeouts keep up to three in a batch, since only three in a row count (HEALTH-01)", () => {

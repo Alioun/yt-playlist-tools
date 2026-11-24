@@ -8,7 +8,8 @@ import { createBackend } from "./core"
 import { gatherPush, type GatherPush } from "../../shared/contracts/ui-gather"
 
 export type ScriptedAnswer = { [K in keyof UiMessages]: { readonly kind: K; readonly result: UiMessages[K]["result"] } }[keyof UiMessages]
-export type ScriptedResponders = { readonly [K in keyof UiMessages]?: (payload: UiMessages[K]["payload"]) => UiMessages[K]["result"] }
+type ScriptedResponder<K extends keyof UiMessages> = (payload: UiMessages[K]["payload"]) => UiMessages[K]["result"] | Promise<UiMessages[K]["result"]>
+export type ScriptedResponders = { readonly [K in keyof UiMessages]?: ScriptedResponder<K> }
 export type ScriptedBackendOptions = BackendOptions & {
   readonly records?: JsonObject
   readonly answers: readonly ScriptedAnswer[]
@@ -71,10 +72,10 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.sync": payload => take("ui.sync", payload)
     }
   })
-  function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): UiMessages[K]["result"] {
-    const responder = options.respond?.[kind] as ((payload: UiMessages[K]["payload"]) => UiMessages[K]["result"]) | undefined
+  async function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): Promise<UiMessages[K]["result"]> {
+    const responder = options.respond?.[kind] as ScriptedResponder<K> | undefined
     if (responder && answers[0]?.kind !== kind) {
-      const result: unknown = responder(payload)
+      const result: unknown = await responder(payload)
       if (!uiContract[kind].result(result)) throw Error(`Scripted ${kind} answer is invalid`)
       return structuredClone(result) as UiMessages[K]["result"]
     }

@@ -186,6 +186,15 @@ export function createTabs(ports: TabsPorts): Tabs {
       if (result.kind !== "committed") return result
     }
   }
+  async function left(tabId: number): Promise<void> {
+    if (guard()) return
+    const captured = await snapshot()
+    if (captured.kind !== "memory") return
+    const row = captured.memory.tabs.get(tabId)
+    if (!row) return
+    const current = await ports.native.get(tabId)
+    if (current.kind === "gone" || (current.kind === "tab" && current.tab.site !== row.site)) await forget(tabId, false, captured)
+  }
   async function probe(tabId: number, need: Pick<RoutingNeed, "site" | "req">, captured: Snapshot, injection: { used: boolean }, inject: boolean): Promise<Probe> {
     const started = ports.clock.now()
     const remaining = () => Math.max(0, CANDIDATE_MS - (ports.clock.now() - started))
@@ -526,6 +535,7 @@ export function createTabs(ports: TabsPorts): Tabs {
   }
   return {
     seen,
+    left,
     accountInView,
     serve,
     runIn,

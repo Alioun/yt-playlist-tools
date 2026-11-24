@@ -33,7 +33,7 @@ export type TabHealthReport =
   | { readonly kind: "success"; readonly job: JobId; readonly at?: number }
   | { readonly kind: "measured" }
 export type TabHealthMessages = {
-  "tab.health": { payload: { readonly acct: AccountKey | null; readonly request: { readonly reports: readonly TabHealthReport[] } }; result: null }
+  "tab.health": { payload: { readonly acct: AccountKey | null; readonly request: { readonly reports: readonly TabHealthReport[] } }; result: boolean }
 }
 export const HEALTH_REPORTS = 40
 
@@ -70,7 +70,7 @@ export const tabHealthContract: RpcContract<TabHealthMessages> = {
         acct: a => a === null || isAccountKey(a),
         request: r => objectShape(r, { reports: list => Array.isArray(list) && list.length > 0 && list.length <= HEALTH_REPORTS && list.every(isTabHealthReport) })
       }),
-    result: (v): v is null => v === null,
+    result: (v): v is boolean => bool(v),
     timeoutMs: 5_000
   }
 }

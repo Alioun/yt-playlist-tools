@@ -136,10 +136,14 @@ function youtube() {
   const toasts: unknown[] = []
   const jobs: string[] = []
   const views: { site: string; acct: string | null; features: unknown[] }[] = []
+  let playing: string | null = null
   function answer(kind: string, payload: { job: { kind: string; videoId?: string; videoIds?: string[]; setVideoIds?: string[] } }): unknown {
     switch (kind) {
       case "bg.ping":
         return { site: "www", build, signedIn: true, acct }
+      // The page has delivered its health reports and lost none (HEALTH-23).
+      case "bg.health":
+        return 0
       case "bg.view":
         views.push(payload as never)
         return null
@@ -153,8 +157,15 @@ function youtube() {
         switch (job.kind) {
           case "account":
             return { ok: true, route, data: { signedIn: true, acct } }
+          case "videoInfo":
+            return playing === null ? { ok: false, reason: "unavailable" } : { ok: true, route, data: { videoId: playing, title: "", length: null, kind: "video" } }
           case "membership":
             return { ok: true, route, data: [{ id: "WL", title: "Watch later", contains: [...later.values()].includes(job.videoId ?? "") }] }
+          case "add": {
+            const setVideoId = `entry-${++entry}`
+            later.set(setVideoId, job.videoId ?? "")
+            return { ok: true, route, data: { setVideoId } }
+          }
           case "addBatch":
             return {
               ok: true,
@@ -181,6 +192,9 @@ function youtube() {
     toasts,
     jobs,
     views,
+    play(videoId: string) {
+      playing = videoId
+    },
     receive(message: unknown) {
       const { id, kind, payload } = message as { id: string; kind: string; payload: never }
       const result = answer(kind, payload)
@@ -401,11 +415,6 @@ export async function eventually(check: () => boolean | Promise<boolean>, what: 
   throw new Error(`Timed out waiting: ${what}`)
 }
 
-// The popup's routes and the tab registry answer once the store owner is ready and reports consent.
 export async function started(w: ReturnType<ReturnType<typeof browser>["worker"]>) {
   await w.background.ready
-  await eventually(async () => {
-    const status = await w.popup.call("ui.status", {})
-    return status.kind === "answered" && status.result.kind === "status"
-  }, "the popup's status")
 }

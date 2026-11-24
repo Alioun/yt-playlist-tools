@@ -36,7 +36,7 @@ An origin with `incognito: true` uses private memory. It is a separate record in
 
 `pause(paused)` writes the shared switch. Pause quiets auto-add only. Explicit actions and Undo still run. `skip(request, origin)` sets or clears a session skip for the tab router, which resolves `acct` from its authenticated registry. Explicit adds ignore skips.
 
-Handle IDs are `<generation>:<n>`. A new engine never reissues an earlier engine's ID, so an old toast cannot reach a different operation. Ordinary add and removal Undo lives in this engine's memory. It ends with `release`, with `releaseTab(lane)` when the tab registry reports a reload or close, or with the engine. Gather Undo lives in the session record, keeps its original account, is one-use and keeps the last five across engines. When the owner reports a new removal revision, the engine drops ordinary Undo and private memory.
+Handle IDs are `<generation>:<n>`. A new engine never reissues an earlier engine's ID, so an old toast cannot reach a different operation. Ordinary add and removal Undo lives in this engine's memory. It ends with `release`, with `releaseTab(lane)` when the tab starts a new page load, or with the engine. A closed tab is not heard, because the background listens to no tab event (ARC-MOD-39). Its handles stay unused until the engine ends. Gather Undo lives in the session record, keeps its original account, is one-use and keeps the last five across engines. When the owner reports a new removal revision, the engine drops ordinary Undo and private memory.
 
 ## Data and ordering
 

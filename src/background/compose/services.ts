@@ -176,10 +176,6 @@ export function composeServices(deps: {
         .then(tab => native.tabs.create({ url: runtime.getURL(`/options.html#${hash}`), openerTabId: tabId, ...(tab.index === undefined ? {} : { index: tab.index + 1 }) }))
         .catch(() => {})
     },
-    closed(listener) {
-      native.tabs.onRemoved.addListener(listener)
-      return () => native.tabs.onRemoved.removeListener(listener)
-    },
     async requester(origin) {
       const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
       return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }
@@ -250,7 +246,26 @@ export function composeServices(deps: {
       return { tab: { ...lookup.tab, site: sender.site }, info: acct === null ? { site: sender.site, build, signedIn: false, acct: null } : { site: sender.site, build, signedIn: true, acct } }
     }
   })
-  const diagnostics = createDiagnostics({ tabs, tab: tabId => browserTabs.port.get(tabId), monitor, build, consented: deps.consented, now: () => Date.now() })
+  async function ask<K extends keyof TabAskMessages>(tabId: number, kind: K, payload: TabAskMessages[K]["payload"]) {
+    const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
+    try {
+      return await caller.call(kind, payload)
+    } finally {
+      caller.dispose()
+    }
+  }
+  const diagnostics = createDiagnostics({
+    tabs,
+    tab: tabId => browserTabs.port.get(tabId),
+    async deliver(tabId) {
+      const answer = await ask(tabId, "bg.health", {})
+      return answer.kind === "answered" ? answer.result : null
+    },
+    monitor,
+    build,
+    consented: deps.consented,
+    now: () => Date.now()
+  })
   const autoAddRoutes = createAutoAddTabRouter({
     transport: runtimeTransport(deps.runtime),
     senders: { ...native, runtime },
@@ -280,14 +295,7 @@ export function composeServices(deps: {
       registrar,
       flow: actions.flow,
       consented: deps.consented,
-      async ask(tabId, kind, payload) {
-        const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
-        try {
-          return await caller.call(kind, payload)
-        } finally {
-          caller.dispose()
-        }
-      }
+      ask
     }),
     gather: gather.routes,
     woke: () => gather.woke("ui"),
@@ -300,6 +308,9 @@ export function composeServices(deps: {
         tab: tabId => browserTabs.port.get(tabId),
         build,
         monitor: (context, enabled) => monitor.statuses(context, enabled),
+        left: tabId => {
+          void tabs.left(tabId).catch(() => {})
+        },
         syncOn: async () => {
           const { device } = await native.storage.local.get("device")
           return device !== null && typeof device === "object" && (device as { syncOn?: unknown }).syncOn === true

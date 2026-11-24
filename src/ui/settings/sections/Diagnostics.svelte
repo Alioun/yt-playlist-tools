@@ -2,53 +2,63 @@
   import { untrack } from "svelte"
   import Button from "../../components/Button.svelte"
   import Switch from "../../components/Switch.svelte"
-  import type { FeatureId, Site } from "../../../shared/contracts/vocabulary"
   import type { createFeatureCopy } from "../../onboarding/features"
-  import { firstRunFeatures } from "../../onboarding/features"
   import type { PageState } from "../../lib/page-state.svelte"
-  import { accessSite, heldReason, isOn } from "../../lib/held"
-  import { featureName } from "../../lib/health"
+  import { heldMessage } from "../../lib/held"
+  import { featureName, healthLine } from "../../lib/health"
   import { browserLabel, knownProblems, type ReportFeature } from "../report"
-  import { diagnosticsReport } from "../diagnostics"
-  import type { UiDiagnostics } from "../../../shared/contracts/ui-pages"
+  import { diagnosticsReport, statusRows, type RowState } from "../diagnostics"
+  import type { UiCheck, UiDiagnostics } from "../../../shared/contracts/ui-pages"
 
   // Settings › Diagnostics (UI-SET-17, HEALTH-22): each feature's status per site, the report with Copy, Known
   // problems, Report a problem, the detailed console log and the version.
   let { pageState, features }: { pageState: PageState; features: ReturnType<typeof createFeatureCopy> } = $props()
   const { i18n, backend, platform } = untrack(() => pageState.page)
-  const settings = $derived(pageState.settings)
   const device = $derived(pageState.ready?.device.kind === "current" ? pageState.ready.device.device : null)
-  const health = $derived(pageState.status?.kind === "status" ? pageState.status.health : [])
   let copied = $state(false)
   let reporting = $state<ReportFeature | null>(null)
   let logFailed = $state(false)
-  const rows = $derived(settings ? firstRunFeatures.filter(row => isOn(settings, row.id)).flatMap(row => {
-    const site: Site = accessSite(row.id)
-    const statuses = health.filter(entry => entry.feature === row.id)
-    const held = heldReason(row.id, settings, pageState.agreed, pageState.access ?? { www: true, music: true, browserMenu: true })
-    if (!statuses.length) return [{ feature: row.id as FeatureId, site, label: i18n.message(held ? "diag_held" : "diag_unchecked"), broken: false }]
-    return statuses.map(status => ({
-      feature: status.feature, site: status.site, broken: !held && status.state !== "working",
-      label: i18n.message(held ? "diag_held" : status.state === "not-working" ? "diag_notWorking" : status.state === "partly-working" ? "diag_partly" : "diag_working")
-    }))
-  }) : [])
+  const rows = $derived(statusRows(pageState))
+  const untabbed = $derived((["www", "music"] as const).filter(site => rows.some(row => row.site === site && row.state.kind === "no-tab")))
+  const stateLabels = { working: "diag_working", "partly-working": "diag_partly", "not-working": "diag_notWorking" } as const
+  const label = (state: RowState) => i18n.message(state.kind === "held" ? heldMessage[state.held] : state.kind === "no-tab" ? "diag_noTab" : stateLabels[state.health.state])
+  const broken = (state: RowState) => state.kind === "health" && state.health.state !== "working"
+  const checkedKeys = {
+    www: { one: "diag_checked_www_one", other: "diag_checked_www_other" },
+    music: { one: "diag_checked_music_one", other: "diag_checked_music_other" }
+  } as const
+  const checkedLine = (check: UiCheck) =>
+    i18n.message(checkedKeys[check.site][i18n.plural(check.jobs.length)], { done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })
   let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
+  let checked = $state.raw<readonly UiCheck[] | null>(null)
+  const checks = $derived(checked ?? evidence?.checks ?? [])
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
-    browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, health,
-    signedIn: pageState.tab ? pageState.signedIn : null, evidence }) : "")
+    browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, rows,
+    signedIn: pageState.tab ? pageState.signedIn : null, evidence: evidence && { checks, signals: evidence.signals } }) : "")
   // HEALTH-22, HEALTH-23: the session's signals feed the report, and Check now runs only when clicked.
-  let checking = $state(false), checkFailed = $state(false)
-  async function diagnostics(check: boolean) {
-    const answer = await backend.call("ui.diagnostics", { check })
-    if (answer.kind === "answered" && answer.result.kind === "diagnostics") { evidence = answer.result; return true }
-    return false
+  let checking = $state(false), checkFailed = $state(false), reads = 0
+  async function refreshEvidence() {
+    const read = ++reads
+    const answer = await backend.call("ui.diagnostics", { check: false })
+    if (read === reads && answer.kind === "answered" && answer.result.kind === "diagnostics") evidence = answer.result
   }
-  void untrack(() => diagnostics(false))
+  // The evidence is read again with every status, so which tabs are open and the signals keep up with the rows.
+  $effect(() => {
+    void pageState.status
+    untrack(() => void refreshEvidence())
+  })
   async function checkNow() {
     checking = true; checkFailed = false
     try {
-      checkFailed = !await diagnostics(true)
-      if (!checkFailed) await pageState.refreshStatus()
+      const answer = await backend.call("ui.diagnostics", { check: true })
+      if (answer.kind !== "answered" || answer.result.kind !== "diagnostics") {
+        checkFailed = true
+        return
+      }
+      ++reads
+      evidence = answer.result
+      checked = answer.result.checks
+      await pageState.refreshStatus()
     } finally { checking = false }
   }
   const noTab = $derived(evidence !== null && !evidence.tabs.www && !evidence.tabs.music)
@@ -66,13 +76,20 @@
     {#if rows.length === 0}<p class="text-muted-foreground text-[13.5px]">{i18n.message("shell_noFeatures")}</p>{/if}
     <ul class="flex flex-col gap-1.5 text-[13.5px]">
       {#each rows as row (`${row.feature}:${row.site}`)}
-        <li class="flex items-center justify-between gap-3" data-status={row.feature}>
-          <span>{featureName(features, row.feature)} <span class="text-muted-foreground">· {i18n.message(row.site === "www" ? "site_www" : "site_music")}</span></span>
-          <span class={row.broken ? "text-warning font-medium" : "text-muted-foreground"}>{row.label}
-            {#if row.broken}<Button size="sm" variant="link" onclick={() => { reporting = row.feature }}>{i18n.message("diag_report")}</Button>{/if}</span>
+        {@const why = row.state.kind === "health" ? healthLine(i18n, row.state.health) : null}
+        <li data-status={row.feature} data-site={row.site}>
+          <div class="flex items-center justify-between gap-3">
+            <span>{featureName(features, row.feature)} <span class="text-muted-foreground">· {i18n.message(row.site === "www" ? "site_www" : "site_music")}</span></span>
+            <span class={broken(row.state) ? "text-warning font-medium" : "text-muted-foreground"}>{label(row.state)}
+              {#if broken(row.state)}<Button size="sm" variant="link" onclick={() => { reporting = row.feature }}>{i18n.message("diag_report")}</Button>{/if}</span>
+          </div>
+          {#if why}<p class="text-muted-foreground text-[12.5px]">{why}</p>{/if}
         </li>
       {/each}
     </ul>
+    {#each untabbed as site (site)}
+      <p class="text-muted-foreground mt-2 text-[12.5px]">{i18n.message(site === "www" ? "diag_noTabLine_www" : "diag_noTabLine_music")}</p>
+    {/each}
     <div class="mt-3 flex flex-col items-start gap-1.5 border-t pt-3 text-[13.5px]">
       {#if noTab}
         <p class="text-muted-foreground">{i18n.message("diag_checkNoTab")}</p>
@@ -81,11 +98,16 @@
         <Button size="sm" variant="outline" pending={checking} disabled={!pageState.agreed || evidence === null} onclick={checkNow}>{i18n.message("diag_checkNow")}</Button>
         <p class="text-muted-foreground text-[12.5px]">{i18n.message("diag_checkLine")}</p>
       {/if}
-      {#each evidence?.checks ?? [] as check (check.site)}
-        <p data-check={check.site}>{i18n.message("diag_checked", { site: i18n.message(check.site === "www" ? "site_www" : "site_music"),
-          done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })}</p>
-      {/each}
-      {#if checkFailed}<p role="status" class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>{/if}
+      <!-- Each check's lines are new nodes, so a screen reader hears a repeat check with the same counts too. -->
+      <div role="status" class="flex flex-col gap-1.5">
+        {#if checkFailed}
+          <p class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>
+        {:else}
+          {#each checks as check (`${check.site}:${check.at}`)}
+            <p data-check={check.site}>{checkedLine(check)}</p>
+          {/each}
+        {/if}
+      </div>
     </div>
   </section>
   <section class="bg-card rounded-2xl border p-5">

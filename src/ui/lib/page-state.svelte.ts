@@ -27,6 +27,8 @@ export class PageState {
   readonly page: ExtensionPage
   readonly #stops: (() => void)[] = []
   #accountRead = false
+  #accountReads = 0
+  #statusReads = 0
 
   constructor(page: ExtensionPage) {
     this.page = page
@@ -36,6 +38,12 @@ export class PageState {
     this.#stops.push(
       page.backend.watchPage(event => {
         this.#seen(event.view)
+      }),
+      // A tab opening or closing, or a new breakage signal, changes what the page shows without a reload (UI-SET-17).
+      page.backend.watchStatus(() => {
+        if (!this.#accountRead) return
+        void this.refreshAccount()
+        void this.refreshStatus()
       })
     )
     void this.refreshAccess()
@@ -103,13 +111,16 @@ export class PageState {
     const [www, music, browserMenu] = await Promise.all([access.has("www"), access.has("music"), access.hasBrowserMenu()])
     this.access = { www, music, browserMenu }
   }
+  // Reads can overlap, so only the latest one's answer is kept.
   async refreshAccount() {
+    const read = ++this.#accountReads
     const answer = await this.page.backend.call("ui.accountInView", {})
-    this.account = answer.kind === "answered" ? answer.result : { kind: "unavailable", reason: "native" }
+    if (read === this.#accountReads) this.account = answer.kind === "answered" ? answer.result : { kind: "unavailable", reason: "native" }
   }
   async refreshStatus() {
+    const read = ++this.#statusReads
     const answer = await this.page.backend.call("ui.status", {})
-    this.status = answer.kind === "answered" ? answer.result : { kind: "unavailable", reason: "collaborator" }
+    if (read === this.#statusReads) this.status = answer.kind === "answered" ? answer.result : { kind: "unavailable", reason: "collaborator" }
   }
   /** One feature switch, with any permission asked in the click (UI-POP-21, FT-52). */
   async switchFeature(feature: PageFeatureId, value: boolean): Promise<FeatureSettingAnswer> {

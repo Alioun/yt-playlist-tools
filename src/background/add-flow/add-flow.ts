@@ -1194,7 +1194,7 @@ export function createAddFlow(ports: Ports): AddFlow {
     )
   }
 
-  // The later tab registry calls this when a page load ends. Its toasts and once-per-tab memory end with it.
+  // Called when a tab starts a new page load. The earlier load's toasts and once-per-tab memory end with it.
   function releaseTab(lane: string): void {
     shownTabs.delete(lane)
     tripped.delete(lane)

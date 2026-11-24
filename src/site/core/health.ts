@@ -24,23 +24,43 @@ export type SiteHealth = {
 /**
  * The tab's half of the Monitor's transport (HEALTH-28): signals wait in a batch sent at most every 5 s, a signal
  * already sent this page goes again only once its job has succeeded since, and a success goes only for a job with a signal.
+ * Check now has the batch delivered at once, before its reads and after them, and counts the batches lost between (HEALTH-23).
  */
 export function createSiteHealth(options: {
   readonly site: Site
   readonly page: Pick<PageLink, "onSignal" | "state">
-  send(reports: readonly TabHealthReport[]): void
+  /** Settles once the background has the reports. */
+  send(reports: readonly TabHealthReport[]): Promise<boolean>
   now(): number
   online(): boolean
   later(run: () => void, milliseconds: number): () => void
-}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; dispose(): void } {
+}): SiteHealth & { answered(job: JobId, complete?: boolean): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; deliver(): Promise<number | null>; dispose(): void } {
   let queue: TabHealthReport[] = [], lastSent = -Infinity, cancel: (() => void) | null = null, answeredAt = -Infinity, disposed = false, unmeasured = false
+  let lost = 0
+  const sending = new Set<Promise<void>>()
   const sent = new Map<string, JobId | null>(), batched = new Map<string, number>(), signalled = new Set<JobId>()
+  // A batch the background didn't take was never sent, so each of its reports goes again when it recurs.
+  function forget(reports: readonly TabHealthReport[]) {
+    lost++
+    for (const report of reports) {
+      if (report.kind === "success") signalled.add(report.job)
+      else if (report.kind === "measured") unmeasured = true
+      else sent.delete(keyOf(report.signal))
+    }
+  }
+  function send() {
+    const reports = queue.splice(0, HEALTH_REPORTS)
+    batched.clear(); lastSent = options.now()
+    const pending: Promise<void> = options.send(reports).catch(() => false).then(taken => {
+      sending.delete(pending)
+      if (!taken) forget(reports)
+    })
+    sending.add(pending)
+  }
   function flush() {
     cancel = null
     if (disposed || !queue.length) return
-    const reports = queue.splice(0, HEALTH_REPORTS)
-    batched.clear(); lastSent = options.now()
-    try { options.send(reports) } catch {}
+    send()
     if (queue.length) schedule()
   }
   function schedule() {
@@ -115,6 +135,13 @@ export function createSiteHealth(options: {
       if (!admit(signal)) return
       push({ kind: "anchor", anchor: observation.anchor, signal, observation: { relevant: observation.relevant, visible: observation.visible,
         settledMs: observation.delayMs, distinctMainLinks: observation.distinctMainLinks, recognised: observation.recognised } })
+    },
+    // Answers with the batches this page has lost so far. A check compares its own two answers, so one check's asks never hide another's loss.
+    async deliver() {
+      cancel?.(); cancel = null
+      while (!disposed && queue.length) send()
+      await Promise.all(sending)
+      return disposed ? null : lost
     },
     dispose() {
       if (disposed) return

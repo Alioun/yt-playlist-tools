@@ -6,7 +6,7 @@ import type { PageStatusSource } from "../router/ui-pages"
 import type { SessionRead } from "../store/session-memory"
 import type { SettingsRead } from "../store/local-filter-writer"
 import { enabledTabFeatures, type StatusProducer } from "../tab-view/producer"
-import type { TabLookup } from "../tabs/ports"
+import type { NativeTab, TabLookup } from "../tabs/ports"
 import type { TabRecord } from "../tabs/records"
 import type { Settings } from "../../shared/model/types"
 import type { EnabledMonitorFeature, MonitorStatus } from "../monitor/ports"
@@ -32,7 +32,16 @@ export function backgroundFeatures(settings: Settings, syncOn: boolean, site: Si
 const destinationGaps = { player: "player", queue: "queue", playlist: "playlist" } as const
 
 const rank = { working: 0, "partly-working": 1, "not-working": 2 } as const
+// The Monitor reads the session once per tab, so each site's read stops at its most recently seen tabs.
 const MAX_TABS = 20
+/**
+ * A registered tab is open on its site only while the browser still shows that site in it. Nothing tells the
+ * background when a tab goes to another site, so its row stays until a status read finds it (ARC-ACC-70).
+ */
+function openTab(lookup: TabLookup, record: TabRecord, incognito: boolean | null): (NativeTab & { readonly site: Site }) | null {
+  if (lookup.kind !== "tab" || lookup.tab.site !== record.site || (incognito !== null && lookup.tab.incognito !== incognito)) return null
+  return { ...lookup.tab, site: record.site }
+}
 
 function gaps(status: Pick<FeatureStatus, "jobs" | "actions" | "kinds">): HealthGap[] {
   const result: HealthGap[] = []
@@ -48,26 +57,24 @@ type StatusDeps = { readonly statuses: StatusProducer; readonly tab: (tabId: num
 type HealthDeps = StatusDeps & { readonly monitor?: MonitorStatuses; readonly syncOn?: () => Promise<boolean> }
 /** One known tab's feature statuses, from the status producer, as the tab view and the badge read them. */
 export async function readTabStatuses(deps: StatusDeps, settings: Settings, tabId: number, record: TabRecord, incognito: boolean | null): Promise<readonly FeatureStatus[]> {
-  const lookup = await deps.tab(tabId)
-  if (lookup.kind !== "tab" || (incognito !== null && lookup.tab.incognito !== incognito)) return []
+  const tab = openTab(await deps.tab(tabId), record, incognito)
+  if (!tab) return []
   const site: Site = record.site
   const enabled = enabledTabFeatures(settings, site)
   if (!enabled?.length) return []
   const info = record.signedIn ? ({ site, build: deps.build, signedIn: true, acct: record.acct } as const) : ({ site, build: deps.build, signedIn: false, acct: null } as const)
-  const read = await deps.statuses.read({ tab: { ...lookup.tab, site }, info }, enabled)
+  const read = await deps.statuses.read({ tab, info }, enabled)
   return read.kind === "statuses" ? read.statuses : []
 }
-/** A tab's health rows for the popup and settings: its page features' statuses and the background features' (HEALTH-29). */
-async function readTabHealth(deps: HealthDeps, settings: Settings, syncOn: boolean, tabId: number, record: TabRecord, incognito: boolean | null): Promise<readonly UiFeatureHealth[]> {
-  const site: Site = record.site
-  if (!deps.monitor) return (await readTabStatuses(deps, settings, tabId, record, incognito)).map(status => ({ feature: status.feature, site, state: status.state, gaps: gaps(status) }))
-  const lookup = await deps.tab(tabId)
-  if (lookup.kind !== "tab" || (incognito !== null && lookup.tab.incognito !== incognito)) return []
+/** An open tab's health rows for the popup and settings: its page features' statuses and the background features' (HEALTH-29). */
+async function readTabHealth(deps: HealthDeps, settings: Settings, syncOn: boolean, tab: NativeTab & { readonly site: Site }, record: TabRecord): Promise<readonly UiFeatureHealth[]> {
+  const site = tab.site
+  if (!deps.monitor) return (await readTabStatuses(deps, settings, tab.tabId, record, null)).map(status => ({ feature: status.feature, site, state: status.state, gaps: gaps(status) }))
   const paged = enabledTabFeatures(settings, site) ?? []
   const enabled = [...paged, ...backgroundFeatures(settings, syncOn, site, paged)]
   if (!enabled.length) return []
   const info = record.signedIn ? ({ site, build: deps.build, signedIn: true, acct: record.acct } as const) : ({ site, build: deps.build, signedIn: false, acct: null } as const)
-  const read = await deps.monitor({ tab: { ...lookup.tab, site }, info }, enabled)
+  const read = await deps.monitor({ tab, info }, enabled)
   if (read.kind !== "statuses") return []
   return read.statuses.map(status => ({
     feature: status.feature,
@@ -79,7 +86,7 @@ async function readTabHealth(deps: HealthDeps, settings: Settings, syncOn: boole
 /**
  * The popup's and settings' health facts (UI-POP-09): over a YouTube or YouTube Music tab, that tab's statuses;
  * over any other tab, the worst status of each feature across the open tabs of each site. The tab registry in
- * session memory says which tabs our site core answered from.
+ * session memory says which tabs our site core answered from, and the browser says which of them are still there.
  */
 export function createPageStatus(deps: {
   readonly owner: { readSession(): Promise<SessionRead>; read(view: "settings"): Promise<SettingsRead> }
@@ -88,27 +95,37 @@ export function createPageStatus(deps: {
   readonly build: BuildId
   readonly monitor?: MonitorStatuses
   readonly syncOn?: () => Promise<boolean>
+  /** Hears each registered tab that closed or went to another site. Dropping its row tells every open page (UI-SET-17). */
+  readonly left?: (tabId: number) => void
 }): PageStatusSource {
   return async ui => {
     const [session, settingsRead] = await Promise.all([deps.owner.readSession(), deps.owner.read("settings")])
     if (session.kind !== "memory") return
-    const active = ui.requester.activeTabId === null ? undefined : session.memory.tabs.get(ui.requester.activeTabId)
-    const tab: UiTabFacts =
-      active && ui.requester.activeTabId !== null
-        ? active.signedIn
-          ? { kind: "site", site: active.site, tabId: ui.requester.activeTabId, signedIn: true, acct: active.acct }
-          : { kind: "site", site: active.site, tabId: ui.requester.activeTabId, signedIn: false, acct: null }
-        : { kind: "other" }
+    const registry = session.memory.tabs
+    const open = async (tabId: number, record: TabRecord) => {
+      const lookup = await deps.tab(tabId)
+      if (lookup.kind === "gone" || (lookup.kind === "tab" && lookup.tab.site !== record.site)) deps.left?.(tabId)
+      const tab = openTab(lookup, record, ui.requester.incognito)
+      return tab ? [{ tab, record }] : []
+    }
+    const activeRecord = ui.requester.activeTabId === null ? undefined : registry.get(ui.requester.activeTabId)
+    const [active] = activeRecord && ui.requester.activeTabId !== null ? await open(ui.requester.activeTabId, activeRecord) : []
+    const tab: UiTabFacts = !active
+      ? { kind: "other" }
+      : active.record.signedIn
+        ? { kind: "site", site: active.tab.site, tabId: active.tab.tabId, signedIn: true, acct: active.record.acct }
+        : { kind: "site", site: active.tab.site, tabId: active.tab.tabId, signedIn: false, acct: null }
     if (settingsRead.kind !== "value") return { tab, health: [] }
     const settings = decodeSettings(settingsRead.settings)
     const syncOn = (await deps.syncOn?.().catch(() => false)) ?? false
-    const targets = tab.kind === "site" ? [tab.tabId] : [...session.memory.tabs.keys()].slice(0, MAX_TABS)
+    const seen = (record: TabRecord) => record.seenAt ?? record.at ?? 0
+    const recent = [...registry].sort(([, a], [, b]) => seen(b) - seen(a))
+    const read = { www: 0, music: 0 }
+    const targets = active ? [active] : (await Promise.all(recent.map(([tabId, record]) => open(tabId, record)))).flat().filter(row => read[row.tab.site]++ < MAX_TABS)
     const worst = new Map<string, UiFeatureHealth>()
     await Promise.all(
-      targets.map(async tabId => {
-        const record = session.memory.tabs.get(tabId)
-        if (!record) return
-        for (const next of await readTabHealth(deps, settings, syncOn, tabId, record, ui.requester.incognito)) {
+      targets.map(async ({ tab: target, record }) => {
+        for (const next of await readTabHealth(deps, settings, syncOn, target, record)) {
           const key = `${record.site}:${next.feature}`
           const previous = worst.get(key)
           if (!previous || rank[next.state] > rank[previous.state]) worst.set(key, next)

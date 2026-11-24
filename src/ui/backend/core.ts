@@ -33,6 +33,8 @@ type View = {
   pending: Promise<UiSnapshot> | undefined
 }
 const disposedView = (): UiSnapshot => ({ kind: "unavailable", reason: "disposed" })
+// The background's `storage.session` keys for the tab registry and the Monitor's signals.
+const statusKeys = ["tabs", "breakage"] as const
 
 export function createBackend(ports: BackendPorts, options: BackendOptions): Backend {
   const keys = createKeySettingsSource(ports.local)
@@ -64,6 +66,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     })
   const views = new Map<string, View>()
   const pageListeners = new Set<(event: PageEvent) => void>()
+  const statusListeners = new Set<() => void>()
   let pageEpoch = 0
   let disposed = false
   let listening = false
@@ -125,7 +128,17 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     return pending
   }
   const changed: LocalListener = (changes, area) => {
-    if (disposed || area !== "local") return
+    if (disposed) return
+    if (area === "session") {
+      if (statusKeys.some(key => Object.hasOwn(changes, key)))
+        for (const listener of [...statusListeners]) {
+          try {
+            listener()
+          } catch {}
+        }
+      return
+    }
+    if (area !== "local") return
     if (pageListeners.size && Object.keys(changes).some(pageViewKeeps)) refreshPage()
     for (const [stop, request] of [...playlistLists]) {
       if (Object.hasOwn(changes, "device") || Object.hasOwn(changes, "schema") || Object.hasOwn(changes, `doc:setup:${request.acct}`)) stop()
@@ -147,7 +160,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     }
   }
   function removeUnusedListener() {
-    if (listening && playlistLists.size === 0 && pageListeners.size === 0 && ![...views.values()].some(entry => entry.listeners.size)) {
+    if (listening && playlistLists.size === 0 && pageListeners.size === 0 && statusListeners.size === 0 && ![...views.values()].some(entry => entry.listeners.size)) {
       listening = false
       ports.local.onChanged.removeListener(changed)
     }
@@ -173,6 +186,16 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     listen()
     return () => {
       if (!pageListeners.delete(listener)) return
+      removeUnusedListener()
+    }
+  }
+  function watchStatus(fn: () => void) {
+    if (disposed) return () => {}
+    const listener = () => fn()
+    statusListeners.add(listener)
+    listen()
+    return () => {
+      if (!statusListeners.delete(listener)) return
       removeUnusedListener()
     }
   }
@@ -348,6 +371,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     watch,
     loadPage: readPage,
     watchPage,
+    watchStatus,
     change,
     changeFeatureSetting,
     call,

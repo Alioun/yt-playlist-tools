@@ -234,7 +234,8 @@ export function composeAnyTab(deps: {
   async function reconcileMenu(): Promise<void> {
     const menus = native.contextMenus
     if (disposed || !menus) return
-    const settings = deps.consented() ? await actions.settings(false) : null
+    // The store's own read says no settings while consent is missing, and it is never behind the change that called this.
+    const settings = await actions.settings(false)
     const granted = await native.permissions.contains({ permissions: ["contextMenus"] }).catch(() => false)
     try {
       await menus.removeAll()

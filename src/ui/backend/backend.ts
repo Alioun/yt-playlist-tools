@@ -53,6 +53,8 @@ export type Backend = {
   /** The popup's and settings' whole view, from one `storage.local` read (UI-POP-02). */
   loadPage(): Promise<PageView>
   watchPage(fn: (event: PageEvent) => void): () => void
+  /** Fires when the tab registry or the Monitor's signals change in `storage.session`, so a page reads its status again. */
+  watchStatus(fn: () => void): () => void
   change(change: AgreeChange): Promise<AgreementAnswer>
   change(change: DestinationChange): Promise<DestinationAnswer>
   change(change: AutoAddReadChange): Promise<AutoAddReadAnswer>

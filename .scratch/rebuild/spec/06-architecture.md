@@ -454,7 +454,7 @@ flowchart TD
 
 - **ARC-ACC-70. The tab registry and pings stay small** ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)):
   - a site core sends `tab.hello` once per page load, never per in-app navigation;
-  - the registry holds at most 200 tabs. A `tab.hello` replaces the tab's entry, and an entry goes when a send or ping finds its tab gone, or when it's the oldest beyond 200. No tab event is needed for this;
+  - the registry holds at most 200 tabs. A `tab.hello` replaces the tab's entry, and an entry goes when a send or ping finds its tab gone, when a status read finds its tab closed or finds that the browser no longer shows the entry's site in it ([UI-SET-17](05-ui.md#sections)), or when it's the oldest beyond 200. The background hears no tab event for this, so a closed tab keeps its entry until one of those reads;
   - a job pings at most 3 candidates (ARC-ACC-55), then answers `NoTab`;
   - a job injects the site core into at most one tab. (R110)
 
@@ -1002,11 +1002,11 @@ interface Monitor {
 - **Playlists:** `list(acct, { refresh, req })`, `create(...)`, `resolveChannel(input, req)` and `absorb(answer)`. It hides cache freshness (a list opened with a cache older than 5 minutes refreshes; `refresh` is ↻, R39) and the merge rules.
 - **Accounts:** `onSeen(acct, tab)`. It hides the 24 h label check, and claiming the unclaimed setup after consent with the pure claim calculation over the unclaimed record, owned playlist IDs, current shared shortcuts, and the existing account setup. Its result distinguishes merged choices, ownership drops, and a skipped shortcut (R150, R152). The store's `claim` change applies the result ([§6.9](#69-the-store-module-interface); [ACC-30](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [REL-MIG-35](08-release.md#210-claiming-the-unclaimed-setup)).
 - **Diagnostics:** `report() → string` and `checkNow() → CheckResult | NoTab`. It hides the list of what a report never contains ([HEALTH-25](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report)). With no YouTube tab, Check now is disabled with "Open YouTube to check" and a button (R15). It also builds Report a problem's address, `reportUrl(kind, feature) → { url, shown }`, from the version, the browser, the feature and its status only; `shown` is the line the chooser displays ([HEALTH-27](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report); R89).
-- **Commands and Menus** (R88, R91): `onCommand(name)` and `onMenuClick(info, tab)`, which hand off to ARC-ACC-69. Menus also creates and removes the browser menu's entries as the feature and its permission change (ARC-MAN-20).
+- **Commands and Menus** (R88, R91): `onCommand(name)` and `onMenuClick(info, tab)`, which hand off to ARC-ACC-69. Menus also creates and removes the browser menu's entries as the feature and its permission change (ARC-MAN-20). Each time, it reads the feature's switch and consent from the store itself, so agreeing at first run draws the entries where the permission is already held, as on Firefox.
 - **Recent:** `record(report, origin)` after each add with an *added* outcome, `forget(undo)` after its Undo, and `list(acct)`. It keeps `storage.session`'s `recentAdds` through the store, at most 50 entries, and nothing from a private tab ([DATA-52](04-features-accounts-data.md#411-recent-adds); R86). A gather into the gather playlist records one entry for all the videos it added (R134).
 - **SettingsFile:** `exportFile() → Blob` and `importFile(text) → ImportPlan | Refusal`, both pure over the store's documents, plus the `import` change that applies a plan ([DATA-53 to DATA-55](04-features-accounts-data.md#412-the-settings-file); ARC-MOD-36; R90).
 - **Router:** maps each message kind to one module call, validates it with the contract's guard, and computes `Origin` from `sender`.
-- **Boot:** registers every listener synchronously in the worker's first turn, as MV3 requires. Each handler awaits `store.ready()` before doing anything.
+- **Boot:** registers every listener synchronously in the worker's first turn, as MV3 requires. Each handler awaits `store.ready()` and the consent read that follows it before doing anything. The message, key or menu click that woke a stopped worker is then handled as a running worker would handle it, and the start-up redraw of the browser's menu (ARC-MAN-20) reads the consent the store holds.
   - **ARC-MOD-34. The `runtime.onInstalled` listener** has one job: when the reason is "install", it opens first run in a tab ([FT-40](04-features-accounts-data.md#16-first-run), [DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)). Other reasons do nothing, so no tab opens on an update; a 1.4.5 user with no 1.x key left is a fresh install whom the toolbar "!" and the popup's "Waiting for your OK" lead to first run (R76). Nothing else depends on the event: the reconcile (ARC-MAN-12) and recognising a 1.x upgrade (ARC-MOD-25) run on every start, because Firefox can skip it. (R64, R76)
   - **ARC-MOD-37. A routine start is cheap.** Every wake of the service worker (Chrome) or event page (Firefox) is a start, so start-up work is sized for it ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)):
     - the migration check reads the `schema` marker and the consent and upgrade-note records in one `storage.local.get`, and reads more only when those say a migration or a 1.x check is due;
@@ -1022,7 +1022,8 @@ interface Monitor {
     - states are badge text and colour, not changing icon images, which cost an image decode or encode per call. (R112)
   - **ARC-MOD-39. The background's listeners and timers** (R103, R110, R133):
     - its only listeners are `runtime.onMessage`, `runtime.onInstalled` (ARC-MOD-34, and the browser menu after an update, ARC-MAN-23), `permissions.onAdded` and `onRemoved`, `storage.sync.onChanged` ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)), `commands.onCommand` (R88), `contextMenus.onClicked` (R91, present only while its optional permission is held) and `runtime.onStartup`, for the upgrade note's one reopening ([REL-CON-25](08-release.md#31-opening-the-note); R97), automatic gathering's trigger-1 check (R129) and, if live check P2 calls for it, P2's fallback (§6.2.15). That one wakes the background once per browser start, and returns after one storage read when none of them needs it (R133);
-    - it never listens to an event that every tab or window fires: no `tabs.on*`, `windows.on*` or `webNavigation` listener, and no `menus.onShown`. Chrome can't filter these, so each would wake the background for every tab in the browser, including tabs it has no access to;
+    - it never listens to an event that every tab or window fires: no `tabs.on*`, `windows.on*` or `webNavigation` listener, and no `menus.onShown`. Chrome can't filter these, so each would wake the background for every tab in the browser, including tabs it has no access to. A listener added after start-up is no way round this: Chrome keeps one that is still on when the worker stops, and wakes the worker for it from then on (measured 2026-11-23). So no tab event releases a closed tab's Undo handles. They end with the worker, or with the tab's next page load;
+    - an extension page the user has open may hear tab events while it is open, as Settings does to keep Diagnostics current ([UI-SET-17](05-ui.md#sections)). That wakes no background, and costs nothing once the page is closed;
     - it sets no interval and no alarm (FT-22, [FT-61](04-features-accounts-data.md#13-off-costs-nothing)). A timer is a one-shot follow-up of the event being handled (sync's 2 s and 5 s, a command's or a gather's 3 s answer, a gather's quiet second and its 10 s cap, the 2 s and 10 s checks of YouTube's player tab, and the 1, 3 and 10 s checks of YouTube's queue tab; R133), at most 25 s long, and never set again by its own callback. Longer waits, such as the 60 s pause after a 429 and a new playlist's 30 s, are timestamps checked at the next event, because a stopped worker loses its timers. Opaque sync failures use R155's persisted minimum-60-second hold, checked only on a later external event. Cleanup and opaque recovery add no timers or polling (R151, R155).
 
 ### 6.4.4 Popup, settings and the first-run page (`src/ui/`)
@@ -1335,7 +1336,7 @@ sequenceDiagram
 | `tab.undo { handle }` | `UndoReport` | |
 | `tab.change { Change }` | `ChangeResult` | Pause, "Don't auto-add this video", channel filter edits from the watch-page menu |
 | `tab.progress.load { video }` / `tab.progress.save { video, len, parts }` | `Parts \| null` / — | Refused for private tabs, which keep progress in memory |
-| `tab.signals { signals[], successes[] }` | — | Batched |
+| `tab.health { acct, request: { reports[] } }` | `boolean` | Batched. True confirms that the Monitor accepted the reports. |
 | `tab.need { popovers: true }` or `tab.need { jobs: true }` | `ok` | The picker, or the page's jobs file on its first job (ARC-MAN-16, ARC-MAN-26) |
 | `tab.noticeShown { features }` | — | |
 
@@ -1345,6 +1346,7 @@ sequenceDiagram
 | `bg.job { job }` | `JobResult` | Add-flow steps, serving-tab jobs, and the popup's Playing now (`nowPlaying`, ARC-ACC-68) |
 | `bg.ping` | `{ site, build, acct, signedIn }` | 2 s budget |
 | `bg.query { name }` | whatever the feature exposes | The popup's This video (auto-add's `status`) |
+| `bg.health` | `number \| null` | Before and after Check now's reads, send pending health reports and wait for confirmation of any batches in flight. The answer is how many batches the Monitor didn't take from this page so far. A check compares its own two answers, so two checks at once never hide each other's lost batch. `null` when the page can't say (HEALTH-23). |
 
 - **ARC-MSG-05. `TabView`** holds:
   - the features on for this site, and their options from shared settings;
@@ -1406,7 +1408,7 @@ sequenceDiagram
   - `tab.hello`, once per page load (ARC-ACC-70);
   - what a user action needs: `tab.add`, `tab.undo`, `tab.change`, `tab.need`, `tab.noticeShown`;
   - auto-add's goals reached (`tab.add`), and progress at [DATA-27](04-features-accounts-data.md#46-watch-progress)'s checkpoints (`tab.progress.load` once per video, `tab.progress.save`);
-  - `tab.signals`, at most every 5 s, only with a new signal, or a success for a job that has a signal in that tab ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage));
+  - `tab.health`, at most every 5 s, only with a new signal, or a success for a job that has a signal in that tab ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)), and at once when Check now asks with `bg.health`;
   - `tab.videoChanged`, only while its toolbar tick shows (ARC-MOD-38).
 
   A `timeupdate`, a pointer or focus move, a key that matches nothing, a page mutation or an in-app navigation never sends anything by itself. (R105, R110, R111, R112)
