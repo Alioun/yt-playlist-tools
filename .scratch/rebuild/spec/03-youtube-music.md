@@ -332,14 +332,16 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
   - If that cache is older than 5 minutes, the list refreshes by itself on open. ↻ always refreshes it. (R39)
   - Membership is fetched fresh on every open. The check marks show a loading state until it arrives.
   - Rows work before membership is known. An add then reports already in on the row if it was.
-- **YM-PICK-6** **Check marks:** none until ticket 25's M2 check passes. Until then the picker shows no check marks and no "Couldn't check" line (R191). Once M2 passes, every playlist that already holds the song gets one:
-  - Membership comes from YouTube Music's own answer if it carries membership.
-  - Otherwise it comes from a youtube.com serving tab on the same account, in a window of the same kind.
-  - If neither can be read:
-    - the list still works, with no check marks;
+- **YM-PICK-6** **Check marks:** every playlist that already holds the song gets one (R202).
+  - The picker asks YouTube Music for its Save-dialog list. The rows, their titles and their order come from that answer.
+  - That answer can leave out whether a playlist holds the song. Each row it leaves out takes its check from a youtube.com serving tab on the same account, in a window of the same kind. If YouTube Music's answer can't be read at all, that tab's rows stand in, without Watch Later.
+  - So while YouTube Music's answer carries no membership, the check marks need an open youtube.com tab on that account.
+  - If a row's check still can't be read:
+    - that row shows no check mark, and rows with a known check keep theirs;
+    - the list still works;
     - it shows "Couldn't check where this song already is";
     - Quick actions is partly working.
-  - **PROVISIONAL** (ticket 25, M2): whether YouTube Music's answer carries membership.
+  - **PROVISIONAL** (ticket 25, M2): whether YouTube Music's own answer carries membership. M2 hasn't run. The YouTube Music specimen PR #89 parses (`addToPlaylistRenderer` with `playlistAddToOptionRenderer` rows) carries no selection state, so the youtube.com tab supplies the checks for now.
 - **YM-PICK-7** **Ticking a row** saves the song there at once, through YM-SAVE-5's flow.
   - The row shows its own result: busy, then checked, or an inline "Couldn't save".
   - Nothing in the picker raises a toast, with two exceptions: the choose-mode pick (YM-SAVE-3) and an untick (YM-PICK-8). (R84)
@@ -614,13 +616,14 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - the picker's check marks (YM-PICK-6);
   - the player-bar Save's anchor, when YouTube Music should be drawing it;
   - some of a feature's actions unavailable (YM-FAIL-4; R50);
-  - Save and Like with the account keys unreadable (YM-ACC-7; R50).
+  - Save and Like with the account keys unreadable (YM-ACC-7; R50);
+  - the cast state, when it can't be read in Chrome. Queue edits then stay available (YM-CAST-2), and the health line's gap reads "it can't tell whether YouTube Music is casting".
 - **YM-FAIL-11** A tab's status clears by itself when the job next succeeds, or on reload when the check passes.
 - **YM-FAIL-12** **A quiet route turned noisy:** if YouTube Music shows its own toast after one of our queue edits, inserts, moves and Undo's re-inserts included, a `quiet-route-noisy` breakage signal is recorded and the feature that made the edit (Quick actions or Quick-action shortcuts) is *partly working* in that tab. The edit stands, and our own toast for it is suppressed, so only one shows ([Q-WATCH-28](07-quality.md#757-runtime-breakage-signals), [ARC-ACC-22](06-architecture.md#627-route-table-youtube-music)). The signal identifiers are chapter 07's ([Q-WATCH-24](07-quality.md#757-runtime-breakage-signals)). (R40, R51)
 
 ## 15. Casting
 
-- **YM-CAST-1** Casting exists only in Chrome. On Firefox, the casting state never applies.
+- **YM-CAST-1** Casting exists only in Chrome. On Firefox, the casting state never applies. There the cast-state read answers "not casting" without reading YouTube Music's store, so it never counts against a feature's health.
 - **YM-CAST-2** **While casting, every queue edit is unavailable,** with one message (R5):
   - inserts by Play next and Add to queue, including inserting a copy of the playing song;
   - moves of a queued song;
@@ -821,7 +824,7 @@ Keys from any tab is one feature for both sites, specified in [02 §2.14](02-you
 | Item | Requirement | Settled by |
 |---|---|---|
 | Save to library's signed-in shape and toast | YM-MORE-9 | Ticket 25, M3 |
-| YouTube Music's answer carries membership; YouTube Music responses carry `datasyncId` | YM-PICK-6, YM-ACC-6 | Ticket 25, M2 |
+| YouTube Music's answer carries membership (until then, a youtube.com tab supplies the checks); YouTube Music responses carry `datasyncId` | YM-PICK-6, YM-ACC-6 | Ticket 25, M2 |
 | Likes are quiet and repaint, including in the Wiz miniplayer | YM-LIKE-7 | Ticket 25, M3 |
 | The installed app is first-class | YM-APP-4 | Ticket 25, M4 |
 | The Wiz miniplayer's Save anchor, signed in | YM-BAR-8 | Ticket 25 |

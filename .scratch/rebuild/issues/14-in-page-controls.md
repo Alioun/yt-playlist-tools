@@ -410,7 +410,7 @@ The setup, matching production as ticket 17 asks:
 6. **Our Add to queue steps aside where YouTube draws its own.** The runner-up was always drawing ours.
 7. **The thumbnail buttons copy YouTube's own toggles,** at the top-left. The runner-up was ticket 09's 28 px square with a 4 px radius.
 8. **Progress is a pie, not a ring.** The runner-up, a ring, read as loading.
-9. **The card menu opens at YouTube's ⋮.** The runner-up was at the pointer.
+9. **The card menu opens at the right-click point.** The first choice was YouTube's ⋮, because moving YouTube's dropdown looked fragile. The user chose the pointer on 2026-11-17 (YT-CM-02).
 10. **Hosts:** layer + one overlay + inline hosts per placement. The runner-up was literally one host, which can't sit in YouTube's row or keep Tab order.
 11. **Popovers close themselves on Escape.** The runner-up was letting Escape through the isolation.
 12. **Type in YouTube's rem.** The runner-up was px.

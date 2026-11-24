@@ -80,7 +80,7 @@ Two more targets exist only at build time: the live-check build ([§6.4.6](#646-
   - **Exception:** the tab's account (`LOGGED_IN` and `DATASYNC_ID`) is read once, at page load, and kept until the page reloads, just as YouTube's own page keeps it (ticket 11). The account guard compares against that value.
   - A stale client version (HTTP 400) can't happen, because nothing is ever sent outside a live page.
 - **ARC-ACC-07.** No remote config, selectors or endpoint maps are ever fetched. Every route, parser, shape and fallback ships in the package (ADR-0005).
-- **ARC-ACC-08.** 2.0 never clicks or otherwise drives YouTube's visible UI to do work. One exception: the right-click card menu opens YouTube's own ⋮ menu, because that is the feature.
+- **ARC-ACC-08.** 2.0 never clicks or otherwise drives YouTube's visible UI to do work. One exception: the right-click card menu opens YouTube's own ⋮ menu and moves the menu's anchor to the right-click point, because that is the feature ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)).
 - **ARC-ACC-09.** Until **consent** is given, no job runs and no extension script reaches a YouTube page. That includes the on-demand core (ADR-0010). `Tabs.serve` and `Registrar.ensure` refuse before consent.
 
 ### 6.2.2 Routes
@@ -103,7 +103,7 @@ A **route** is one way the gateway gets a job done.
   3. it needs no click on YouTube's visible UI.
 
   Two visible changes are allowed, because each is the result the user asked for: the queue appearing or growing after Add to queue or Play next, and a like button's state changing after a like.
-- **ARC-ACC-11.** Among the routes that qualify, YouTube's own come first (YouTube command, service request, YouTube Music handler), then the signed request.
+- **ARC-ACC-11.** Among the routes that qualify, YouTube's own come first (YouTube command, service request, YouTube Music handler), then the signed request. On youtube.com, `accountLabel`, `membership`, `playlists` and `create` are the exception. They send the signed request first and keep the service request as the fallback. PR #89 (`64b90b2`) found that the service request no longer answers `account_menu` or `browse`, and each silent try spent half the job's time before the signed request went out.
 - **ARC-ACC-12.** Each site's route table is one data constant, with one row per job listing its routes in order: `src/page/routes/www.ts` and `src/page/routes/music.ts`. Live-check results change only these constants.
 - **Rejected routes:**
   - **Copying headers off YouTube's own requests** by wrapping `window.fetch`. It patches every YouTube page at `document_start` whether or not a feature needs it, it handles the same credential anyway, and it only works if YouTube has just made a signed-in request.
@@ -137,7 +137,7 @@ Requirements:
 - `POST https://www.youtube.com/youtubei/v1/<path>?prettyPrint=false` with `credentials: "same-origin"`. No API key.
 - **Headers:**
   - `Content-Type: application/json`;
-  - `X-Goog-Visitor-Id` (`VISITOR_DATA`);
+  - `X-Goog-Visitor-Id` (`VISITOR_DATA`, else `INNERTUBE_CONTEXT.client.visitorData`, because YouTube stopped setting `VISITOR_DATA`; PR #89, `5f97000`);
   - `X-Youtube-Bootstrap-Logged-In` (`LOGGED_IN`);
   - `X-Youtube-Client-Name` and `X-Youtube-Client-Version` (`INNERTUBE_CONTEXT_CLIENT_NAME` and `…_VERSION`), always the page's own values, never hard-coded;
   - `X-Goog-AuthUser` (`SESSION_INDEX`);
@@ -176,7 +176,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 |---|---|---|---|---|---|
 | `account` | www, music | — | `{ signedIn, datasyncId \| null }` (the raw ID; the core turns it into a key before anything leaves the tab) | none | no |
 | `accountLabel` | www, music | — | `{ name, handle?, avatar? }` | playlist | yes |
-| `membership` | www, music | `{ videoId }` | each playlist the account can add to: `{ id, title, privacy?, count?, contains }`, in the site's Save-dialog order. `count` is the song or video count, when the answer carries one; without it, YouTube Music's picker shows privacy only ([YM-PICK-4](03-youtube-music.md#10-the-playlist-picker); R73) | playlist | yes |
+| `membership` | www, music | `{ videoId }` | each playlist the account can add to: `{ id, title, privacy?, count?, contains }`, in the site's Save-dialog order. `contains` is `null` on YouTube Music when its answer leaves the selection state out ([YM-PICK-6](03-youtube-music.md#10-the-playlist-picker)). `count` is the song or video count, when the answer carries one; without it, YouTube Music's picker shows privacy only ([YM-PICK-4](03-youtube-music.md#10-the-playlist-picker); R73) | playlist | yes |
 | `playlists` | www | — | each playlist: `{ id, title, privacy?, count?, thumb? }` | playlist | yes |
 | `add` | www | `{ playlistId, videoId }` | `{ setVideoId }` | playlist | yes |
 | `remove` | www | `{ playlistId, setVideoId }` | — | playlist | yes |
@@ -190,7 +190,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 | `queueAdd` | www | target card | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
 | `queueUndo` | www | `{ listId, setVideoId }` | — | app-state | no |
 | `queueAddList` | www | `{ videoIds }`: the rest of a gather into YouTube's queue, after the first video, which the tab the gather opened plays; at most 199 ([YT-GT-14](02-youtube.md#2163-destinations); R123) | `{ confirmed, count }` | app-state | no |
-| `openCardMenu` | www | target card | — | none | no |
+| `openCardMenu` | www | target card, and `{ videoId, at }`: `at` is the right-click's viewport point, where the menu opens ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)) | — | none | no |
 | `itemInfo` | music | target element | the item's menu endpoints (the library toggle with its state, the mix's watch endpoint and the artist and album browse endpoints included, R85), kind, like state, queue item ID, `selected`, header song count | none | no |
 | `queueInsert` | music | `{ endpoint, position: "next" \| "end" }` | `{ ids }`: the new queue item IDs | app-state | no |
 | `queueRemove` | music | `{ id }` | `{ index }` | app-state | no |
@@ -219,14 +219,14 @@ The sending context is either **the tab** (where the action happened) or **a ser
 | Job | Primary route | Fallbacks, in order | Sending context | Decided by |
 |---|---|---|---|---|
 | `account` | **Page read:** `ytcfg` `LOGGED_IN` and `DATASYNC_ID`, at page load. Every answer's `responseContext.mainAppWebResponseContext.datasyncId` is then checked against it ([§6.2.10](#6210-the-account-check)). | — | The tab, or a serving tab. From the popup, an on-demand probe. | Settled; stability L7 |
-| `accountLabel` | **PROVISIONAL (L2):** service request `account/account_menu` | Signed request `account/account_menu`. If neither works, the label is "Unnamed account". | Any tab of that account | L2 |
-| `membership` | **PROVISIONAL (L2, L5):** service request `playlist/get_add_to_playlist {videoIds: [id], excludeWatchLater: false}`. Both answer shapes are parsed: the old renderer and the view model. | Signed request, same path | The tab, or a serving tab for the popup and settings | L2, L5 |
-| `playlists` | **PROVISIONAL (L2, L5):** service request `browse {browseId: "FEplaylist_aggregation"}`. Watch Later (`WL`) is added as a fixed entry if it isn't listed. | Signed request. If the lockups carry no privacy, the privacy shown comes from the last membership read. | A serving tab | L2, L5 |
+| `accountLabel` | Signed request `account/account_menu` (ARC-ACC-11) | **PROVISIONAL (L2):** service request `account/account_menu`. If neither works, the label is "Unnamed account". | Any tab of that account | L2 |
+| `membership` | **PROVISIONAL (L5):** signed request `playlist/get_add_to_playlist {videoIds: [id], excludeWatchLater: false}` (ARC-ACC-11). Both answer shapes are parsed: the old renderer and the view model. | **PROVISIONAL (L2):** service request, same path | The tab, or a serving tab for the popup and settings | L2, L5 |
+| `playlists` | **PROVISIONAL (L5):** signed request `browse {browseId: "FEplaylist_aggregation"}` (ARC-ACC-11). Watch Later (`WL`) is added as a fixed entry if it isn't listed. If the lockups carry no privacy, the privacy shown comes from the last membership read. | **PROVISIONAL (L2):** service request, same browse | A serving tab | L2, L5 |
 | `add` (auto-add, shortcuts, quick-save, picker; Watch Later and Shorts included) | **PROVISIONAL (L1):** YouTube command `playlistEditEndpoint {playlistId, actions: [{action: "ACTION_ADD_VIDEO", addedVideoId}]}`. Success is read from `status`, never from the HTTP code. | Service request, if L2 passes for `playlistEditEndpoint`; then signed request `browse/edit_playlist` | The tab; a serving tab for adds from the popup's picker | L1, L2, L6 |
 | `remove` (undo, picker untick) | As `add`, with `ACTION_REMOVE_VIDEO` and the `setVideoId` the add returned | As `add` | The tab where the add ran, or the serving tab | L1, L6 |
 | `addBatch` (Gather tabs into the gather playlist; R126) | **PROVISIONAL (L1, G1, G2):** as `add`, with one `ACTION_ADD_VIDEO` action per video in one `playlistEditEndpoint`. Each video's `setVideoId` or failure is read from the answer's per-action results; success is still read from `status` | As `add`: the service request, then the signed request `browse/edit_playlist` with the same actions | A serving tab ([ARC-ACC-73](#6216-gathering-tabs)) | L1, G1, G2 |
 | `removeBatch` (a gather's Undo; R127) | **PROVISIONAL (G5):** as `remove`, with one `ACTION_REMOVE_VIDEO` per `setVideoId` in one request | As `remove` | A serving tab of that account | L1, G5 |
-| `create` | **PROVISIONAL (L2):** service request `createPlaylistServiceEndpoint`. The YouTube command is excluded, because it drops the new ID. | Signed request `playlist/create`. With no tab: "Open YouTube to create playlists". | The tab, or a serving tab | L2 |
+| `create` | Signed request `playlist/create` (ARC-ACC-11). The YouTube command is excluded, because it drops the new ID. | **PROVISIONAL (L2):** service request `createPlaylistServiceEndpoint`. With no tab: "Open YouTube to create playlists". | The tab, or a serving tab | L2 |
 | `queueAdd` | YouTube command; see [§6.2.8](#6284-youtubes-queue-quiet-add-confirmation-and-undo). Works signed out. | None: nothing else reaches the queue. YouTube's ⋮ menu stays available. | The tab | L8, T29.Q1, T29.Q6–Q8 |
 | `queueUndo` | YouTube command: the quiet removal ([§6.2.8](#6284-youtubes-queue-quiet-add-confirmation-and-undo)) | None: "Couldn't undo" | The tab | T29.Q2, T29.Q5–Q7 |
 | `queueAddList` (Gather tabs into YouTube's queue; R123) | **PROVISIONAL (G3):** YouTube command `addToPlaylistCommand {listType: "PLAYLIST_EDIT_LIST_TYPE_QUEUE", …}` carrying every video ID, through the global resolver, in the watch tab the gather opened. `confirmed` once the queue panel's data ([ARC-ACC-35](#6284-youtubes-queue-quiet-add-confirmation-and-undo)) holds every ID sent. Works signed out. | None: the gather closes nothing and says so | The tab the gather opened ([ARC-ACC-75](#6216-gathering-tabs)) | G3 |
@@ -234,7 +234,7 @@ The sending context is either **the tab** (where the action happened) or **a ser
 | `resolveChannel` (typed channels) | **Plain request:** `navigation/resolve_url`, following up to 3 `urlEndpoint` hops and accepting only a `UC…` ID with `WEB_PAGE_TYPE_CHANNEL`. Then a plain `browse {browseId: "UC…"}` for the title and @handle. | With no tab, only `UC…` IDs and `/channel/UC…` URLs are accepted, parsed offline. Other forms show "Open YouTube to look up this channel". | A serving tab of any account, signed in or out | Settled |
 | `videoInfo` | **Page read:** the navigation event and the player | — | The tab | L9 |
 | `player` stream (watch progress) | **Page read:** the `<video>` inside `#movie_player` or `#shorts-player` | On Shorts, progress from the `<video>` alone if `#shorts-player`'s API is missing | The tab | L9 |
-| `openCardMenu` | YouTube's own UI (exempt) | The browser's own menu | The tab | Settled |
+| `openCardMenu` | YouTube's own UI (exempt): click the card's ⋮ button, then move the dropdown's anchor to `at` as YouTube marks it opened. That mark confirms the job. On close, the dropdown gets its ⋮ anchor back ([YT-CM-02](02-youtube.md#212-the-right-click-card-menu)). | The browser's own menu | The tab | Settled |
 
 ### 6.2.7 Route table: YouTube Music
 
@@ -251,11 +251,11 @@ The sending context is either **the tab** (where the action happened) or **a ser
 | `library` (Save to library and its undo; R85) | `app.handleServiceEndpoint(…)` with the endpoint the item carries: the toggle's `feedbackEndpoint` on tracks, or the card's `likeEndpoint` for a playlist or album. Tokens are never built. | None | The tab | M3 |
 | `navigate` (Start mix, Go to album, Go to artist; R85) | `app.handleNavigationEndpoint(…)` with the endpoint the item carries: the mix's `watchEndpoint` or `watchPlaylistEndpoint`, or the `browseEndpoint` with the artist or album page type. In-app navigation, with no reload. Start mix replaces the queue, as YouTube Music's own item does, so it's a queue edit for casting (ARC-ACC-31). | None | The tab | Ticket 21 §2.6, §2.7 |
 | `save`, `unsave` (and their undo) | **PROVISIONAL (M2):** `networkManager.fetch("/browse/edit_playlist")`. It's quiet and returns `status` and `setVideoId`. A duplicate rejection reads as *already in*. | None. Save isn't offered in a tab whose `networkManager` is missing. | The tab | M2 |
-| `membership` (picker; the read before a save) | **PROVISIONAL (M2):** `networkManager.fetch("/playlist/get_add_to_playlist")` | **Membership only:** a www serving tab of the same account, in a window of the same kind. Else the picker shows no ticks, with ticket 12's note. | The tab | M2 |
+| `membership` (picker; the read before a save) | **PROVISIONAL (M2):** `networkManager.fetch("/playlist/get_add_to_playlist")` | **Membership only:** a www serving tab of the same account, in a window of the same kind, fills each `contains` YouTube Music's answer left `null`. If YouTube Music's answer can't be read at all, the www rows stand in, without Watch Later. A row neither answer settles shows no tick, with ticket 12's note ([YM-PICK-6](03-youtube-music.md#10-the-playlist-picker), R202). | The tab | M2 |
 | `create` | `networkManager.fetch("/playlist/create")`. YouTube Music's gated "feature enablement" answer counts as a failure. | — | The tab | M2 |
 | `accountLabel` | `networkManager.fetch("/account/account_menu")` | "Unnamed account" | The tab | M2 |
 | `nowPlaying` (job and stream) | **Page read:** `navigator.mediaSession.metadata` (title, artist, album, and the largest `artwork` entry's URL; R73) and the `<video>` element. The video ID comes from `#movie_player.getVideoData()`. Never the player bar, which an A/B test removes. | The queue's selected item (`app.queue`) | The tab | M1 |
-| `castState` | **Page read:** `state.castStatus` in the app's state store, found signed out (ticket 25) | `#movie_player`'s API | The tab | M5 |
+| `castState` | **Page read:** `state.castStatus` in the app's state store, found signed out (ticket 25). On Firefox the read answers `casting: false` without reading the store ([YM-CAST-1](03-youtube-music.md#15-casting)). | `#movie_player`'s API | The tab | M5 |
 
 - **ARC-ACC-21.** On YouTube Music, `networkManager` signs requests itself. The signed request never runs on music.youtube.com. When an internal is missing there, the action is removed from that tab rather than falling back (`ctx.can(job)` is false), and its buttons hide in that tab. Its key stays caught, because a key never does nothing silently: each press answers "{Action} isn't working right now. The popup shows why." ([YM-KEY-12](03-youtube-music.md#12-keys-quick-action-shortcuts)). A feature with some actions unavailable is *partly working*, and its status detail names those actions (the Monitor, [§6.4.3](#643-background-srcbackground)). (R50, R68)
 - **ARC-ACC-22.** Nothing YouTube Music runs on our behalf shows a second toast:
@@ -519,7 +519,7 @@ What the signed-out run found:
 | Check | What it tests | If it passes | If it fails |
 |---|---|---|---|
 | **L1** | The resolver with `playlistEditEndpoint` and a `commandController`: options forwarded, `onSuccess` / `onServerError` get the answer, and nothing shows on success *or* on failure (a full or deleted playlist) | `add` and `remove` use the YouTube command | `add` and `remove` use the service request if L2 passes for `playlistEditEndpoint`, else the signed request |
-| **L2** | `yt-service-request` from a temporary element under `ytd-app` returns the answer with no popup, toast or navigation. Run once each for `get_add_to_playlist`, `FEplaylist_aggregation`, `createPlaylistServiceEndpoint`, `account/account_menu` and `playlistEditEndpoint`. | That job uses the service request | That job uses the signed request |
+| **L2** | `yt-service-request` from a temporary element under `ytd-app` returns the answer with no popup, toast or navigation. Run once each for `get_add_to_playlist`, `FEplaylist_aggregation`, `createPlaylistServiceEndpoint`, `account/account_menu` and `playlistEditEndpoint`. | That job can use the service request. For `accountLabel`, `membership`, `playlists` and `create` it stays the fallback after the signed request (ARC-ACC-11). | That job uses the signed request |
 | **L3** | A same-origin request with cookies and no `Authorization` gets a signed-in answer and can write | The signed request sends no hash, nothing reads cookies, and the "Authentication information" tick and the cookie lines go (R48) | The signed request computes the hash |
 | **L4** | `SAPISID` (or `__Secure-3PAPISID`) is readable from `document.cookie` while signed in; the hash is checked against `Origin` / `X-Origin` | The signed request works as specified | The signed request can't exist. Jobs left without a qualifying route are unavailable, and each gap becomes a new ticket. Not expected. |
 | **L5** | The shapes of `get_add_to_playlist` (renderer or view model, paging, privacy, Watch Later) and of the `FEplaylist_aggregation` lockups | Parsers fixed to those shapes | — (shape detail) |
@@ -528,7 +528,7 @@ What the signed-out run found:
 | **L8** | After a queue add on an existing queue, the video shows in the panel data, and which field holds it | Confirmation reads that field | Only the fallback signal remains, and Add to queue on an open queue shows *Sent, not confirmed* ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)) |
 | **L9** | `#shorts-player`'s player API, and `yt-navigate-finish` on every swipe | Page reads as specified | The Shorts channel comes from a plain request, and progress from the `<video>` alone |
 | **M1** | The menu-item route queues correctly and shows nothing once `commands` are stripped; queue replay works signed in | Menu-item route primary, replay as fallback | Replay is primary. Either way, queue edits are unavailable while casting (ARC-ACC-31; R5, R46). |
-| **M2** | `networkManager.fetch` returns signed answers for `get_add_to_playlist`, `browse/edit_playlist`, `playlist/create` and `account/account_menu`; membership (`containsSelectedVideos`) is present; answers carry `datasyncId` | Membership is read on YouTube Music | Membership comes from a www serving tab, else there are no ticks. Without `datasyncId`, the YouTube Music guard uses only the page-load `ytcfg`. |
+| **M2** | `networkManager.fetch` returns signed answers for `get_add_to_playlist`, `browse/edit_playlist`, `playlist/create` and `account/account_menu`; membership (`containsSelectedVideos`) is present; answers carry `datasyncId` | Membership is read on YouTube Music | Membership comes from a www serving tab, else those rows have no ticks. This is how 2.0 ships until M2 runs (R202). Without `datasyncId`, the YouTube Music guard uses only the page-load `ytcfg`. |
 | **M3** | A like through `handleServiceEndpoint` sticks, repaints the like button and shows no toast. The same for Save to library, signed in, with the item's own endpoint (R85) | As specified | YouTube Music's own toast stands in for ours on likes, and on Save to library |
 | **M4** | In the installed YouTube Music app (Chrome, Edge), `tabs.query` finds its tab, `executeScript` and registered scripts run there, and the popup's active tab is the app's. A key from any tab, set in the browser, reaches the background while the app window has focus (R33, R88). | The app is first-class | The app gets only what reaches it, and the gap is recorded |
 | **M5** | Where an active cast session shows: `state.castStatus` (found signed out), or `#movie_player`'s API | Casting is detected, and every queue edit and its Undo, inserts included, is unavailable while casting (ARC-ACC-31; R46) | Casting can't be detected, so every queue edit (inserts, moves, Remove from queue and their Undo) stays available, and their toasts say "this tab's queue" instead of "the queue" ([YM-CAST-2](03-youtube-music.md#15-casting)). Wherever casting can be read, R46 still holds. |
@@ -987,7 +987,7 @@ interface Monitor {
 ```
 
 - **What it hides:**
-  - `deriveStatus(registry health, signals) → statuses`, which is pure. Status is per feature, per site and tab ([HEALTH-07](04-features-accounts-data.md#52-status)). A YouTube Music feature with some actions unavailable in a tab is *partly working*, and its status detail names those actions, from the registry's `actions` (ARC-REG-01). That detail is what an unavailable action's key points to: its buttons hide in that tab, but the key stays caught and answers "{Action} isn't working right now. The popup shows why." (ARC-ACC-21) (R50, R68);
+  - `deriveStatus(registry health, signals) → statuses`, which is pure. Status is per feature, per site and tab ([HEALTH-07](04-features-accounts-data.md#52-status)). A `playlists` answer the parser doesn't recognise, or a rejection, takes that job out at once, because both of its routes share one parser and a rejection ends the request. A YouTube Music feature with some actions unavailable in a tab is *partly working*, and its status detail names those actions, from the registry's `actions` (ARC-REG-01). That detail is what an unavailable action's key points to: its buttons hide in that tab, but the key stays caught and answers "{Action} isn't working right now. The popup shows why." (ARC-ACC-21) (R50, R68);
   - the thresholds;
   - notice-once memory;
   - signals from private tabs, kept in memory only.
@@ -1191,7 +1191,7 @@ type FeatureDef = {
 - **ARC-REG-11. Gather tabs' registry entry** (R120, R133, R136):
   - `id: "gather"`, `setting: "gather"`, `footprint: "none"` ("Doesn't change the page").
   - `pages.www` is ARC-MAN-24's entry, with no `file`. `check:budget` gives it no row, like ARC-REG-10's features, and the `registry` guard expects none in `perf-budget.json`.
-  - `health.www = { required: [], optional: ["queueAddList", "membership", "addBatch", "removeBatch"], anchors: [] }`. YouTube's player needs no job; the Gather module's own check reports its `no-effect` (ARC-ACC-74). The Monitor turns these into a status per destination ([HEALTH-29](04-features-accounts-data.md#52-status)).
+  - `health.www = { required: [], optional: ["queueAddList", "membership", "addBatch", "removeBatch"], anchors: [] }`. YouTube's player needs no job; the Gather module's own check reports its `no-effect` (ARC-ACC-74). While Gather tabs targets a playlist, the Monitor adds `playlists` to the optional jobs, and a lost `playlists` job counts against the playlist destination. The Monitor turns these into a status per destination ([HEALTH-29](04-features-accounts-data.md#52-status)).
 - **The plug-in contract:**
   - **ARC-REG-04.** A feature's entrypoint is one line: `export default defineUnlistedScript(() => definePageFeature(quickSave))`.
   - **ARC-REG-05.** `start(ctx)` runs when the tab view says the feature is on. Everything the feature adds goes through `ctx.scope`.
