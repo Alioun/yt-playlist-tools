@@ -204,7 +204,7 @@ jobs:
       # package.json isn't checked out; a test holds this to its packageManager.
       - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
         with:
-          bun-version: 1.4.3
+          bun-version: 1.4.5
           no-cache: true
 
       - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit upstream's v8 tag peels to (design, "Turning it on")
@@ -400,7 +400,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
         with:
-          bun-version: 1.4.3
+          bun-version: 1.4.5
           no-cache: true
 
       - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit upstream's v8 tag peels to (design, "Turning it on")

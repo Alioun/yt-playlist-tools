@@ -7,11 +7,21 @@ import { fixtureGates, gateId, type FixtureGate } from "../../tools/fixtures/gat
 
 const root = "tools/fixtures"
 const at = (gate: { fixture: string }, path: string) => join(root, gate.fixture, path)
-// Two kinds of generated file aren't fixture files: the .wxt/ folder WXT writes when a fixture is built,
-// and the .fixture-gate-<pid>.tsconfig.json a running negatives gate writes beside its project.
+// Generated files aren't fixture files: the .wxt/ folder WXT writes when a fixture is built, the .svelte-check/
+// folder svelte-check writes when a fixture is typechecked, and the .fixture-gate-<pid>.tsconfig.json a running
+// negatives gate writes beside its project.
+const generatedFolders = new Set([".wxt", ".svelte-check"])
 function listFixtureFiles(directory: string) {
   return readdirSync(directory, { recursive: true, withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.parentPath !== directory && !entry.name.startsWith(".fixture-gate-") && !relative(directory, entry.parentPath).split(sep).includes(".wxt"))
+    .filter(
+      entry =>
+        entry.isFile() &&
+        entry.parentPath !== directory &&
+        !entry.name.startsWith(".fixture-gate-") &&
+        !relative(directory, entry.parentPath)
+          .split(sep)
+          .some(folder => generatedFolders.has(folder))
+    )
     .map(entry => join(entry.parentPath, entry.name))
     .sort()
 }
@@ -62,10 +72,18 @@ function referenced(gate: FixtureGate): string[] {
 }
 
 describe("fixture gate registry", () => {
-  test("files WXT generates under .wxt/ and a running gate's temporary tsconfig are not fixture files", () => {
+  test("files WXT generates under .wxt/, svelte-check's .svelte-check/ output and a running gate's temporary tsconfig are not fixture files", () => {
     const directory = mkdtempSync(join(tmpdir(), "fixture-files-"))
     try {
-      for (const file of ["pilot/tsconfig.json", "pilot/.wxt/tsconfig.json", "pilot/.wxt/types/paths.d.ts", "pilot/.fixture-gate-123.tsconfig.json", "top.json"]) {
+      for (const file of [
+        "pilot/tsconfig.json",
+        "pilot/.wxt/tsconfig.json",
+        "pilot/.wxt/types/paths.d.ts",
+        "pilot/.svelte-check/tsconfig.json",
+        "pilot/.svelte-check/svelte/App.svelte.d.ts",
+        "pilot/.fixture-gate-123.tsconfig.json",
+        "top.json"
+      ]) {
         mkdirSync(join(directory, file, ".."), { recursive: true })
         writeFileSync(join(directory, file), "{}")
       }

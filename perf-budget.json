@@ -77,39 +77,45 @@
     },
     {
       "row": "popup/www/js",
-      "kb": 58.17,
+      "kb": 62.5,
       "since": "2026-11-22",
-      "why": "The popup validates the casting-specific health status in the shared health contract, reads the status again when a tab opens or a breakage signal lands, and reads the name of an account with no setup from its tab. Its membership contract carries the YouTube Music sheet's second read."
+      "why": "The popup validates the casting-specific health status in the shared health contract, reads the status again when a tab opens or a breakage signal lands, and reads the name of an account with no setup from its tab. Its membership contract carries the YouTube Music sheet's second read. Svelte 5.59.1 adds about 4 KB here against 5.58.0: the runtime gained the batch and fork rework of 5.58.1 and the custom renderer API of 5.59.0."
     },
     {
       "row": "popup/music/js",
-      "kb": 68.47,
+      "kb": 72.8,
       "since": "2026-11-22",
-      "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, reads the status again when a tab opens or a breakage signal lands, and shows the live account name. Its membership contract carries the sheet's second read, which asks a YouTube tab for check marks."
+      "why": "The Music popup shares the health contract that identifies casting failures separately from unavailable actions, reads the status again when a tab opens or a breakage signal lands, and shows the live account name. Its membership contract carries the sheet's second read, which asks a YouTube tab for check marks. Svelte 5.59.1 adds about 4 KB here against 5.58.0: the runtime gained the batch and fork rework of 5.58.1 and the custom renderer API of 5.59.0."
     },
     {
       "row": "www/kit",
-      "kb": 28.4,
+      "kb": 32.1,
       "since": "2026-11-07",
-      "why": "Thumbnail overlays track page pointer, mouse and drag gestures so they cannot intercept the release that ends queue reordering."
+      "why": "Thumbnail overlays track page pointer, mouse and drag gestures so they cannot intercept the release that ends queue reordering. Svelte 5.59.1 adds about 4 KB here against 5.58.0: the runtime gained the batch and fork rework of 5.58.1 and the custom renderer API of 5.59.0."
+    },
+    {
+      "row": "music/kit",
+      "kb": 34.3,
+      "since": "2026-11-25",
+      "why": "Svelte 5.59.1 adds about 4 KB here against 5.58.0: the runtime gained the batch and fork rework of 5.58.1 and the custom renderer API of 5.59.0."
     },
     {
       "row": "popovers",
-      "kb": 52,
+      "kb": 56,
       "since": "2026-11-22",
-      "why": "The in-page Save picker now includes its own control utilities and a small shadow-root reset so YouTube's styles and 10px root cannot leave controls unstyled or shrink the text. It also marks the rows no read answered for, and says why check marks are missing. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0."
+      "why": "The in-page Save picker now includes its own control utilities and a small shadow-root reset so YouTube's styles and 10px root cannot leave controls unstyled or shrink the text. It also marks the rows no read answered for, and says why check marks are missing. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0. Svelte 5.59.1 adds about 4 KB here against 5.58.0: the runtime gained the batch and fork rework of 5.58.1 and the custom renderer API of 5.59.0."
     },
     {
       "row": "first-run/js",
-      "kb": 64.2,
+      "kb": 68.5,
       "since": "2026-11-22",
-      "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk. The shared UI contract includes the live account name. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0."
+      "why": "Feature selection includes localized examples and a loader for the illustrated previews. The illustration component is a separate lazy chunk. The shared UI contract includes the live account name. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0. Svelte 5.59.1 adds about 4 KB here against 5.58.0: the runtime gained the batch and fork rework of 5.58.1 and the custom renderer API of 5.59.0."
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 68,
+      "kb": 72.3,
       "since": "2026-11-22",
-      "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader, and the shared UI contract. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0."
+      "why": "The upgrade entry shares the first-run shell, including the localized example captions and lazy preview loader, and the shared UI contract. The dependency bump of 2026-11-24 adds up to 0.4 KB, mostly from bits-ui 2.22.0. Svelte 5.59.1 adds about 4 KB here against 5.58.0: the runtime gained the batch and fork rework of 5.58.1 and the custom renderer API of 5.59.0."
     },
     {
       "row": "www/card-menu",

@@ -4,13 +4,13 @@ Built and checked on Ubuntu 24.04 on ARM64 and x86-64 with Node 24, the AMO revi
 
 Bun only installs the dependencies, because the lockfile is Bun's. The build itself runs on Node, with your own npm.
 
-1. Install the exact dependencies pinned in `bun.lock` from the npm registry, with Bun 1.4.3 fetched through npm. Nothing is installed globally.
+1. Install the exact dependencies pinned in `bun.lock` from the npm registry, with Bun 1.4.5 fetched through npm. Nothing is installed globally.
 
    ```sh
-   npx --yes bun@1.4.3 install --frozen-lockfile
+   npx --yes bun@1.4.5 install --frozen-lockfile
    ```
 
-   Two other ways to get the same Bun are `npm install --global bun@1.4.3` and `curl -fsSL https://bun.com/install | bash -s "bun-v1.4.3"`.
+   Two other ways to get the same Bun are `npm install --global bun@1.4.5` and `curl -fsSL https://bun.com/install | bash -s "bun-v1.4.5"`.
 
 2. Build the Firefox package on Node.
 

@@ -1,6 +1,6 @@
 # Check source ZIP rebuilds
 
-Run the check with Node 24, Bun 1.4.3, Git, and Python 3 on `PATH`.
+Run the check with Node 24, Bun 1.4.5, Git, and Python 3 on `PATH`.
 Allow network access for two frozen dependency installs.
 Bun must match `package.json`'s `packageManager` field.
 
